@@ -1,0 +1,5 @@
+type: module
+name: RLMumford Tools
+description: 'Tools common to RLMumford Projects'
+package: RLMumford
+core: 8.x

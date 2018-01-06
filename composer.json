@@ -1,0 +1,42 @@
+{
+    "name": "rlmumford/common",
+    "description": "Common RLMumford Tools & Modules",
+    "type": "drupal-module",
+    "authors": [
+        {
+            "name": "rlmumford",
+            "email": "rlmumford@googlemail.com"
+        }
+    ],
+    "require": {
+        "drupal/rules": "^3.0@alpha",
+        "cweagans/composer-patches": "^1.6",
+        "webflo/drupal-finder": "^1.0.0",
+        "webmozart/path-util": "^2.3"
+    },
+    "repositories": [
+      {
+        "type": "composer",
+        "url": "https://packages.drupal.org/8"
+      }
+    ],
+    "minimum-stability": "dev",
+    "autoload": {
+      "classmap": [
+        "scripts/composer/ScriptHandler.php"
+      ]
+    },
+    "scripts": {
+      "rlmumford-dev": "RLMumford\\composer\\ScriptHandler::developRLMumford"
+    },
+    "extra": {
+      "enable-patching": true,
+      "patches": {
+        "drupal/rules": {
+          "Configurable Component Variables": "https://www.drupal.org/files/issues/2916331-11.patch"
+        }
+      }
+    },
+    "require-dev": {
+    }
+}
