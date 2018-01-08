@@ -1,0 +1,5 @@
+administer tasks:
+  title: Administer tasks
+  restrict access: true
+view tasks:
+  title: View tasks
