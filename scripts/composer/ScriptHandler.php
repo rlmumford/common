@@ -22,12 +22,12 @@ class ScriptHandler {
     $rootDir = getcwd();
     $composer = $event->getComposer();
     $rootRequires = $composer->getPackage()->getRequires();
-    if (empty($rootRequires['counselkit/counselkit'])) {
+    if (empty($rootRequires['rlmumford/common'])) {
       $event->getIO()->write('Cannot find RLMumford Package.');
       return;
     }
     $package = $composer->getRepositoryManager()->getLocalRepository()
-      ->findPackage('counselkit/counselkit', $rootRequires['counselkit/counselkit']->getConstraint());
+      ->findPackage('rlmumford/common', $rootRequires['rlmumford/common']->getConstraint());
     $installationManager = $composer->getInstallationManager();
     $installPath = $installationManager->getInstallPath($package);
     $fullVersion = $package->getFullPrettyVersion(FALSE);
