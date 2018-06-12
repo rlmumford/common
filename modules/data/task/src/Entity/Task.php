@@ -52,7 +52,7 @@ use Drupal\task\TaskInterface;
  *     "canonical" = "/task/{task}",
  *     "edit-form" = "/task/{task}/edit",
  *     "add-form" = "/task/add"
- *   }
+  *   }
  * )
  */
 class Task extends ContentEntityBase implements TaskInterface {

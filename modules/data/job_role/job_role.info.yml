@@ -1,0 +1,7 @@
+name: Job Role
+type: module
+core: 8.x
+description: "Storage for Job Role"
+package: RLMumford
+dependencies:
+- range

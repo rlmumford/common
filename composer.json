@@ -12,7 +12,8 @@
         "drupal/rules": "^3.0@alpha",
         "cweagans/composer-patches": "^1.6",
         "webflo/drupal-finder": "^1.0.0",
-        "webmozart/path-util": "^2.3"
+        "webmozart/path-util": "^2.3",
+        "drupal/range": "1.x-dev"
     },
     "repositories": [
       {
