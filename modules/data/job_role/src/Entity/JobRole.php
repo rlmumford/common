@@ -9,9 +9,12 @@
 namespace Drupal\job_role\Entity;
 
 use Drupal\Core\Entity\ContentEntityBase;
+use Drupal\Core\Entity\EntityChangedTrait;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\user\UserInterface;
 
 /**
  * Job Role Entity.
@@ -29,6 +32,7 @@ use Drupal\Core\Field\FieldStorageDefinitionInterface;
  *     "list_builder" = "Drupal\job_role\JobRoleListBuilder",
  *     "storage" = "Drupal\job_role\JobRoleStorage",
  *     "access" = "Drupal\job_role\JobRoleAccessControlHandler",
+ *     "permission_provider" = "Drupal\job_role\JobRolePermissionProvider",
  *     "form" = {
  *       "default" = "Drupal\job_role\JobRoleForm"
  *     },
@@ -51,7 +55,68 @@ use Drupal\Core\Field\FieldStorageDefinitionInterface;
  *   }
  * )
  */
-class JobRole extends ContentEntityBase {
+class JobRole extends ContentEntityBase implements JobRoleInterface {
+
+  use EntityChangedTrait;
+  use StringTranslationTrait;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function isActive() {
+    return (bool) $this->get('status')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setActive($active) {
+    $this->set('status', (bool) $active);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getCreatedTime() {
+    return $this->get('created')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setCreatedTime($timestamp) {
+    $this->set('created', $timestamp);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getOwner() {
+    return $this->get('owner')->entity;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getOwnerId() {
+    return $this->get('owner')->target_id;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setOwner(UserInterface $owner) {
+    $this->owner->entity = $owner;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setOwnerId($uid) {
+    $this->owner->target_id = $uid;
+  }
 
   /**
    * {@inheritdoc}
