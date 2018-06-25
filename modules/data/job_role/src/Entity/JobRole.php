@@ -170,6 +170,24 @@ class JobRole extends ContentEntityBase implements JobRoleInterface {
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
 
+    $fields['files'] = BaseFieldDefinition::create('file')
+      ->setCardinality(2)
+      ->setLabel(t('Supporting Documents'))
+      ->setDescription(t('Supporting documentation associated with this role.'))
+      ->setRevisionable(TRUE)
+      ->setSetting('file_extensions', 'pdf txt doc docx')
+      ->setSetting('uri_scheme', 'public')
+      ->setSetting('description_field', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'file_generic',
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayOptions('view', [
+        'type' => 'file_default',
+        'label' => 'above',
+      ])
+      ->setDisplayConfigurable('view', TRUE);
+
     $fields['owner'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Owner'))
       ->setDescription(t('The user that owns this role.'))
@@ -177,17 +195,12 @@ class JobRole extends ContentEntityBase implements JobRoleInterface {
       ->setSetting('target_type', 'user')
       ->setSetting('handler', 'default');
 
-    $fields['status'] = BaseFieldDefinition::create('boolean')
-      ->setLabel(t('Active'))
-      ->setDescription(t('Whether the job_role is active.'))
-      ->setDefaultValue(TRUE)
-      ->setRevisionable(TRUE);
-
-    $fields['featured'] = BaseFieldDefinition::create('boolean')
-      ->setLabel(t('Featured'))
-      ->setDescription(t('Whether the job_role is featured.'))
-      ->setDefaultValue(FALSE)
-      ->setRevisionable(TRUE);
+    $fields['organisation'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('Organisation'))
+      ->setDescription(t('The user/contact that is the organisation/employer for this role.'))
+      ->setRevisionable(TRUE)
+      ->setSetting('target_type', 'user')
+      ->setSetting('handler', 'default');
 
     $fields['created'] = BaseFieldDefinition::create('created')
       ->setLabel(t('Created'))
@@ -199,106 +212,6 @@ class JobRole extends ContentEntityBase implements JobRoleInterface {
       ->setDescription(t('The time when the job_role was last edited.'))
       ->setRevisionable(TRUE);
 
-    $fields['expires'] = BaseFieldDefinition::create('datetime')
-      ->setLabel(t('Expires'))
-      ->setDescription(t('The time this job role expires.'))
-      ->setRevisionable(TRUE);
-
-    $fields['essential_req'] = BaseFieldDefinition::create('entity_reference_revisions')
-      ->setLabel(t('Essential Requirements'))
-      ->setDescription(t('Requirements that are essential for the role.'))
-      ->setSetting('target_type', 'paragraph')
-      ->setSetting('handler', 'default:paragraph')
-      ->setSetting('handler_settings', [
-        'negate' => 0,
-        'target_bundles' => [
-          'role_req_responsibility' => 'role_req_responsibility',
-          'role_req_education' => 'role_req_education',
-          'role_req_skill' => 'role_req_skill',
-        ],
-      ])
-      ->setRevisionable(TRUE)
-      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
-      ->setDisplayOptions('form', [
-        'type' => 'paragraphs',
-        'settings' => [
-          'title' => 'Essential Requirement',
-          'title_plural' => 'Essential Requirements',
-          'edit_mode' => 'open',
-          'add_mode' => 'dropdown',
-          'form_display_mode' => 'default',
-        ],
-      ])
-      ->setDisplayOptions('view', [
-        'type' => 'entity_reference_revisions_entity_view',
-        'settings' => [
-          'view_mode' => 'default',
-        ],
-      ]);
-
-    $fields['important_req'] = BaseFieldDefinition::create('entity_reference_revisions')
-      ->setLabel(t('Important Requirements'))
-      ->setDescription(t('Requirements that, although not essential, are important for the role.'))
-      ->setSetting('target_type', 'paragraph')
-      ->setSetting('handler', 'default:paragraph')
-      ->setSetting('handler_settings', [
-        'negate' => 0,
-        'target_bundles' => [
-          'role_req_responsibility' => 'role_req_responsibility',
-          'role_req_education' => 'role_req_education',
-          'role_req_skill' => 'role_req_skill',
-        ],
-      ])
-      ->setRevisionable(TRUE)
-      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
-      ->setDisplayOptions('form', [
-        'type' => 'paragraphs',
-        'settings' => [
-          'title' => 'Important Requirement',
-          'title_plural' => 'Important Requirements',
-          'edit_mode' => 'open',
-          'add_mode' => 'dropdown',
-          'form_display_mode' => 'default',
-        ],
-      ])
-      ->setDisplayOptions('view', [
-        'type' => 'entity_reference_revisions_entity_view',
-        'settings' => [
-          'view_mode' => 'default',
-        ],
-      ]);
-
-    $fields['bonus_req'] = BaseFieldDefinition::create('entity_reference_revisions')
-      ->setLabel(t('Bonus Requirements'))
-      ->setDescription(t('Requirements that, although not essential, would be helpful for the role.'))
-      ->setSetting('target_type', 'paragraph')
-      ->setSetting('handler', 'default:paragraph')
-      ->setSetting('handler_settings', [
-        'negate' => 0,
-        'target_bundles' => [
-          'role_req_responsibility' => 'role_req_responsibility',
-          'role_req_education' => 'role_req_education',
-          'role_req_skill' => 'role_req_skill',
-        ],
-      ])
-      ->setRevisionable(TRUE)
-      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
-      ->setDisplayOptions('form', [
-        'type' => 'paragraphs',
-        'settings' => [
-          'title' => 'Bonus Requirement',
-          'title_plural' => 'Bonus Requirements',
-          'edit_mode' => 'open',
-          'add_mode' => 'dropdown',
-          'form_display_mode' => 'default',
-        ],
-      ])
-      ->setDisplayOptions('view', [
-        'type' => 'entity_reference_revisions_entity_view',
-        'settings' => [
-          'view_mode' => 'default',
-        ],
-      ]);
 
     return $fields;
   }
