@@ -10,7 +10,7 @@
     ],
     "require": {
         "drupal/rules": "^3.0@alpha",
-        "cweagans/composer-patches": "^1.6",
+        "cweagans/composer-patches": "dev-dev-relative-patches",
         "webflo/drupal-finder": "^1.0.0",
         "webmozart/path-util": "^2.3",
         "drupal/range": "1.x-dev",
@@ -21,6 +21,10 @@
       {
         "type": "composer",
         "url": "https://packages.drupal.org/8"
+      },
+      {
+        "type": "vcs",
+        "url": "git@github.com:rlmumford/composer-patches.git"
       }
     ],
     "minimum-stability": "dev",
