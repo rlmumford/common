@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\sowlo_role;
+namespace Drupal\job_role;
 
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\entity\EntityPermissionProvider;

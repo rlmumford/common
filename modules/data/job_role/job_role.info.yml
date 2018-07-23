@@ -5,3 +5,5 @@ description: "Storage for Job Role"
 package: RLMumford
 dependencies:
 - range
+- file
+- text
