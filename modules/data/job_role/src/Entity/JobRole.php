@@ -44,14 +44,14 @@ use Drupal\user\UserInterface;
  *   base_table = "job_role",
  *   revision_table = "job_role_revision",
  *   data_table = "job_role_data",
+ *   field_ui_base_route = "entity.job_role.admin_form",
  *   revision_data_table = "job_role_revision_data",
- *   admin_permission = "administer job_roles",
+ *   admin_permission = "administer job roles",
  *   entity_keys = {
  *     "id" = "id",
  *     "revision" = "vid",
- *     "bundle" = "type",
  *     "uuid" = "uuid",
- *     "label" = "title"
+ *     "label" = "label"
  *   }
  * )
  */
@@ -211,7 +211,6 @@ class JobRole extends ContentEntityBase implements JobRoleInterface {
       ->setLabel(t('Changed'))
       ->setDescription(t('The time when the job_role was last edited.'))
       ->setRevisionable(TRUE);
-
 
     return $fields;
   }

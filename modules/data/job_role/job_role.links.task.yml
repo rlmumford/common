@@ -1,0 +1,4 @@
+job_role.settings_tab:
+  route_name: entity.job_role.admin_form
+  title: 'Settings'
+  base_route: entity.job_role.admin_form

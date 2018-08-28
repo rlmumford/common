@@ -1,0 +1,7 @@
+entity.job_role.admin_form:
+  path: '/admin/structure/jobs'
+  defaults:
+    _form: '\Drupal\job_role\Form\JobRoleSettingsForm'
+    _title: 'Job Roles'
+  requirements:
+    _permission: 'administer job roles'

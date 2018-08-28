@@ -1,0 +1,6 @@
+entity.job_role.admin_form:
+  title: 'Job Roles'
+  parent: system.admin_structure
+  description: 'Configure job roles.'
+  weight: -10
+  route_name: entity.job_role.admin_form
