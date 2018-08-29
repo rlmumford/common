@@ -1,0 +1,124 @@
+<?php
+
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\profile\Entity\ProfileInterface;
+use Drupal\profile\Entity\ProfileType;
+use Drupal\profile\Entity\ProfileTypeInterface;
+use Drupal\user\UserInterface;
+
+/**
+ * Implements hook_module_implements_alter().
+ */
+function profile_tools_module_implements_alter(&$implementations, $hook) {
+  $duplicated_hooks = [
+    'entity_base_field_info',
+    'profile_insert',
+    'profile_update',
+    'profile_delete',
+    'profile_type_insert',
+    'profile_type_delete',
+  ];
+
+  if (\Drupal::moduleHandler()->moduleExists('decoupled_auth') && in_array($hook, $duplicated_hooks)) {
+    unset($implementations['profile_tools']);
+  }
+}
+
+/**
+ * Implements hook_entity_base_field_info().
+ */
+function profile_tools_entity_base_field_info(EntityTypeInterface $entity_type) {
+  $module_handler = \Drupal::moduleHandler();
+
+  // If the profile module exists, add the profile fields to the user.
+  if ($entity_type->id() == 'user' && $module_handler->moduleExists('profile')) {
+    $fields = [];
+
+    /** @var \Drupal\profile\Entity\ProfileType[] $types */
+    $types = ProfileType::loadMultiple();
+    foreach ($types as $profile_type) {
+      $name = 'profile_' . $profile_type->id();
+      $fields[$name] = BaseFieldDefinition::create('entity_reference')
+        ->setLabel($profile_type->label())
+        ->setReadOnly(TRUE)
+        ->setSetting('target_type', 'profile')
+        ->setSetting('handler_settings', ['target_bundles' => [$profile_type->id()]])
+        ->setDisplayConfigurable('view', TRUE)
+        ->setDisplayOptions('view', [
+          'type' => 'entity_reference_entity_view',
+          'weight' => 10,
+        ])
+        ->setCardinality(BaseFieldDefinition::CARDINALITY_UNLIMITED);
+    }
+
+    return $fields;
+  }
+
+  return [];
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_insert() for profile.
+ */
+function profile_tools_profile_insert(ProfileInterface $entity) {
+  profile_tools_update_profile_fields($entity->getOwner(), [$entity->bundle()]);
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_update() for profile.
+ */
+function profile_tools_profile_update(ProfileInterface $entity) {
+  profile_tools_update_profile_fields($entity->getOwner(), [$entity->bundle()]);
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_delete() for profile.
+ */
+function profile_tools_profile_delete(ProfileInterface $entity) {
+  // As we may be deleting in response to a deleted user, check the owner exists
+  // before attempting to update the profile fields.
+  $owner = $entity->getOwner();
+  if ($owner) {
+    profile_tools_update_profile_fields($owner, [$entity->bundle()]);
+  }
+}
+
+/**
+ * Update the user profile fields.
+ */
+function profile_tools_update_profile_fields(UserInterface $owner, array $bundles = []) {
+  /** @var \Drupal\profile\ProfileStorageInterface $profile_storage */
+  $profile_storage = \Drupal::entityTypeManager()->getStorage('profile');
+  foreach ($bundles as $type) {
+    $owner->{'profile_' . $type} = $profile_storage->loadMultipleByUser($owner, $type, TRUE);
+  }
+  $owner->save();
+
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_insert() for profile_type.
+ */
+function profile_tools_profile_type_insert(ProfileTypeInterface $entity) {
+  // Create our new field.
+  $field_manager = Drupal::service('entity_field.manager');
+  $field_manager->clearCachedFieldDefinitions();
+  $definitions = $field_manager->getFieldStorageDefinitions('user');
+  Drupal::service('field_storage_definition.listener')->onFieldStorageDefinitionCreate($definitions['profile_' . $entity->id()]);
+  // @todo Remove this once profile issue is cleared [#2875157].
+  Drupal::service('entity_type.manager')->clearCachedDefinitions();
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_delete() for profile_type.
+ */
+function profile_tools_profile_type_delete(ProfileTypeInterface $entity) {
+  // Remove our field.
+  $definitions = Drupal::service('entity.last_installed_schema.repository')->getLastInstalledFieldStorageDefinitions('user');
+  $name = 'profile_' . $entity->id();
+  if (isset($definitions[$name])) {
+    Drupal::service('field_storage_definition.listener')->onFieldStorageDefinitionDelete($definitions[$name]);
+  }
+}
+

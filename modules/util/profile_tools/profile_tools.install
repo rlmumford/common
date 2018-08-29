@@ -1,0 +1,46 @@
+<?php
+
+/**
+ * Implements hook_install().
+ */
+function profile_tools_install() {
+  if (\Drupal::moduleHandler()->moduleExists('decoupled_auth')) {
+    return;
+  }
+
+  $field_manager = Drupal::service('entity_field.manager');
+  $field_manager->clearCachedFieldDefinitions();
+  $definitions = $field_manager->getFieldStorageDefinitions('user');
+  $field_storage_listener = Drupal::service('field_storage_definition.listener');
+
+  /** @var \Drupal\profile\Entity\ProfileType[] $types */
+  $types = ProfileType::loadMultiple();
+  foreach ($types as $profile_type) {
+    $name = 'profile_' . $profile_type->id();
+    if (isset($definitions[$name])) {
+      $field_storage_listener->onFieldStorageDefinitionCreate($definitions[$name]);
+    }
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function profile_tools_uninstall() {
+  if (\Drupal::moduleHandler()->moduleExists('decoupled_auth')) {
+    return;
+  }
+
+  $definitions = Drupal::service('entity.last_installed_schema.repository')->getLastInstalledFieldStorageDefinitions('user');
+  $field_storage_listener = Drupal::service('field_storage_definition.listener');
+
+  /** @var \Drupal\profile\Entity\ProfileType[] $types */
+  $types = ProfileType::loadMultiple();
+  foreach ($types as $profile_type) {
+    $name = 'profile_' . $profile_type->id();
+    if (isset($definitions[$name])) {
+      $field_storage_listener->onFieldStorageDefinitionDelete($definitions[$name]);
+    }
+  }
+}
+

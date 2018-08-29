@@ -1,0 +1,6 @@
+type: module
+core: 8.x
+name: Profile Tools
+description: Improvements to the profile system for easier querying with flexiform.
+dependencies:
+  - profile
