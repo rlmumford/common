@@ -1,0 +1,5 @@
+type: module
+name: Service
+description: 'Service Entity data storage.'
+package: RLMumford
+core: 8.x

@@ -7,7 +7,9 @@ use Drupal\Core\Entity\EntityChangedTrait;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
-use Drupal\Core\Field\FieldStorageDefinitionInterface
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
+use Drupal\datetime\Plugin\Field\FieldType\DateTimeItem;
+use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
 use Drupal\task\TaskInterface;
 
 /**
@@ -58,27 +60,27 @@ use Drupal\task\TaskInterface;
 class Task extends ContentEntityBase implements TaskInterface {
 
   /**
-   * Get the Status Options for Tasks.
+   * {@inheritdoc}
    */
   public static function statusOptionsList() {
     return [
-      'pending' => t('Pending'),
-      'active' => t('Active'),
-      'waiting' => t('Waiting (Blocked)'),
-      'resolved' => t('Resolved'),
-      'closed' => t('Closed'),
+      static::STATUS_PENDING => t('Pending'),
+      static::STATUS_ACTIVE => t('Active'),
+      static::STATUS_WAITING => t('Waiting (Blocked)'),
+      static::STATUS_RESOLVED => t('Resolved'),
+      static::STATUS_CLOSED => t('Closed'),
     ];
   }
 
   /**
-   * Get the resolution options for Tasks.
+   * {@inheritdoc}
    */
   public static function resolutionOptionsList() {
     return [
-      'complete' => 'Complete',
-      'incomplete' => 'Incomplete',
-      'invalid' => 'Invalid',
-      'duplicate' => 'Duplicate',
+      static::RESOLUTION_COMPLETE => t('Complete'),
+      static::RESOLUTION_INCOMPLETE => t('Incomplete'),
+      static::RESOLUTION_INVALID => t('Invalid'),
+      static::RESOLUTION_DUPLICATE => t('Duplicate'),
     ];
   }
 
@@ -136,18 +138,22 @@ class Task extends ContentEntityBase implements TaskInterface {
       ->setLabel(t('Updated'));
     $fields['start'] = BaseFieldDefinition::create('datetime')
       ->setLabel(t('Start Date'))
+      ->setSetting('datetime_type', DateTimeItem::DATETIME_TYPE_DATETIME)
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
     $fields['due'] = BaseFieldDefinition::create('datetime')
       ->setLabel(t('Due Date'))
+      ->setSetting('datetime_type', DateTimeItem::DATETIME_TYPE_DATETIME)
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
     $fields['deadline'] = BaseFieldDefinition::create('datetime')
       ->setLabel(t('External Deadline'))
+      ->setSetting('datetime_type', DateTimeItem::DATETIME_TYPE_DATETIME)
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
     $fields['resolved'] = BaseFieldDefinition::create('datetime')
       ->setLabel(t('Date Resolved'))
+      ->setSetting('datetime_type', DateTimeItem::DATETIME_TYPE_DATETIME)
       ->setDisplayConfigurable('view', TRUE);
 
     // Important Users.
@@ -212,7 +218,7 @@ class Task extends ContentEntityBase implements TaskInterface {
     $this->updater->target_id = $current_user->id();
 
     // Set the start date to now if its not already set.
-    $now = gmdate(DATETIME_DATE_STORAGE_FORMAT);
+    $now = gmdate(DateTimeItemInterface::DATE_STORAGE_FORMAT);
     if (!$this->start->value) {
       $this->start->value = $now;
     }

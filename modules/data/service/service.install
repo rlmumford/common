@@ -1,0 +1,31 @@
+<?php
+
+use Drupal\Core\Field\BaseFieldDefinition;
+
+/**
+ * Implements hook_install().
+ */
+function service_install() {
+  if (\Drupal::moduleHandler()->moduleExists('task')) {
+    $service_field = BaseFieldDefinition::create('service_reference')
+      ->setLabel(t('Service'))
+      ->setRevisionable(TRUE)
+      ->setSetting('target_type', 'service')
+      ->setDisplayOptions('view', [
+        'label' => 'inline',
+        'type' => 'entity_reference_label',
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'entity_reference_autocomplete',
+      ])
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('form', TRUE);
+
+    \Drupal::entityDefinitionUpdateManager()->installFieldStorageDefinition(
+      'service',
+      'task',
+      'service',
+      $service_field
+    );
+  }
+}
