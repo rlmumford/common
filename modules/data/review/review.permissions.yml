@@ -1,0 +1,6 @@
+administer service types:
+  title: 'Administer service types'
+  restrict access: true
+administer services:
+  title: 'Administer services'
+  restrict access: true

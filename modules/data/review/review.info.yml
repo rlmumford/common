@@ -1,0 +1,5 @@
+type: module
+name: Review
+description: 'Review Entity data storage.'
+package: RLMumford
+core: 8.x

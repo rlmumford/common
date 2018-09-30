@@ -1,0 +1,75 @@
+<?php
+
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\BaseFieldDefinition;
+
+/**
+ * Implements hook_entity_base_field_info().
+ */
+function service_entity_base_field_info(EntityTypeInterface $entity_type) {
+  if (!in_array($entity_type->id(), ['task'])) {
+    return [];
+  }
+
+  $fields = [];
+  $fields['service'] = BaseFieldDefinition::create('service_reference')
+    ->setLabel(t('Review'))
+    ->setRevisionable(TRUE)
+    ->setSetting('target_type', 'service')
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'entity_reference_label',
+    ])
+    ->setDisplayOptions('form', [
+      'type' => 'entity_reference_autocomplete',
+    ])
+    ->setDisplayConfigurable('view', TRUE)
+    ->setDisplayConfigurable('form', TRUE);
+
+  return $fields;
+}
+
+/**
+ * Implements hook_field_formatter_info_alter().
+ */
+function service_field_formatter_info_alter(array &$info) {
+  $info['entity_reference_label']['field_types'][] = 'service_reference';
+  $info['entity_reference_entity_id']['field_types'][] = 'service_reference';
+}
+
+/**
+ * Implements hook_field_widget_info_alter().
+ */
+function service_field_widget_info_alter(array &$info) {
+  $info['entity_reference_autocomplete']['field_types'][] = 'service_reference';
+}
+
+/**
+ * Implements hook_modules_installed().
+ */
+function service_modules_installed($modules) {
+  if (!in_array('task', $modules)) {
+    return;
+  }
+
+  $service_field = BaseFieldDefinition::create('service_reference')
+    ->setLabel(t('Review'))
+    ->setRevisionable(TRUE)
+    ->setSetting('target_type', 'service')
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'entity_reference_label',
+    ])
+    ->setDisplayOptions('form', [
+      'type' => 'entity_reference_autocomplete',
+    ])
+    ->setDisplayConfigurable('view', TRUE)
+    ->setDisplayConfigurable('form', TRUE);
+
+  \Drupal::entityDefinitionUpdateManager()->installFieldStorageDefinition(
+    'service',
+    'task',
+    'service',
+    $service_field
+  );
+}
