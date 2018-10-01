@@ -1,5 +1,7 @@
 <?php
 
+use \Drupal\profile\Entity\ProfileType;
+
 /**
  * Implements hook_install().
  */
@@ -8,10 +10,10 @@ function profile_tools_install() {
     return;
   }
 
-  $field_manager = Drupal::service('entity_field.manager');
+  $field_manager = \Drupal::service('entity_field.manager');
   $field_manager->clearCachedFieldDefinitions();
   $definitions = $field_manager->getFieldStorageDefinitions('user');
-  $field_storage_listener = Drupal::service('field_storage_definition.listener');
+  $field_storage_listener = \Drupal::service('field_storage_definition.listener');
 
   /** @var \Drupal\profile\Entity\ProfileType[] $types */
   $types = ProfileType::loadMultiple();
@@ -31,8 +33,8 @@ function profile_tools_uninstall() {
     return;
   }
 
-  $definitions = Drupal::service('entity.last_installed_schema.repository')->getLastInstalledFieldStorageDefinitions('user');
-  $field_storage_listener = Drupal::service('field_storage_definition.listener');
+  $definitions = \Drupal::service('entity.last_installed_schema.repository')->getLastInstalledFieldStorageDefinitions('user');
+  $field_storage_listener = \Drupal::service('field_storage_definition.listener');
 
   /** @var \Drupal\profile\Entity\ProfileType[] $types */
   $types = ProfileType::loadMultiple();
