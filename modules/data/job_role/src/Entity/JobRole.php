@@ -130,7 +130,7 @@ class JobRole extends ContentEntityBase implements JobRoleInterface {
       ->setSetting('max_length', 255)
       ->setDisplayOptions('view', [
         'label' => 'hidden',
-        'type' => 'stirng',
+        'type' => 'string',
         'weight' => -5,
       ])
       ->setDisplayOptions('form', [
