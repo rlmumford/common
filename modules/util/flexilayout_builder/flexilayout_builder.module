@@ -1,0 +1,21 @@
+<?php
+
+use Drupal\flexilayout_builder\Entity\FlexibleLayoutBuilderEntityViewDisplay;
+use Drupal\flexilayout_builder\Plugin\SectionStorage\DefaultsSectionStorage;
+use Drupal\flexilayout_builder\Plugin\SectionStorage\OverridesSectionStorage;
+
+/**
+ * Implements hook_entity_type_alter().
+ */
+function flexilayout_builder_entity_type_alter(array &$entity_types) {
+  $entity_types['entity_view_display']
+    ->setClass(FlexibleLayoutBuilderEntityViewDisplay::class);
+}
+
+/**
+ * Implemens hook_layout_builder_section_storage().
+ */
+function flexilayout_builder_layout_builder_section_storage_alter(&$definitions) {
+  $definitions['defaults']->setClass(DefaultsSectionStorage::class);
+  $definitions['overrides']->setClass(OverridesSectionStorage::class);
+}

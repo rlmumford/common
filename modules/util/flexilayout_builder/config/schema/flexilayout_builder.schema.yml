@@ -1,0 +1,15 @@
+core.entity_view_display.*.*.*.third_party.flexilayout_builder:
+  type: mapping
+  label: 'Per-view-mode Flexible Layout Builder settings'
+  mapping:
+    static_context:
+      type: sequence
+      label: Static context list
+      sequence:
+        - type: ctools.context
+          label: 'Static Context'
+    relationships:
+      type: sequence
+      sequence:
+        - type: ctools.relationship
+          label: 'Relationship'
