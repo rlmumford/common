@@ -19,3 +19,16 @@ function flexilayout_builder_layout_builder_section_storage_alter(&$definitions)
   $definitions['defaults']->setClass(DefaultsSectionStorage::class);
   $definitions['overrides']->setClass(OverridesSectionStorage::class);
 }
+
+/**
+ * Implements hook_builder_module_implements_alter().
+ */
+function flexilayout_builder_module_implements_alter(&$implementations, $hook) {
+  if ($hook === 'entity_type_alter') {
+    // Ensure that this module's implementation of hook_entity_type_alter() runs
+    // last so that our entity class is used for entity_view_Display entities.
+    $group = $implementations['flexilayout_builder'];
+    unset($implementations['flexilayout_builder']);
+    $implementations['flexilayout_builder'] = $group;
+  }
+}

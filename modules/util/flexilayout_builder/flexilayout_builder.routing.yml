@@ -46,3 +46,40 @@ flexilayout_builder.edit_static_context:
     parameters:
       section_storage:
         layout_builder_tempstore: TRUE
+
+flexilayout_builder.add_relationship:
+  path: '/layout_builder/add/relationship/{section_storage_type}/{section_storage}/{plugin}'
+  defaults:
+    _form: '\Drupal\flexilayout_builder\Form\AddRelationship'
+  requirements:
+    _permission: 'configure any layout'
+    _layout_builder_access: 'view'
+  options:
+    _admin_route: TRUE
+    parameters:
+      section_storage:
+        layout_builder_tempstore: TRUE
+flexilayout_builder.choose_relationship:
+  path: '/layout_builder/choose/relationship/{section_storage_type}/{section_storage}'
+  defaults:
+    _controller: '\Drupal\flexilayout_builder\Controller\ChooseRelationshipController::build'
+  requirements:
+    _permission: 'configure any layout'
+    _layout_builder_access: 'view'
+  options:
+    _admin_route: TRUE
+    parameters:
+      section_storage:
+        layout_builder_tempstore: TRUE
+flexilayout_builder.edit_relationship:
+  path: '/layout_builder/edit/relationship/{section_storage_type}/{section_storage}/{machine_name}'
+  defaults:
+    _form: '\Drupal\flexilayout_builder\Form\EditRelationship'
+  requirements:
+    _permission: 'configure any layout'
+    _layout_builder_access: 'view'
+  options:
+    _admin_route: TRUE
+    parameters:
+      section_storage:
+        layout_builder_tempstore: TRUE

@@ -50,8 +50,8 @@ class ViewContextController implements ContainerInjectionInterface {
     ];
 
     $provided_contexts = $this->getAvailableContexts($section_storage);
-    $static_contexts = $section_storage->getConfig('static_context');
-    $relationships = $section_storage->getConfig('relationships');
+    $static_contexts = $section_storage->getConfig('static_context') ?: [];
+    $relationships = $section_storage->getConfig('relationships') ?: [];
     $provided_contexts = array_diff_key($provided_contexts, $static_contexts, $relationships);
     foreach ($provided_contexts as $machine_name => $context) {
       /** @var \Drupal\Core\Plugin\Context\ContextInterface $context */

@@ -59,7 +59,17 @@ trait DisplayWideConfigSectionStorageTrait {
     $static_contexts = $this->getConfig('static_context');
     $contexts += \Drupal::service('ctools.context_mapper')->getContextValues($static_contexts ?: []);
 
-    // @todo: Relationships.
+    $relationship_manager = \Drupal::service('plugin.manager.ctools.relationship');
+    $context_handler = \Drupal::service('context.handler');
+    if ($relationships = $this->getConfig('relationships')) {
+      foreach ($relationships as $machine_name => $relationship) {
+        /** @var \Drupal\ctools\Plugin\RelationshipInterface $plugin */
+        $plugin = $relationship_manager->createInstance($relationship['plugin'], $relationship['settings'] ?: []);
+        $context_handler->applyContextMapping($plugin, $contexts);
+
+        $contexts[$machine_name] = $plugin->getRelationship();
+      }
+    }
 
     return $contexts;
   }

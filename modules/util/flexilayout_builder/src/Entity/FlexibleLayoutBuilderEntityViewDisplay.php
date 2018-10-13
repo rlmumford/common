@@ -2,7 +2,9 @@
 
 namespace Drupal\flexilayout_builder\Entity;
 
+use Drupal\Core\Entity\Entity\EntityViewDisplay;
 use Drupal\Core\Entity\FieldableEntityInterface;
+use Drupal\Core\Plugin\Context\EntityContext;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\layout_builder\Entity\LayoutBuilderEntityViewDisplay;
 
@@ -12,7 +14,7 @@ class FlexibleLayoutBuilderEntityViewDisplay extends LayoutBuilderEntityViewDisp
    * {@inheritdoc}
    */
   public function buildMultiple(array $entities) {
-    $build_list = parent::buildMultiple($entities);
+    $build_list = EntityViewDisplay::buildMultiple($entities);
     if (!$this->isLayoutBuilderEnabled()) {
       return $build_list;
     }
@@ -28,6 +30,7 @@ class FlexibleLayoutBuilderEntityViewDisplay extends LayoutBuilderEntityViewDisp
           }
         }
 
+        $contexts = $this->prepareContexts($entity);
         foreach ($sections as $delta => $section) {
           $build_list[$id]['_layout_builder'][$delta] = $section->toRenderArray(
             $this->prepareContexts($entity)
@@ -54,19 +57,19 @@ class FlexibleLayoutBuilderEntityViewDisplay extends LayoutBuilderEntityViewDisp
     ]);
     $contexts['layout_builder.entity'] = EntityContext::fromEntity($entity, $label);
 
-    $contexts += \Drupal::service('ctools.context_mapper')->getContextValues($this->getThirdPartySetting('flexilayout_builder', 'static_context'));
+    $contexts += \Drupal::service('ctools.context_mapper')->getContextValues($this->getThirdPartySetting('flexilayout_builder', 'static_context', []));
 
     /** @var \Drupal\ctools\Plugin\RelationshipManager $relationship_manager */
     $relationship_manager = \Drupal::service('plugin.manager.ctools.relationship');
     /** @var \Drupal\Core\Plugin\Context\ContextHandler $context_handler */
     $context_handler = \Drupal::service('context.handler');
 
-    foreach ($this->getThirdPartySetting('flexilayout_builder', 'relationships', []) as $relationship) {
+    foreach ($this->getThirdPartySetting('flexilayout_builder', 'relationships', []) as $machine_name => $relationship) {
       /** @var \Drupal\ctools\Plugin\RelationshipInterface $plugin */
-      $plugin = $relationship_manager->createInstance($relationship['plugin']);
+      $plugin = $relationship_manager->createInstance($relationship['plugin'], $relationship['settings'] ?: []);
       $context_handler->applyContextMapping($plugin, $contexts);
 
-      $contexts[$relationship['id']] = $plugin->getRelationship();
+      $contexts[$machine_name] = $plugin->getRelationship();
     }
 
     return $contexts;
