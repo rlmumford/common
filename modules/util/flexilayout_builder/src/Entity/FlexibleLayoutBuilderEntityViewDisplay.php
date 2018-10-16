@@ -32,9 +32,7 @@ class FlexibleLayoutBuilderEntityViewDisplay extends LayoutBuilderEntityViewDisp
 
         $contexts = $this->prepareContexts($entity);
         foreach ($sections as $delta => $section) {
-          $build_list[$id]['_layout_builder'][$delta] = $section->toRenderArray(
-            $this->prepareContexts($entity)
-          );
+          $build_list[$id]['_layout_builder'][$delta] = $section->toRenderArray($contexts);
         }
       }
     }

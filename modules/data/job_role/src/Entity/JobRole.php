@@ -158,6 +158,12 @@ class JobRole extends ContentEntityBase implements JobRoleInterface {
         'label' => 'inline',
         'type' => 'range_decimal',
       ])
+      ->setSetting('from', [
+        'prefix' => '£',
+      ])
+      ->setSetting('to', [
+        'prefix' => '£',
+      ])
       ->setDisplayOptions('form', [
         'type' => 'range',
         'settings' => [
