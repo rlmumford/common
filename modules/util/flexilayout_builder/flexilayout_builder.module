@@ -1,9 +1,11 @@
 <?php
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\ctools_block\Plugin\Block\EntityField;
 use Drupal\flexilayout_builder\Entity\FlexibleLayoutBuilderEntityViewDisplay;
 use Drupal\flexilayout_builder\Plugin\SectionStorage\DefaultsSectionStorage;
 use Drupal\flexilayout_builder\Plugin\SectionStorage\OverridesSectionStorage;
+use Drupal\layout_builder\Plugin\Block\FieldBlock;
 
 /**
  * Implements hook_entity_type_alter().
@@ -41,6 +43,9 @@ function flexilayout_builder_form_layout_builder_add_block_alter(array &$form, F
   /** @var \Drupal\layout_builder\SectionStorageInterface $section_storage */
   list($section_storage, $delta, $region, $plugin_id) = $form_state->getBuildInfo()['args'];
   $form_state->set('section_storage', $section_storage);
+  $form_state->set('flb__component', $form_state->get('layout_builder__component'));
+  $form_state->set('flb__uuid', $form_state->get('layout_builder__component')->getUuid());
+  $form_state->set('flb__delta', $delta);
 
   _flexilayout_builder_layout_builder_block_form_alter($form, $form_state);
 }
@@ -52,7 +57,9 @@ function flexilayout_builder_form_layout_builder_update_block_alter(array &$form
   /** @var \Drupal\layout_builder\SectionStorageInterface $section_storage */
   list($section_storage, $delta, $region, $uuid) = $form_state->getBuildInfo()['args'];
   $form_state->set('section_storage', $section_storage);
-  $form_state->set('component', $section_storage->getSection($delta)->getComponent($uuid));
+  $form_state->set('flb__component', $section_storage->getSection($delta)->getComponent($uuid));
+  $form_state->set('flb__uuid', $uuid);
+  $form_state->set('flb__delta', $delta);
 
   _flexilayout_builder_layout_builder_block_form_alter($form, $form_state);
 }
@@ -61,23 +68,39 @@ function flexilayout_builder_form_layout_builder_update_block_alter(array &$form
  * Add magical extra things to the block form.
  */
 function _flexilayout_builder_layout_builder_block_form_alter(array &$form, FormStateInterface $form_state) {
+  $form['actions']['#weight'] = 1000;
   $form['flexilayout_builder'] = [
     '#type' => 'container',
   ];
 
-  $class = $form_state->get('component') ? $form_state->get('component')->get('class') : '';
+  $class = $form_state->get('flb__component') ? $form_state->get('flb__component')->get('class') : '';
   $form['flexilayout_builder']['class'] = [
     '#type' => 'textfield',
     '#title' => t('Block Classes'),
     '#default_value' => $class,
   ];
 
-  $form['#submit'][] = '_flexilayout_builder_layout_builder_block_form_submit';
+  /** @var \Drupal\layout_builder\SectionComponent $component */
+  if (($component = $form_state->get('flb__component')) && ($component->getPlugin() instanceof EntityField || $component->getPlugin() instanceof FieldBlock)) {
+    $form['flexilayout_builder']['field_label_override'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Use Block Title as Field Label'),
+      '#default_value' => $component->get('field_label_override'),
+    ];
+  }
+
+  array_unshift($form['#submit'], '_flexilayout_builder_layout_builder_block_form_submit');
 }
 
 /**
  * Submit.
  */
-function _flexilayout_builder_layout_builder_block_form_submit() {
+function _flexilayout_builder_layout_builder_block_form_submit(array $form, FormStateInterface $form_state) {
+  $values = $form_state->getValue('flexilayout_builder');
+  $component = $form_state->get('section_storage')
+    ->getSection($form_state->get('flb__delta'))
+    ->getComponent($form_state->get('flb__uuid'));
 
+  $component->set('class', $values['class']);
+  $component->set('field_label_override', $values['field_label_override']);
 }

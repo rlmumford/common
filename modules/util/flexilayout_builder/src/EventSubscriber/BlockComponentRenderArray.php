@@ -8,9 +8,11 @@ use Drupal\Core\Block\BlockPluginInterface;
 use Drupal\Core\Render\Element;
 use Drupal\Core\Render\PlaceholderInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\ctools_block\Plugin\Block\EntityField;
 use Drupal\layout_builder\Access\LayoutPreviewAccessAllowed;
 use Drupal\layout_builder\Event\SectionComponentBuildRenderArrayEvent;
 use Drupal\layout_builder\LayoutBuilderEvents;
+use Drupal\layout_builder\Plugin\Block\FieldBlock;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -60,6 +62,12 @@ class BlockComponentRenderArray implements EventSubscriberInterface {
     if ($component->get('class')) {
       foreach (explode(' ', $component->get('class')) as $class) {
         $build['#attributes']['class'][] = $class;
+      }
+    }
+
+    if ($block instanceof EntityField || $block instanceof FieldBlock) {
+      if ($component->get('field_label_override')) {
+        $build['content']['field']['#title'] = $component->get('configuration')['label'];
       }
     }
     $event->setBuild($build);
