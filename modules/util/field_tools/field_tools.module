@@ -1,0 +1,10 @@
+<?php
+
+use Drupal\field_tools\Plugin\Field\FieldWidget\AddressDefaultWidget;
+
+/**
+ * Implements hook_field_widget_info_alter().
+ */
+function field_tools_field_widget_info_alter(array &$info) {
+  $info['address_default']['class'] = AddressDefaultWidget::class;
+}
