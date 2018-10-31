@@ -4,6 +4,8 @@ namespace Drupal\service\Entity;
 
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Entity\FieldableEntityInterface;
+use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\service\ServiceInterface;
 use Drupal\service\Entity\ServiceType;
@@ -61,6 +63,12 @@ class Service extends ContentEntityBase implements ServiceInterface {
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
+
+    $fields['label'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Title'))
+      ->setRevisionable(TRUE)
+      ->setDefaultValueCallback('\Drupal\service\Entity\Service::createLabel')
+      ->setDisplayConfigurable('view', TRUE);
 
     $fields['state'] = BaseFieldDefinition::create('boolean')
       ->setLabel(t('Active?'))
@@ -162,8 +170,22 @@ class Service extends ContentEntityBase implements ServiceInterface {
   public function preSave(EntityStorageInterface $storage) {
     $type = $this->getType();
     if ($type->get('default_label')) {
-      $this->label->value = $this->applyTokens($type->get('default_label'));
+      $this->label = $this->applyTokens($type->get('default_label'));
     }
+  }
+
+  /**
+   * Create the label.
+   */
+  public static function createLabel(ServiceInterface $service, FieldDefinitionInterface $fieldDefinition) {
+    $token_service = \Drupal::token();
+
+    $type = $service->getType();
+    if ($type->get('default_label')) {
+      return $token_service->replace($type->get('default_label'), ['service' => $service]);
+    }
+
+    return '';
   }
 
   /**
@@ -171,8 +193,8 @@ class Service extends ContentEntityBase implements ServiceInterface {
    */
   protected function applyTokens($string, BubbleableMetadata $bubbleable_metadata = NULL) {
     $token_service = \Drupal::token();
-
-    return $token_service->replace($string, ['service' => $this], [], $bubbleable_metadata);
+    $return  = $token_service->replace($string, ['service' => $this], [], $bubbleable_metadata);
+    return $return;
   }
 }
 

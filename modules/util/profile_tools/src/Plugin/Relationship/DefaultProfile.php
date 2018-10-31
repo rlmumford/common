@@ -31,7 +31,7 @@ class DefaultProfile extends RelationshipBase {
     $context_definition = new EntityContextDefinition('profile', $this->getPluginDefinition()['label']);
     $context_definition->addConstraint('Bundle', [$type]);
 
-    if ($user) {
+    if ($user->id() || $user->id() === 0) {
       /** @var \Drupal\profile\ProfileStorageInterface $storage */
       $storage = \Drupal::entityTypeManager()->getStorage('profile');
       if ($profile = $storage->loadDefaultByUser($user, $type)) {
