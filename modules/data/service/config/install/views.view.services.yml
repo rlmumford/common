@@ -3,6 +3,7 @@ status: true
 dependencies:
   module:
     - service
+    - user
 id: services
 label: Services
 module: views
@@ -19,8 +20,9 @@ display:
     position: 0
     display_options:
       access:
-        type: none
-        options: {  }
+        type: perm
+        options:
+          perm: 'manage services'
       cache:
         type: tag
         options: {  }
@@ -344,6 +346,7 @@ display:
         - 'languages:language_content'
         - 'languages:language_interface'
         - url.query_args
+        - user.permissions
       tags: {  }
   block_1:
     display_plugin: block
@@ -361,6 +364,7 @@ display:
         - 'languages:language_content'
         - 'languages:language_interface'
         - url.query_args
+        - user.permissions
       tags: {  }
   block_2:
     display_plugin: block
@@ -424,4 +428,5 @@ display:
         - 'languages:language_interface'
         - url
         - url.query_args
+        - user.permissions
       tags: {  }

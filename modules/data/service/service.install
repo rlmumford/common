@@ -59,3 +59,20 @@ function service_update_8001() {
     $config_storage->write($name, $source->read($name));
   }
 }
+
+/**
+ * Update services view for permissions.
+ */
+function service_update_8002() {
+  // Install configuration.
+  $source = new FileStorage(drupal_get_path('module', 'service').'/config/install');
+  /** @var \Drupal\Core\Config\StorageInterface $config_storage */
+  $config_storage = \Drupal::service('config.storage');
+
+  $configs_to_install = [
+    'views.view.services',
+  ];
+  foreach ($configs_to_install as $name) {
+    $config_storage->write($name, $source->read($name));
+  }
+}

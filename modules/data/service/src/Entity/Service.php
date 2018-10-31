@@ -196,5 +196,52 @@ class Service extends ContentEntityBase implements ServiceInterface {
     $return  = $token_service->replace($string, ['service' => $this], [], $bubbleable_metadata);
     return $return;
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getManager() {
+    return $this->manager->entity;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getManagerId() {
+    return $this->manager->target_id;
+  }
+
+  /**
+   * Get the recipients.
+   *
+   * @return \Drupal\user\UserInterface[]
+   *   A list of user entities of the recipients.
+   */
+  public function getRecipients() {
+    return $this->recipients->getReferencedEntities();
+  }
+
+  /**
+   * Get the main recipient.
+   *
+   * @return \Drupal\user\UserInterface
+   *   The main recipient
+   */
+  public function getMainRecipient() {
+    return $this->recipients[0]->entity;
+  }
+
+  /**
+   * Get the recipient ids.
+   *
+   * @return string[]|int[]
+   */
+  public function getRecipientIds() {
+    $ids = [];
+    foreach ($this->recipients as $item) {
+      $ids[] = $item->target_id;
+    }
+    return $ids;
+  }
 }
 
