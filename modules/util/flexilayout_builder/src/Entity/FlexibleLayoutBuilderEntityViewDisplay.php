@@ -2,11 +2,13 @@
 
 namespace Drupal\flexilayout_builder\Entity;
 
+use Drupal\Component\Plugin\Exception\MissingValueContextException;
 use Drupal\Core\Entity\Entity\EntityViewDisplay;
 use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Plugin\Context\EntityContext;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\layout_builder\Entity\LayoutBuilderEntityViewDisplay;
+use Drupal\layout_builder\Section;
 
 class FlexibleLayoutBuilderEntityViewDisplay extends LayoutBuilderEntityViewDisplay {
 
@@ -32,12 +34,38 @@ class FlexibleLayoutBuilderEntityViewDisplay extends LayoutBuilderEntityViewDisp
 
         $contexts = $this->prepareContexts($entity);
         foreach ($sections as $delta => $section) {
-          $build_list[$id]['_layout_builder'][$delta] = $section->toRenderArray($contexts);
+          $build_list[$id]['_layout_builder'][$delta] = $this->sectionToRenderArray($section, $contexts);
         }
       }
     }
 
     return $build_list;
+  }
+
+  /**
+   * Render a section. This is effectively an override of Section::toRenderArray()
+   * that doesn't attempt to render a block if there are missing contexts.
+   *
+   * @param \Drupal\layout_builder\Section $section
+   * @param \Drupal\Core\Plugin\Context\ContextInterface[] $contexts
+   * @param bool $in_preview
+   *
+   * @return array
+   *
+   * @see Section::toRenderArray()
+   */
+  protected function sectionToRenderArray(Section $section, array $contexts = [], $in_preview = FALSE) {
+    $regions = [];
+    foreach ($section->getComponents() as $component) {
+      try {
+        if ($output = $component->toRenderArray($contexts, $in_preview)) {
+          $regions[$component->getRegion()][$component->getUuid()] = $output;
+        }
+      }
+      catch (MissingValueContextException $missingValueContextException) {}
+    }
+
+    return $section->getLayout()->build($regions);
   }
 
   /**
