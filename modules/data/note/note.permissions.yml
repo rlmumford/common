@@ -1,0 +1,5 @@
+administer notes:
+  title: 'Administer Notes'
+  restrict access: TRUE
+post notes:
+  title: 'Post Notes'

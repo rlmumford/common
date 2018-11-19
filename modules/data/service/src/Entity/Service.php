@@ -47,6 +47,7 @@ use Drupal\Core\Field\BaseFieldDefinition;
  *     "uuid" = "uuid",
  *     "label" = "label",
  *   },
+ *   has_notes = "true",
  *   bundle_entity_type = "service_type",
  *   field_ui_base_route = "entity.service_type.edit_form",
  *   links = {

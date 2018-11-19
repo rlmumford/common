@@ -8,13 +8,13 @@ use Drupal\Core\Config\Entity\ConfigEntityListBuilder;
 /**
  * List controller for service types.
  */
-class TaskInstructionListBuilder extends ConfigEntityListBuilder {
+class TaskBundleListBuilder extends ConfigEntityListBuilder {
 
   /**
    * {@inheritdoc}
    */
   public function buildHeader() {
-    $header['label'] = $this->t('Task Instruction');
+    $header['label'] = $this->t('Task Bundle');
     return $header + parent::buildHeader();
   }
 

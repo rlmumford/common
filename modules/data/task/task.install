@@ -1,0 +1,94 @@
+<?php
+
+use Drupal\Core\Config\Entity\ConfigEntityType;
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+
+/**
+ * Install Massive Task Improvements.
+ */
+function task_update_8002() {
+  try {
+    $entity_type_manager = \Drupal::entityTypeManager();
+    $updater = \Drupal::entityDefinitionUpdateManager();
+
+    // Task Bundle.
+    $updater->installEntityType(new ConfigEntityType([
+      'id' => 'task_bundle',
+      'label' => new TranslatableMarkup('Task Bundle'),
+      'config_prefix' => 'task_bundle',
+      'admin_permission' => 'administer task bundles',
+      'bundle_of' => 'task',
+      'entity_keys' => [
+        'id' => 'id',
+        'label' => 'label',
+      ],
+      'config_export' => [
+        'id' => 'id',
+        'label' => 'label',
+      ],
+    ]));
+
+    $task_bundle_storage = $entity_type_manager->getStorage('task_bundle');
+    if (!$task_bundle_storage->load('default')) {
+      $task_bundle_storage->create([
+        'id' => 'default',
+        'label' => 'Default',
+      ])->save();
+    }
+
+    // Task Plan.
+    $updater->installEntityType(new ConfigEntityType([
+      'id' => 'task_plan',
+      'label' => new TranslatableMarkup('Task Plan'),
+      'config_prefix' => 'task_plan',
+      'admin_permission' => 'administer task plans',
+      'entity_keys' => [
+        'id' => 'id',
+        'label' => 'label',
+      ],
+      'config_export' => [
+        'id' => 'id',
+        'code' => 'code',
+        'label' => 'label',
+        'bundle' => 'bundle',
+        'description' => 'description',
+        'instructions' => 'instructions',
+        'default_title' => 'default_title',
+        'steps' => 'steps',
+      ],
+    ]));
+
+    // Add the bundle field to task entities.
+    if (!$updater->getFieldStorageDefinition('bundle', 'task')) {
+      $updater->installFieldStorageDefinition(
+        'bundle',
+        'task',
+        'task',
+        BaseFieldDefinition::create('entity_reference')
+          ->setSetting('target_type', 'task_bundle')
+          ->setLabel(t('Bundle'))
+          ->setRequired(TRUE)
+          ->setReadOnly(TRUE)
+      );
+
+      \Drupal::database()->update('task')
+        ->fields(['task' => 'default'])->execute();
+    }
+
+    // Add The plan field to task entities.
+    if (!$updater->getFieldStorageDefinition('plan', 'task')) {
+      $updater->installFieldStorageDefinition(
+        'plan',
+        'task',
+        'task',
+        BaseFieldDefinition::create('entity_reference')
+          ->setSetting('target_type', 'task_plan')
+          ->setLabel(t('Plan'))
+      );
+    }
+  }
+  catch (\Exception $e) {
+    throw $e;
+  }
+}

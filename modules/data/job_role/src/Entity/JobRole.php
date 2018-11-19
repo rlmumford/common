@@ -128,6 +128,7 @@ class JobRole extends ContentEntityBase implements JobRoleInterface {
       ->setLabel(t('Title'))
       ->setRevisionable(TRUE)
       ->setSetting('max_length', 255)
+      ->setRequired(TRUE)
       ->setDisplayOptions('view', [
         'label' => 'hidden',
         'type' => 'string',
@@ -140,7 +141,8 @@ class JobRole extends ContentEntityBase implements JobRoleInterface {
       ->setDisplayConfigurable('form', TRUE);
 
     $fields['description'] = BaseFieldDefinition::create('text_long')
-      ->setLabel(t('Description'))
+      ->setLabel(t('Full Job Description'))
+      ->setRequired(TRUE)
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'text_default',

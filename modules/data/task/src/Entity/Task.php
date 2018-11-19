@@ -37,11 +37,14 @@ use Drupal\task\TaskInterface;
  *       "html" = "Drupal\Core\Entity\Routing\DefaultHtmlRouteProvider",
  *     }
  *   },
+ *   has_notes = "true",
  *   base_table = "task",
  *   revision_table = "task_revision",
  *   data_table = "task_data",
  *   revision_data_table = "task_revision_data",
  *   admin_permission = "administer tasks",
+ *   bundle_entity_type = "task_bundle",
+ *   field_ui_base_route = "entity.task_bundle.edit_form",
  *   entity_keys = {
  *     "id" = "id",
  *     "revision" = "vid",
@@ -89,6 +92,11 @@ class Task extends ContentEntityBase implements TaskInterface {
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
+
+    $fields['plan'] = BaseFieldDefinition::create('entity_reference')
+      ->setSetting('target_type', 'task_plan')
+      ->setLabel('Plan')
+      ->setDisplayConfigurable('view', TRUE);
 
     $fields['title'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Title'))

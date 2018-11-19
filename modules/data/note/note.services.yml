@@ -1,0 +1,6 @@
+services:
+  note.entity_type_update_subscriber:
+    class: Drupal\note\EventSubscriber\EntityTypeUpdateSubscriber
+    arguments: [ '@entity.definition_update_manager' ]
+    tags:
+      - { name: event_subscriber }

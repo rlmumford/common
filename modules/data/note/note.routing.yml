@@ -1,0 +1,7 @@
+entity.note.reply:
+  path: '/note/{note}/reply'
+  defaults:
+    _entity_form: 'note.reply'
+    _title: 'Post Reply'
+  requirements:
+    _entity_access: 'note.reply'
