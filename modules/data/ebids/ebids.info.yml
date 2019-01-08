@@ -1,0 +1,5 @@
+name: Event Based Immutable Data Storage
+type: module
+core: 8.x
+description: "Storage for Document Based immutable Event entities."
+package: RLMumford

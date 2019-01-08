@@ -1,0 +1,6 @@
+services:
+  ebids.aws.sdk:
+    class: Drupal\ebids\AwsSdK
+  plugin.manager.event_storage:
+    class: Drupal\ebids\EventStorageManager
+    parent: default_plugin_manager
