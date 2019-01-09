@@ -2,12 +2,22 @@
 
 namespace Drupal\ebids\Entity;
 
+use Drupal\Core\Cache\MemoryCache\MemoryCacheInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityStorageBase;
+use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\ebids\EventStorageManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class EventEntityStorage extends EntityStorageBase {
+
+  /**
+   * The event storage handler
+   *
+   * @var \Drupal\ebids\Storage\EventStorageInterface
+   */
+  protected $eventStorage;
 
   /**
    * Instantiates a new instance of this entity handler.
@@ -26,7 +36,29 @@ class EventEntityStorage extends EntityStorageBase {
    *   A new instance of the entity handler.
    */
   public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
-    // TODO: Implement createInstance() method.
+    return new static(
+      $entity_type,
+      $container->get('plugin.manager.event_storage'),
+      $container->get('entity.memory_cache')
+    );
+  }
+
+  /**
+   * EventEntityStorage constructor.
+   *
+   * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
+   * @param \Drupal\ebids\EventStorageManager $event_storage_manager
+   * @param \Drupal\Core\Cache\MemoryCache\MemoryCacheInterface|NULL $memory_cache
+   *
+   * @throws \Drupal\Component\Plugin\Exception\PluginException
+   */
+  public function __construct(EntityTypeInterface $entity_type, EventStorageManager $event_storage_manager, MemoryCacheInterface $memory_cache = NULL) {
+    parent::__construct($entity_type, $memory_cache);
+
+    $this->eventStorage = $event_storage_manager->createInstance(
+      $entity_type->get('event_storage'),
+      $entity_type->get('event_storage_configuration')
+    );
   }
 
   /**
@@ -43,7 +75,8 @@ class EventEntityStorage extends EntityStorageBase {
    *   Associative array of entities, keyed on the entity ID.
    */
   protected function doLoadMultiple(array $ids = NULL) {
-    // TODO: Implement doLoadMultiple() method.
+    $entities = $this->eventStorage->readEvents($ids, $this->entityClass);
+    return $entities;
   }
 
   /**
@@ -57,7 +90,8 @@ class EventEntityStorage extends EntityStorageBase {
    * @return bool
    */
   protected function has($id, EntityInterface $entity) {
-    // TODO: Implement has() method.
+    $event = $this->eventStorage->readEvent($id, get_class($entity));
+    return !empty($event);
   }
 
   /**
@@ -83,7 +117,13 @@ class EventEntityStorage extends EntityStorageBase {
    *   returns SAVED_NEW or SAVED_UPDATED, depending on the operation performed.
    */
   protected function doSave($id, EntityInterface $entity) {
-    // TODO: Implement doSave() method.
+    if ($this->has($id, $entity)) {
+      throw new EntityStorageException('Cannot update existing event records.');
+    }
+
+    $this->eventStorage->recordEvent($entity);
+
+    return SAVED_NEW;
   }
 
   /**

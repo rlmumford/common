@@ -98,7 +98,7 @@ class AmazonDynamoDBEventStorageBase extends PluginBase implements EventStorageI
    * @return \Drupal\ebids\EventInterface
    */
   public function readEvent($uuid, $return_class = NULL) {
-    $marshaler = new Marshaler;
+    $marshaler = new AmazonDynamoDbEventMarshaler();
     $key = [
       'uuid' => $uuid,
     ];
@@ -108,8 +108,15 @@ class AmazonDynamoDBEventStorageBase extends PluginBase implements EventStorageI
     ]);
 
     if (!empty($result['Item'])) {
-      // @todo: Return the event.
+      return $marshaler->unmarshalEvent($result['Item'], $return_class);
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function readEvents(array $ids = array(), $return_class = NULL) {
+    // TODO: Implement readEvents() method.
   }
 
   /**
