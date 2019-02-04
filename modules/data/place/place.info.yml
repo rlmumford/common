@@ -1,0 +1,5 @@
+type: module
+core: 8.x
+name: Place
+description: "Place Storage"
+package: RLMumford
