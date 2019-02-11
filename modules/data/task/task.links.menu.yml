@@ -1,0 +1,12 @@
+entity.task_bundle.collection:
+  title: 'Task Bundles'
+  parent: system.admin_structure
+  description: 'Configure task bundles.'
+  weight: -10
+  route_name: entity.task_bundle.collection
+entity.task_plan.collection:
+  title: 'Task Plans'
+  parent: system.admin_structure
+  description: 'Configure task plans.'
+  weight: -10
+  route_name: entity.task_plan.collection

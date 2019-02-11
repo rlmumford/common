@@ -44,13 +44,19 @@ class Place extends ContentEntityBase {
       ->setDisplayConfigurable('form', TRUE);
 
     $fields['address'] =  BaseFieldDefinition::create('address')
-      ->setLabel(t('Contact Address'))
+      ->setLabel(t('Postal Address'))
       ->setRevisionable(TRUE)
-      ->setDefaultValueCallback('job_board_job_role_contact_default_value')
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayOptions('form', [
         'type' => 'address_default',
       ])
+      ->setDisplayConfigurable('form', TRUE);
+
+    $fields['geo'] = BaseFieldDefinition::create('geofield')
+      ->setLabel('Geolocation')
+      ->setRevisionable(TRUE)
+      ->setRequired(TRUE)
+      ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
     return $fields;
   }

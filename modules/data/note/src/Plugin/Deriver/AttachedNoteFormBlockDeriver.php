@@ -9,6 +9,8 @@ use Drupal\Core\Plugin\Context\ContextDefinition;
 use Drupal\Core\Plugin\Discovery\ContainerDeriverInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\StringTranslation\TranslationInterface;
+use Drupal\Core\StringTranslation\TranslationManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -40,11 +42,11 @@ class AttachedNoteFormBlockDeriver extends DeriverBase implements ContainerDeriv
    * AttachedNoteFormBlockDeriver constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   * @param \Consolidation\OutputFormatters\Transformations\StringTransformationInterface $string_translation
+   * @param \Drupal\Core\StringTranslation\TranslationManager $string_translation
    */
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
-    StringTransformationInterface $string_translation
+    TranslationManager $string_translation
   ) {
     $this->entityTypeManager = $entity_type_manager;
     $this->stringTranslation = $string_translation;

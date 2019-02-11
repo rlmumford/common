@@ -70,17 +70,21 @@ class TaskPlanForm extends EntityForm {
       ];
     }
 
+    $description = $entity->get('description');
     $form['description'] = [
       '#type' => 'text_format',
       '#title' => $this->t('Description'),
-      '#default_value' => $entity->get('description'),
+      '#default_value' => $description['value'],
+      '#format' => $description['format'] ?: 'basic_html',
       '#required' => TRUE,
     ];
 
+    $instructions = $entity->get('instructions');
     $form['instructions'] = [
       '#type' => 'text_format',
       '#title' => $this->t('Instructions'),
-      '#default_value' => $entity->get('instructions'),
+      '#default_value' => $instructions['value'],
+      '#format' => $instructions['format'] ?: 'basic_html',
       '#required' => TRUE,
     ];
 

@@ -56,13 +56,13 @@ class TaskPlan extends ConfigEntityBase implements TaskPlanInterface {
    *
    * @return \Drupal\task\Entity\Task
    */
-  public function createTask() {
+  public function createTask($values = []) {
     $storage = \Drupal::entityTypeManager()->getStorage('task');
 
     /** @var \Drupal\task\Entity\Task $task */
     $task = $storage->create([
       'type' => $this->get('bundle'),
-    ]);
+    ] + $values);
     $task->plan = $this;
 
     return $task;

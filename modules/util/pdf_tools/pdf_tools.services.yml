@@ -1,0 +1,4 @@
+services:
+  pdf_tools.generator:
+    class: Drupal\pdf_tools\WKHTMLtoPDFGenerator
+    arguments: ['@file_system']

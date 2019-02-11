@@ -183,7 +183,7 @@ class Task extends ContentEntityBase implements TaskInterface {
       ])
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE)
-      ->setDefaultValueCallback('Drupal\task\Entity\Task:getCurrentUserId');
+      ->setDefaultValueCallback('Drupal\task\Entity\Task::getCurrentUserId');
 
     // The Resolution of the Task.
     $fields['resolution'] = BaseFieldDefinition::create('list_string')

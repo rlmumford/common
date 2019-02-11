@@ -12,7 +12,7 @@ use Drupal\Core\Render\BubbleableMetadata;
  *   id = "task_plan_instructions",
  *   admin_label = @Translation("Task Plan Instructions"),
  *   context = {
- *     "job" = @ContextDefinition("entity:task", label = @Translation("Task"))
+ *     "task" = @ContextDefinition("entity:task", label = @Translation("Task"))
  *   }
  * )
  */
@@ -48,7 +48,7 @@ class TaskPlanInstructions extends BlockBase {
         $content = \Drupal::token()->replace($instructions['value'], [
           'task' => $task,
           'task_plan' => $plan,
-        ], $cacheable_metadata);
+        ], [], $cacheable_metadata);
 
         $build = [
           '#type' => 'processed_text',

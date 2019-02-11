@@ -2,11 +2,11 @@
 
 namespace Drupal\note\EventSubscriber;
 
-use Composer\EventDispatcher\EventSubscriberInterface;
 use Drupal\Core\Entity\EntityDefinitionUpdateManagerInterface;
 use Drupal\Core\Entity\EntityTypeEventSubscriberTrait;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\note\Entity\Note;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class EntityTypeUpdateSubscriber implements EventSubscriberInterface {
   use EntityTypeEventSubscriberTrait;

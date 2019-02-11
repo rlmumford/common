@@ -15,17 +15,16 @@ class TaskBundleForm extends BundleEntityFormBase {
     $entity = $this->entity;
     $form['label'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Task Plan Name'),
+      '#title' => $this->t('Task Bundle Name'),
       '#default_value' => $entity->label,
       '#size' => 30,
       '#required' => TRUE,
       '#maxlength' => 64,
-      '#description' => $this->t('The name of this task plan.'),
+      '#description' => $this->t('The name of this task bundle.'),
     ];
     $form['id'] = [
       '#type' => 'machine_name',
-      '#default_value' => $entity
-        ->id(),
+      '#default_value' => $entity->id(),
       '#required' => TRUE,
       '#disabled' => !$entity
         ->isNew(),
@@ -33,7 +32,7 @@ class TaskBundleForm extends BundleEntityFormBase {
       '#maxlength' => 64,
       '#machine_name' => [
         'exists' => [
-          '\\Drupal\\task\\Entity\\TaskPlan',
+          '\\Drupal\\task\\Entity\\TaskBundle',
           'load',
         ],
       ],

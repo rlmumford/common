@@ -60,9 +60,9 @@ function task_update_8002() {
     ]));
 
     // Add the bundle field to task entities.
-    if (!$updater->getFieldStorageDefinition('bundle', 'task')) {
+    if (!$updater->getFieldStorageDefinition('type', 'task')) {
       $updater->installFieldStorageDefinition(
-        'bundle',
+        'type',
         'task',
         'task',
         BaseFieldDefinition::create('entity_reference')
@@ -73,7 +73,7 @@ function task_update_8002() {
       );
 
       \Drupal::database()->update('task')
-        ->fields(['task' => 'default'])->execute();
+        ->fields(['type' => 'default'])->execute();
     }
 
     // Add The plan field to task entities.

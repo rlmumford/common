@@ -87,12 +87,15 @@ class ServiceReferenceItem extends EntityReferenceItem {
    */
   protected function setChainAndRoot() {
     $chain = [];
-    $chain[] = $root = $entity = $this->get('entity');
-    while ($entity = $entity->service->entity) {
+    $chain[] = $root = $entity = $this->get('entity')->getValue();
+    while (isset($entity->service) && !$entity->service->isEmpty() && $entity = $entity->service->entity) {
       $chain[] = $root = $entity;
     }
-    $this->writePropertyValue('all', $chain);
-    $this->writePropertyValue('root', $root);
+
+    if (!empty($chain)) {
+      $this->writePropertyValue('all', $chain);
+      $this->writePropertyValue('root', $root);
+    }
   }
 
   /**

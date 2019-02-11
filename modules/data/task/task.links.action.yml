@@ -1,0 +1,10 @@
+task_bundle_add:
+  route_name: entity.task_bundle.add_form
+  title: 'Add Task Bundle'
+  appears_on:
+    - entity.task_bundle.collection
+task_plan_add:
+  route_name: entity.task_plan.add_form
+  title: 'Add Task Plan'
+  appears_on:
+    - entity.task_plan.collection
