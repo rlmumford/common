@@ -1,0 +1,16 @@
+<?php
+
+/**
+ * Implements hook_entity_bundle_info().
+ */
+function place_entity_bundle_info() {
+  /** @var \Drupal\place\PlaceHandlerPluginManager $manager */
+  $manager = \Drupal::service('plugin.manager.place.place_handler');
+
+  $bundles = [];
+  foreach ($manager->getDefinitions() as $plugin_id => $definition) {
+    $bundles['place'][$plugin_id]['label'] = $definition['label'];
+  }
+
+  return $bundles;
+}

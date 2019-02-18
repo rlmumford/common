@@ -25,7 +25,8 @@ use Drupal\Tests\commerce_tax\Kernel\TaxRateTest;
  *     "id" = "id",
  *     "revision" = "vid",
  *     "uuid" = "uuid",
- *     "label" = "name"
+ *     "label" = "name",
+ *     "bundle" = "type",
  *   }
  * )
  *
@@ -33,6 +34,11 @@ use Drupal\Tests\commerce_tax\Kernel\TaxRateTest;
  */
 class Place extends ContentEntityBase {
 
+  /**
+   * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
+   *
+   * @return array|\Drupal\Core\Field\FieldDefinitionInterface[]
+   */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
 
@@ -43,22 +49,23 @@ class Place extends ContentEntityBase {
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
 
-    $fields['address'] =  BaseFieldDefinition::create('address')
-      ->setLabel(t('Postal Address'))
-      ->setRevisionable(TRUE)
-      ->setDisplayConfigurable('view', TRUE)
-      ->setDisplayOptions('form', [
-        'type' => 'address_default',
-      ])
-      ->setDisplayConfigurable('form', TRUE);
-
-    $fields['geo'] = BaseFieldDefinition::create('geofield')
-      ->setLabel('Geolocation')
-      ->setRevisionable(TRUE)
-      ->setRequired(TRUE)
-      ->setDisplayConfigurable('view', TRUE)
-      ->setDisplayConfigurable('form', TRUE);
     return $fields;
   }
+
+  /**
+   *
+   */
+  public static function bundleFieldDefinitions(EntityTypeInterface $entity_type, $bundle, array $base_field_definitions) {
+    /** @var \Drupal\place\PlaceHandlerPluginManager $manager */
+    $manager = \Drupal::service('plugin.manager.place.place_handler');
+    $fields = parent::bundleFieldDefinitions($entity_type, $bundle, $base_field_definitions);
+
+    /** @var \Drupal\place\Plugin\PlaceHandler\PlaceHandlerInterface $plugin */
+    $plugin = $manager->createInstance($bundle);
+    $fields += $plugin->fieldDefinitions();
+
+    return $fields;
+  }
+
 
 }

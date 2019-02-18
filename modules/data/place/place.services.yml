@@ -1,0 +1,4 @@
+services:
+  plugin.manager.place.place_handler:
+    class: Drupal\place\PlaceHandlerPluginManager
+    parent: default_plugin_manager
