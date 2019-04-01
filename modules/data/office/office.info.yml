@@ -3,3 +3,6 @@ core: 8.x
 name: Office
 description: "Office Storage"
 package: RLMumford
+
+dependencies:
+- place
