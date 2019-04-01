@@ -4,6 +4,18 @@ namespace Drupal\place\Annotation;
 
 use Drupal\Component\Annotation\Plugin;
 
+/**
+ * Defines a PlaceHandler plugin annotation object.
+ *
+ * Plugin Namespace: Plugin\PlaceHandler.
+ *
+ * @see \Drupal\place\Plugin\PlaceHandler\PlaceHandlerInterface
+ * @see \Drupal\place\Plugin\PlaceHandler\PlaceHandlerBase
+ *
+ * @ingroup plugin_api
+ *
+ * @Annotation
+ */
 class PlaceHandler extends Plugin {
 
   /**

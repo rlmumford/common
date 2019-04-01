@@ -2,6 +2,8 @@
 
 namespace Drupal\place\Plugin\PlaceHandler;
 
+use Drupal\Core\Field\BaseFieldDefinition;
+
 class AddressPlaceHandlerBase extends PlaceHandlerBase {
 
   public function fieldDefinitions() {

@@ -2,11 +2,11 @@
 
 namespace Drupal\place\Entity;
 
+use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\Tests\commerce_tax\Kernel\TaxRateTest;
 
 /**
  * Class Place
@@ -19,7 +19,8 @@ use Drupal\Tests\commerce_tax\Kernel\TaxRateTest;
  *   data_table = "place_data",
  *   revision_data_table = "place_revision_data",
  *   handlers = {
- *     "storage" => "Drupal\place\PlaceStorage",
+ *     "storage" = "Drupal\place\PlaceStorage",
+ *     "access" = "Drupal\place\PlaceAccessControlHandler",
  *   },
  *   entity_keys = {
  *     "id" = "id",
@@ -60,9 +61,12 @@ class Place extends ContentEntityBase {
     $manager = \Drupal::service('plugin.manager.place.place_handler');
     $fields = parent::bundleFieldDefinitions($entity_type, $bundle, $base_field_definitions);
 
-    /** @var \Drupal\place\Plugin\PlaceHandler\PlaceHandlerInterface $plugin */
-    $plugin = $manager->createInstance($bundle);
-    $fields += $plugin->fieldDefinitions();
+    try {
+      /** @var \Drupal\place\Plugin\PlaceHandler\PlaceHandlerInterface $plugin */
+      $plugin = $manager->createInstance($bundle);
+      $fields += $plugin->fieldDefinitions();
+    }
+    catch (PluginNotFoundException $e) {}
 
     return $fields;
   }
