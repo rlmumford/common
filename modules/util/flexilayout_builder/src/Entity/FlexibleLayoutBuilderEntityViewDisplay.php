@@ -7,66 +7,14 @@ use Drupal\Core\Entity\Entity\EntityViewDisplay;
 use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Plugin\Context\EntityContext;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\flexilayout_builder\Plugin\SectionStorage\ConfigurableContextSectionStorageTrait;
+use Drupal\flexilayout_builder\Plugin\SectionStorage\OverridesSectionStorage;
 use Drupal\layout_builder\Entity\LayoutBuilderEntityViewDisplay;
 use Drupal\layout_builder\Section;
 
 class FlexibleLayoutBuilderEntityViewDisplay extends LayoutBuilderEntityViewDisplay {
-
-  /**
-   * {@inheritdoc}
-   */
-  public function buildMultiple(array $entities) {
-    $build_list = EntityViewDisplay::buildMultiple($entities);
-    if (!$this->isLayoutBuilderEnabled()) {
-      return $build_list;
-    }
-
-    /** @var \Drupal\Core\Entity\FieldableEntityInterface $entity */
-    foreach ($entities as $id => $entity) {
-      $sections = $this->getRuntimeSections($entity);
-      if ($sections) {
-        foreach ($build_list[$id] as $name => $build_part) {
-          $field_definition = $this->getFieldDefinition($name);
-          if ($field_definition && $field_definition->isDisplayConfigurable($this->displayContext)) {
-            unset($build_list[$id][$name]);
-          }
-        }
-
-        $contexts = $this->prepareContexts($entity);
-        foreach ($sections as $delta => $section) {
-          $build_list[$id]['_layout_builder'][$delta] = $this->sectionToRenderArray($section, $contexts);
-        }
-      }
-    }
-
-    return $build_list;
-  }
-
-  /**
-   * Render a section. This is effectively an override of Section::toRenderArray()
-   * that doesn't attempt to render a block if there are missing contexts.
-   *
-   * @param \Drupal\layout_builder\Section $section
-   * @param \Drupal\Core\Plugin\Context\ContextInterface[] $contexts
-   * @param bool $in_preview
-   *
-   * @return array
-   *
-   * @see Section::toRenderArray()
-   */
-  protected function sectionToRenderArray(Section $section, array $contexts = [], $in_preview = FALSE) {
-    $regions = [];
-    foreach ($section->getComponents() as $component) {
-      try {
-        if ($output = $component->toRenderArray($contexts, $in_preview)) {
-          $regions[$component->getRegion()][$component->getUuid()] = $output;
-        }
-      }
-      catch (MissingValueContextException $missingValueContextException) {}
-    }
-
-    return $section->getLayout()->build($regions);
-  }
 
   /**
    * Prepare contexts for layout rendering.
@@ -74,16 +22,11 @@ class FlexibleLayoutBuilderEntityViewDisplay extends LayoutBuilderEntityViewDisp
    * @return \Drupal\Core\Plugin\Context\ContextInterface[]
    *   Array of contexts keyed name.
    */
-  protected function prepareContexts(FieldableEntityInterface $entity) {
-    // Bypass ::getContexts() in order to use the runtime entity, not a
-    // sample entity.
-    $contexts = $this->contextRepository()->getAvailableContexts();
-    $label = new TranslatableMarkup('@entity being viewed', [
-      '@entity' => $entity->getEntityType()->getSingularLabel(),
-    ]);
-    $contexts['layout_builder.entity'] = EntityContext::fromEntity($entity, $label);
-
-    $contexts += \Drupal::service('ctools.context_mapper')->getContextValues($this->getThirdPartySetting('flexilayout_builder', 'static_context', []));
+  protected function getContextsForEntity(FieldableEntityInterface $entity) {
+    $contexts = parent::getContextsForEntity($entity);
+    $contexts += \Drupal::service('ctools.context_mapper')->getContextValues(
+      $this->getThirdPartySetting('flexilayout_builder', 'static_context', [])
+    );
 
     /** @var \Drupal\ctools\Plugin\RelationshipManager $relationship_manager */
     $relationship_manager = \Drupal::service('plugin.manager.ctools.relationship');
@@ -99,6 +42,56 @@ class FlexibleLayoutBuilderEntityViewDisplay extends LayoutBuilderEntityViewDisp
     }
 
     return $contexts;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function addSectionField($entity_type_id, $bundle, $field_name) {
+    parent::addSectionField($entity_type_id, $bundle, $field_name);
+
+    // Add the layout settings field.
+    $settings_field_name = OverridesSectionStorage::SETTINGS_FIELD_NAME;
+    $field = FieldConfig::loadByName($entity_type_id, $bundle, $settings_field_name);
+    if (!$field) {
+      $field_storage = FieldStorageConfig::loadByName($entity_type_id, $settings_field_name);
+      if (!$field_storage) {
+        $field_storage = FieldStorageConfig::create([
+          'entity_type' => $entity_type_id,
+          'field_name' => $settings_field_name,
+          'type' => 'layout_settings',
+          'locked' => TRUE,
+        ]);
+        $field_storage->setTranslatable(FALSE);
+        $field_storage->save();
+      }
+
+      $field = FieldConfig::create([
+        'field_storage' => $field_storage,
+        'bundle' => $bundle,
+        'label' => t('Layout Settings'),
+      ]);
+      $field->setTranslatable(FALSE);
+      $field->save();
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function removeSectionField($entity_type_id, $bundle, $field_name) {
+    $query = $this->entityTypeManager()->getStorage($this->getEntityTypeId())->getQuery()
+      ->condition('targetEntityType', $this->getTargetEntityTypeId())
+      ->condition('bundle', $this->getTargetBundle())
+      ->condition('mode', $this->getMode(), '<>')
+      ->condition('third_party_settings.layout_builder.allow_custom', TRUE);
+    $enabled = (bool) $query->count()->execute();
+    if (!$enabled && $field = FieldConfig::loadByName($entity_type_id, $bundle, $field_name)) {
+      $field->delete();
+    }
+    if (!$enabled && $field = FieldConfig::loadByName($entity_type_id, $bundle, OverridesSectionStorage::SETTINGS_FIELD_NAME)) {
+      $field->delete();
+    }
   }
 
 }

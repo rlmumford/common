@@ -10,11 +10,14 @@ use Drupal\Core\TypedData\TypedDataManagerInterface;
 use Drupal\Core\Url;
 use Drupal\ctools\Plugin\RelationshipManagerInterface;
 use Drupal\flexilayout_builder\Plugin\SectionStorage\DisplayWideConfigSectionStorageInterface;
+use Drupal\layout_builder\Context\LayoutBuilderContextTrait;
+use Drupal\layout_builder\SectionStorageInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class ChooseRelationshipController implements ContainerInjectionInterface {
   use AjaxHelperTrait;
   use StringTranslationTrait;
+  use LayoutBuilderContextTrait;
 
   /**
    * @var \Drupal\ctools\Plugin\RelationshipManagerInterface
@@ -48,11 +51,11 @@ class ChooseRelationshipController implements ContainerInjectionInterface {
    * @return array
    *   A render array.
    */
-  public function build(DisplayWideConfigSectionStorageInterface $section_storage) {
+  public function build(SectionStorageInterface $section_storage) {
     $build['#title'] = $this->t('Choose a relationship');
     $build['#type'] = 'container';
 
-    $definitions = $this->relationshipManager->getDefinitionsForContexts($section_storage->getContexts());
+    $definitions = $this->relationshipManager->getDefinitionsForContexts($this->getAvailableContexts($section_storage));
     foreach ($definitions as $plugin_id => $definition) {
       list($category,) = explode(':', $plugin_id, 2);
       if ($category == $plugin_id) {

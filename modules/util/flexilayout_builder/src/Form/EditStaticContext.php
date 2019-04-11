@@ -10,6 +10,7 @@ use Drupal\Core\Plugin\Context\ContextDefinition;
 use Drupal\ctools\Context\EntityLazyLoadContext;
 use Drupal\flexilayout_builder\Plugin\SectionStorage\DisplayWideConfigSectionStorageInterface;
 use Drupal\layout_builder\Controller\LayoutRebuildTrait;
+use Drupal\layout_builder\DefaultsSectionStorageInterface;
 use Drupal\layout_builder\LayoutTempstoreRepositoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -23,7 +24,7 @@ class EditStaticContext extends FormBase {
   use LayoutRebuildTrait;
 
   /**
-   * @var \Drupal\flexilayout_builder\Plugin\SectionStorage\DisplayWideConfigSectionStorageInterface
+   * @var \Drupal\layout_builder\DefaultsSectionStorageInterface
    */
   protected $sectionStorage;
 
@@ -79,9 +80,9 @@ class EditStaticContext extends FormBase {
    * @return array
    *   The form structure.
    */
-  public function buildForm(array $form, FormStateInterface $form_state, DisplayWideConfigSectionStorageInterface $section_storage = NULL, $machine_name = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, DefaultsSectionStorageInterface $section_storage = NULL, $machine_name = NULL) {
     $this->sectionStorage = $section_storage;
-    $static_contexts = $this->sectionStorage->getConfig('static_context');
+    $static_contexts = $this->sectionStorage->getThirdPartySetting('flexilayout_builder', 'static_context');
     $context = $static_contexts[$machine_name];
     $data_type = $context['type'];
 
@@ -155,7 +156,7 @@ class EditStaticContext extends FormBase {
    * @return bool
    */
   public function contextExists($value, array $element, FormStateInterface $form_state) {
-    $static_context = $this->sectionStorage->getConfig('static_context');
+    $static_context = $this->sectionStorage->getThirdPartySetting('flexilayout_builder', 'static_context');
     return !empty($static_context[$value]);
   }
 
@@ -169,14 +170,14 @@ class EditStaticContext extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $values = $form_state->getValues();
-    $static_contexts = $this->sectionStorage->getConfig('static_context');
+    $static_contexts = $this->sectionStorage->getThirdPartySetting('flexilayout_builder', 'static_context');
     $static_contexts[$values['machine_name']] = [
       'type' => $values['data_type'],
       'label' => $values['label'],
       'description' => $values['description'],
       'value' => $values['context_value'],
     ];
-    $this->sectionStorage->setConfig('static_context', $static_contexts);
+    $this->sectionStorage->setThirdPartySetting('flexilayout_builder', 'static_context', $static_contexts);
 
     $this->layoutTempstoreRepository->set($this->sectionStorage);
   }
@@ -194,23 +195,5 @@ class EditStaticContext extends FormBase {
    */
   protected function successfulAjaxSubmit(array $form, FormStateInterface $form_state) {
     return $this->rebuildAndClose($this->sectionStorage);
-  }
-
-  /**
-   * Rebuilds the layout.
-   *
-   * @param \Drupal\layout_builder\SectionStorageInterface $section_storage
-   *   The section storage.
-   *
-   * @return \Drupal\Core\Ajax\AjaxResponse
-   *   An AJAX response to either rebuild the layout and close the dialog, or
-   *   reload the page.
-   */
-  protected function rebuildLayout(SectionStorageInterface $section_storage) {
-    $response = new AjaxResponse();
-    $layout_controller = $this->classResolver->getInstanceFromDefinition(FlexiLayoutBuilderController::class);
-    $layout = $layout_controller->layout($section_storage, TRUE);
-    $response->addCommand(new ReplaceCommand('#layout-builder', $layout));
-    return $response;
   }
 }

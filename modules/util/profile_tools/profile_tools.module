@@ -43,7 +43,7 @@ function profile_tools_entity_base_field_info(EntityTypeInterface $entity_type) 
         ->setLabel($profile_type->label())
         ->setReadOnly(TRUE)
         ->setSetting('target_type', 'profile')
-        ->setSetting('handler_settings', ['target_bundles' => [$profile_type->id()]])
+        ->setSetting('handler_settings', ['target_bundles' => [$profile_type->id() => $profile_type->id()]])
         ->setDisplayConfigurable('view', TRUE)
         ->setDisplayOptions('view', [
           'type' => 'entity_reference_entity_view',

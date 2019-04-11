@@ -15,10 +15,10 @@ use Drupal\Core\Plugin\PluginFormFactoryInterface;
 use Drupal\Core\Plugin\PluginWithFormsInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\ctools\Plugin\RelationshipManagerInterface;
-use Drupal\flexilayout_builder\Controller\FlexiLayoutBuilderController;
 use Drupal\flexilayout_builder\Plugin\Relationship\ConfigurableRelationshipInterface;
-use Drupal\flexilayout_builder\Plugin\SectionStorage\DisplayWideConfigSectionStorageInterface;
+use Drupal\layout_builder\Context\LayoutBuilderContextTrait;
 use Drupal\layout_builder\Controller\LayoutRebuildTrait;
+use Drupal\layout_builder\DefaultsSectionStorageInterface;
 use Drupal\layout_builder\LayoutTempstoreRepositoryInterface;
 use Drupal\layout_builder\SectionStorageInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -31,11 +31,12 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class AddRelationship extends FormBase {
   use AjaxFormHelperTrait;
   use LayoutRebuildTrait;
+  use LayoutBuilderContextTrait;
   use ContextAwarePluginAssignmentTrait;
   use StringTranslationTrait;
 
   /**
-   * @var \Drupal\flexilayout_builder\Plugin\SectionStorage\DisplayWideConfigSectionStorageInterface
+   * @var \Drupal\layout_builder\DefaultsSectionStorageInterface
    */
   protected $sectionStorage;
 
@@ -102,7 +103,7 @@ class AddRelationship extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, DisplayWideConfigSectionStorageInterface $section_storage = NULL, $plugin = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, DefaultsSectionStorageInterface $section_storage = NULL, $plugin = NULL) {
     return $this->doBuildForm($form, $form_state, $section_storage, 'add', $plugin);
   }
 
@@ -117,11 +118,11 @@ class AddRelationship extends FormBase {
    * @return array
    *   The form structure.
    */
-  public function doBuildForm(array $form, FormStateInterface $form_state, DisplayWideConfigSectionStorageInterface $section_storage = NULL, $op = 'edit', $plugin = NULL) {
+  public function doBuildForm(array $form, FormStateInterface $form_state, DefaultsSectionStorageInterface $section_storage = NULL, $op = 'edit', $plugin = NULL) {
     $this->sectionStorage = $section_storage;
 
     if ($op == 'edit') {
-      $relationships = $this->sectionStorage->getConfig('relationships');
+      $relationships = $this->sectionStorage->getThirdPartySetting('flexilayout_builder', 'relationships');
       $relationship_config = $relationships[$plugin];
       $machine_name = $plugin;
       $plugin = $relationship_config['plugin'];
@@ -170,7 +171,7 @@ class AddRelationship extends FormBase {
     else {
       $form['settings'] = [
         '#type' => 'container',
-        'context_mapping' => $this->addContextAssignmentElement($this->relationship, $this->sectionStorage->getContexts()),
+        'context_mapping' => $this->addContextAssignmentElement($this->relationship, $this->getAvailableContexts($this->sectionStorage)),
        ];
     }
 
@@ -194,7 +195,7 @@ class AddRelationship extends FormBase {
    * @return bool
    */
   public function contextExists($value, array $element, FormStateInterface $form_state) {
-    $static_context = $this->sectionStorage->getConfig('relationships');
+    $static_context = $this->sectionStorage->getThirdPartySetting('flexilayout_builder','relationships');
     return !empty($static_context[$value]);
   }
 
@@ -236,14 +237,14 @@ class AddRelationship extends FormBase {
     }
 
     $values = $form_state->getValues();
-    $relationships = $this->sectionStorage->getConfig('relationships');
+    $relationships = $this->sectionStorage->getThirdPartySetting('flexilayout_builder', 'relationships');
     $relationships[$values['machine_name']] = [
       'plugin' => $values['plugin'],
       'label' => $values['label'],
       'description' => $values['description'],
       'settings' => $configuration,
     ];
-    $this->sectionStorage->setConfig('relationships', $relationships);
+    $this->sectionStorage->setThirdPartySetting('flexilayout_builder','relationships', $relationships);
 
     $this->layoutTempstoreRepository->set($this->sectionStorage);
     $form_state->setRedirectUrl($this->sectionStorage->getLayoutBuilderUrl());
@@ -262,23 +263,5 @@ class AddRelationship extends FormBase {
    */
   protected function successfulAjaxSubmit(array $form, FormStateInterface $form_state) {
     return $this->rebuildAndClose($this->sectionStorage);
-  }
-
-  /**
-   * Rebuilds the layout.
-   *
-   * @param \Drupal\layout_builder\SectionStorageInterface $section_storage
-   *   The section storage.
-   *
-   * @return \Drupal\Core\Ajax\AjaxResponse
-   *   An AJAX response to either rebuild the layout and close the dialog, or
-   *   reload the page.
-   */
-  protected function rebuildLayout(SectionStorageInterface $section_storage) {
-    $response = new AjaxResponse();
-    $layout_controller = $this->classResolver->getInstanceFromDefinition(FlexiLayoutBuilderController::class);
-    $layout = $layout_controller->layout($section_storage, TRUE);
-    $response->addCommand(new ReplaceCommand('#layout-builder', $layout));
-    return $response;
   }
 }

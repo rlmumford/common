@@ -8,7 +8,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TypedData\TypedDataManagerInterface;
 use Drupal\Core\Url;
-use Drupal\flexilayout_builder\Plugin\SectionStorage\DisplayWideConfigSectionStorageInterface;
+use Drupal\layout_builder\SectionStorageInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class ChooseStaticContextController implements ContainerInjectionInterface {
@@ -47,7 +47,7 @@ class ChooseStaticContextController implements ContainerInjectionInterface {
    * @return array
    *   A render array.
    */
-  public function build(DisplayWideConfigSectionStorageInterface $section_storage) {
+  public function build(SectionStorageInterface $section_storage) {
     $build['#title'] = $this->t('Choose a data type');
     $build['#type'] = 'container';
 

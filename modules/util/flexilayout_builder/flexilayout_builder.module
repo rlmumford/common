@@ -1,10 +1,13 @@
 <?php
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
 use Drupal\ctools_block\Plugin\Block\EntityField;
 use Drupal\flexilayout_builder\Entity\FlexibleLayoutBuilderEntityViewDisplay;
+use Drupal\flexilayout_builder\LayoutThirdPartySettingsInterface;
 use Drupal\flexilayout_builder\Plugin\SectionStorage\DefaultsSectionStorage;
 use Drupal\flexilayout_builder\Plugin\SectionStorage\OverridesSectionStorage;
+use Drupal\layout_builder\DefaultsSectionStorageInterface;
 use Drupal\layout_builder\Plugin\Block\FieldBlock;
 
 /**
@@ -16,7 +19,22 @@ function flexilayout_builder_entity_type_alter(array &$entity_types) {
 }
 
 /**
- * Implemens hook_layout_builder_section_storage().
+ * Implements hook_element_info_alter
+ *
+ * The pre_render callback added here adds a "Manage Context" link to the interface
+ * that allows the addition of static contexts and relationships.
+ *
+ * @param array $info
+ */
+function flexilayout_builder_element_info_alter(array &$info) {
+  $info['layout_builder']['#pre_render'][] = 'flexilayout_builder_layout_builder_context_control_pre_render';
+}
+
+/**
+ * Implements hook_layout_builder_section_storage().
+ *
+ * We change the default section storage class to make sure we can store layout
+ * wide third party settings.
  */
 function flexilayout_builder_layout_builder_section_storage_alter(&$definitions) {
   $definitions['defaults']->setClass(DefaultsSectionStorage::class);
@@ -34,6 +52,41 @@ function flexilayout_builder_module_implements_alter(&$implementations, $hook) {
     unset($implementations['flexilayout_builder']);
     $implementations['flexilayout_builder'] = $group;
   }
+}
+
+/**
+ * Pre render the layout builder interface to add the context controls.
+ */
+function flexilayout_builder_layout_builder_context_control_pre_render($element) {
+  $section_storage = $element['#section_storage'];
+  if (!($section_storage instanceof LayoutThirdPartySettingsInterface)) {
+    return $element;
+  }
+
+  $element['layout_builder']['#weight'] = 100;
+  $element['context_controls'] = [
+    '#type' => 'container',
+    '#weight' => -100,
+    '#attributes' => [
+      'id' => 'layout-builder--context-controls',
+      'class' => ['layout-builder--context-controls'],
+    ],
+  ];
+  $element['context_controls']['manage_context'] = [
+    '#type' => 'link',
+    '#title' => t('Manage Context'),
+    '#url' => Url::fromRoute('flexilayout_builder.view_context', [
+      'section_storage_type' => $section_storage->getStorageType(),
+      'section_storage' => $section_storage->getStorageId(),
+    ]),
+    '#attributes' => [
+      'class' => ['use-ajax'],
+      'data-dialog-type' => 'dialog',
+      'data-dialog-renderer' => 'off_canvas',
+    ],
+  ];
+
+  return $element;
 }
 
 /**
@@ -66,6 +119,14 @@ function flexilayout_builder_form_layout_builder_update_block_alter(array &$form
 
 /**
  * Add magical extra things to the block form.
+ *
+ * Currently supported magic:
+ *   - block_classes
+ *   - field_label_overrides
+ *
+ * Still to implement:
+ *   - Visibility rules
+ *   - Output styles
  */
 function _flexilayout_builder_layout_builder_block_form_alter(array &$form, FormStateInterface $form_state) {
   $form['actions']['#weight'] = 1000;

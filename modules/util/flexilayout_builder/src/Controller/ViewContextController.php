@@ -12,6 +12,7 @@ use Drupal\Core\TypedData\TypedDataManagerInterface;
 use Drupal\Core\Url;
 use Drupal\flexilayout_builder\Plugin\SectionStorage\DisplayWideConfigSectionStorageInterface;
 use Drupal\layout_builder\Context\LayoutBuilderContextTrait;
+use Drupal\layout_builder\DefaultsSectionStorageInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class ViewContextController implements ContainerInjectionInterface {
@@ -32,7 +33,7 @@ class ViewContextController implements ContainerInjectionInterface {
    * @return array
    *   A render array.
    */
-  public function build(DisplayWideConfigSectionStorageInterface $section_storage) {
+  public function build(DefaultsSectionStorageInterface $section_storage) {
     $build['#title'] = $this->t('Available Contexts');
     $build['#type'] = 'container';
 
@@ -50,8 +51,8 @@ class ViewContextController implements ContainerInjectionInterface {
     ];
 
     $provided_contexts = $this->getAvailableContexts($section_storage);
-    $static_contexts = $section_storage->getConfig('static_context') ?: [];
-    $relationships = $section_storage->getConfig('relationships') ?: [];
+    $static_contexts = $section_storage->getThirdPartySetting('flexilayout_builder', 'static_context') ?: [];
+    $relationships = $section_storage->getThirdPartySetting('flexilayout_builder', 'relationships') ?: [];
     $provided_contexts = array_diff_key($provided_contexts, $static_contexts, $relationships);
     foreach ($provided_contexts as $machine_name => $context) {
       /** @var \Drupal\Core\Plugin\Context\ContextInterface $context */
