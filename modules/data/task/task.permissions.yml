@@ -4,9 +4,6 @@ administer tasks:
 administer task bundles:
   title: Administer task bundles
   restrict access: true
-administer task plans:
-  title: Administer task plans
-  restrict access: true
 view any tasks:
   title: View any tasks
 view assigned tasks:
