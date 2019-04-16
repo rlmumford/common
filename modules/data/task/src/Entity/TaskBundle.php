@@ -17,6 +17,7 @@ use Drupal\Core\Config\Entity\ConfigEntityBundleBase;
  *   id = "task_bundle",
  *   label = @Translation("Task Bundle"),
  *   handlers = {
+ *     "storage" = "Drupal\Core\Config\Entity\ConfigEntityStorage",
  *     "form" = {
  *       "add" = "Drupal\task\Form\TaskBundleForm",
  *       "edit" = "Drupal\task\Form\TaskBundleForm",
@@ -27,7 +28,7 @@ use Drupal\Core\Config\Entity\ConfigEntityBundleBase;
  *     },
  *   },
  *   admin_permission = "administer task bundles",
- *   config_prefix = "task_bundle",
+ *   config_prefix = "task.task_bundle",
  *   bundle_of = "task",
  *   entity_keys = {
  *     "id" = "id",
@@ -46,5 +47,8 @@ use Drupal\Core\Config\Entity\ConfigEntityBundleBase;
  */
 class TaskBundle extends ConfigEntityBundleBase {
 
+  public $id;
+
+  public $label;
 
 }

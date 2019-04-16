@@ -1,0 +1,10 @@
+task.task_bundle.*:
+  type: config_entity
+  label: 'Task Bundle'
+  mapping:
+    id:
+      type: string
+      label: 'Machine Name'
+    label:
+      type: string
+      label: 'Label'
