@@ -28,7 +28,7 @@ use Drupal\Core\Config\Entity\ConfigEntityBundleBase;
  *     },
  *   },
  *   admin_permission = "administer task bundles",
- *   config_prefix = "task.task_bundle",
+ *   config_prefix = "task_bundle",
  *   bundle_of = "task",
  *   entity_keys = {
  *     "id" = "id",

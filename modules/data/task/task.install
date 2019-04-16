@@ -17,7 +17,8 @@ function task_update_8002() {
     $updater->installEntityType(new ConfigEntityType([
       'id' => 'task_bundle',
       'label' => new TranslatableMarkup('Task Bundle'),
-      'config_prefix' => 'task.task_bundle',
+      'config_prefix' => 'task_bundle',
+      'provider' => 'task',
       'handlers' => [
         'storage' => \Drupal\Core\Config\Entity\ConfigEntityStorage::class,
         'form' => [
@@ -42,6 +43,7 @@ function task_update_8002() {
     ]));
 
     \Drupal::typedDataManager()->clearCachedDefinitions();
+    \Drupal::service('config.typed')->clearCachedDefinitions();
     $task_bundle_storage = $entity_type_manager->getStorage('task_bundle');
     if (!$task_bundle_storage->load('default')) {
       $task_bundle_storage->create([
@@ -52,64 +54,24 @@ function task_update_8002() {
 
     // Add the bundle field to task entities.
     if (!$updater->getFieldStorageDefinition('type', 'task')) {
-      $updater->installFieldStorageDefinition('type', 'task', 'task', BaseFieldDefinition::create('entity_reference')->setSetting('target_type', 'task_bundle')->setLabel(t('Bundle'))->setRequired(TRUE)->setReadOnly(TRUE));
+      $updater->installFieldStorageDefinition(
+        'type',
+        'task',
+        'task',
+        BaseFieldDefinition::create('entity_reference')
+          ->setSetting('target_type', 'task_bundle')
+          ->setLabel(t('Bundle'))
+          ->setRequired(TRUE)
+          ->setReadOnly(TRUE)
+      );
 
-      \Drupal::database()->update('task')->fields(['type' => 'default'])->execute();
+      \Drupal::database()
+        ->update('task')
+        ->fields(['type' => 'default'])
+        ->execute();
     }
   }
   catch (\Exception $e) {
     throw $e;
   }
 }
-
-/**
- * Install task plans.
- *
- * Temporarily removed.
- *
- * @throws \Drupal\Core\Entity\Exception\EntityTypeIdLengthException
- *
-function task_update_8003() {
-  try {
-    $entity_type_manager = \Drupal::entityTypeManager();
-    $updater = \Drupal::entityDefinitionUpdateManager();
-
-    // Task Plan.
-    $updater->installEntityType(new ConfigEntityType([
-      'id' => 'task_plan',
-      'label' => new TranslatableMarkup('Task Plan'),
-      'config_prefix' => 'task_plan',
-      'admin_permission' => 'administer task plans',
-      'entity_keys' => [
-        'id' => 'id',
-        'label' => 'label',
-      ],
-      'config_export' => [
-        'id' => 'id',
-        'code' => 'code',
-        'label' => 'label',
-        'bundle' => 'bundle',
-        'description' => 'description',
-        'instructions' => 'instructions',
-        'default_title' => 'default_title',
-        'steps' => 'steps',
-      ],
-    ]));
-    \Drupal::typedDataManager()->clearCachedDefinitions();
-
-    // Add The plan field to task entities.
-    if (!$updater->getFieldStorageDefinition('plan', 'task')) {
-      $updater->installFieldStorageDefinition(
-        'plan',
-        'task',
-        'task',
-        BaseFieldDefinition::create('entity_reference')
-          ->setSetting('target_type', 'task_plan')
-          ->setLabel(t('Plan'))
-      );
-    }
-  }
-  catch (\Exception $e) {
-    throw $e;
-  }
-}*/

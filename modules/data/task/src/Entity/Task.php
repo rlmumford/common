@@ -93,11 +93,6 @@ class Task extends ContentEntityBase implements TaskInterface {
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
 
-    $fields['plan'] = BaseFieldDefinition::create('entity_reference')
-      ->setSetting('target_type', 'task_plan')
-      ->setLabel('Plan')
-      ->setDisplayConfigurable('view', TRUE);
-
     $fields['title'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Title'))
       ->setSetting('max_length', 255)
