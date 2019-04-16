@@ -1,0 +1,34 @@
+<?php
+
+/**
+ * Move any relationship dependent on layout_builder.entity to entity.
+ */
+function flexilayout_builder_update_8703() {
+  $display_storage = \Drupal::entityTypeManager()->getStorage('entity_view_display');
+  foreach ($display_storage->loadMultiple() as $display) {
+    /** @var $display \Drupal\flexilayout_builder\Entity\FlexibleLayoutBuilderEntityViewDisplay */
+    $changed = FALSE;
+    $relationships = $display->getThirdPartySetting('flexilayout_builder', 'relationships', []);
+    if (empty($relationships)) {
+      continue;
+    }
+
+    foreach ($relationships as $rel_key => &$settings) {
+      if (empty($settings['settings']['context_mapping'])) {
+        continue;
+      }
+
+      foreach ($settings['settings']['context_mapping'] as $key => $context) {
+        if ($context == 'layout_builder.entity') {
+          $changed = TRUE;
+          $settings['settings']['context_mapping'][$key] = 'entity';
+        }
+      }
+    }
+
+    if ($changed) {
+      $display->setThirdPartySetting('flexilayout_builder', 'relationships', $relationships);
+      $display->save();
+    }
+  }
+}
