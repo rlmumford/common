@@ -1,0 +1,90 @@
+<?php
+
+use Drupal\commerce_order\Entity\Order;
+use Drupal\commerce_price\Price;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\BaseFieldDefinition;
+
+/**
+ * Implements hook_entity_base_field_info().
+ */
+function commerce_vat_helper_entity_base_field_info(EntityTypeInterface $entity_type) {
+  if ($entity_type->id() == 'commerce_order') {
+    $fields = [];
+    $fields['exvat_total_price'] = BaseFieldDefinition::create('commerce_price')
+      ->setLabel(t('Exc-VAT total price'))
+      ->setProvider('commerce_vat_helper')
+      ->setDescription(t('The total price of the order excluding vat.'))
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+    $fields['total_vat'] = BaseFieldDefinition::create('commerce_price')
+      ->setLabel(t('Total VAT applied'))
+      ->setDescription(t('The total VAT applied to the order.'))
+      ->setProvider('commerce_vat_helper')
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+    $fields['paid'] = BaseFieldDefinition::create('timestamp')
+      ->setLabel(t('Paid'))
+      ->setDescription(t('The time when the order paid for.'))
+      ->setProvider('commerce_vat_helper')
+      ->setDisplayOptions('view', [
+        'label' => 'above',
+        'type' => 'timestamp',
+        'weight' => 0,
+      ])
+      ->setDisplayConfigurable('view', TRUE);
+    return $fields;
+  }
+
+  return [];
+}
+
+/**
+ * Compute the exvat and total vat values.
+ *
+ * @param \Drupal\commerce_order\Entity\Order $order
+ */
+function commerce_vat_helper_compute_values(Order $order) {
+  if ($order->total_price->isEmpty()) {
+    $order->exvat_total_price->removeItem(0);
+    $order->total_vat->removeItem(0);
+    return;
+  }
+
+  /** @var \Drupal\commerce_order\OrderTotalSummaryInterface $summary_builder */
+  $summary_builder = \Drupal::service('commerce_order.order_total_summary');
+  $totals = $summary_builder->buildTotals($order);
+
+  /** @var \Drupal\commerce_price\Price $total_inc_vat */
+  $total_inc_vat = $totals['total'];
+  $vat_total = new Price('0.00', $total_inc_vat->getCurrencyCode());
+
+  foreach ($totals['adjustments'] as $adjustment) {
+    if ($adjustment['label'] == 'VAT') {
+      $vat_total = $vat_total->add($adjustment['total']);
+    }
+  }
+
+  $total_ex_vat = $total_inc_vat->subtract($vat_total);
+
+  $order->exvat_total_price = $total_ex_vat;
+  $order->total_vat = $vat_total;
+}
+
+/**
+ * Implements commerce_vat_helper_commerce_order_presave().
+ */
+function commerce_vat_helper_commerce_order_presave(Order $order) {
+  if ($original = $order->original) {
+    if ($order->total_price->number != $original->total_price->number) {
+      commerce_vat_helper_compute_values($order);
+    }
+    else if (!$order->total_price->isEmpty()
+      && $order->exvat_total_price->isEmpty()) {
+      commerce_vat_helper_compute_values($order);
+    }
+  }
+  else if (!$order->total_price->isEmpty()) {
+    commerce_vat_helper_compute_values($order);
+  }
+}

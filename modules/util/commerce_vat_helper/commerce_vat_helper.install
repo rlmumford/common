@@ -1,0 +1,42 @@
+<?php
+
+use Drupal\Core\Field\BaseFieldDefinition;
+
+/**
+ * Implements hook_install().
+ */
+function commerce_vat_helper_install() {
+  $fields = [];
+  $fields['exvat_total_price'] = BaseFieldDefinition::create('commerce_price')
+    ->setLabel(t('Exc-VAT total price'))
+    ->setProvider('commerce_vat_helper')
+    ->setDescription(t('The total price of the order excluding vat.'))
+    ->setDisplayConfigurable('form', TRUE)
+    ->setDisplayConfigurable('view', TRUE);
+  $fields['total_vat'] = BaseFieldDefinition::create('commerce_price')
+    ->setLabel(t('Total VAT applied'))
+    ->setDescription(t('The total VAT applied to the order.'))
+    ->setProvider('commerce_vat_helper')
+    ->setDisplayConfigurable('form', TRUE)
+    ->setDisplayConfigurable('view', TRUE);
+  $fields['paid'] = BaseFieldDefinition::create('timestamp')
+    ->setLabel(t('Paid'))
+    ->setDescription(t('The time when the order paid for.'))
+    ->setProvider('commerce_vat_helper')
+    ->setDisplayOptions('view', [
+      'label' => 'above',
+      'type' => 'timestamp',
+      'weight' => 0,
+    ])
+    ->setDisplayConfigurable('view', TRUE);
+
+  $update_manager = \Drupal::entityDefinitionUpdateManager();
+  foreach ($fields as $field_name => $definition) {
+    $update_manager->installFieldStorageDefinition(
+      $field_name,
+      'commerce_order',
+      $definition->getProvider(),
+      $definition
+    );
+  }
+}
