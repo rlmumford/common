@@ -1,0 +1,6 @@
+administer relationships:
+  title: Administer relationships
+  restrict access: true
+administer relationship types:
+  title: Administer relationship types
+  restrict access: true

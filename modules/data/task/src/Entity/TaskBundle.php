@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Rob
- * Date: 19/11/2018
- * Time: 11:32
- */
 
 namespace Drupal\task\Entity;
 

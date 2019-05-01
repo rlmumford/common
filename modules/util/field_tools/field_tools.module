@@ -1,10 +1,8 @@
 <?php
 
-use Drupal\field_tools\Plugin\Field\FieldWidget\AddressDefaultWidget;
-
 /**
- * Implements hook_field_widget_info_alter().
+ * Implements hook_entity_reference_selection_alter().
  */
-function field_tools_field_widget_info_alter(array &$info) {
-  $info['address_default']['class'] = AddressDefaultWidget::class;
+function field_tools_entity_reference_selection_alter(&$plugins) {
+  $plugins['default:user']['class'] = \Drupal\field_tools\Plugin\EntityReferenceSelection\UserSelection::class;
 }

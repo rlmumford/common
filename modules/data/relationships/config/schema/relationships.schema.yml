@@ -1,0 +1,53 @@
+relationships.relationship_type.*:
+  type: config_entity
+  label: 'Task Bundle'
+  mapping:
+    id:
+      type: string
+      label: 'Machine Name'
+    label:
+      type: string
+      label: 'Label'
+    forward_label:
+      type: string
+      label: 'Forward Label'
+    backward_label:
+      type: string
+      label: 'Backward Label'
+    tail_entity_type_id:
+      type: string
+      label: 'Tail Entity Type ID'
+    tail_label:
+      type: string
+      label: 'Tail Label'
+    tail_handler:
+      type: string
+      label: 'Tail Selection Handler'
+    tail_handler_settings:
+      type: map
+      label: 'Tail Selection Handler Settings'
+    tail_field:
+      type: string
+      label: 'Tail Field'
+    tail_field_label:
+      type: string
+      label: 'Tail Field Label'
+    head_entity_type_id:
+      type: string
+      label: 'Head Entity Type ID'
+    head_label:
+      type: string
+      label: 'Head Label'
+    head_handler:
+      type: string
+      label: 'Head Selection Handler'
+    head_handler_settings:
+      type: map
+      label: 'Head Selection Handler Settings'
+    head_field:
+      type: string
+      label: 'Head Field'
+    head_field_label:
+      type: string
+      label: 'Head Field Label'
+

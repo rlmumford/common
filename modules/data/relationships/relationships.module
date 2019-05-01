@@ -1,0 +1,47 @@
+<?php
+
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\BaseFieldDefinition;
+
+/**
+ * Implements hook_entity_base_field_info().
+ */
+function relationships_entity_base_field_info(EntityTypeInterface $entity_type) {
+  /** @var \Drupal\relationships\Entity\RelationshipType[] $types */
+  $types = \Drupal::entityTypeManager()
+    ->getStorage('relationship_type')
+    ->loadMultiple();
+  $fields = [];
+
+  foreach ($types as $relationship_type) {
+    if ($relationship_type->head_entity_type_id == $entity_type->id() && $relationship_type->head_field) {
+      $fields[$relationship_type->head_field] = BaseFieldDefinition::create('relationship')
+        ->setCardinality(BaseFieldDefinition::CARDINALITY_UNLIMITED)
+        ->setLabel($relationship_type->head_field_label)
+        ->setSetting('relationship_type', $relationship_type->id())
+        ->setSetting('relationship_end', 'head')
+        ->setSetting('target_type', $relationship_type->getEndEntityTypeId('tail'))
+        ->setSetting('handler', $relationship_type->getEndHandler('tail'))
+        ->setSetting('handler_settings', $relationship_type->getEndHandlerSettings('tail'))
+        ->setProvider('relationships')
+        ->setDisplayConfigurable('form', TRUE)
+        ->setComputed(TRUE);
+    }
+    if ($relationship_type->tail_entity_type_id == $entity_type->id() && $relationship_type->tail_field) {
+      $fields[$relationship_type->tail_field] = BaseFieldDefinition::create('relationship')
+        ->setCardinality(BaseFieldDefinition::CARDINALITY_UNLIMITED)
+        ->setLabel($relationship_type->tail_field_label)
+        ->setSetting('relationship_type', $relationship_type->id())
+        ->setSetting('relationship_end', 'tail')
+        ->setSetting('target_type', $relationship_type->getEndEntityTypeId('head'))
+        ->setSetting('handler', $relationship_type->getEndHandler('head'))
+        ->setSetting('handler_settings', $relationship_type->getEndHandlerSettings('head'))
+        ->setProvider('relationships')
+        ->setDisplayConfigurable('form', TRUE)
+        ->setComputed(TRUE);
+    }
+  }
+
+  return $fields;
+}

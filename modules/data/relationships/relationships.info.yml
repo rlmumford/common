@@ -1,0 +1,8 @@
+type: module
+name: Relationships
+description: 'Store relationships between entities.'
+core: 8.x
+
+dependencies:
+- user
+- entity

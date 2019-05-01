@@ -1,0 +1,6 @@
+entity.relationship_type.collection:
+  title: 'Relationship Types'
+  parent: system.admin_structure
+  description: 'Configure relationship types.'
+  weight: -10
+  route_name: entity.relationship_type.collection

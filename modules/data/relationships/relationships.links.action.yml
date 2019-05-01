@@ -1,0 +1,5 @@
+relationship_type_add:
+  route_name: entity.relationship_type.add_form
+  title: 'Add Relationship Type'
+  appears_on:
+    - entity.relationship_type.collection
