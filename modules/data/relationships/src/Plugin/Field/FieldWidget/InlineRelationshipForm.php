@@ -525,8 +525,10 @@ class InlineRelationshipForm extends WidgetBase implements ContainerFactoryPlugi
     }
 
     $widget_state = static::getWidgetState($form['#parents'], $items->getName(), $form_state);
-    foreach ($widget_state['entities'] as $entity) {
-      $items->appendItem($entity['relationship']);
+    if (!empty($widget_state['entities'])) {
+      foreach ($widget_state['entities'] as $entity) {
+        $items->appendItem($entity['relationship']);
+      }
     }
     $items->filterEmptyItems();
   }
