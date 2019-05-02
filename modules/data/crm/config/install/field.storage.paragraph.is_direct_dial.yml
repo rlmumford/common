@@ -4,7 +4,7 @@ dependencies:
   module:
     - paragraphs
 id: paragraph.is_direct_dial
-name: is_direct_dial
+field_name: is_direct_dial
 entity_type: paragraph
 type: boolean
 settings: {  }

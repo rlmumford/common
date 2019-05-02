@@ -4,7 +4,7 @@ dependencies:
   module:
     - paragraphs
 id: paragraph.email_notes
-name: email_notes
+field_name: email_notes
 entity_type: paragraph
 type: string_long
 settings:

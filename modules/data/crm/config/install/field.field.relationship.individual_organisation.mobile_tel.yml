@@ -7,7 +7,7 @@ dependencies:
   module:
     - telephone
 id: relationship.individual_organisation.mobile_tel
-name: mobile_tel
+field_name: mobile_tel
 entity_type: relationship
 bundle: individual_organisation
 label: 'Mobile Tel.'
@@ -17,4 +17,4 @@ translatable: false
 default_value: {  }
 default_value_callback: ''
 settings: {  }
-type: telephone
+field_type: telephone

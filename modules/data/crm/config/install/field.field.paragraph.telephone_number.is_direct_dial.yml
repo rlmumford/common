@@ -5,7 +5,7 @@ dependencies:
     - field.storage.paragraph.is_direct_dial
     - paragraphs.paragraphs_type.telephone_number
 id: paragraph.telephone_number.is_direct_dial
-name: is_direct_dial
+field_name: is_direct_dial
 entity_type: paragraph
 bundle: telephone_number
 label: 'Is Direct Dial'
@@ -19,4 +19,4 @@ default_value_callback: ''
 settings:
   on_label: 'Direct Dial'
   off_label: Switchboard
-type: boolean
+field_type: boolean

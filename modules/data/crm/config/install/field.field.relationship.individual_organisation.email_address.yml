@@ -5,7 +5,7 @@ dependencies:
     - field.storage.relationship.email_address
     - relationships.relationship_type.individual_organisation
 id: relationship.individual_organisation.email_address
-name: email_address
+field_name: email_address
 entity_type: relationship
 bundle: individual_organisation
 label: 'Email Address'
@@ -15,4 +15,4 @@ translatable: false
 default_value: {  }
 default_value_callback: ''
 settings: {  }
-type: email
+field_type: email

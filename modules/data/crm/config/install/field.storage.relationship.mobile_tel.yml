@@ -5,7 +5,7 @@ dependencies:
     - relationships
     - telephone
 id: relationship.mobile_tel
-name: mobile_tel
+field_name: mobile_tel
 entity_type: relationship
 type: telephone
 settings: {  }

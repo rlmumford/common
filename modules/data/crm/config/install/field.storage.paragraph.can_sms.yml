@@ -4,7 +4,7 @@ dependencies:
   module:
     - paragraphs
 id: paragraph.can_sms
-name: can_sms
+field_name: can_sms
 entity_type: paragraph
 type: boolean
 settings: {  }

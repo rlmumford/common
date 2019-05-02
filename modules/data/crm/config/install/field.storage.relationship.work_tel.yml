@@ -5,7 +5,7 @@ dependencies:
     - relationships
     - telephone
 id: relationship.work_tel
-name: work_tel
+field_name: work_tel
 entity_type: relationship
 type: telephone
 settings: {  }

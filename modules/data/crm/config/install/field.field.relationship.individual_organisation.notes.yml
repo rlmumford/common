@@ -5,7 +5,7 @@ dependencies:
     - field.storage.relationship.notes
     - relationships.relationship_type.individual_organisation
 id: relationship.individual_organisation.notes
-name: notes
+field_name: notes
 entity_type: relationship
 bundle: individual_organisation
 label: Notes
@@ -15,4 +15,4 @@ translatable: false
 default_value: {  }
 default_value_callback: ''
 settings: {  }
-type: string_long
+field_type: string_long

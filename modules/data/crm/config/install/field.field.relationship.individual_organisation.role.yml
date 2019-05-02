@@ -7,7 +7,7 @@ dependencies:
   module:
     - options
 id: relationship.individual_organisation.role
-name: role
+field_name: role
 entity_type: relationship
 bundle: individual_organisation
 label: Role
@@ -17,4 +17,4 @@ translatable: false
 default_value: {  }
 default_value_callback: ''
 settings: {  }
-type: list_string
+field_type: list_string

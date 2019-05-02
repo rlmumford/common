@@ -4,7 +4,7 @@ dependencies:
   module:
     - paragraphs
 id: paragraph.number_notes
-name: number_notes
+field_name: number_notes
 entity_type: paragraph
 type: string_long
 settings:

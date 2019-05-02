@@ -5,7 +5,7 @@ dependencies:
     - field.storage.paragraph.number_notes
     - paragraphs.paragraphs_type.telephone_number
 id: paragraph.telephone_number.number_notes
-name: number_notes
+field_name: number_notes
 entity_type: paragraph
 bundle: telephone_number
 label: Notes
@@ -15,4 +15,4 @@ translatable: false
 default_value: {  }
 default_value_callback: ''
 settings: {  }
-type: string_long
+field_type: string_long

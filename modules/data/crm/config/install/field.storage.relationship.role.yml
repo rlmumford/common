@@ -5,7 +5,7 @@ dependencies:
     - options
     - relationships
 id: relationship.role
-name: role
+field_name: role
 entity_type: relationship
 type: list_string
 settings:

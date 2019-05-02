@@ -5,7 +5,7 @@ dependencies:
     - field.storage.paragraph.email_address
     - paragraphs.paragraphs_type.email_address
 id: paragraph.email_address.email_address
-name: email_address
+field_name: email_address
 entity_type: paragraph
 bundle: email_address
 label: 'Email Address'
@@ -15,4 +15,4 @@ translatable: false
 default_value: {  }
 default_value_callback: ''
 settings: {  }
-type: email
+field_type: email

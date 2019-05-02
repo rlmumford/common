@@ -7,7 +7,7 @@ dependencies:
   module:
     - telephone
 id: relationship.individual_organisation.work_tel
-name: work_tel
+field_name: work_tel
 entity_type: relationship
 bundle: individual_organisation
 label: 'Work Tel.'
@@ -17,4 +17,4 @@ translatable: false
 default_value: {  }
 default_value_callback: ''
 settings: {  }
-type: telephone
+field_type: telephone

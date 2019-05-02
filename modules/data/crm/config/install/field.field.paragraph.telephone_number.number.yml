@@ -7,7 +7,7 @@ dependencies:
   module:
     - telephone
 id: paragraph.telephone_number.number
-name: number
+field_name: number
 entity_type: paragraph
 bundle: telephone_number
 label: Number
@@ -17,4 +17,4 @@ translatable: false
 default_value: {  }
 default_value_callback: ''
 settings: {  }
-type: telephone
+field_type: telephone

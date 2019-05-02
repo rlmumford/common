@@ -5,7 +5,7 @@ dependencies:
     - field.storage.paragraph.email_notes
     - paragraphs.paragraphs_type.email_address
 id: paragraph.email_address.email_notes
-name: email_notes
+field_name: email_notes
 entity_type: paragraph
 bundle: email_address
 label: 'Email Notes'
@@ -15,4 +15,4 @@ translatable: false
 default_value: {  }
 default_value_callback: ''
 settings: {  }
-type: string_long
+field_type: string_long

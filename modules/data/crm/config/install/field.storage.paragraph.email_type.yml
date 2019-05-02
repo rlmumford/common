@@ -4,8 +4,8 @@ dependencies:
   module:
     - options
     - paragraphs
-id: paragraph.email
-name: email
+id: paragraph.email_type
+field_name: email_type
 entity_type: paragraph
 type: list_string
 settings:

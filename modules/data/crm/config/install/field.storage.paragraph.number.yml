@@ -5,7 +5,7 @@ dependencies:
     - paragraphs
     - telephone
 id: paragraph.number
-name: number
+field_name: number
 entity_type: paragraph
 type: telephone
 settings: {  }

@@ -218,6 +218,17 @@ class RelationshipTypeForm extends BundleEntityFormBase {
       ];
     }
 
+    $element['field'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Field Name'),
+      '#default_value' => $settings['field'],
+    ];
+    $element['field_label'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Field Label'),
+      '#default_value' => $settings['field_label'],
+    ];
+
     return $element;
   }
 

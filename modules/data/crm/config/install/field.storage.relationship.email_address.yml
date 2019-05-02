@@ -4,7 +4,7 @@ dependencies:
   module:
     - relationships
 id: relationship.email_address
-name: email_address
+field_name: email_address
 entity_type: relationship
 type: email
 settings: {  }

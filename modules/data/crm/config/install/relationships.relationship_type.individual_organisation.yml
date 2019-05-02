@@ -19,7 +19,8 @@ tail_handler_settings:
   auto_create: 1
   auto_create_roles:
     individual: individual
-tail_field_label: Organisations
+tail_field: organisations
+tail_field_label: 'Organisations'
 head_entity_type_id: user
 head_label: Organisation
 head_handler: 'default:user'
@@ -34,4 +35,5 @@ head_handler_settings:
   auto_create: 1
   auto_create_roles:
     organisation: organisation
-head_field: Individuals
+head_field: individuals
+head_field_label: 'Individuals'

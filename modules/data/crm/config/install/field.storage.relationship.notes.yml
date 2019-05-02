@@ -4,7 +4,7 @@ dependencies:
   module:
     - relationships
 id: relationship.notes
-name: notes
+field_name: notes
 entity_type: relationship
 type: string_long
 settings:

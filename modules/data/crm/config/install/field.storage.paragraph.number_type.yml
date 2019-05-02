@@ -5,7 +5,7 @@ dependencies:
     - options
     - paragraphs
 id: paragraph.number_type
-name: number_type
+field_name: number_type
 entity_type: paragraph
 type: list_string
 settings:
