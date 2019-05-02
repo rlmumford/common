@@ -1,0 +1,32 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.number_type
+name: number_type
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: home
+      label: Home
+    -
+      value: work
+      label: Work
+    -
+      value: mobile
+      label: Mobile
+    -
+      value: other
+      label: Other
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

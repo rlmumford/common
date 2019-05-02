@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.relationship.role_title
+    - relationship.relationship_type.individual_organisation
+id: relationship.individual_organisation.role_title
+field_name: role_title
+entity_type: relationship
+bundle: individual_organisation
+label: 'Role Title'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

@@ -1,0 +1,33 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.profile.telephone_numbers
+    - paragraphs.paragraphs_type.telephone_number
+    - profile.type.organisation
+  module:
+    - entity_reference_revisions
+id: profile.organisation.telephone_numbers
+field_name: telephone_numbers
+entity_type: profile
+bundle: organisation
+label: 'Telephone Numbers'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:paragraph'
+  handler_settings:
+    negate: 0
+    target_bundles:
+      telephone_number: telephone_number
+    target_bundles_drag_drop:
+      email_address:
+        weight: 3
+        enabled: false
+      telephone_number:
+        enabled: true
+        weight: 4
+field_type: entity_reference_revisions

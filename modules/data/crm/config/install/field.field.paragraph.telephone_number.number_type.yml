@@ -1,0 +1,20 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.number_type
+    - paragraphs.paragraphs_type.telephone_number
+  module:
+    - options
+id: paragraph.telephone_number.number_type
+name: number_type
+entity_type: paragraph
+bundle: telephone_number
+label: Type
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+type: list_string

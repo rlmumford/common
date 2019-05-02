@@ -1,0 +1,20 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.relationship.work_tel
+    - relationships.relationship_type.individual_organisation
+  module:
+    - telephone
+id: relationship.individual_organisation.work_tel
+name: work_tel
+entity_type: relationship
+bundle: individual_organisation
+label: 'Work Tel.'
+description: ''
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+type: telephone

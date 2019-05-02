@@ -14,7 +14,7 @@
         "webflo/drupal-finder": "^1.0.0",
         "webmozart/path-util": "^2.3",
         "drupal/range": "1.x-dev",
-        "drupal/entity": "1.x-dev",
+        "drupal/entity": "^1.0-rc2",
         "drupal/flexiform": "1.x-dev",
         "drupal/block_class": "1.x-dev",
         "aws/aws-sdk-php": "3.*"

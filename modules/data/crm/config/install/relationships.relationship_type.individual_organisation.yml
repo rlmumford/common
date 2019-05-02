@@ -1,0 +1,37 @@
+langcode: en
+status: true
+dependencies: {  }
+id: individual_organisation
+label: 'Individual - Organisation'
+forward_label: 'is a member of'
+backward_label: 'has as a member'
+tail_entity_type_id: user
+tail_label: Individual
+tail_handler: 'default:user'
+tail_handler_settings:
+  include_anonymous: 1
+  filter:
+    type: role
+    role:
+      individual: individual
+  sort:
+    field: _none
+  auto_create: 1
+  auto_create_roles:
+    individual: individual
+tail_field_label: Organisations
+head_entity_type_id: user
+head_label: Organisation
+head_handler: 'default:user'
+head_handler_settings:
+  include_anonymous: 1
+  filter:
+    type: role
+    role:
+      organisation: organisation
+  sort:
+    field: _none
+  auto_create: 1
+  auto_create_roles:
+    organisation: organisation
+head_field: Individuals

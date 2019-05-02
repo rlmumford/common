@@ -1,0 +1,33 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.profile.email_addresses
+    - paragraphs.paragraphs_type.email_address
+    - profile.type.organisation
+  module:
+    - entity_reference_revisions
+id: profile.organisation.email_addresses
+field_name: email_addresses
+entity_type: profile
+bundle: organisation
+label: 'Email Addresses'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:paragraph'
+  handler_settings:
+    negate: 0
+    target_bundles:
+      email_address: email_address
+    target_bundles_drag_drop:
+      email_address:
+        weight: 3
+        enabled: true
+      telephone_number:
+        enabled: false
+        weight: 4
+field_type: entity_reference_revisions

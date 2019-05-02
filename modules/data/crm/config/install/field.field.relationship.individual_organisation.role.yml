@@ -1,0 +1,20 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.relationship.role
+    - relationships.relationship_type.individual_organisation
+  module:
+    - options
+id: relationship.individual_organisation.role
+name: role
+entity_type: relationship
+bundle: individual_organisation
+label: Role
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+type: list_string

@@ -1,0 +1,7 @@
+langcode: en
+status: true
+dependencies: {  }
+id: telephone_number
+label: 'Telephone Number'
+icon_description: ''
+behavior_plugins: {  }

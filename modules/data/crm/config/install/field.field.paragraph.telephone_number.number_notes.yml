@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.number_notes
+    - paragraphs.paragraphs_type.telephone_number
+id: paragraph.telephone_number.number_notes
+name: number_notes
+entity_type: paragraph
+bundle: telephone_number
+label: Notes
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+type: string_long

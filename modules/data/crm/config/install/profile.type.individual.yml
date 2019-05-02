@@ -1,0 +1,12 @@
+langcode: en
+status: true
+dependencies: {  }
+id: individual
+label: Individual
+registration: false
+multiple: false
+roles:
+  individual: individual
+weight: 0
+use_revisions: true
+description: ''

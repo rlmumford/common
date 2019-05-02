@@ -1,0 +1,7 @@
+langcode: en
+status: true
+dependencies: {  }
+id: email_address
+label: 'Email Address'
+icon_description: ''
+behavior_plugins: {  }

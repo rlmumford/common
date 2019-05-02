@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.is_direct_dial
+    - paragraphs.paragraphs_type.telephone_number
+id: paragraph.telephone_number.is_direct_dial
+name: is_direct_dial
+entity_type: paragraph
+bundle: telephone_number
+label: 'Is Direct Dial'
+description: ''
+required: false
+translatable: false
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'Direct Dial'
+  off_label: Switchboard
+type: boolean

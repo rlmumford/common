@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.email_address
+    - paragraphs.paragraphs_type.email_address
+id: paragraph.email_address.email_address
+name: email_address
+entity_type: paragraph
+bundle: email_address
+label: 'Email Address'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+type: email

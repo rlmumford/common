@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - user
+third_party_settings: {}
+id: user.edit_organisation
+label: 'Edit Organisation'
+targetEntityType: user
+cache: true

@@ -1,0 +1,12 @@
+langcode: en
+status: true
+dependencies: {  }
+id: organisation
+label: Organisation
+registration: false
+multiple: false
+roles:
+  organisation: organisation
+weight: 0
+use_revisions: true
+description: ''

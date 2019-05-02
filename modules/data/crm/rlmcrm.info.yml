@@ -1,0 +1,11 @@
+type: module
+core: 8.x
+name: CRM
+description: "Common core to RLMumford CRM projects"
+package: RLMumford
+
+dependencies:
+- profile
+- name
+- select_or_other
+- paragraphs

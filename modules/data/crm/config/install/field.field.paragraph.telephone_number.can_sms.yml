@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.can_sms
+    - paragraphs.paragraphs_type.telephone_number
+id: paragraph.telephone_number.can_sms
+name: can_sms
+entity_type: paragraph
+bundle: telephone_number
+label: 'Can receive SMS?'
+description: ''
+required: false
+translatable: false
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'Yes'
+  off_label: 'No'
+type: boolean
