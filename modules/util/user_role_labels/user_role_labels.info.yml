@@ -1,0 +1,7 @@
+type: module
+name: 'User Role Labels'
+description: 'Tools to allow user roles to define different labels for users.'
+core: 8.x
+
+dependencies:
+- user

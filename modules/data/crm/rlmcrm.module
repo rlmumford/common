@@ -1,6 +1,6 @@
 <?php
 
-use Drupal\Core\Entity\ContentEntityForm;
+use Drupal\rlmcrm\Form\UserRoleAddForm;
 
 /**
  * Implements hook_entity_type_build()
@@ -9,9 +9,9 @@ use Drupal\Core\Entity\ContentEntityForm;
  */
 function rlmcrm_entity_type_build(&$entity_types) {
   if ($entity_type = $entity_types['user']) {
-    $entity_type->setFormClass('add_individual', ContentEntityForm::class);
-    $entity_type->setFormClass('add_organisation', ContentEntityForm::class);
-    $entity_type->setFormClass('edit_individual', ContentEntityForm::class);
-    $entity_type->setFormClass('edit_organisation', ContentEntityForm::class);
+    $entity_type->setFormClass('add_individual', UserRoleAddForm::class);
+    $entity_type->setFormClass('add_organisation', UserRoleAddForm::class);
+    $entity_type->setFormClass('edit_individual', UserRoleAddForm::class);
+    $entity_type->setFormClass('edit_organisation', UserRoleAddForm::class);
   }
 }

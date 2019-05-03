@@ -1,0 +1,282 @@
+<?php
+
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\profile\Entity\ProfileInterface;
+use Drupal\user\RoleInterface;
+use Drupal\user\UserInterface;
+
+/**
+ * Generate the role label for a given role and user.
+ *
+ * @param \Drupal\user\RoleInterface $role
+ * @param \Drupal\user\UserInterface $user
+ *
+ * @return string
+ */
+function user_role_labels_role_label(RoleInterface $role, UserInterface $user) {
+  $name = NULL;
+  if ($callback = $role->getThirdPartySetting('user_role_labels', 'label_callback', FALSE)) {
+    $name = $callback($user);
+  }
+  else if ($template = $role->getThirdPartySetting('user_role_labels', 'label_template', FALSE)) {
+    $name = \Drupal::token()->replace($template, ['user' => $user]);
+  }
+
+  return $name;
+}
+
+/**
+ * Implements hook_entity_base_field_info().
+ */
+function user_role_labels_entity_base_field_info(EntityTypeInterface $entity_type) {
+  if ($entity_type->id() != 'user') {
+    return [];
+  }
+
+  /** @var \Drupal\user\Entity\Role[] $roles */
+  $roles = \Drupal::entityTypeManager()->getStorage('user_role')->loadMultiple();
+  $fields = [];
+  foreach ($roles as $role) {
+    if (!$role->getThirdPartySetting('user_role_labels', 'label_enabled', FALSE)) {
+      continue;
+    }
+
+    $fields['role_label_'.$role->id()] = BaseFieldDefinition::create('string')
+      ->setCardinality(1)
+      ->setLabel(new TranslatableMarkup('@role Label', ['@role' => $role->label()]))
+      ->setProvider('user_role_labels')
+      ->setDisplayConfigurable('view', TRUE);
+  }
+  return $fields;
+}
+
+/**
+ * Implements hook_user_presave().
+ */
+function user_role_labels_user_presave(EntityInterface $user) {
+  /** @var UserInterface $user */
+  $role_storage = \Drupal::entityTypeManager()->getStorage('user_role');
+  foreach ($role_storage->loadMultiple($user->getRoles(FALSE)) as $role) {
+    /** @var \Drupal\user\Entity\Role $role */
+    if (!$role->getThirdPartySetting('user_role_labels', 'label_enabled', FALSE)) {
+      continue;
+    }
+
+    $field_name = 'role_label_'.$role->id();
+    $user->{$field_name} = user_role_labels_role_label($role, $user);
+  }
+}
+
+/**
+ * Implements hook_user_role_presave().
+ */
+function user_role_labels_user_role_presave(RoleInterface $role) {
+  $has_field = FALSE;
+  $needs_field = FALSE;
+  if ($role->getThirdPartySetting('user_role_labels', 'label_enabled', FALSE)) {
+    $needs_field = TRUE;
+  }
+
+  if ($role->original && $role->original->geThirdPartySetting('user_role_labels', 'label_enabled', FALSE)) {
+    $has_field = TRUE;
+  }
+
+  $update_manager = \Drupal::entityDefinitionUpdateManager();
+  if ($needs_field && !$has_field) {
+    $definition = BaseFieldDefinition::create('string')
+      ->setCardinality(1)
+      ->setLabel(new TranslatableMarkup('@role Label', ['@role' => $role->label()]))
+      ->setProvider('user_role_labels')
+      ->setDisplayConfigurable('view', TRUE);
+
+    $update_manager->installFieldStorageDefinition(
+      'role_label_'.$role->id(),
+      'user',
+      'user_role_labels',
+      $definition
+    );
+  }
+
+  if (!$needs_field && $has_field) {
+    $definition = BaseFieldDefinition::create('string')
+      ->setCardinality(1)
+      ->setLabel(new TranslatableMarkup('@role Label', ['@role' => $role->label()]))
+      ->setName('role_label_'.$role->id())
+      ->setProvider('user_role_labels')
+      ->setTargetEntityTypeId('user')
+      ->setDisplayConfigurable('view', TRUE);
+    $update_manager->uninstallFieldStorageDefinition($definition);
+  }
+}
+
+/**
+ * Implements hook_user_role_delete().
+ */
+function user_role_labels_user_role_delete(RoleInterface $role) {
+  if ($role->getThirdPartySetting('user_role_labels', 'label_enabled', FALSE)) {
+    $definition = BaseFieldDefinition::create('string')
+      ->setCardinality(1)
+      ->setLabel(new TranslatableMarkup('@role Label', ['@role' => $role->label()]))
+      ->setName('role_label_'.$role->id())
+      ->setProvider('user_role_labels')
+      ->setTargetEntityTypeId('user')
+      ->setDisplayConfigurable('view', TRUE);
+    \Drupal::entityDefinitionUpdateManager()->uninstallFieldStorageDefinition($definition);
+  }
+}
+
+/**
+ * Implements hook_profile_insert();
+ */
+function user_role_labels_profile_insert(ProfileInterface $profile) {
+  _user_role_labels_profile_post_save($profile);
+}
+
+/**
+ * Implements hook_profile_update();
+ */
+function user_role_labels_profile_update(ProfileInterface $profile) {
+  _user_role_labels_profile_post_save($profile);
+}
+
+/**
+ * Handle potential re-calculation of role labels.
+ *
+ * @param \Drupal\profile\Entity\ProfileInterface $profile
+ */
+function _user_role_labels_profile_post_save(ProfileInterface $profile) {
+  /** @var UserInterface $user */
+  if (!($user = $profile->getOwner())) {
+    return;
+  }
+
+  $needs_resave = FALSE;
+  /** @var \Drupal\user\RoleInterface[] $roles */
+  $roles = \Drupal::entityTypeManager()->getStorage('user_role')->loadMultiple(
+    $user->getRoles(TRUE)
+  );
+  foreach ($roles as $role) {
+    if (!$role->getThirdPartySetting('user_role_labels', 'label_enabled', FALSE)) {
+      continue;
+    }
+
+    $regen_settings = $role->getThirdPartySetting('user_role_labels', 'label_regen', []);
+    if (empty($regen_settings['profile_triggers']) || !in_array($profile->bundle(), array_filter($regen_settings['profile_triggers']))) {
+      $needs_resave = TRUE;
+    }
+  }
+
+  if ($needs_resave) {
+    $user->save();
+  }
+}
+
+/**
+ * Implements hook_user_format_name_alter().
+ *
+ * This hook allows roles to define how the user label should be rendered.
+ *
+ * @param $name
+ * @param \Drupal\Core\Session\AccountInterface $account
+ *
+ * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+ * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+ */
+function user_role_labels_user_format_name_alter(&$name, AccountInterface $account) {
+  if (!($account instanceof UserInterface)) {
+    /** @var UserInterface $account */
+    $account = \Drupal::entityTypeManager()->getStorage('user')->load($account->id());
+  }
+
+  $role_ids = $account->getRoles(FALSE);
+  /** @var \Drupal\user\Entity\Role[] $roles */
+  $roles = \Drupal::entityTypeManager()->getStorage('user_role')->loadMultiple($role_ids);
+
+  uasort($roles, function($role_a, $role_b) {
+    /** @var \Drupal\user\Entity\Role $role_a */
+    /** @var \Drupal\user\Entity\Role $role_b */
+    $role_a_lw = $role_a->getThirdPartySetting('user_role_labels', 'label_priority', 0);
+    $role_b_lw = $role_b->getThirdPartySetting('user_role_labels', 'label_priority', 0);
+
+    if ($role_a_lw == $role_b_lw) {
+      return 0;
+    }
+    return ($role_a_lw > $role_b_lw) ? -1 : 1;
+  });
+
+  foreach ($roles as $role) {
+    if ($role_label = user_role_labels_role_label($role, $account)) {
+      $name = $role_label;
+    }
+  }
+}
+
+/**
+ * Implements hook_form_user_role_form_alter().
+ */
+function user_role_labels_form_user_role_form_alter(&$form, FormStateInterface $form_state) {
+  /** @var \Drupal\user\Entity\Role $role */
+  $role = $form_state->getFormObject()->getEntity();
+  $settings = $role->getThirdPartySettings('user_role_labels');
+
+  $form['user_label'] = [
+    '#type' => 'details',
+    '#title' => new TranslatableMarkup('Label Settings'),
+    '#description' => new TranslatableMarkup('These settings allow this role to alter how the label is generated'),
+    '#parents' => ['third_party_settings', 'user_role_labels'],
+    '#tree' => TRUE,
+  ];
+  $form['user_label']['label_enabled'] = [
+    '#type' => 'checkbox',
+    '#title' => new TranslatableMarkup('Has role label'),
+    '#description' => new TranslatableMarkup('This role has its out label settings'),
+    '#default_value' => $settings['label_enabled'],
+  ];
+  $form['user_label']['label_priority'] = [
+    '#type' => 'textfield',
+    '#title' => new TranslatableMarkup('Priority'),
+    '#description' => new TranslatableMarkup('What priority should this role take in determining the global user label. The higher the priority the more likely it is to be used.'),
+    '#size' => 5,
+    '#default_value' => $settings['label_priority'],
+  ];
+  $form['user_label']['label_template'] = [
+    '#type' => 'textfield',
+    '#title' => new TranslatableMarkup('Template'),
+    '#description' => new TranslatableMarkup('A template for the label, you can use user tokens'),
+    '#default_value' => $settings['label_template'],
+  ];
+  $form['user_label']['label_callback'] = [
+    '#type' => 'textfield',
+    '#title' => new TranslatableMarkup('Callback'),
+    '#description' => new TranslatableMarkup('A callback function to generate the label. If both a callback and template are specified, the callback takes priority.'),
+    '#default_value' => $settings['label_callback'],
+  ];
+
+
+  $form['user_label']['label_regen'] = [
+    '#type' => 'fieldset',
+    '#title' => new TranslatableMarkup('Label Regeneration'),
+    '#description' => new TranslatableMarkup('Settings managing when labels should be regenerated.'),
+  ];
+  $label_regen_settings = $role->getThirdPartySetting('user_role_labels', 'label_regen', []);
+  if (\Drupal::moduleHandler()->moduleExists('profile')) {
+    $profile_bundles = \Drupal::service('entity_type.bundle.info')->getBundleInfo('profile');
+    $profile_options = [];
+    foreach ($profile_bundles as $bundle => $info) {
+      $profile_options[$bundle] = $info['label'];
+    }
+
+    $form['user_label']['label_regen']['profile_triggers'] = [
+      '#type' => 'checkboxes',
+      '#title' => new TranslatableMarkup('Profile Types'),
+      '#description' => new TranslatableMarkup('Recalculate role labels for this role when a profile is saved.'),
+      '#options' => $profile_options,
+      '#default_value' => !empty($label_regen_settings['profile_triggers']) ? $label_regen_settings['profile_triggers'] : [],
+    ];
+  }
+}
