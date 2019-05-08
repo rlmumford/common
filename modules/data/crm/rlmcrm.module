@@ -1,6 +1,8 @@
 <?php
 
+use Drupal\Core\Session\AccountInterface;
 use Drupal\rlmcrm\Form\UserRoleAddForm;
+use Drupal\user\RoleInterface;
 
 /**
  * Implements hook_entity_type_build()
@@ -14,4 +16,44 @@ function rlmcrm_entity_type_build(&$entity_types) {
     $entity_type->setFormClass('edit_individual', UserRoleAddForm::class);
     $entity_type->setFormClass('edit_organisation', UserRoleAddForm::class);
   }
+}
+
+/**
+ * Label callback to get the individual label.
+ *
+ * @param \Drupal\Core\Session\AccountInterface $user
+ * @param \Drupal\user\RoleInterface $role
+ *
+ * @return string
+ */
+function rlmcrm_user_role_individual_label(AccountInterface $user, RoleInterface $role) {
+  /** @var \Drupal\profile\ProfileStorageInterface $profile_storage */
+  $profile_storage = \Drupal::entityTypeManager()->getStorage('profile');
+  if ($user->id() && ($profile = $profile_storage->loadDefaultByUser($user,'individual'))) {
+    return implode(" ", array_filter([
+      $profile->name->title,
+      $profile->name->given,
+      $profile->name->family,
+    ]));
+  }
+
+  return NULL;
+}
+
+/**
+ * Label callback to get organisation label.
+ *
+ * @param \Drupal\Core\Session\AccountInterface $user
+ * @param \Drupal\user\RoleInterface $role
+ *
+ * @return string
+ */
+function rlmcrm_user_role_organisation_label(AccountInterface $user, RoleInterface $role) {
+  /** @var \Drupal\profile\ProfileStorageInterface $profile_storage */
+  $profile_storage = \Drupal::entityTypeManager()->getStorage('profile');
+  if ($user->id() && $profile = $profile_storage->loadDefaultByUser($user,'organisation')) {
+    return $profile->organisation_name->value;
+  }
+
+  return NULL;
 }

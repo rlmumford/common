@@ -34,8 +34,8 @@ class UserRoleLabelsSelection extends UserSelection {
       $query->condition('uid', 0, '<>');
     }
 
-    $label_condition_group = $query->orConditionGroup();
     if (isset($match)) {
+      $label_condition_group = $query->orConditionGroup();
       $label_condition_group->condition('name', $match, $match_operator);
 
       /** @var \Drupal\user\RoleInterface $role */
@@ -50,8 +50,8 @@ class UserRoleLabelsSelection extends UserSelection {
 
         $label_condition_group->condition('role_label_'.$role->id(), $match, $match_operator);
       }
+      $query->condition($label_condition_group);
     }
-    $query->condition($label_condition_group);
 
     // Filter by role.
     if (!empty($configuration['filter']['role'])) {

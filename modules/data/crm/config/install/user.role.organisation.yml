@@ -1,6 +1,17 @@
 langcode: en
 status: true
-dependencies: {  }
+dependencies:
+  module:
+    - user_role_labels
+third_party_settings:
+  user_role_labels:
+    label_enabled: 1
+    label_priority: '0'
+    label_template: ''
+    label_callback: rlmcrm_user_role_organisation_label
+    label_regen:
+      profile_triggers:
+        organisation: organisation
 id: organisation
 label: Organisation
 weight: 5

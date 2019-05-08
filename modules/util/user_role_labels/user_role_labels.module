@@ -21,7 +21,7 @@ use Drupal\user\UserInterface;
 function user_role_labels_role_label(RoleInterface $role, UserInterface $user) {
   $name = NULL;
   if ($callback = $role->getThirdPartySetting('user_role_labels', 'label_callback', FALSE)) {
-    $name = $callback($user);
+    $name = $callback($user, $role);
   }
   else if ($template = $role->getThirdPartySetting('user_role_labels', 'label_template', FALSE)) {
     $name = \Drupal::token()->replace($template, ['user' => $user]);
@@ -82,7 +82,7 @@ function user_role_labels_user_role_presave(RoleInterface $role) {
     $needs_field = TRUE;
   }
 
-  if ($role->original && $role->original->geThirdPartySetting('user_role_labels', 'label_enabled', FALSE)) {
+  if ($role->original && $role->original->getThirdPartySetting('user_role_labels', 'label_enabled', FALSE)) {
     $has_field = TRUE;
   }
 
@@ -223,6 +223,12 @@ function user_role_labels_form_user_role_form_alter(&$form, FormStateInterface $
   /** @var \Drupal\user\Entity\Role $role */
   $role = $form_state->getFormObject()->getEntity();
   $settings = $role->getThirdPartySettings('user_role_labels');
+  $settings += [
+    'label_priority' => 0,
+    'label_enabled' => FALSE,
+    'label_template' => NULL,
+    'label_callback' => NULL,
+  ];
 
   $form['user_label'] = [
     '#type' => 'details',

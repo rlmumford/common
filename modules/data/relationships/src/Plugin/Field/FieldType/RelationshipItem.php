@@ -160,11 +160,21 @@ class RelationshipItem extends EntityReferenceItem {
     }
     else {
       parent::setValue($values, FALSE);
-    }
 
-    // Notify the parent if necessary.
-    if ($notify && $this->parent) {
-      $this->parent->onChange($this->getName());
+      // Support setting the field item with only one property, but make sure
+      // values stay in sync if only property is passed.
+      // NULL is a valid value, so we use array_key_exists().
+      if (is_array($values) && array_key_exists('relationship_id', $values) && !isset($values['relationship'])) {
+        $this->onChange('relationship_id', FALSE);
+      }
+      elseif (is_array($values) && !array_key_exists('relationship_id', $values) && isset($values['relationship'])) {
+        $this->onChange('relationship', FALSE);
+      }
+
+      // Notify the parent if necessary.
+      if ($notify && $this->parent) {
+        $this->parent->onChange($this->getName());
+      }
     }
   }
 
