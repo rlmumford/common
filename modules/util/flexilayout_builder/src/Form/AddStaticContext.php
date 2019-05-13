@@ -3,12 +3,15 @@
 namespace Drupal\flexilayout_builder\Form;
 
 use Drupal\Core\Ajax\AjaxFormHelperTrait;
+use Drupal\Core\Config\Entity\ThirdPartySettingsInterface;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\layout_builder\Controller\LayoutRebuildTrait;
 use Drupal\layout_builder\DefaultsSectionStorageInterface;
 use Drupal\layout_builder\LayoutTempstoreRepositoryInterface;
+use Drupal\layout_builder\SectionStorageInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -77,7 +80,12 @@ class AddStaticContext extends FormBase {
    * @return array
    *   The form structure.
    */
-  public function buildForm(array $form, FormStateInterface $form_state, DefaultsSectionStorageInterface $section_storage = NULL, $data_type = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, SectionStorageInterface $section_storage = NULL, $data_type = NULL) {
+    if (!$section_storage instanceof ThirdPartySettingsInterface) {
+      \Drupal::messenger()->addError(new TranslatableMarkup('Only Section Storages with third party settings can have configurable contexts.'));
+      return $form;
+    }
+
     $this->sectionStorage = $section_storage;
 
     $form['data_type'] = [

@@ -4,6 +4,7 @@ use Drupal\commerce_order\Entity\Order;
 use Drupal\commerce_price\Price;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\views\ViewExecutable;
 
 /**
  * Implements hook_entity_base_field_info().
@@ -86,5 +87,28 @@ function commerce_vat_helper_commerce_order_presave(Order $order) {
   }
   else if (!$order->total_price->isEmpty()) {
     commerce_vat_helper_compute_values($order);
+  }
+}
+
+/**
+ * Implements hook_views_pre_render();
+ *
+ * @param $view
+ */
+function commerce_vat_helper_views_pre_render(ViewExecutable $view) {
+  if ($view->storage->id() != 'commerce_vat__orders_vat' || $view->current_display != 'attachment_1') {
+    return;
+  }
+
+  $value_fields = [
+    'commerce_order_commerce_payment_total_price__number',
+    'commerce_order_commerce_payment_exvat_total_price__number',
+    'commerce_order_commerce_payment_total_vat__number',
+    'commerce_payment_amount__number',
+  ];
+  foreach ($view->result as $row) {
+    foreach ($value_fields as $field) {
+      $row->{$field} = number_format($row->{$field}, 2, '.', '');
+    }
   }
 }

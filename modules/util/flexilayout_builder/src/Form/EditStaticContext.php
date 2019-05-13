@@ -3,15 +3,16 @@
 namespace Drupal\flexilayout_builder\Form;
 
 use Drupal\Core\Ajax\AjaxFormHelperTrait;
+use Drupal\Core\Config\Entity\ThirdPartySettingsInterface;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ctools\Context\EntityLazyLoadContext;
-use Drupal\flexilayout_builder\Plugin\SectionStorage\DisplayWideConfigSectionStorageInterface;
 use Drupal\layout_builder\Controller\LayoutRebuildTrait;
-use Drupal\layout_builder\DefaultsSectionStorageInterface;
 use Drupal\layout_builder\LayoutTempstoreRepositoryInterface;
+use Drupal\layout_builder\SectionStorageInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -80,7 +81,12 @@ class EditStaticContext extends FormBase {
    * @return array
    *   The form structure.
    */
-  public function buildForm(array $form, FormStateInterface $form_state, DefaultsSectionStorageInterface $section_storage = NULL, $machine_name = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, SectionStorageInterface $section_storage = NULL, $machine_name = NULL) {
+    if (!$section_storage instanceof ThirdPartySettingsInterface) {
+      \Drupal::messenger()->addError(new TranslatableMarkup('Only Section Storages with third party settings can have configurable contexts.'));
+      return $form;
+    }
+
     $this->sectionStorage = $section_storage;
     $static_contexts = $this->sectionStorage->getThirdPartySetting('flexilayout_builder', 'static_context');
     $context = $static_contexts[$machine_name];

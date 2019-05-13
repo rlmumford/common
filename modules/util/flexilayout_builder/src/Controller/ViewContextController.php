@@ -3,7 +3,9 @@
 namespace Drupal\flexilayout_builder\Controller;
 
 use Drupal\Core\Ajax\AjaxHelperTrait;
+use Drupal\Core\Config\Entity\ThirdPartySettingsInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Plugin\Context\ContextRepositoryInterface;
 use Drupal\Core\Plugin\Context\EntityContext;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -13,6 +15,7 @@ use Drupal\Core\Url;
 use Drupal\flexilayout_builder\Plugin\SectionStorage\DisplayWideConfigSectionStorageInterface;
 use Drupal\layout_builder\Context\LayoutBuilderContextTrait;
 use Drupal\layout_builder\DefaultsSectionStorageInterface;
+use Drupal\layout_builder\SectionStorageInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class ViewContextController implements ContainerInjectionInterface {
@@ -33,9 +36,21 @@ class ViewContextController implements ContainerInjectionInterface {
    * @return array
    *   A render array.
    */
-  public function build(DefaultsSectionStorageInterface $section_storage) {
+  public function build(SectionStorageInterface $section_storage) {
     $build['#title'] = $this->t('Available Contexts');
     $build['#type'] = 'container';
+
+    if (!($section_storage instanceof ThirdPartySettingsInterface)) {
+      $build['message'] = [
+        '#theme' => 'status_messages',
+        '#message_list' => [
+           MessengerInterface::TYPE_ERROR => [
+             'notps' => new TranslatableMarkup('Configurable contexts are only available on Section Storages with third party settings.'),
+           ],
+        ],
+      ];
+      return $build;
+    }
 
     $build['provided'] = [
       '#type' => 'details',

@@ -1,5 +1,6 @@
 <?php
 
+use Drupal\Core\Config\Entity\ThirdPartySettingsInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\ctools_block\Plugin\Block\EntityField;
@@ -58,8 +59,9 @@ function flexilayout_builder_module_implements_alter(&$implementations, $hook) {
  * Pre render the layout builder interface to add the context controls.
  */
 function flexilayout_builder_layout_builder_context_control_pre_render($element) {
+  /** @var \Drupal\layout_builder\SectionStorageInterface $section_storage */
   $section_storage = $element['#section_storage'];
-  if (!($section_storage instanceof LayoutThirdPartySettingsInterface)) {
+  if (!($section_storage instanceof ThirdPartySettingsInterface)) {
     return $element;
   }
 

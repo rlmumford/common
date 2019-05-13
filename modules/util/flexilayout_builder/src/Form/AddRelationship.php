@@ -3,22 +3,19 @@
 namespace Drupal\flexilayout_builder\Form;
 
 use Drupal\Core\Ajax\AjaxFormHelperTrait;
-use Drupal\Core\Ajax\AjaxResponse;
-use Drupal\Core\Ajax\ReplaceCommand;
+use Drupal\Core\Config\Entity\ThirdPartySettingsInterface;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformState;
 use Drupal\Core\Plugin\ContextAwarePluginAssignmentTrait;
-use Drupal\Core\Plugin\ContextAwarePluginInterface;
 use Drupal\Core\Plugin\PluginFormFactoryInterface;
-use Drupal\Core\Plugin\PluginWithFormsInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\ctools\Plugin\RelationshipManagerInterface;
 use Drupal\flexilayout_builder\Plugin\Relationship\ConfigurableRelationshipInterface;
 use Drupal\layout_builder\Context\LayoutBuilderContextTrait;
 use Drupal\layout_builder\Controller\LayoutRebuildTrait;
-use Drupal\layout_builder\DefaultsSectionStorageInterface;
 use Drupal\layout_builder\LayoutTempstoreRepositoryInterface;
 use Drupal\layout_builder\SectionStorageInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -103,7 +100,7 @@ class AddRelationship extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, DefaultsSectionStorageInterface $section_storage = NULL, $plugin = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, SectionStorageInterface $section_storage = NULL, $plugin = NULL) {
     return $this->doBuildForm($form, $form_state, $section_storage, 'add', $plugin);
   }
 
@@ -118,7 +115,12 @@ class AddRelationship extends FormBase {
    * @return array
    *   The form structure.
    */
-  public function doBuildForm(array $form, FormStateInterface $form_state, DefaultsSectionStorageInterface $section_storage = NULL, $op = 'edit', $plugin = NULL) {
+  public function doBuildForm(array $form, FormStateInterface $form_state, SectionStorageInterface $section_storage = NULL, $op = 'edit', $plugin = NULL) {
+    if (!$section_storage instanceof ThirdPartySettingsInterface) {
+      \Drupal::messenger()->addError(new TranslatableMarkup('Only Section Storages with third party settings can have configurable contexts.'));
+      return $form;
+    }
+
     $this->sectionStorage = $section_storage;
 
     if ($op == 'edit') {
@@ -126,7 +128,10 @@ class AddRelationship extends FormBase {
       $relationship_config = $relationships[$plugin];
       $machine_name = $plugin;
       $plugin = $relationship_config['plugin'];
-      $this->relationship = $this->relationshipManager->createInstance($relationship_config['plugin'], $relationship_config['settings'] ?: []);
+      $this->relationship = $this->relationshipManager->createInstance(
+        $relationship_config['plugin'],
+        $relationship_config['settings'] ?: []
+      );
     }
     else {
       $this->relationship = $this->relationshipManager->createInstance($plugin);
