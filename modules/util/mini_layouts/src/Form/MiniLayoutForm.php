@@ -52,7 +52,7 @@ class MiniLayoutForm extends EntityForm {
     $types = \Drupal::typedDataManager()->getDefinitions();
     foreach ($types as $type => $definition) {
       $category = new TranslatableMarkup('Data');
-      if (!empty($definition['deriver'])) {
+      if (!empty($definition['deriver']) && !empty($types[$definition['id']])) {
         $category = $types[$definition['id']]['label'];
       }
       $context_type_options[(string) $category][$type] = $definition['label'];
