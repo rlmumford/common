@@ -1,7 +1,10 @@
 <?php
 
+use Drupal\Component\Plugin\Exception\ContextException;
+use Drupal\Component\Plugin\Exception\MissingValueContextException;
 use Drupal\Core\Config\Entity\ThirdPartySettingsInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Plugin\Context\EntityContext;
 use Drupal\Core\Url;
 use Drupal\ctools_block\Plugin\Block\EntityField;
 use Drupal\flexilayout_builder\Entity\FlexibleLayoutBuilderEntityViewDisplay;
@@ -171,9 +174,16 @@ function _flexilayout_builder_layout_builder_block_form_submit(array $form, Form
 /**
  * Implements hook_layout_builder_view_context().
  */
-function flexilayout_builder_layout_builder_view_context(array $contexts, SectionStorageInterface $storage, $allow_sample = FALSE) {
+function flexilayout_builder_layout_builder_view_context_alter(array &$contexts, SectionStorageInterface $storage = NULL, $allow_sample = FALSE) {
   if (!($storage instanceof ThirdPartySettingsInterface)) {
     return;
+  }
+
+  // Handle the weird case where 'entity' is not set but 'layout_builder.entity' is
+  // set as this should all end up as 'entity'.
+  // @todo Remove this after https://www.drupal.org/node/3018782.
+  if (!empty($contexts['layout_builder.entity']) && empty($contexts['entity'])) {
+    $contexts['entity'] = $contexts['layout_builder.entity'];
   }
 
   $contexts += \Drupal::service('ctools.context_mapper')->getContextValues(
@@ -184,14 +194,43 @@ function flexilayout_builder_layout_builder_view_context(array $contexts, Sectio
   $relationship_manager = \Drupal::service('plugin.manager.ctools.relationship');
   /** @var \Drupal\Core\Plugin\Context\ContextHandler $context_handler */
   $context_handler = \Drupal::service('context.handler');
+  /** @var \Drupal\layout_builder\Entity\SampleEntityGeneratorInterface $sample_generator */
+  $sample_generator = \Drupal::service('layout_builder.sample_entity_generator');
+
 
   foreach ($storage->getThirdPartySetting('flexilayout_builder', 'relationships', []) as $machine_name => $relationship) {
-    /** @var \Drupal\ctools\Plugin\RelationshipInterface $plugin */
-    $plugin = $relationship_manager->createInstance($relationship['plugin'], $relationship['settings'] ?: []);
-    $context_handler->applyContextMapping($plugin, $contexts);
+    try {
+      /** @var \Drupal\ctools\Plugin\RelationshipInterface $plugin */
+      $plugin = $relationship_manager->createInstance($relationship['plugin'], $relationship['settings'] ?: []);
+      $context_handler->applyContextMapping($plugin, $contexts);
 
-    $contexts[$machine_name] = $plugin->getRelationship();
+      $context = $plugin->getRelationship();
+      if (!$context->hasContextValue() && $allow_sample) {
+        $definition = $context->getContextDefinition();
+        if (stripos($definition->getDataType(), 'entity:') === 0) {
+          list(,$entity_type_id) = explode(':', $definition->getDataType(), 2);
+          $bundle = $entity_type_id;
 
-    // @todo: Provide a sample if the relationship is empty.
+          if ($bundles = $definition->getConstraint('Bundle')) {
+            $bundle = is_array($bundles) ? reset($bundles) : $bundles;
+          }
+          else {
+            // @todo: Select a random bundle.
+          }
+
+          $context = EntityContext::fromEntity(
+            $sample_generator->get($entity_type_id, $bundle)
+          );
+        }
+      }
+
+      $contexts[$machine_name] = $context;
+    }
+    catch (MissingValueContextException $e) {
+
+    }
+    catch (ContextException $exception) {
+
+    }
   }
 }
