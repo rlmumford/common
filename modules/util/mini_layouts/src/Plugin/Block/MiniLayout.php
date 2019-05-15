@@ -3,9 +3,13 @@
 namespace Drupal\mini_layouts\Plugin\Block;
 
 use Drupal\Core\Block\BlockBase;
+use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\Plugin\Context\EntityContext;
 use Drupal\Core\Plugin\ContextAwarePluginInterface;
+use Drupal\layout_builder\SectionStorage\SectionStorageManager;
+use Drupal\layout_builder\SectionStorage\SectionStorageManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -21,6 +25,11 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class MiniLayout extends BlockBase implements ContextAwarePluginInterface, ContainerFactoryPluginInterface {
 
   /**
+   * @var \Drupal\layout_builder\SectionStorage\SectionStorageManagerInterface
+   */
+  protected $sectionStorageManager;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
@@ -28,14 +37,16 @@ class MiniLayout extends BlockBase implements ContextAwarePluginInterface, Conta
       $configuration,
       $plugin_id,
       $plugin_definition,
-      $container->get('entity_type.manager')
+      $container->get('entity_type.manager'),
+      $container->get('plugin.manager.layout_builder.section_storage')
     );
   }
 
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityTypeManagerInterface $entity_type_manager) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityTypeManagerInterface $entity_type_manager, SectionStorageManagerInterface $section_storage_manager) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
     $this->entityTypeManager = $entity_type_manager;
+    $this->sectionStorageManager = $section_storage_manager;
   }
 
   /**
@@ -57,9 +68,21 @@ class MiniLayout extends BlockBase implements ContextAwarePluginInterface, Conta
       ->getStorage('mini_layout')
       ->load($this->getPluginDefinition()['mini_layout']);
 
+    $contexts = $this->getContexts();
+    $contexts['display'] = EntityContext::fromEntity($mini_layout);
+
+    // Get section storage to pass to contexts hook.
+    $cacheability = new CacheableMetadata();
+    $storage = $this->sectionStorageManager->findByContext($contexts, $cacheability);
+
+    // Allow modules to alter the contexts available. Pass the section storage
+    // as context so that DefaultsSectionStorage's thirdPartySettings can be
+    // used to influence contexts.
+    \Drupal::moduleHandler()->alter('layout_builder_view_context', $contexts, $storage);
+
     $build = [];
-    foreach ($mini_layout->getSections() as $delta => $section) {
-      $build[$delta] = $section->toRenderArray($this->getContexts());
+    foreach ($storage->getSections() as $delta => $section) {
+      $build[$delta] = $section->toRenderArray($contexts);
     }
 
     return  $build;

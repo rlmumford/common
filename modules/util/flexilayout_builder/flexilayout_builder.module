@@ -10,6 +10,7 @@ use Drupal\flexilayout_builder\Plugin\SectionStorage\DefaultsSectionStorage;
 use Drupal\flexilayout_builder\Plugin\SectionStorage\OverridesSectionStorage;
 use Drupal\layout_builder\DefaultsSectionStorageInterface;
 use Drupal\layout_builder\Plugin\Block\FieldBlock;
+use Drupal\layout_builder\SectionStorageInterface;
 
 /**
  * Implements hook_entity_type_alter().
@@ -34,11 +35,10 @@ function flexilayout_builder_element_info_alter(array &$info) {
 /**
  * Implements hook_layout_builder_section_storage().
  *
- * We change the default section storage class to make sure we can store layout
- * wide third party settings.
+ * We change the overrides section storage class to store layout wide third
+ * party settings.
  */
 function flexilayout_builder_layout_builder_section_storage_alter(&$definitions) {
-  $definitions['defaults']->setClass(DefaultsSectionStorage::class);
   $definitions['overrides']->setClass(OverridesSectionStorage::class);
 }
 
@@ -166,4 +166,32 @@ function _flexilayout_builder_layout_builder_block_form_submit(array $form, Form
 
   $component->set('class', $values['class']);
   $component->set('field_label_override', $values['field_label_override']);
+}
+
+/**
+ * Implements hook_layout_builder_view_context().
+ */
+function flexilayout_builder_layout_builder_view_context(array $contexts, SectionStorageInterface $storage, $allow_sample = FALSE) {
+  if (!($storage instanceof ThirdPartySettingsInterface)) {
+    return;
+  }
+
+  $contexts += \Drupal::service('ctools.context_mapper')->getContextValues(
+    $storage->getThirdPartySetting('flexilayout_builder', 'static_context', [])
+  );
+
+  /** @var \Drupal\ctools\Plugin\RelationshipManager $relationship_manager */
+  $relationship_manager = \Drupal::service('plugin.manager.ctools.relationship');
+  /** @var \Drupal\Core\Plugin\Context\ContextHandler $context_handler */
+  $context_handler = \Drupal::service('context.handler');
+
+  foreach ($storage->getThirdPartySetting('flexilayout_builder', 'relationships', []) as $machine_name => $relationship) {
+    /** @var \Drupal\ctools\Plugin\RelationshipInterface $plugin */
+    $plugin = $relationship_manager->createInstance($relationship['plugin'], $relationship['settings'] ?: []);
+    $context_handler->applyContextMapping($plugin, $contexts);
+
+    $contexts[$machine_name] = $plugin->getRelationship();
+
+    // @todo: Provide a sample if the relationship is empty.
+  }
 }

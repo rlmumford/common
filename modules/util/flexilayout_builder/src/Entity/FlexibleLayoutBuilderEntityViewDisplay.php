@@ -17,34 +17,6 @@ use Drupal\layout_builder\Section;
 class FlexibleLayoutBuilderEntityViewDisplay extends LayoutBuilderEntityViewDisplay {
 
   /**
-   * Prepare contexts for layout rendering.
-   *
-   * @return \Drupal\Core\Plugin\Context\ContextInterface[]
-   *   Array of contexts keyed name.
-   */
-  protected function getContextsForEntity(FieldableEntityInterface $entity) {
-    $contexts = parent::getContextsForEntity($entity);
-    $contexts += \Drupal::service('ctools.context_mapper')->getContextValues(
-      $this->getThirdPartySetting('flexilayout_builder', 'static_context', [])
-    );
-
-    /** @var \Drupal\ctools\Plugin\RelationshipManager $relationship_manager */
-    $relationship_manager = \Drupal::service('plugin.manager.ctools.relationship');
-    /** @var \Drupal\Core\Plugin\Context\ContextHandler $context_handler */
-    $context_handler = \Drupal::service('context.handler');
-
-    foreach ($this->getThirdPartySetting('flexilayout_builder', 'relationships', []) as $machine_name => $relationship) {
-      /** @var \Drupal\ctools\Plugin\RelationshipInterface $plugin */
-      $plugin = $relationship_manager->createInstance($relationship['plugin'], $relationship['settings'] ?: []);
-      $context_handler->applyContextMapping($plugin, $contexts);
-
-      $contexts[$machine_name] = $plugin->getRelationship();
-    }
-
-    return $contexts;
-  }
-
-  /**
    * {@inheritdoc}
    */
   protected function addSectionField($entity_type_id, $bundle, $field_name) {

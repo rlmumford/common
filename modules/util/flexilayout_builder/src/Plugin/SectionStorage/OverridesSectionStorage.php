@@ -2,11 +2,10 @@
 
 namespace Drupal\flexilayout_builder\Plugin\SectionStorage;
 
-use Drupal\flexilayout_builder\LayoutThirdPartySettingsInterface;
+use Drupal\Core\Config\Entity\ThirdPartySettingsInterface;
 use Drupal\layout_builder\Plugin\SectionStorage\OverridesSectionStorage as CoreOverridesSectionStorage;
 
-class OverridesSectionStorage extends CoreOverridesSectionStorage implements LayoutThirdPartySettingsInterface {
-  use ConfigurableContextSectionStorageTrait;
+class OverridesSectionStorage extends CoreOverridesSectionStorage implements ThirdPartySettingsInterface {
 
   /**
    * The field name that stores the display settings.
@@ -102,19 +101,5 @@ class OverridesSectionStorage extends CoreOverridesSectionStorage implements Lay
   public function getThirdPartyProviders() {
     $settings = $this->getEntity()->get(static::SETTINGS_FIELD_NAME)->settings;
     return array_keys($settings);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function getRelationshipsConfiguration() {
-    return $this->getThirdPartySetting('flexilayout_builder', 'relationships', []);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function getStaticContextConfiguration() {
-    return $this->getThirdPartySetting('flexilayout_builder', 'static_context', []);
   }
 }
