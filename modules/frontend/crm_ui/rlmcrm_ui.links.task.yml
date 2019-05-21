@@ -1,0 +1,20 @@
+rlmcrm_ui.contact.summary:
+  route_name: rlmcrm_ui.contact
+  title: 'Summary'
+  base_route: rlmcrm_ui.contact
+rlmcrm_ui.contact.communication:
+  route_name: rlmcrm_ui.contact.communication
+  title: 'Communications'
+  base_route: rlmcrm_ui.contact
+rlmcrm_ui.contact.employer:
+  route_name: rlmcrm_ui.contact.employer
+  title: 'Employer'
+  base_route: rlmcrm_ui.contact
+rlmcrm_ui.contact.individuals:
+  route_name: rlmcrm_ui.contact.individuals
+  title: 'Individuals'
+  base_route: rlmcrm_ui.contact
+rlmcrm_ui.contact.organisations:
+  route_name: rlmcrm_ui.contact.organisations
+  title: 'Organisations'
+  base_route: rlmcrm_ui.contact

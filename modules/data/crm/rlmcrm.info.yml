@@ -9,3 +9,7 @@ dependencies:
 - name
 - select_or_other
 - paragraphs
+- relationships
+- email
+- telephone
+- address

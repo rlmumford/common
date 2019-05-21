@@ -1,0 +1,7 @@
+rlmcrm_ui.contact.billing:
+  path: '/admin/contacts/{user}/billing'
+  defaults:
+    _entity_view: user.rlmcrm_ui_billing
+    _title_callback: '\Drupal\Core\Entity\Controller\EntityController::title'
+  requirements:
+    _entity_access: user.rlmcrm_view_billing

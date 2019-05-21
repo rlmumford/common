@@ -1,0 +1,32 @@
+rlmcrm_ui.contact.add.individual:
+  route_name: rlmcrm_ui.contact.add.individual
+  appears_on:
+    - view.rlmcrm_ui_contacts.list
+  title: 'Add Individual'
+rlmcrm_ui.contact.add.organisation:
+  route_name: rlmcrm_ui.contact.add.organisation
+  appears_on:
+    - view.rlmcrm_ui_contacts.list
+  title: 'Add Organisation'
+rlmcrm_ui.contact.add.related_organisation:
+  route_name: relationships.new_relationship.tail
+  appears_on:
+    - rlmcrm_ui.contact.organisations
+  title: 'Add Organisation'
+  class: \Drupal\rlmcrm_ui\Menu\AddRelationshipLocalAction
+rlmcrm_ui.contact.add.related_individual:
+  route_name: relationships.new_relationship.head
+  appears_on:
+    - rlmcrm_ui.contact.individuals
+  title: 'Add Individual'
+  class: \Drupal\rlmcrm_ui\Menu\AddRelationshipLocalAction
+rlmcrm_ui.contact.edit.individual:
+  route_name: rlmcrm_ui.contact.edit.individual
+  appears_on:
+    - rlmcrm_ui.contact
+  title: 'Edit'
+rlmcrm_ui.contact.edit.organisation:
+  route_name: rlmcrm_ui.contact.edit.organisation
+  appears_on:
+    - rlmcrm_ui.contact
+  title: 'Edit'

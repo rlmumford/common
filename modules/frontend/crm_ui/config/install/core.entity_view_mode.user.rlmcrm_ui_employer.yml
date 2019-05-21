@@ -1,0 +1,9 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - user
+id: user.rlmcrm_ui_employer
+label: 'Contact Employer'
+targetEntityType: user
+cache: true

@@ -1,0 +1,107 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.relationship.individual_organisation.email_address
+    - field.field.relationship.individual_organisation.mobile_tel
+    - field.field.relationship.individual_organisation.notes
+    - field.field.relationship.individual_organisation.role
+    - field.field.relationship.individual_organisation.role_title
+    - field.field.relationship.individual_organisation.work_tel
+    - relationships.relationship_type.individual_organisation
+  module:
+    - flexiform
+    - telephone
+third_party_settings:
+  flexiform:
+    enhancer:
+      multiple_entities:
+        id: multiple_entities
+      page_exposure:
+        id: page_exposure
+      submit_button_ajax:
+        ajax:
+          'actions::submit':
+            enabled: false
+            response: refresh
+        id: submit_button_ajax
+      submit_button_label:
+        label:
+          'actions::submit': ''
+        id: submit_button_label
+      submit_button_redirect:
+        redirect:
+          'actions::submit': ''
+        id: submit_button_redirect
+id: relationship.individual_organisation.default
+targetEntityType: relationship
+bundle: individual_organisation
+mode: default
+content:
+  email_address:
+    type: email_default
+    weight: 4
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  head:
+    type: entity_reference_autocomplete
+    weight: 1
+    region: content
+    settings:
+      match_operator: CONTAINS
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  mobile_tel:
+    type: telephone_default
+    weight: 5
+    region: content
+    settings:
+      placeholder: ''
+    third_party_settings: {  }
+  notes:
+    settings:
+      rows: 3
+      placeholder: ''
+    third_party_settings:
+      flexiform:
+        field_definition:
+          label: ''
+    type: string_textarea
+    weight: 7
+    region: content
+  role:
+    type: options_select
+    weight: 2
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  role_title:
+    type: string_textfield
+    weight: 3
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  tail:
+    type: entity_reference_autocomplete
+    weight: 0
+    region: content
+    settings:
+      match_operator: CONTAINS
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  work_tel:
+    type: telephone_default
+    weight: 6
+    region: content
+    settings:
+      placeholder: ''
+    third_party_settings: {  }
+hidden:
+  active: true

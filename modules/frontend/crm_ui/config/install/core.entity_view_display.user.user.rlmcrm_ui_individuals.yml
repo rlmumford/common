@@ -1,0 +1,111 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.user.rlmcrm_ui_individuals
+    - field.field.user.user.commerce_remote_id
+    - field.field.user.user.user_picture
+    - image.style.thumbnail
+    - views.view.rlmcrm_ui_individual_organisation
+  module:
+    - communication
+    - image
+    - layout_builder
+    - layout_discovery
+    - user
+    - views
+third_party_settings:
+  layout_builder:
+    allow_custom: false
+    enabled: true
+    sections:
+      -
+        layout_id: layout_onecol
+        layout_settings: {  }
+        components:
+          39faf543-ef02-4955-9aec-6f0a78ea4579:
+            uuid: 39faf543-ef02-4955-9aec-6f0a78ea4579
+            region: content
+            configuration:
+              id: 'views_block:rlmcrm_ui_individual_organisation-individuals_full'
+              label: ''
+              provider: views
+              label_display: '0'
+              views_label: ''
+              items_per_page: '40'
+              context_mapping:
+                head: layout_builder.entity
+            additional:
+              class: ''
+              field_label_override: null
+            weight: 0
+        third_party_settings: {  }
+_core:
+  default_config_hash: V51QPCKkgNREKtSmB9Iu2wmAMEpktVpnzklWaZV8UYo
+id: user.user.rlmcrm_ui_individuals
+targetEntityType: user
+bundle: user
+mode: rlmcrm_ui_individuals
+content:
+  communication_contact_addresses:
+    type: contact_info_summary
+    region: content
+    weight: 13
+    label: above
+    settings:
+      info_label_display: none
+    third_party_settings: {  }
+  communication_contact_emails:
+    type: contact_info_summary
+    region: content
+    weight: 11
+    label: above
+    settings:
+      info_label_display: none
+    third_party_settings: {  }
+  communication_contact_telephones:
+    type: contact_info_summary
+    region: content
+    weight: 12
+    label: above
+    settings:
+      info_label_display: none
+    third_party_settings: {  }
+  member_for:
+    weight: 5
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  profile_individual:
+    type: entity_reference_entity_view
+    weight: 10
+    region: content
+    label: above
+    settings:
+      view_mode: default
+      link: false
+    third_party_settings: {  }
+  profile_organisation:
+    type: entity_reference_entity_view
+    weight: 10
+    region: content
+    label: above
+    settings:
+      view_mode: default
+      link: false
+    third_party_settings: {  }
+  user_picture:
+    type: image
+    weight: 0
+    region: content
+    settings:
+      image_style: thumbnail
+      image_link: content
+    third_party_settings: {  }
+    label: hidden
+hidden:
+  commerce_remote_id: true
+  profile_customer: true
+  profile_employer: true
+  role_label_individual: true
+  role_label_organisation: true

@@ -1,0 +1,58 @@
+<?php
+
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\user\UserInterface;
+
+/**
+ * Implements hook_user_view().
+ */
+function rlmcrm_ui_user_view(&$build, UserInterface $account, EntityViewDisplayInterface $display, $view_mode) {
+  $build['#attached']['library'][] = 'rlmcrm_ui/contact_page';
+}
+
+/**
+ * Implements hook_user_access().
+ */
+function rlmcrm_ui_user_access(UserInterface $contact, $operation, AccountInterface $account) {
+  if (stripos($operation, 'rlmcrm_') !== 0) {
+    return;
+  }
+
+  $operation_parts = explode('_', $operation, 3);
+  if (count($operation_parts) != 3) {
+    return;
+  }
+  list(,$action, $tab) = $operation_parts;
+
+  $result = AccessResult::allowedIfHasPermission($account, "can {$action} contact {$tab}");
+
+  // Special behaviours for individual/organisation tabs.
+  if ($tab == 'individuals' || $tab == 'organisation') {
+    $result = $result->andIf(
+      AccessResult::forbiddenIf(!$contact->hasRole('organisation'))
+        ->addCacheableDependency($contact)
+        ->cachePerUser()
+        ->addCacheTags(['user.roles'])
+    );
+  }
+  if ($tab == 'organisations' || $tab == 'individual') {
+    $result = $result->andIf(
+      AccessResult::forbiddenIf(!$contact->hasRole('individual'))
+        ->addCacheableDependency($contact)
+        ->cachePerUser()
+        ->addCacheTags(['user.roles'])
+    );
+  }
+  if ($tab == 'employer') {
+    $result = $result->andIf(
+      AccessResult::forbiddenIf(!$contact->hasRole('employer'))
+        ->addCacheableDependency($contact)
+        ->cachePerUser()
+        ->addCacheTags(['user.roles'])
+    );
+  }
+
+  return $result;
+}

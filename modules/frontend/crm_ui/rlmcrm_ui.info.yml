@@ -6,3 +6,4 @@ package: RLMumford
 
 dependencies:
 - rlmcrm
+- views_block_filter_block

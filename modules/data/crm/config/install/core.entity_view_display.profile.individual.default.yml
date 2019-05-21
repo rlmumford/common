@@ -1,0 +1,47 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.profile.individual.email_addresses
+    - field.field.profile.individual.name
+    - field.field.profile.individual.telephone_numbers
+    - profile.type.individual
+  module:
+    - name
+    - rlmcrm
+id: profile.individual.default
+targetEntityType: profile
+bundle: individual
+mode: default
+content:
+  email_addresses:
+    type: email_addresses_paragraph
+    weight: 1
+    region: content
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+  name:
+    type: name_default
+    weight: 0
+    region: content
+    label: inline
+    settings:
+      format: default
+      markup: false
+      output: default
+      multiple: default
+      multiple_delimiter: ', '
+      multiple_and: text
+      multiple_delimiter_precedes_last: never
+      multiple_el_al_min: '3'
+      multiple_el_al_first: '1'
+    third_party_settings: {  }
+  telephone_numbers:
+    type: telephone_numbers_paragraph
+    weight: 2
+    region: content
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+hidden: {  }

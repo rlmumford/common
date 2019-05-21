@@ -31,8 +31,6 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  *   has_notes = "true",
  *   base_table = "relationship",
  *   revision_table = "relationship_revision",
- *   data_table = "relationship_data",
- *   revision_data_table = "relationship_revision_data",
  *   admin_permission = "administer relationships",
  *   bundle_entity_type = "relationship_type",
  *   field_ui_base_route = "entity.relationship_type.edit_form",
@@ -41,6 +39,10 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  *     "revision" = "vid",
  *     "bundle" = "type",
  *     "uuid" = "uuid",
+ *   },
+ *   links = {
+ *     "canonical" = "/admin/relationship/{relationship}",
+ *     "edit-form" = "/admin/relationship/{relationship}/edit",
  *   }
  * )
  */

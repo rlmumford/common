@@ -1,0 +1,126 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.user.rlmcrm_ui_communications
+    - field.field.user.user.commerce_remote_id
+    - field.field.user.user.user_picture
+    - image.style.thumbnail
+    - views.view.rlmcrm_ui_contact_communications
+  module:
+    - communication
+    - image
+    - layout_builder
+    - layout_discovery
+    - rlmcrm_ui
+    - user
+    - views
+third_party_settings:
+  layout_builder:
+    allow_custom: false
+    enabled: true
+    sections:
+      -
+        layout_id: layout_onecol
+        layout_settings: {  }
+        components:
+          235df4da-4471-4db8-a61d-b7652b685b2f:
+            uuid: 235df4da-4471-4db8-a61d-b7652b685b2f
+            region: content
+            configuration:
+              id: 'views_block:rlmcrm_ui_contact_communications-all_block'
+              label: ''
+              provider: views
+              label_display: '0'
+              views_label: ''
+              items_per_page: none
+              context_mapping:
+                contact: layout_builder.entity
+            additional:
+              class: ''
+              field_label_override: null
+            weight: 3
+          eb87b4fe-3f36-4cac-ba18-f8bef1603d98:
+            uuid: eb87b4fe-3f36-4cac-ba18-f8bef1603d98
+            region: content
+            configuration:
+              id: record_communication_for_contact_dropbutton
+              label: 'Record Communication for Contact'
+              provider: rlmcrm_ui
+              label_display: '0'
+              context_mapping:
+                contact: layout_builder.entity
+            additional:
+              class: ''
+              field_label_override: null
+            weight: 2
+        third_party_settings: {  }
+_core:
+  default_config_hash: V51QPCKkgNREKtSmB9Iu2wmAMEpktVpnzklWaZV8UYo
+id: user.user.rlmcrm_ui_communications
+targetEntityType: user
+bundle: user
+mode: rlmcrm_ui_communications
+content:
+  communication_contact_addresses:
+    type: contact_info_summary
+    region: content
+    weight: 13
+    label: above
+    settings:
+      info_label_display: none
+    third_party_settings: {  }
+  communication_contact_emails:
+    type: contact_info_summary
+    region: content
+    weight: 11
+    label: above
+    settings:
+      info_label_display: none
+    third_party_settings: {  }
+  communication_contact_telephones:
+    type: contact_info_summary
+    region: content
+    weight: 12
+    label: above
+    settings:
+      info_label_display: none
+    third_party_settings: {  }
+  member_for:
+    weight: 5
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  profile_individual:
+    type: entity_reference_entity_view
+    weight: 10
+    region: content
+    label: above
+    settings:
+      view_mode: default
+      link: false
+    third_party_settings: {  }
+  profile_organisation:
+    type: entity_reference_entity_view
+    weight: 10
+    region: content
+    label: above
+    settings:
+      view_mode: default
+      link: false
+    third_party_settings: {  }
+  user_picture:
+    type: image
+    weight: 0
+    region: content
+    settings:
+      image_style: thumbnail
+      image_link: content
+    third_party_settings: {  }
+    label: hidden
+hidden:
+  commerce_remote_id: true
+  profile_customer: true
+  profile_employer: true
+  role_label_individual: true
+  role_label_organisation: true

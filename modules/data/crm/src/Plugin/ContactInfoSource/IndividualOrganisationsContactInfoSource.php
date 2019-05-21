@@ -3,6 +3,7 @@
 namespace Drupal\rlmcrm\Plugin\ContactInfoSource;
 
 use Drupal\communication\Contact\ContactInfo;
+use Drupal\communication\Contact\ContactInfoDefinition;
 use Drupal\communication\Contact\ContactInfoDefinitionInterface;
 use Drupal\communication\Plugin\ContactInfoSource\ContactInfoSourceBase;
 use Drupal\communication\Plugin\ContactInfoSource\ContactInfoSourceMetadataInterface;
@@ -77,9 +78,12 @@ class IndividualOrganisationsContactInfoSource extends ContactInfoSourceBase imp
         else if ($definition->getDataType() == 'telephone' && $field_name == 'email_address') {
           continue;
         }
+        else if (!in_array($definition->getDataType(), ['telephone', 'email'])) {
+          continue;
+        }
 
         $sub_key = "{$relationship_item->relationship->id()}.{$field_name}";
-        $info[$sub_key] = new ContactInfo($entity, $this->getPluginId(), $sub_key);
+        $info[$sub_key] = new ContactInfo($definition, $entity, $this->getPluginId(), $sub_key);
         if ($relationship_item->relationship->get($field_name)->isEmpty()) {
           $info[$sub_key]->setIncomplete();
         }
@@ -175,6 +179,31 @@ class IndividualOrganisationsContactInfoSource extends ContactInfoSourceBase imp
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function getSummary(EntityInterface $entity, $key) {
+    list($rel_id, $field_name) = explode('.', $key, 2);
+
+    if (is_numeric($rel_id)) {
+      /** @var \Drupal\relationships\Entity\Relationship $relationship */
+      $relationship = $this->entityTypeManager->getStorage('relationship')
+        ->load($rel_id);
+
+      /** @var \Drupal\Core\Entity\ContentEntityBase $organisation */
+      $organisation = $relationship->head->entity;
+      $field_definition = $relationship->getFieldDefinition($field_name);
+
+      $label = "{$field_definition->getLabel()} at {$organisation->label()}";
+      if (!$relationship->get($field_name)->isEmpty()) {
+        $label = "{$relationship->get($field_name)->value} ({$label})";
+      }
+      return $label;
+    }
+
+    return '';
+  }
+
+  /**
    * The form for setting metadata.
    *
    * @param array $form
@@ -221,5 +250,16 @@ class IndividualOrganisationsContactInfoSource extends ContactInfoSourceBase imp
           'tail' => $entity,
         ]);
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getInfoDefinition(EntityInterface $entity, $key) {
+    $relationship = $this->getRelationship($entity, $key);
+    list(, $field_name) = explode('.', $key, 2);
+
+    $field_definition = $relationship->getFieldDefinition($field_name);
+    return ContactInfoDefinition::create($field_definition->getDataType());
   }
 }

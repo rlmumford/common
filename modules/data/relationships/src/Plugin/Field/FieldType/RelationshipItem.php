@@ -17,7 +17,7 @@ use Drupal\relationships\Entity\RelationshipType;
  *
  * This FieldType must ALWAYS be computed
  *
- *  @FieldType(
+ * @FieldType(
  *   id = "relationship",
  *   label = @Translation("Relationship"),
  *   description = @Translation("A relationship"),

@@ -1,0 +1,63 @@
+rlmcrm_ui.contact.add.individual:
+  path: '/admin/contacts/new/individual'
+  defaults:
+    _entity_form: user.add_individual
+    _title: 'New Individual'
+  requirements:
+    _entity_create_access: user
+rlmcrm_ui.contact.add.organisation:
+  path: '/admin/contacts/new/organisation'
+  defaults:
+    _entity_form: user.add_organisation
+    _title: 'New Organisation'
+  requirements:
+    _entity_create_access: user
+rlmcrm_ui.contact.edit.individual:
+  path: '/admin/contacts/{user}/edit/individual'
+  defaults:
+    _entity_form: user.edit_individual
+    _title_callback: '\Drupal\Core\Entity\Controller\EntityController::title'
+  requirements:
+    _entity_access: user.rlmcrm_edit_individual
+rlmcrm_ui.contact.edit.organisation:
+  path: '/admin/contacts/{user}/edit/organisation'
+  defaults:
+    _entity_form: user.edit_organisation
+    _title_callback: '\Drupal\Core\Entity\Controller\EntityController::title'
+  requirements:
+    _entity_access: user.rlmcrm_edit_organisation
+rlmcrm_ui.contact:
+  path: '/admin/contacts/{user}'
+  defaults:
+    _entity_view: user.rlmcrm_ui_summary
+    _title_callback: '\Drupal\Core\Entity\Controller\EntityController::title'
+  requirements:
+    _entity_access: user.rlmcrm_view_summary
+rlmcrm_ui.contact.communication:
+  path: '/admin/contacts/{user}/communication'
+  defaults:
+    _entity_view: user.rlmcrm_ui_communications
+    _title_callback: '\Drupal\Core\Entity\Controller\EntityController::title'
+  requirements:
+    _entity_access: user.rlmcrm_view_commmunication
+rlmcrm_ui.contact.employer:
+  path: '/admin/contacts/{user}/employer'
+  defaults:
+    _entity_view: user.rlmcrm_ui_employer
+    _title_callback: '\Drupal\Core\Entity\Controller\EntityController::title'
+  requirements:
+    _entity_access: user.rlmcrm_view_employer
+rlmcrm_ui.contact.organisations:
+  path: '/admin/contacts/{user}/organisations'
+  defaults:
+    _entity_view: user.rlmcrm_ui_organisations
+    _title_callback: '\Drupal\Core\Entity\Controller\EntityController::title'
+  requirements:
+    _entity_access: user.rlmcrm_view_organisations
+rlmcrm_ui.contact.individuals:
+  path: '/admin/contacts/{user}/individuals'
+  defaults:
+    _entity_view: user.rlmcrm_ui_individuals
+    _title_callback: '\Drupal\Core\Entity\Controller\EntityController::title'
+  requirements:
+    _entity_access: user.rlmcrm_view_individuals

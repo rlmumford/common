@@ -3,6 +3,7 @@
 namespace Drupal\rlmcrm\Plugin\ContactInfoSource;
 
 use Drupal\communication\Contact\ContactInfo;
+use Drupal\communication\Contact\ContactInfoDefinition;
 use Drupal\communication\Contact\ContactInfoDefinitionInterface;
 use Drupal\communication\Plugin\ContactInfoSource\ContactInfoSourceBase;
 use Drupal\communication\Plugin\ContactInfoSource\ContactInfoSourceMetadataInterface;
@@ -92,6 +93,10 @@ class ProfileEmailsParagraphSource extends ContactInfoSourceBase implements Cont
           continue;
         }
 
+        if (!in_array($definition->getDataType(), ['telephone', 'email'])) {
+          continue;
+        }
+
         if (!$profile->hasField($field_name)) {
           continue;
         }
@@ -104,14 +109,14 @@ class ProfileEmailsParagraphSource extends ContactInfoSourceBase implements Cont
 
         foreach ($items as $delta => $item) {
           $sub_key = "{$bundle}.{$field_name}.{$delta}";
-          $info[$sub_key] = new ContactInfo($entity, $this->getPluginId(), $sub_key);
+          $info[$sub_key] = new ContactInfo($definition, $entity, $this->getPluginId(), $sub_key);
           if ($item->entity->get($prop_name)->isEmpty()) {
             $info[$sub_key]->setIncomplete();
           }
         }
 
         $sub_key = "{$bundle}.{$field_name}.NEW";
-        $info[$sub_key] = new ContactInfo($entity, $this->getPluginId(), $sub_key);
+        $info[$sub_key] = new ContactInfo($definition, $entity, $this->getPluginId(), $sub_key);
         $info[$sub_key]->setIncomplete();
       }
     }
@@ -225,12 +230,32 @@ class ProfileEmailsParagraphSource extends ContactInfoSourceBase implements Cont
     if (is_numeric($delta)) {
       $item = $profile->get($field_name)->get($delta)->entity;
       $type_field = $field_name == 'email_addresses' ? 'email_type' : 'number_type';
-      $prop_field_name = $field_name == 'email_addresses' ? 'email_address' : 'number';
-      return $profile_type->label() . ' - ' . ucfirst($item->get($type_field)->value) . ' (' . $item->get($prop_field_name)->value . ')';
+      return $profile_type->label() . ' - ' . ucfirst($item->get($type_field)->value);
     }
     else {
       return $profile_type->label() . ' - New';
     }
+  }
+
+  /**
+   * {@inheritdoc{
+   */
+  public function getSummary(EntityInterface $entity, $key) {
+    list($bundle, $field_name, $delta) = explode('.', $key, 3);
+
+    /** @var \Drupal\profile\ProfileStorageInterface $profile_storage */
+    $profile_storage = $this->entityTypeManager->getStorage('profile');
+    $profile = $profile_storage->loadDefaultByUser($entity, $bundle);
+
+    if (is_numeric($delta)) {
+      $item = $profile->get($field_name)->get($delta)->entity;
+      $type_field = $field_name == 'email_addresses' ? 'email_type' : 'number_type';
+      $prop_field_name = $field_name == 'email_addresses' ? 'email_address' : 'number';
+
+      return $item->get($prop_field_name)->value . " (" . ucfirst($item->get($type_field)->value) . ")";
+    }
+
+    return '';
   }
 
   /**
@@ -283,12 +308,22 @@ class ProfileEmailsParagraphSource extends ContactInfoSourceBase implements Cont
       return $profile->get($field_name)->get($delta)->entity;
     }
     else {
-      $paragraph_type = ($field_name == 'email_addresses') ? 'email_address': 'telphone_number';
+      $paragraph_type = ($field_name == 'email_addresses') ? 'email_address': 'telephone_number';
       return $this->entityTypeManager->getStorage('paragraph')->create([
         'type' => $paragraph_type,
       ]);
     }
 
     return NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getInfoDefinition(EntityInterface $entity, $key) {
+    list(,$field_name,) = explode('.', $key, 3);
+    $data_type = $field_name == 'email_addresses' ? 'email' : 'telephone';
+
+    return ContactInfoDefinition::create($data_type);
   }
 }

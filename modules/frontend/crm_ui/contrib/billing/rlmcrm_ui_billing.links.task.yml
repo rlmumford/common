@@ -1,0 +1,4 @@
+rlmcrm_ui.contact.billing:
+  route_name: rlmcrm_ui.contact.billing
+  title: 'Billing'
+  base_route: rlmcrm_ui.contact

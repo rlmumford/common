@@ -1,0 +1,28 @@
+relationships.new_relationship:
+  path: '/admin/relationship/new/{relationship_type}'
+  defaults:
+    _controller: '\Drupal\relationships\Controller\NewRelationshipFormController::getContentResult'
+    _title: 'New Relationship'
+  requirements:
+    _permission: 'administer relationships'
+relationships.new_relationship.tail:
+  path: '/admin/relationship/new/{relationship_type}/tail/{tail_id}'
+  defaults:
+    _controller: '\Drupal\relationships\Controller\NewRelationshipFormController::getContentResult'
+    _title: 'New Relationship'
+  requirements:
+    _permission: 'administer relationships'
+relationships.new_relationship.head:
+  path: '/admin/relationship/new/{relationship_type}/head/{head_id}'
+  defaults:
+    _controller: '\Drupal\relationships\Controller\NewRelationshipFormController::getContentResult'
+    _title: 'New Relationship'
+  requirements:
+    _permission: 'administer relationships'
+relationships.new_relationship.both:
+  path: '/admin/relationship/new/{relationship_type}/tail/{tail_id}/head/{head_id}'
+  defaults:
+    _controller: '\Drupal\relationships\Controller\NewRelationshipFormController::getContentResult'
+    _title: 'New Relationship'
+  requirements:
+    _permission: 'administer relationships'
