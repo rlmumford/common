@@ -1,0 +1,12 @@
+<?php
+
+/**
+ * Implements hook_entity_type_build()
+ *
+ * @param \Drupal\Core\Entity\EntityTypeInterface[] $entity_types
+ */
+function rlmcrm_notes_entity_type_build(&$entity_types) {
+  if ($entity_type = $entity_types['user']) {
+    $entity_type->set('has_notes', TRUE);
+  }
+}

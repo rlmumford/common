@@ -13,3 +13,5 @@ dependencies:
 - email
 - telephone
 - address
+- place
+- office

@@ -1,0 +1,9 @@
+type: module
+core: 8.x
+name: CRM Notes
+description: "RLMumford CRM notes"
+package: RLMumford
+
+dependencies:
+- rlmcrm
+- note

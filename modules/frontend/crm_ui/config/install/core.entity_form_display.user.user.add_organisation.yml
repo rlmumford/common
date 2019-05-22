@@ -38,6 +38,8 @@ third_party_settings:
             create: 1
       page_exposure:
         id: page_exposure
+_core:
+  default_config_hash: K-1rBM8mTIkFp9RqOC2tMRUukOQ1xbRCfSKK8dEddnA
 id: user.user.add_organisation
 targetEntityType: user
 bundle: user
@@ -53,7 +55,7 @@ content:
         field_definition:
           label: Individuals
     type: inline_relationship_form
-    weight: 7
+    weight: 4
     region: content
   'organisation_profile:email_addresses':
     settings:
@@ -68,7 +70,26 @@ content:
         field_definition:
           label: ''
     type: entity_reference_paragraphs
-    weight: 0
+    weight: 1
+    region: content
+  'organisation_profile:places':
+    settings:
+      form_mode: default
+      label_singular: ''
+      label_plural: ''
+      allow_new: true
+      allow_existing: true
+      match_operator: CONTAINS
+      override_labels: false
+      collapsible: false
+      collapsed: false
+      allow_duplicate: false
+    third_party_settings:
+      flexiform:
+        field_definition:
+          label: ''
+    type: inline_entity_form_complex
+    weight: 3
     region: content
   'organisation_profile:organisation_name':
     type: string_textfield
@@ -89,7 +110,7 @@ content:
         field_definition:
           label: ''
     type: entity_reference_paragraphs
-    weight: 0
+    weight: 2
     region: content
 hidden:
   Individuals: true

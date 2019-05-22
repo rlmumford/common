@@ -38,8 +38,6 @@ use Drupal\user\EntityOwnerTrait;
  *   },
  *   base_table = "note",
  *   revision_table = "note_revision",
- *   data_table = "note_data",
- *   revision_data_table = "note_revision_data",
  *   admin_permission = "administer notes",
  *   entity_keys = {
  *     "id" = "id",

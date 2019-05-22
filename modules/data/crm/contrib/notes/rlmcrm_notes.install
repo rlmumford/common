@@ -1,0 +1,25 @@
+<?php
+
+use Drupal\Core\Field\BaseFieldDefinition;
+
+/**
+ * Implements hook_install().
+ */
+function rlmcrm_notes_install() {
+  $update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  $entity_type = $update_manager->getEntityType('user');
+  $definition =  BaseFieldDefinition::create('entity_reference')
+    ->setLabel($entity_type->getLabel())
+    ->setSetting('target_type', $entity_type->id())
+    ->setSetting('note_attachment_field', TRUE)
+    ->setDisplayConfigurable('form', TRUE)
+    ->setDisplayConfigurable('view', TRUE);
+
+  $update_manager->installFieldStorageDefinition(
+    'user',
+    'note',
+    'rlmcrm_notes',
+    $definition
+  );
+}
