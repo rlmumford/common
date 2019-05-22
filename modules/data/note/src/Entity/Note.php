@@ -14,7 +14,7 @@ use Drupal\user\EntityOwnerTrait;
  *
  * @package Drupal\note\Entity
  *
- * @ContentEntity(
+ * @ContentEntityType(
  *   id = "note",
  *   label = @Translation("Note"),
  *   label_singular = @Translation("note"),

@@ -10,8 +10,9 @@ dependencies:
 - select_or_other
 - paragraphs
 - relationships
-- email
 - telephone
 - address
 - place
 - office
+- communication
+- user_role_labels

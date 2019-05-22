@@ -1,3 +1,8 @@
+toolbar:
+  version: VERSION
+  css:
+    theme:
+      css/rlmcrm_ui.icons.css: {}
 contact_page:
   version: VERSION
   css:

@@ -6,6 +6,13 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\user\UserInterface;
 
 /**
+ * Implements hook_toolbar_alter().
+ */
+function rlmcrm_ui_toolbar_alter(&$items) {
+  $items['administration']['#attached']['library'][] = 'rlmcrm_ui/toolbar';
+}
+
+/**
  * Implements hook_user_view().
  */
 function rlmcrm_ui_user_view(&$build, UserInterface $account, EntityViewDisplayInterface $display, $view_mode) {
