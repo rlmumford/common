@@ -51,7 +51,7 @@ function rlmcrm_user_role_individual_label(AccountInterface $user, RoleInterface
 function rlmcrm_user_role_organisation_label(AccountInterface $user, RoleInterface $role) {
   /** @var \Drupal\profile\ProfileStorageInterface $profile_storage */
   $profile_storage = \Drupal::entityTypeManager()->getStorage('profile');
-  if ($user->id() && $profile = $profile_storage->loadDefaultByUser($user,'organisation')) {
+  if ($user->id() && ($profile = $profile_storage->loadDefaultByUser($user,'organisation'))) {
     return $profile->organisation_name->value;
   }
 

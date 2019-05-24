@@ -15,4 +15,5 @@ dependencies:
 - place
 - office
 - communication
+- communication_user
 - user_role_labels

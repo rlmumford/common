@@ -1,0 +1,65 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - communication
+    - flexiform
+third_party_settings:
+  flexiform:
+    enhancer:
+      multiple_entities:
+        id: multiple_entities
+      page_exposure:
+        id: page_exposure
+      submit_button_ajax:
+        ajax:
+          'actions::submit':
+            enabled: false
+            response: refresh
+        id: submit_button_ajax
+      submit_button_label:
+        label:
+          'actions::submit': ''
+        id: submit_button_label
+      submit_button_redirect:
+        redirect:
+          'actions::submit': ''
+        id: submit_button_redirect
+id: communication_participant.email.default
+targetEntityType: communication_participant
+bundle: email
+mode: default
+content:
+  contact:
+    settings:
+      match_operator: CONTAINS
+      size: '60'
+      placeholder: ''
+      new_contact: '1'
+      new_contact_form_modes:
+        - add_individual
+        - add_organisation
+    third_party_settings:
+      flexiform:
+        field_definition:
+          label: ''
+    type: contact_reference_autocomplete
+    weight: 0
+    region: content
+  email:
+    type: email_default
+    region: content
+    weight: 2
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  name:
+    type: string_textfield
+    weight: 1
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+hidden: {  }

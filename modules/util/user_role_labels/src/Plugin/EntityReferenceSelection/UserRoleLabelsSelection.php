@@ -11,7 +11,7 @@ use Drupal\user\RoleInterface;
  * Provides specific access control for the user entity type.
  *
  * @EntityReferenceSelection(
- *   id = "user_role_labels",
+ *   id = "default:user_role_labels",
  *   label = @Translation("User selection (with role labels)"),
  *   entity_types = {"user"},
  *   group = "default",

@@ -1,0 +1,100 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_form_mode.user.edit_individual
+    - field.field.user.user.commerce_remote_id
+    - field.field.user.user.user_picture
+  module:
+    - flexiform
+    - relationships
+    - user
+third_party_settings:
+  flexiform:
+    enhancer:
+      submit_button_ajax:
+        ajax:
+          'actions::submit':
+            enabled: false
+            response: refresh
+        id: submit_button_ajax
+      submit_button_label:
+        label:
+          'actions::submit': ''
+        id: submit_button_label
+      submit_button_redirect:
+        redirect:
+          'actions::submit': ''
+        id: submit_button_redirect
+      multiple_entities:
+        id: multiple_entities
+        entities:
+          individual_profile:
+            label: 'Individual Profile'
+            plugin: 'user_profile:individual'
+            save_on_submit: 1
+            context_mapping:
+              user: ''
+            create: 1
+      page_exposure:
+        id: page_exposure
+id: user.user.edit_individual
+targetEntityType: user
+bundle: user
+mode: edit_individual
+content:
+  'individual_profile:email_addresses':
+    settings:
+      title: 'Email Address'
+      title_plural: 'Email Addresses'
+      edit_mode: open
+      add_mode: dropdown
+      form_display_mode: default
+      default_paragraph_type: email_address
+    third_party_settings:
+      flexiform:
+        field_definition:
+          label: ''
+    type: entity_reference_paragraphs
+    weight: 1
+    region: content
+  'individual_profile:name':
+    type: name_default
+    weight: 0
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  'individual_profile:telephone_numbers':
+    settings:
+      title: 'Telephone Number'
+      title_plural: 'Telephone Numbers'
+      edit_mode: open
+      add_mode: dropdown
+      form_display_mode: default
+      default_paragraph_type: telephone_number
+    third_party_settings:
+      flexiform:
+        field_definition:
+          label: ''
+    type: entity_reference_paragraphs
+    weight: 2
+    region: content
+  organisations:
+    type: inline_relationship_form
+    weight: 3
+    region: content
+    settings:
+      add_new_end_form_mode: default
+      add_relationship_form_mode: default
+      edit_relationship_form_mode: default
+    third_party_settings: {  }
+hidden:
+  account: true
+  commerce_remote_id: true
+  contact: true
+  google_analytics: true
+  individuals: true
+  language: true
+  path: true
+  timezone: true
+  user_picture: true

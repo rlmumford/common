@@ -1,0 +1,48 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.profile.organisation.email_addresses
+    - field.field.profile.organisation.organisation_name
+    - field.field.profile.organisation.places
+    - field.field.profile.organisation.telephone_numbers
+    - profile.type.organisation
+  module:
+    - rlmcrm
+id: profile.organisation.default
+targetEntityType: profile
+bundle: organisation
+mode: default
+content:
+  email_addresses:
+    type: email_addresses_paragraph
+    weight: 1
+    region: content
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+  organisation_name:
+    type: string
+    weight: 0
+    region: content
+    label: inline
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+  places:
+    type: entity_reference_entity_view
+    weight: 3
+    region: content
+    label: above
+    settings:
+      link: true
+      view_mode: default
+    third_party_settings: {  }
+  telephone_numbers:
+    type: telephone_numbers_paragraph
+    weight: 2
+    region: content
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+hidden: {  }
