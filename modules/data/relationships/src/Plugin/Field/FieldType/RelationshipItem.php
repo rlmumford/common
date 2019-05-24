@@ -186,13 +186,16 @@ class RelationshipItem extends EntityReferenceItem {
       return;
     }
 
-    if (($this->relationship->isNew() && !$this->relationship->_needs_delete) || $this->relationship->_needs_save) {
+    if (($this->relationship->isNew() && (!$this->relationship->_needs_delete) || $this->relationship->_needs_save)) {
       $this->relationship->save();
     }
     else if ($this->relationship->_needs_delete && !$this->relationship->isNew()) {
       $this->relationship->delete();
 
-      $this->getEntity()->get($this->getFieldDefinition()->getName())->removeItem($this->name);
+      $items = $this->getEntity()->get($this->getFieldDefinition()->getName());
+      if ($items->get($this->name)) {
+        $items->removeItem($this->name);
+      }
     }
   }
 

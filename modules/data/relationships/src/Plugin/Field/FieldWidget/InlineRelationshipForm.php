@@ -247,7 +247,7 @@ class InlineRelationshipForm extends WidgetBase implements ContainerFactoryPlugi
       $element['entities'][$delta] = [];
       $row = &$element['entities'][$delta];
       $row['target'] = [
-        '#markup' => $relationship_entity->{$target_end}->entity->label(),
+        '#markup' => !$relationship_entity->{$target_end}->isEmpty() ? $relationship_entity->{$target_end}->entity->label() : '',
       ];
 
       if (empty($relationship['form'])) {
@@ -520,9 +520,7 @@ class InlineRelationshipForm extends WidgetBase implements ContainerFactoryPlugi
    */
   public function extractFormValues(FieldItemListInterface $items, array $form, FormStateInterface $form_state) {
     // First remove all items.
-    foreach ($items as $delta => $item) {
-      $items->removeItem($delta);
-    }
+    $items->setValue([]);
 
     $widget_state = static::getWidgetState($form['#parents'], $items->getName(), $form_state);
     if (!empty($widget_state['entities'])) {

@@ -167,7 +167,7 @@ class IndividualOrganisationsContactInfoSource extends ContactInfoSourceBase imp
       $organisation = $relationship->head->entity;
       $field_definition = $relationship->getFieldDefinition($field_name);
 
-      $label = " {$field_definition->getLabel()} at {$organisation->label()}";
+      $label = "{$field_definition->getLabel()} at ".(!empty($organisation) ? $organisation->label() : 'Unknown Organisation');
       if (!$relationship->get($field_name)->isEmpty()) {
         $label .= " ({$relationship->get($field_name)->value})";
       }
@@ -193,7 +193,7 @@ class IndividualOrganisationsContactInfoSource extends ContactInfoSourceBase imp
       $organisation = $relationship->head->entity;
       $field_definition = $relationship->getFieldDefinition($field_name);
 
-      $label = "{$field_definition->getLabel()} at {$organisation->label()}";
+      $label = "{$field_definition->getLabel()} at ".(!empty($organisation) ? $organisation->label() : 'Unknown Organisation');
       if (!$relationship->get($field_name)->isEmpty()) {
         $label = "{$relationship->get($field_name)->value} ({$label})";
       }

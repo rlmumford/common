@@ -170,7 +170,7 @@ class OrganisationIndividualsContactInfoSource extends ContactInfoSourceBase imp
       $individual = $relationship->tail->entity;
       $field_definition = $relationship->getFieldDefinition($field_name);
 
-      $label = "{$individual->label()} {$field_definition->getLabel()}";
+      $label = (!empty($individual) ? $individual->label() : 'Unknown Individual')." {$field_definition->getLabel()}";
       if (!$relationship->get($field_name)->isEmpty()) {
         $label .= " ({$relationship->get($field_name)->value})";
       }
@@ -195,8 +195,8 @@ class OrganisationIndividualsContactInfoSource extends ContactInfoSourceBase imp
       /** @var \Drupal\Core\Entity\ContentEntityBase $individual */
       $individual = $relationship->tail->entity;
       $field_definition = $relationship->getFieldDefinition($field_name);
-
-      $label = "{$individual->label()} {$field_definition->getLabel()}";
+      
+      $label = (!empty($individual) ? $individual->label() : 'Unknown Individual')." {$field_definition->getLabel()}";
       if (!$relationship->get($field_name)->isEmpty()) {
         $label = "{$relationship->get($field_name)->value} ({$label})";
       }
