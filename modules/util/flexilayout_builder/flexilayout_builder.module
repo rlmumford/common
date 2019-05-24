@@ -8,10 +8,7 @@ use Drupal\Core\Plugin\Context\EntityContext;
 use Drupal\Core\Url;
 use Drupal\ctools_block\Plugin\Block\EntityField;
 use Drupal\flexilayout_builder\Entity\FlexibleLayoutBuilderEntityViewDisplay;
-use Drupal\flexilayout_builder\LayoutThirdPartySettingsInterface;
-use Drupal\flexilayout_builder\Plugin\SectionStorage\DefaultsSectionStorage;
 use Drupal\flexilayout_builder\Plugin\SectionStorage\OverridesSectionStorage;
-use Drupal\layout_builder\DefaultsSectionStorageInterface;
 use Drupal\layout_builder\Plugin\Block\FieldBlock;
 use Drupal\layout_builder\SectionStorageInterface;
 
