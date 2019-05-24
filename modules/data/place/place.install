@@ -1,0 +1,32 @@
+<?php
+
+use Drupal\place\Entity\Place;
+
+/**
+ * Implements hook_install().
+ */
+function place_install() {
+  /** @var \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager */
+  $entity_type_manager = \Drupal::service('entity_type.manager');
+  $place_base_field_definitions = Place::baseFieldDefinitions($entity_type_manager->getDefinition('place'));
+
+  /** @var \Drupal\place\PlaceHandlerPluginManager $handler_manager */
+  $handler_manager = \Drupal::service('plugin.manager.place.place_handler');
+  /** @var \Drupal\Core\Entity\EntityDefinitionUpdateManagerInterface $entity_update_manager */
+  $entity_update_manager = \Drupal::service('entity.definition_update_manager');
+  foreach ($handler_manager->getDefinitions() as $plugin_id => $definition) {
+    /** @var \Drupal\place\Plugin\PlaceHandler\PlaceHandlerInterface $plugin */
+    $plugin = $handler_manager->createInstance($plugin_id);
+
+    /** @var \Drupal\Core\Field\BaseFieldDefinition[] $bundle_field_definitions */
+    $bundle_field_definitions = $plugin->fieldDefinitions($place_base_field_definitions);
+    foreach ($bundle_field_definitions as $name => $field_definition) {
+      $entity_update_manager->installFieldStorageDefinition(
+        $name,
+        'place',
+        $field_definition->getProvider(),
+        $field_definition
+      );
+    }
+  }
+}

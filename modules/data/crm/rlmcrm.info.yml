@@ -5,15 +5,16 @@ description: "Common core to RLMumford CRM projects"
 package: RLMumford
 
 dependencies:
-- profile
-- name
-- select_or_other
-- paragraphs
+- profile:profile
+- name:name
+- select_or_other:select_or_other
+- paragraphs:paragraphs
 - relationships
-- telephone
-- address
+- drupal:telephone
+- address:address
 - place
 - office
-- communication
-- communication_user
+- communication:communication
+- communication:communication_user
+- decoupled_auth:decoupled_auth
 - user_role_labels
