@@ -12,7 +12,7 @@ entity_type: relationship
 bundle: individual_organisation
 label: 'Work Tel.'
 description: ''
-required: true
+required: false
 translatable: false
 default_value: {  }
 default_value_callback: ''
