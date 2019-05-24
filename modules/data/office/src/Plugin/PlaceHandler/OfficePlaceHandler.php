@@ -27,8 +27,8 @@ class OfficePlaceHandler extends AddressPlaceHandlerBase {
     }
 
     $fields['address']->setSetting('field_overrides', [
-      'given_name' => FieldOverride::HIDDEN,
-      'family_name' => FieldOverride::HIDDEN,
+      'givenName' => ['override' => 'hidden'],
+      'familyName' => ['override' => 'hidden'],
     ]);
 
     return $fields;
