@@ -8,7 +8,7 @@ use Drupal\Core\Field\BaseFieldDefinition;
  * Implements hook_entity_base_field_info().
  */
 function service_entity_base_field_info(EntityTypeInterface $entity_type) {
-  if (!in_array($entity_type->id(), ['task'])) {
+  if (!in_array($entity_type->id(), ['task', 'communication'])) {
     return [];
   }
 
@@ -63,7 +63,7 @@ function service_note_presave(EntityInterface $note) {
  * Implements hook_modules_installed().
  */
 function service_modules_installed($modules) {
-  if (!in_array('task', $modules)) {
+  if (!array_intersect(['task', 'communication'], $modules)) {
     return;
   }
 
@@ -81,10 +81,21 @@ function service_modules_installed($modules) {
     ->setDisplayConfigurable('view', TRUE)
     ->setDisplayConfigurable('form', TRUE);
 
-  \Drupal::entityDefinitionUpdateManager()->installFieldStorageDefinition(
-    'service',
-    'task',
-    'service',
-    $service_field
-  );
+  if (in_array('task', $modules)) {
+    \Drupal::entityDefinitionUpdateManager()->installFieldStorageDefinition(
+      'service',
+      'task',
+      'service',
+      $service_field
+    );
+  }
+
+  if (in_array('communication', $modules)) {
+    \Drupal::entityDefinitionUpdateManager()->installFieldStorageDefinition(
+      'service',
+      'communication',
+      'service',
+      $service_field
+    );
+  }
 }
