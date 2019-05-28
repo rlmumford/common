@@ -1,0 +1,27 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.profile.places
+    - profile.type.individual
+id: profile.individual.places
+field_name: places
+entity_type: profile
+bundle: individual
+label: Places
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:place'
+  handler_settings:
+    target_bundles:
+      office: office
+      address: address
+    sort:
+      field: _none
+    auto_create: false
+    auto_create_bundle: office
+field_type: entity_reference

@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.profile.organisation_akas
+    - profile.type.organisation
+id: profile.organisation.organisation_akas
+field_name: organisation_akas
+entity_type: profile
+bundle: organisation
+label: 'Other Names'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

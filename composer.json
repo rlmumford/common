@@ -15,8 +15,11 @@
         "webmozart/path-util": "^2.3",
         "drupal/range": "1.x-dev",
         "drupal/entity": "^1.0-rc2",
+        "drupal/name": "1.x-dev",
+        "drupal/select_or_other": "1.x-dev",
         "drupal/flexiform": "1.x-dev",
         "drupal/mini_layouts": "1.x-dev",
+        "drupal/paragraphs": "^1.8",
         "drupal/block_class": "1.x-dev",
         "aws/aws-sdk-php": "3.*"
     },
@@ -42,12 +45,15 @@
     "extra": {
       "enable-patching": true,
       "patches": {
-        "drupal/rules": {
-          "Configurable Component Variables": "https://www.drupal.org/files/issues/2916331-11.patch"
-        },
-        "drupal/ctools": {
-          "Fix TypedData Relationship Deriver": "https://www.drupal.org/files/issues/2018-10-16/3007028-2.patch"
-        }
+          "drupal/name": {
+              "Name field fix": "https://www.drupal.org/files/issues/2019-05-15/3054937-2.patch"
+          },
+          "drupal/rules": {
+              "Configurable Component Variables": "https://www.drupal.org/files/issues/2916331-11.patch"
+          },
+          "drupal/ctools": {
+              "Fix TypedData Relationship Deriver": "https://www.drupal.org/files/issues/2018-10-16/3007028-2.patch"
+          }
       }
     },
     "require-dev": {

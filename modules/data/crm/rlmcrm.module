@@ -1,6 +1,7 @@
 <?php
 
 use Drupal\Core\Session\AccountInterface;
+use Drupal\profile\Entity\Profile;
 use Drupal\rlmcrm\Form\UserRoleAddForm;
 use Drupal\user\RoleInterface;
 
@@ -56,4 +57,23 @@ function rlmcrm_user_role_organisation_label(AccountInterface $user, RoleInterfa
   }
 
   return NULL;
+}
+
+/**
+ * Implements hook_profile_presave().
+ *
+ * If organisation_name is not in the akas field then add it.
+ */
+function rlmcrm_profile_presave(Profile $profile) {
+  if ($profile->bundle() != 'organisation') {
+    return;
+  }
+
+  foreach ($profile->organisation_akas as $item) {
+    if ($item->value == $profile->organisation_name->value) {
+      return;
+    }
+  }
+
+  $profile->organisation_akas[] = $profile->organisation_name->value;
 }

@@ -1,0 +1,20 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - profile
+id: profile.organisation_akas
+field_name: organisation_akas
+entity_type: profile
+type: string
+settings:
+  max_length: 255
+  is_ascii: false
+  case_sensitive: false
+module: core
+locked: false
+cardinality: 1
+translatable: -1
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false
