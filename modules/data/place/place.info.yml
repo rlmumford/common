@@ -6,3 +6,4 @@ package: RLMumford
 
 dependencies:
   - entity:entity
+  - geofield:geofield
