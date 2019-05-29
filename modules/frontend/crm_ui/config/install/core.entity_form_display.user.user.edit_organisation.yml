@@ -3,8 +3,6 @@ status: true
 dependencies:
   config:
     - core.entity_form_mode.user.edit_organisation
-    - field.field.user.user.commerce_remote_id
-    - field.field.user.user.user_picture
   module:
     - flexiform
     - relationships
@@ -109,11 +107,9 @@ content:
     region: content
 hidden:
   account: true
-  commerce_remote_id: true
   contact: true
   google_analytics: true
   language: true
   organisations: true
   path: true
   timezone: true
-  user_picture: true

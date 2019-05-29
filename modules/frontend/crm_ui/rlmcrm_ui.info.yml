@@ -6,4 +6,5 @@ package: RLMumford
 
 dependencies:
 - rlmcrm
-- views_block_filter_block
+- views_block_filter_block:views_block_filter_block
+- flexiform:flexiform
