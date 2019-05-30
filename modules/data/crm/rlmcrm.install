@@ -64,9 +64,9 @@ function rlmcrm_update_8002() {
   /** @var \Drupal\Core\Config\ConfigManagerInterface $config_manager */
   $config_manager = \Drupal::service('config.manager');
   $configs_to_install = [
+    'field.storage.profile.organisation_akas',
     'field.field.profile.individual.places',
     'field.field.profile.organisation.organisation_akas',
-    'field.storage.profile.organisation_akas',
   ];
   foreach ($configs_to_install as $name) {
     $config = new Config(
