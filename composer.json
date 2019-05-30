@@ -57,6 +57,9 @@
           },
           "drupal/ctools": {
               "Fix TypedData Relationship Deriver": "https://www.drupal.org/files/issues/2018-10-16/3007028-2.patch"
+          },
+          "drupal/decoupled_auth": {
+              "Allow unsaved profiles": "https://www.drupal.org/files/issues/2019-05-30/3058223-2.patch"
           }
       }
     },
