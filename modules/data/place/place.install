@@ -12,6 +12,8 @@ function place_install() {
 
   /** @var \Drupal\place\PlaceHandlerPluginManager $handler_manager */
   $handler_manager = \Drupal::service('plugin.manager.place.place_handler');
+  $handler_manager->clearCachedDefinitions();
+
   /** @var \Drupal\Core\Entity\EntityDefinitionUpdateManagerInterface $entity_update_manager */
   $entity_update_manager = \Drupal::service('entity.definition_update_manager');
   foreach ($handler_manager->getDefinitions() as $plugin_id => $definition) {

@@ -212,6 +212,7 @@ function user_role_labels_user_format_name_alter(&$name, AccountInterface $accou
   foreach ($roles as $role) {
     if ($role_label = user_role_labels_role_label($role, $account)) {
       $name = $role_label;
+      return;
     }
   }
 }
