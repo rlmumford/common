@@ -1,0 +1,7 @@
+service:
+  rlmaws.client_factory:
+    class: 'Drupal\rlmaws\AWSClientFactory'
+    arguments: [ '@config_factory', '@rlmaws.credential_provider' ]
+  rlmaws.credential_provider:
+    class: 'Drupal\rlmaws\Credentials\ContextualCredentialProvider'
+    arguments: [ '@module_handler' ]
