@@ -1,4 +1,4 @@
-service:
+services:
   rlmaws.client_factory:
     class: 'Drupal\rlmaws\AWSClientFactory'
     arguments: [ '@config_factory', '@rlmaws.credential_provider' ]
