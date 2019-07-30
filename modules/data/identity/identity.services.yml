@@ -1,0 +1,4 @@
+services:
+  plugin.manager.identity_data_type:
+    class: Drupal\identity\IdentityDataTypeManager
+    parent: default_plugin_manager
