@@ -48,6 +48,11 @@ use Drupal\Core\Field\BaseFieldDefinition;
 class Identity extends ContentEntityBase implements IdentityInterface {
 
   /**
+   * @var \Drupal\identity\Entity\IdentityData[][]
+   */
+  protected $_data;
+
+  /**
    * {@inheritdoc}
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
@@ -71,21 +76,6 @@ class Identity extends ContentEntityBase implements IdentityInterface {
       ])
       ->setDisplayConfigurable('form', TRUE);
 
-    $fields['creator'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('Creator'))
-      ->setRevisionable(TRUE)
-      ->setSetting('target_type', 'user')
-      ->setDefaultValueCallback('\Drupal\identity\Entity\Identity::getCurrentUserId')
-      ->setDisplayOptions('view', [
-        'label' => 'inline',
-        'type' => 'entity_reference_label',
-      ])
-      ->setDisplayOptions('form', [
-        'type' => 'entity_reference_autocomplete',
-      ])
-      ->setDisplayConfigurable('view', TRUE)
-      ->setDisplayConfigurable('form', TRUE);
-
     $fields['created'] = BaseFieldDefinition::create('created')
       ->setLabel(t('Created'))
       ->setRevisionable(TRUE)
@@ -99,51 +89,36 @@ class Identity extends ContentEntityBase implements IdentityInterface {
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-    $fields['identity'] = BaseFieldDefinition::create('identity_reference')
-      ->setLabel(t('Identity'))
-      ->setRevisionable(TRUE)
-      ->setSetting('target_type', 'identity')
-      ->setDisplayOptions('view', [
-        'label' => 'inline',
-        'type' => 'entity_reference_label',
-      ])
-      ->setDisplayOptions('form', [
-        'type' => 'entity_reference_autocomplete',
-      ])
-      ->setDisplayConfigurable('view', TRUE)
-      ->setDisplayConfigurable('form', TRUE);
-
-    $fields['manager'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('Manager'))
-      ->setRevisionable(TRUE)
-      ->setSetting('target_type', 'user')
-      ->setDefaultValueCallback('\Drupal\identity\Entity\Identity::getCurrentUserId')
-      ->setDisplayOptions('view', [
-        'label' => 'inline',
-        'type' => 'entity_reference_label',
-      ])
-      ->setDisplayOptions('form', [
-        'type' => 'entity_reference_autocomplete',
-      ])
-      ->setDisplayConfigurable('view', TRUE)
-      ->setDisplayConfigurable('form', TRUE);
-
-    $fields['recipients'] = BaseFieldDefinition::create('entity_reference')
-      ->setCardinality(BaseFieldDefinition::CARDINALITY_UNLIMITED)
-      ->setLabel(t('Recipients'))
-      ->setRevisionable(TRUE)
-      ->setSetting('target_type', 'user')
-      ->setDisplayOptions('view', [
-        'label' => 'inline',
-        'type' => 'entity_reference_label',
-      ])
-      ->setDisplayOptions('form', [
-        'type' => 'entity_reference_autocomplete',
-      ])
-      ->setDisplayConfigurable('view', TRUE)
-      ->setDisplayConfigurable('form', TRUE);
-
     return $fields;
+  }
+
+  /**
+   * @param $type
+   * @param array $filters
+   */
+  public function getData($type, array $filters = []) {
+    if (!isset($this->_data[$type])) {
+      $data_storage = \Drupal::entityTypeManager()->getStorage('identity_data');
+      $query = $data_storage->getQuery();
+      $query->condition('identity', $this->id());
+      $query->condition('type', $type);
+
+      $this->_data[$type] =  $data_storage->loadMultiple($query->execute());
+    }
+
+    if (empty($filters)) {
+      return $this->_data[$type];
+    }
+
+    return array_filter($this->_data[$type], function($data) use ($filters) {
+      foreach ($filters as $field_name => $value) {
+        if ($data->{$field_name}->value != $value) {
+          return FALSE;
+        }
+      }
+
+      return TRUE;
+    });
   }
 }
 

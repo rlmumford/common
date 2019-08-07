@@ -3,3 +3,6 @@ core: 8.x
 name: Identity
 description: "Stores Identity Data"
 package: RLMumford
+
+dependencies:
+ - entity:entity

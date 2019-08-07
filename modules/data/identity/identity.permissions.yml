@@ -1,0 +1,3 @@
+administer identities:
+  title: 'Administer identities'
+  restrict access: true

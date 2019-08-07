@@ -10,6 +10,9 @@ use Drupal\identity\Entity\IdentityDataInterface;
 use Drupal\identity\Entity\IdentityDataType;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\identity\IdentityMatch;
+use Drupal\user\EntityOwnerInterface;
+use Drupal\user\EntityOwnerTrait;
 
 /**
  * Entity class for IdentityDatas.
@@ -40,6 +43,7 @@ use Drupal\Core\Field\BaseFieldDefinition;
  *     "revision" = "vid",
  *     "bundle" = "type",
  *     "uuid" = "uuid",
+ *     "owner" = "user",
  *   },
  *   has_notes = "true",
  *   bundle_plugin_type = "identity_data_type",
@@ -50,37 +54,25 @@ use Drupal\Core\Field\BaseFieldDefinition;
  *   }
  * )
  */
-class IdentityData extends ContentEntityBase implements IdentityDataInterface {
+class IdentityData extends ContentEntityBase implements IdentityDataInterface, EntityOwnerInterface {
+  use EntityOwnerTrait;
+
+  /**
+   * @var \Drupal\identity\Plugin\IdentityDataType\IdentityDataTypeInterface
+   */
+  protected $_type;
 
   /**
    * {@inheritdoc}
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
+    $fields += static::ownerBaseFieldDefinitions($entity_type);
 
-    $fields['label'] = BaseFieldDefinition::create('string')
-      ->setLabel(t('Title'))
+    $fields['identity'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('Identity'))
       ->setRevisionable(TRUE)
-      ->setDefaultValueCallback('\Drupal\identity_data\Entity\IdentityData::createLabel')
-      ->setDisplayConfigurable('view', TRUE);
-
-    $fields['state'] = BaseFieldDefinition::create('boolean')
-      ->setLabel(t('Active?'))
-      ->setRevisionable(TRUE)
-      ->setDefaultValue(TRUE)
-      ->setDisplayOptions('form', [
-        'type' => 'boolean_checkbox',
-        'settings' => [
-          'display_label' => TRUE,
-        ],
-      ])
-      ->setDisplayConfigurable('form', TRUE);
-
-    $fields['creator'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('Creator'))
-      ->setRevisionable(TRUE)
-      ->setSetting('target_type', 'user')
-      ->setDefaultValueCallback('\Drupal\identity_data\Entity\IdentityData::getCurrentUserId')
+      ->setSetting('target_type', 'identity')
       ->setDisplayOptions('view', [
         'label' => 'inline',
         'type' => 'entity_reference_label',
@@ -88,6 +80,13 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface {
       ->setDisplayOptions('form', [
         'type' => 'entity_reference_autocomplete',
       ])
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('form', TRUE);
+
+    $fields['source'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('Source'))
+      ->setRevisionable(TRUE)
+      ->setSetting('target_type', 'identity_data_source')
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
 
@@ -104,52 +103,84 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface {
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-    $fields['identity_data'] = BaseFieldDefinition::create('identity_data_reference')
-      ->setLabel(t('IdentityData'))
+    $fields['changed'] = BaseFieldDefinition::create('changed')
+      ->setLabel(t('Changed'))
       ->setRevisionable(TRUE)
-      ->setSetting('target_type', 'identity_data')
-      ->setDisplayOptions('view', [
-        'label' => 'inline',
-        'type' => 'entity_reference_label',
-      ])
-      ->setDisplayOptions('form', [
-        'type' => 'entity_reference_autocomplete',
-      ])
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['source'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('Source'))
+      ->setSetting('target_type', 'identity_data_source')
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
 
-    $fields['manager'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('Manager'))
+    $fields['reference'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Reference'))
       ->setRevisionable(TRUE)
-      ->setSetting('target_type', 'user')
-      ->setDefaultValueCallback('\Drupal\identity_data\Entity\IdentityData::getCurrentUserId')
-      ->setDisplayOptions('view', [
-        'label' => 'inline',
-        'type' => 'entity_reference_label',
-      ])
-      ->setDisplayOptions('form', [
-        'type' => 'entity_reference_autocomplete',
-      ])
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
 
-    $fields['recipients'] = BaseFieldDefinition::create('entity_reference')
-      ->setCardinality(BaseFieldDefinition::CARDINALITY_UNLIMITED)
-      ->setLabel(t('Recipients'))
+    $fields['archived'] = BaseFieldDefinition::create('boolean')
+      ->setLabel(t('Archived'))
+      ->setDefaultValue(['value' => FALSE])
       ->setRevisionable(TRUE)
-      ->setSetting('target_type', 'user')
-      ->setDisplayOptions('view', [
-        'label' => 'inline',
-        'type' => 'entity_reference_label',
-      ])
-      ->setDisplayOptions('form', [
-        'type' => 'entity_reference_autocomplete',
-      ])
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
+
+    $fields['group'] = BaseFieldDefinition::create('uuid')
+      ->setLabel(t('Group'));
 
     return $fields;
   }
 
+  /**
+   * Get the data type plugin.
+   *
+   * @return \Drupal\identity\Plugin\IdentityDataType\IdentityDataTypeInterface
+   */
+  public function getType() {
+    if (!$this->_type) {
+      $this->_type = \Drupal::service('plugin.manager.identity_data_type')
+        ->createInstance($this->type->value);
+    }
+
+    return $this->_type;
+  }
+
+  /**
+   * Get the identity of this data.
+   *
+   * @return \Drupal\identity\Entity\Identity
+   */
+  public function getIdentity() {
+    return $this->identity->entity;
+  }
+
+  /**
+   * Get the acquisition priority of this data.
+   *
+   * @return integer
+   */
+  public function acquisitionPriority() {
+    return $this->getType()->acquisitionPriority($this);
+  }
+
+  /**
+   * Find matches for this data.
+   *
+   * @return \Drupal\identity\IdentityMatch[]
+   */
+  public function findMatches() {
+    return $this->getType()->findMatches($this);
+  }
+
+  /**
+   * Support or oppose a match.
+   *
+   * @param \Drupal\identity\IdentityMatch $match
+   */
+  public function supportOrOppose(IdentityMatch $match) {
+    return $this->getType()->supportOrOppose($this, $match);
+  }
 }
 
