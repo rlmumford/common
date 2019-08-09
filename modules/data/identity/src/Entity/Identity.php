@@ -93,8 +93,7 @@ class Identity extends ContentEntityBase implements IdentityInterface {
   }
 
   /**
-   * @param $type
-   * @param array $filters
+   * {@inheritdoc}
    */
   public function getData($type, array $filters = []) {
     if (!isset($this->_data[$type])) {
@@ -103,14 +102,59 @@ class Identity extends ContentEntityBase implements IdentityInterface {
       $query->condition('identity', $this->id());
       $query->condition('type', $type);
 
-      $this->_data[$type] =  $data_storage->loadMultiple($query->execute());
+      $this->_data[$type] = $data_storage->loadMultiple($query->execute());
     }
 
+    return $this->applyDataFilters($this->_data[$type], $filters);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getAllData(array $filters = []) {
+    /** @var \Drupal\identity\Entity\IdentityDataStorage $data_storage */
+    $data_storage = \Drupal::entityTypeManager()->getStorage('identity_data');
+    /** @var \Drupal\identity\IdentityDataTypeManager $data_type_manager */
+    $data_type_manager = \Drupal::service('plugin.manager.identity_data_type');
+    $types = $data_type_manager->getDefinitions();
+
+    $all_data = [];
+    $unloaded_types = [];
+    foreach ($types as $type => $definition) {
+      if (isset($this->_data[$type])) {
+        $all_data += $this->_data[$type];
+      }
+      else {
+        $unloaded_types[] = $type;
+      }
+    }
+
+    if (!empty($unloaded_types)) {
+      $query = $data_storage->getQuery();
+      $query->condition('type', $unloaded_types);
+      $query->condition('identity', $this->id());
+
+      /** @var \Drupal\identity\Entity\IdentityData[] $loaded_data */
+      $loaded_data = $data_storage->create($query->execute());
+      foreach ($loaded_data as $loaded_datum) {
+        $all_data[$loaded_datum->id()] = $loaded_datum;
+        $this->_data[$loaded_datum->bundle()][$loaded_datum->id()] = $loaded_datum;
+      }
+    }
+
+    return $this->applyDataFilters($all_data, $filters);
+  }
+
+  /**
+   * @param \Drupal\identity\Entity\IdentityDataInterface[] $data
+   * @param array $filters
+   */
+  protected function applyDataFilters($data, array $filters = []) {
     if (empty($filters)) {
-      return $this->_data[$type];
+      return $data;
     }
 
-    return array_filter($this->_data[$type], function($data) use ($filters) {
+    return array_filter($data, function($data) use ($filters) {
       foreach ($filters as $field_name => $value) {
         if ($data->{$field_name}->value != $value) {
           return FALSE;

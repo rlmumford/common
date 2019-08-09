@@ -58,7 +58,7 @@ class IdentityMatch {
     $this->identity = $match_data->getIdentity();
     $this->matchData = $match_data;
     $this->searchData = $search_data;
-    $this->initialScore = $score;
+    $this->initialScore = $this->score = $score;
   }
 
   /**

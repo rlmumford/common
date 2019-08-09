@@ -28,8 +28,8 @@ use Drupal\user\EntityOwnerTrait;
  *   ),
  *   bundle_label = @Translation("Identity Data Type"),
  *   handlers = {
- *     "storage" = "Drupal\identity\IdentityDataStorage",
- *     "access" = "Drupal\identity\IdentityDataAccessControlHandler",
+ *     "storage" = "Drupal\identity\Entity\IdentityDataStorage",
+ *     "access" = "Drupal\identity\Entity\IdentityDataAccessControlHandler",
  *     "views_data" = "Drupal\views\EntityViewsData",
  *     "route_provider" = {
  *       "html" = "Drupal\Core\Entity\Routing\DefaultHtmlRouteProvider",
@@ -58,9 +58,19 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface, E
   use EntityOwnerTrait;
 
   /**
+   * @var \Drupal\identity\Entity\IdentityInterface
+   */
+  protected $_oldIdentity = NULL;
+
+  /**
    * @var \Drupal\identity\Plugin\IdentityDataType\IdentityDataTypeInterface
    */
   protected $_type;
+
+  /**
+   * @var bool
+   */
+  protected $_skipIdentitySave = FALSE;
 
   /**
    * {@inheritdoc}
@@ -157,6 +167,45 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface, E
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function setIdentity(IdentityInterface $identity) {
+    if ($this->identity->entity && $this->identity->entity->id() == $identity->id()) {
+      return;
+    }
+
+    if ($this->identity->entity) {
+      $this->_oldIdentity = $this->identity->entity;
+    }
+
+    $this->identity = $identity;
+
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function skipIdentitySave($skip = TRUE) {
+    $this->_skipIdentitySave = $skip;
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function postSave(EntityStorageInterface $storage, $update = TRUE) {
+    parent::postSave($storage, $update);
+
+    if (!$this->_skipIdentitySave) {
+      $this->getIdentity()->save();
+      $this->_oldIdentity->save();
+
+      $this->_skipIdentitySave = FALSE;
+    }
+  }
+
+  /**
    * Get the acquisition priority of this data.
    *
    * @return integer
@@ -182,5 +231,7 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface, E
   public function supportOrOppose(IdentityMatch $match) {
     return $this->getType()->supportOrOppose($this, $match);
   }
+
+
 }
 

@@ -10,8 +10,8 @@ use Drupal\identity\IdentityMatch;
  * Class PersonalName
  *
  * @IdentityDataType(
- *   "id" = "personal_name",
- *   "label" = @Translation("Personal Name"),
+ *   id = "personal_name",
+ *   label = @Translation("Personal Name"),
  * );
  *
  * @package Drupal\identity\Plugin\IdentityDataType

@@ -14,6 +14,20 @@ interface IdentityDataInterface {
   public function getIdentity();
 
   /**
+   * Set the identity this data is associated with.
+   *
+   * @return static
+   */
+  public function setIdentity(IdentityInterface $identity);
+
+  /**
+   * @param bool $skip
+   *
+   * @return static
+   */
+  public function skipIdentitySave($skip = TRUE);
+
+  /**
    * Get the acquisition priority of this data.
    *
    * @return integer

@@ -16,4 +16,11 @@ interface IdentityInterface extends ContentEntityInterface {
    */
   public function getData($type, array $filters = []);
 
+  /**
+   * Get all datas from the identity.
+   *
+   * @return \Drupal\identity\Entity\IdentityDataInterface[]
+   */
+  public function getAllData(array $filters = []);
+
 }

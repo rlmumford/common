@@ -5,6 +5,11 @@ namespace Drupal\identity;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\identity\Entity\IdentityDataInterface;
 
+/**
+ * Class IdentityDataIdentityAcquirer
+ *
+ * @package Drupal\identity
+ */
 class IdentityDataIdentityAcquirer implements IdentityDataIdentityAcquirerInterface {
 
   /**
@@ -31,7 +36,7 @@ class IdentityDataIdentityAcquirer implements IdentityDataIdentityAcquirerInterf
    * @return \Drupal\identity\IdentityAcquisitionResult
    */
   public function acquireIdentity(IdentityDataGroup $data_group, array $options = []) {
-    $threshold = 1000;
+    $threshold = 100;
 
     // Order datas by their acquisition priority.
     $datas = $data_group->getDatas();
@@ -69,7 +74,7 @@ class IdentityDataIdentityAcquirer implements IdentityDataIdentityAcquirerInterf
     });
 
     $top_match = array_shift($all_matches);
-    if ($top_match->getScore() > $threshold) {
+    if ($top_match && $top_match->getScore() > $threshold) {
       // @todo: Check if there are other > threshold matches and trigger
       // merge requests.
 

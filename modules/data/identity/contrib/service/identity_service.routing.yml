@@ -1,0 +1,20 @@
+identity_service.query_data:
+  path: '/api/identity/query'
+  defaults:
+    _controller: '\Drupal\identity_service\Controller\ServiceController::queryData'
+  options:
+    _auth: ['basic_auth']
+    no_cache: 'TRUE'
+  methods: ['POST']
+  requirements:
+    _permission: 'query identity data'
+identity_service.post_data:
+  path: '/api/identity/post'
+  defaults:
+    _controller: '\Drupal\identity_service\Controller\ServiceController::postData'
+  options:
+    _auth: ['basic_auth']
+    no_cache: 'TRUE'
+  methods: ['POST']
+  requirements:
+    _permission: 'post identity data'

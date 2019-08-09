@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Rob
- * Date: 30/07/2019
- * Time: 17:22
- */
 
 namespace Drupal\identity\Annotation;
 

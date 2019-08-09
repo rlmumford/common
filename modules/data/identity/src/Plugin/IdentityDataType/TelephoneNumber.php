@@ -10,8 +10,8 @@ use Drupal\identity\IdentityMatch;
  * Class TelephoneNumber
  *
  * @IdentityDataType(
- *   "id" = "telephone_number",
- *   "label" = @Translation("Telephone Number"),
+ *   id = "telephone_number",
+ *   label = @Translation("Telephone Number"),
  * );
  *
  * @package Drupal\identity\Plugin\IdentityDataType

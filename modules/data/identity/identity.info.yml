@@ -6,3 +6,5 @@ package: RLMumford
 
 dependencies:
  - entity:entity
+ - name:name
+ - drupal:telephone
