@@ -49,9 +49,6 @@
     "extra": {
       "enable-patching": true,
       "patches": {
-          "drupal/name": {
-              "Name field fix": "https://www.drupal.org/files/issues/2019-05-15/3054937-2.patch"
-          },
           "drupal/rules": {
               "Configurable Component Variables": "https://www.drupal.org/files/issues/2916331-11.patch"
           },
