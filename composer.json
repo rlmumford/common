@@ -53,7 +53,8 @@
               "Configurable Component Variables": "https://www.drupal.org/files/issues/2916331-11.patch"
           },
           "drupal/ctools": {
-              "Fix TypedData Relationship Deriver": "https://www.drupal.org/files/issues/2018-10-16/3007028-2.patch"
+              "Fix TypedData Relationship Deriver": "https://www.drupal.org/files/issues/2018-10-16/3007028-2.patch",
+              "Fix Label for Context Definition in Relationship Deriver": "https://www.drupal.org/files/issues/2019-09-03/3079000-2.patch"
           },
           "drupal/decoupled_auth": {
               "Allow unsaved profiles": "https://www.drupal.org/files/issues/2019-08-13/3058223-4.patch"
