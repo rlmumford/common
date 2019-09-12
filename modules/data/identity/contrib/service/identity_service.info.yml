@@ -1,0 +1,10 @@
+type: module
+core: 8.x
+name: Identity Service
+description: "Provides Identity Web Service Routes"
+package: RLMumford
+
+dependencies:
+  - drupal:basic_auth
+  - drupal:serialization
+  - drupal:rest

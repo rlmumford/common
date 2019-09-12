@@ -1,0 +1,7 @@
+services:
+  plugin.manager.identity_data_class:
+    class: Drupal\identity\IdentityDataClassManager
+    parent: default_plugin_manager
+  identity.acquirer:
+    class: Drupal\identity\IdentityDataIdentityAcquirer
+    arguments: [ '@entity_type.manager' ]

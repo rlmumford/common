@@ -21,7 +21,7 @@ function profile_tools_module_implements_alter(&$implementations, $hook) {
   ];
 
   if (\Drupal::moduleHandler()->moduleExists('decoupled_auth') && in_array($hook, $duplicated_hooks)) {
-    unset($implementations['profile_tools']);
+    unset($implementations['decoupled_auth']);
   }
 }
 
@@ -63,6 +63,12 @@ function profile_tools_entity_base_field_info(EntityTypeInterface $entity_type) 
  */
 function profile_tools_profile_insert(ProfileInterface $entity) {
   profile_tools_update_profile_fields($entity->getOwner(), [$entity->bundle()]);
+
+  if (\Drupal::moduleHandler()->moduleExists('search_api')) {
+    if (empty($entity->search_api_skip_tracking)) {
+      search_api_entity_update($entity->getOwner());
+    }
+  }
 }
 
 /**
@@ -70,6 +76,15 @@ function profile_tools_profile_insert(ProfileInterface $entity) {
  */
 function profile_tools_profile_update(ProfileInterface $entity) {
   profile_tools_update_profile_fields($entity->getOwner(), [$entity->bundle()]);
+
+  if (\Drupal::moduleHandler()->moduleExists('search_api')) {
+    if (empty($entity->search_api_skip_tracking)) {
+      $owner = $entity->getOwner();
+      $owner->original = $owner;
+      search_api_entity_update($owner);
+      unset($owner->original);
+    }
+  }
 }
 
 /**
