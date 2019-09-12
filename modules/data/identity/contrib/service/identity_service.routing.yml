@@ -8,6 +8,7 @@ identity_service.query_data:
   methods: ['POST']
   requirements:
     _permission: 'query identity data'
+    _format: 'json|hal_json'
 identity_service.data:
   path: '/api/identity/data'
   defaults:
@@ -18,6 +19,7 @@ identity_service.data:
   methods: [ 'POST' ]
   requirements:
     _permission: 'post identity data'
+    _format: 'json|hal_json'
 identity_service.identity.data_post:
   path: '/api/identity/{identity}/data'
   defaults:
@@ -29,6 +31,7 @@ identity_service.identity.data_post:
   requirements:
     _permision: 'post identity data'
     _entity_access: 'identity.update'
+    _format: 'json|hal_json'
 identity_service.identity.data_get:
   path: '/api/identity/{identity}/data'
   defaults:
@@ -39,3 +42,4 @@ identity_service.identity.data_get:
   methods: [ 'GET' ]
   requirements:
     _entity_access: 'identity.view'
+    _format: 'json|hal_json'
