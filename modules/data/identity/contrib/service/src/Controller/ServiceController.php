@@ -239,8 +239,8 @@ class ServiceController extends ControllerBase {
    * @return \Drupal\rest\ResourceResponse
    */
   public function getIdentityData(Identity $identity, Request $request) {
-    if ($request->query->type) {
-      $data = $identity->getData($request->query->type);
+    if ($request->query->get('class')) {
+      $data = $identity->getData($request->query->get('class'));
       return new ResourceResponse($data, 200);
     }
     else {

@@ -1,6 +1,7 @@
 <?php
 
-namespace Drupal\identity\Plugin\IdentityDataType;
+namespace Drupal\identity\Plugin\IdentityDataClass;
+
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity\BundleFieldDefinition;
 use Drupal\identity\Entity\IdentityData;
@@ -9,14 +10,14 @@ use Drupal\identity\IdentityMatch;
 /**
  * Class PersonalName
  *
- * @IdentityDataType(
+ * @IdentityDataClass(
  *   id = "personal_name",
  *   label = @Translation("Personal Name"),
  * );
  *
- * @package Drupal\identity\Plugin\IdentityDataType
+ * @package Drupal\identity\Plugin\IdentityDataClass
  */
-class PersonalName extends IdentityDataTypeBase {
+class PersonalName extends IdentityDataClassBase {
 
   const TYPE_ALIAS = 'alias';
   const TYPE_FULL = 'full';
@@ -38,17 +39,6 @@ class PersonalName extends IdentityDataTypeBase {
     $fields['name'] = BundleFieldDefinition::create('name')
       ->setLabel(new TranslatableMarkup('Name'))
       ->setRevisionable(TRUE)
-      ->setDisplayConfigurable('view', TRUE)
-      ->setDisplayConfigurable('form', TRUE);
-
-    $fields['name_type'] = BundleFieldDefinition::create('list_string')
-      ->setLabel(new TranslatableMarkup('Type'))
-      ->setSetting('allowed_values', [
-        static::TYPE_ALIAS => new TranslatableMarkup('Alias'),
-        static::TYPE_LEGAL => new TranslatableMarkup('Legal'),
-        static::TYPE_FULL => new TranslatableMarkup('Full'),
-        static::TYPE_NICK => new TranslatableMarkup('Nickname'),
-      ])
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
 
@@ -125,5 +115,17 @@ class PersonalName extends IdentityDataTypeBase {
 
       // @todo: Consider opposing matches.
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function typeOptions() {
+    return [
+      static::TYPE_FULL => new TranslatableMarkup('Full Name'),
+      static::TYPE_LEGAL => new TranslatableMarkup('Legal Name'),
+      static::TYPE_ALIAS => new TranslatableMarkup('Alias'),
+      static::TYPE_NICK => new TranslatableMarkup('Nickname'),
+    ];
   }
 }

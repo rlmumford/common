@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\identity\Plugin\IdentityDataType;
+namespace Drupal\identity\Plugin\IdentityDataClass;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity\BundleFieldDefinition;
 use Drupal\identity\Entity\IdentityData;
@@ -9,14 +9,18 @@ use Drupal\identity\IdentityMatch;
 /**
  * Class TelephoneNumber
  *
- * @IdentityDataType(
+ * @IdentityDataClass(
  *   id = "telephone_number",
  *   label = @Translation("Telephone Number"),
  * );
  *
- * @package Drupal\identity\Plugin\IdentityDataType
+ * @package Drupal\identity\Plugin\IdentityDataClass
  */
-class TelephoneNumber extends IdentityDataTypeBase {
+class TelephoneNumber extends IdentityDataClassBase {
+
+  const TYPE_HOME = 'home';
+  const TYPE_WORK = 'work';
+  const TYPE_CELL = 'cell';
 
   /**
    * {@inheritdoc}
@@ -40,14 +44,6 @@ class TelephoneNumber extends IdentityDataTypeBase {
     $fields['can_vm'] = BundleFieldDefinition::create('boolean')
       ->setLabel(new TranslatableMarkup('Can receive Voice Mail'))
       ->setRevisionable(TRUE)
-      ->setDisplayConfigurable('view', TRUE)
-      ->setDisplayConfigurable('form', TRUE);
-
-    $fields['telephone_type'] = BundleFieldDefinition::create('list_string')
-      ->setLabel(new TranslatableMarkup('Type'))
-      ->setSetting('allowed_values', [
-        // @todo: Telephone type.
-      ])
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
 
@@ -80,5 +76,16 @@ class TelephoneNumber extends IdentityDataTypeBase {
         $match->supportMatch($data, 20);
       }
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function typeOptions() {
+    return [
+      static::TYPE_CELL => new TranslatableMarkup('Cell Phone'),
+      static::TYPE_WORK => new TranslatableMarkup('Work'),
+      static::TYPE_HOME => new TranslatableMarkup('Home'),
+    ];
   }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\identity\Plugin\IdentityDataType;
+namespace Drupal\identity\Plugin\IdentityDataClass;
 
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Plugin\PluginBase;
@@ -10,7 +10,7 @@ use Drupal\identity\Entity\IdentityStorage;
 use Drupal\identity\IdentityMatch;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
-class IdentityDataTypeBase extends PluginBase implements IdentityDataTypeInterface, ContainerFactoryPluginInterface {
+class IdentityDataClassBase extends PluginBase implements IdentityDataClassInterface, ContainerFactoryPluginInterface {
 
   /**
    * @var \Drupal\identity\Entity\IdentityStorage
@@ -36,7 +36,7 @@ class IdentityDataTypeBase extends PluginBase implements IdentityDataTypeInterfa
   }
 
   /**
-   * IdentityDataTypeBase constructor.
+   * IdentityDataClassBase constructor.
    *
    * @param array $configuration
    * @param $plugin_id
@@ -73,8 +73,6 @@ class IdentityDataTypeBase extends PluginBase implements IdentityDataTypeInterfa
     return 1;
   }
 
-
-
   /**
    * {@inheritdoc}
    */
@@ -86,5 +84,12 @@ class IdentityDataTypeBase extends PluginBase implements IdentityDataTypeInterfa
    * {@inheritdoc}
    */
   public function supportOrOppose(IdentityData $data, IdentityMatch $match) {
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function typeOptions() {
+    return [];
   }
 }

@@ -2,12 +2,14 @@
 
 namespace Drupal\identity\Entity;
 
+use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\identity\Entity\IdentityDataInterface;
-use Drupal\identity\Entity\IdentityDataType;
+use Drupal\identity\Entity\IdentityDataClass;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\identity\IdentityMatch;
@@ -26,7 +28,7 @@ use Drupal\user\EntityOwnerTrait;
  *     singular = "@count identity data",
  *     plural = "@count identity data"
  *   ),
- *   bundle_label = @Translation("Identity Data Type"),
+ *   bundle_label = @Translation("Identity Data Class"),
  *   handlers = {
  *     "storage" = "Drupal\identity\Entity\IdentityDataStorage",
  *     "access" = "Drupal\identity\Entity\IdentityDataAccessControlHandler",
@@ -41,13 +43,12 @@ use Drupal\user\EntityOwnerTrait;
  *   entity_keys = {
  *     "id" = "id",
  *     "revision" = "vid",
- *     "bundle" = "type",
+ *     "bundle" = "class",
  *     "uuid" = "uuid",
  *     "owner" = "user",
  *   },
  *   has_notes = "true",
- *   bundle_plugin_type = "identity_data_type",
- *   field_ui_base_route = "entity.identity_type.edit_form",
+ *   bundle_plugin_type = "identity_data_class",
  *   links = {
  *     "canonical" = "/identity/data/{identity_data}",
  *     "edit-form" = "/identity/data/{identity_data}/edit"
@@ -63,9 +64,9 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface, E
   protected $_oldIdentity = NULL;
 
   /**
-   * @var \Drupal\identity\Plugin\IdentityDataType\IdentityDataTypeInterface
+   * @var \Drupal\identity\Plugin\IdentityDataClass\IdentityDataClassInterface
    */
-  protected $_type;
+  protected $_class;
 
   /**
    * @var bool
@@ -78,6 +79,18 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface, E
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
     $fields += static::ownerBaseFieldDefinitions($entity_type);
+
+    $fields['type'] = BaseFieldDefinition::create('list_string')
+      ->setLabel(t('Type'))
+      ->setRevisionable(TRUE)
+      ->setSetting('allowed_values_function', [static::class, 'typeAllowedValues'])
+      ->setDisplayOptions('view', [
+        'label' => 'inline',
+        'type' => 'list_default',
+        'weight' => -4,
+      ])
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('form', TRUE);
 
     $fields['identity'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Identity'))
@@ -146,15 +159,15 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface, E
   /**
    * Get the data type plugin.
    *
-   * @return \Drupal\identity\Plugin\IdentityDataType\IdentityDataTypeInterface
+   * @return \Drupal\identity\Plugin\IdentityDataClass\IdentityDataClassInterface
    */
-  public function getType() {
-    if (!$this->_type) {
-      $this->_type = \Drupal::service('plugin.manager.identity_data_type')
-        ->createInstance($this->type->value);
+  public function getClass() {
+    if (!$this->_class) {
+      $this->_class = \Drupal::service('plugin.manager.identity_data_type')
+        ->createInstance($this->class->value);
     }
 
-    return $this->_type;
+    return $this->_class;
   }
 
   /**
@@ -211,7 +224,7 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface, E
    * @return integer
    */
   public function acquisitionPriority() {
-    return $this->getType()->acquisitionPriority($this);
+    return $this->getClass()->acquisitionPriority($this);
   }
 
   /**
@@ -220,7 +233,7 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface, E
    * @return \Drupal\identity\IdentityMatch[]
    */
   public function findMatches() {
-    return $this->getType()->findMatches($this);
+    return $this->getClass()->findMatches($this);
   }
 
   /**
@@ -229,9 +242,22 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface, E
    * @param \Drupal\identity\IdentityMatch $match
    */
   public function supportOrOppose(IdentityMatch $match) {
-    return $this->getType()->supportOrOppose($this, $match);
+    return $this->getClass()->supportOrOppose($this, $match);
   }
 
+  /**
+   * Get the allowed values for the type field
+   *
+   * @param \Drupal\Core\Field\FieldStorageDefinitionInterface $definition
+   * @param \Drupal\identity\Entity\IdentityData $entity
+   * @param $cacheable
+   *
+   * @return array
+   */
+  public static function typeAllowedValues(FieldStorageDefinitionInterface $definition, IdentityData $entity, &$cacheable) {
+    $cacheable = FALSE;
+    return $entity->getClass()->typeOptions();
+  }
 
 }
 

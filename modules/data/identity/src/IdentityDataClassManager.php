@@ -5,10 +5,10 @@ namespace Drupal\identity;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
-use Drupal\identity\Annotation\IdentityDataType;
-use Drupal\identity\Plugin\IdentityDataType\IdentityDataTypeInterface;
+use Drupal\identity\Annotation\IdentityDataClass;
+use Drupal\identity\Plugin\IdentityDataClass\IdentityDataClassInterface;
 
-class IdentityDataTypeManager extends DefaultPluginManager {
+class IdentityDataClassManager extends DefaultPluginManager {
 
   /**
    * Constructs a new IdentityTypeManager object.
@@ -23,14 +23,14 @@ class IdentityDataTypeManager extends DefaultPluginManager {
    */
   public function __construct(\Traversable $namespaces, CacheBackendInterface $cache_backend, ModuleHandlerInterface $module_handler) {
     parent::__construct(
-      'Plugin/IdentityDataType',
+      'Plugin/IdentityDataClass',
       $namespaces,
       $module_handler,
-      IdentityDataTypeInterface::class,
-      IdentityDataType::class
+      IdentityDataClassInterface::class,
+      IdentityDataClass::class
     );
 
-    $this->alterInfo('identity_data_type_info');
-    $this->setCacheBackend($cache_backend, 'identity_data_type_info');
+    $this->alterInfo('identity_data_class_info');
+    $this->setCacheBackend($cache_backend, 'identity_data_class_info');
   }
 }

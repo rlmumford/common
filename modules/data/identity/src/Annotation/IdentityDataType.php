@@ -5,13 +5,13 @@ namespace Drupal\identity\Annotation;
 use Drupal\Component\Annotation\Plugin;
 
 /**
- * Class IdentityDataType
+ * Class IdentityDataClass
  *
  * @package Drupal\identity\Annotation
  *
  * @Annotation
  */
-class IdentityDataType extends Plugin {
+class IdentityDataClass extends Plugin {
 
   /**
    * The plugin ID.

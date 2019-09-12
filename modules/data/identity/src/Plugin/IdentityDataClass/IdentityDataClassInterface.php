@@ -1,12 +1,12 @@
 <?php
 
-namespace Drupal\identity\Plugin\IdentityDataType;
+namespace Drupal\identity\Plugin\IdentityDataClass;
 
 use Drupal\entity\BundlePlugin\BundlePluginInterface;
 use Drupal\identity\Entity\IdentityData;
 use Drupal\identity\IdentityMatch;
 
-interface IdentityDataTypeInterface extends BundlePluginInterface {
+interface IdentityDataClassInterface extends BundlePluginInterface {
 
   /**
    * @param \Drupal\identity\Entity\IdentityData $data
@@ -31,4 +31,12 @@ interface IdentityDataTypeInterface extends BundlePluginInterface {
    *   The match that has been found by find matches.
    */
   public function supportOrOppose(IdentityData $data, IdentityMatch $match);
+
+  /**
+   * Get the type options.
+   *
+   * @return array
+   *   Type options for this data class.
+   */
+  public function typeOptions();
 }

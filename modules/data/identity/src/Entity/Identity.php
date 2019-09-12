@@ -95,17 +95,17 @@ class Identity extends ContentEntityBase implements IdentityInterface {
   /**
    * {@inheritdoc}
    */
-  public function getData($type, array $filters = []) {
-    if (!isset($this->_data[$type])) {
+  public function getData($class, array $filters = []) {
+    if (!isset($this->_data[$class])) {
       $data_storage = \Drupal::entityTypeManager()->getStorage('identity_data');
       $query = $data_storage->getQuery();
       $query->condition('identity', $this->id());
-      $query->condition('type', $type);
+      $query->condition('class', $class);
 
-      $this->_data[$type] = $data_storage->loadMultiple($query->execute());
+      $this->_data[$class] = $data_storage->loadMultiple($query->execute());
     }
 
-    return $this->applyDataFilters($this->_data[$type], $filters);
+    return $this->applyDataFilters($this->_data[$class], $filters);
   }
 
   /**
@@ -114,28 +114,28 @@ class Identity extends ContentEntityBase implements IdentityInterface {
   public function getAllData(array $filters = []) {
     /** @var \Drupal\identity\Entity\IdentityDataStorage $data_storage */
     $data_storage = \Drupal::entityTypeManager()->getStorage('identity_data');
-    /** @var \Drupal\identity\IdentityDataTypeManager $data_type_manager */
+    /** @var \Drupal\identity\IdentityDataClassManager $data_type_manager */
     $data_type_manager = \Drupal::service('plugin.manager.identity_data_type');
-    $types = $data_type_manager->getDefinitions();
+    $classes = $data_type_manager->getDefinitions();
 
     $all_data = [];
-    $unloaded_types = [];
-    foreach ($types as $type => $definition) {
-      if (isset($this->_data[$type])) {
-        $all_data += $this->_data[$type];
+    $unloaded_classes = [];
+    foreach ($classes as $class => $definition) {
+      if (isset($this->_data[$class])) {
+        $all_data += $this->_data[$class];
       }
       else {
-        $unloaded_types[] = $type;
+        $unloaded_classes[] = $class;
       }
     }
 
-    if (!empty($unloaded_types)) {
+    if (!empty($unloaded_classes)) {
       $query = $data_storage->getQuery();
-      $query->condition('type', $unloaded_types);
+      $query->condition('class', $unloaded_classes);
       $query->condition('identity', $this->id());
 
       /** @var \Drupal\identity\Entity\IdentityData[] $loaded_data */
-      $loaded_data = $data_storage->create($query->execute());
+      $loaded_data = $data_storage->loadMultiple($query->execute());
       foreach ($loaded_data as $loaded_datum) {
         $all_data[$loaded_datum->id()] = $loaded_datum;
         $this->_data[$loaded_datum->bundle()][$loaded_datum->id()] = $loaded_datum;
