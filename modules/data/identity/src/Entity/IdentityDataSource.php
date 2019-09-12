@@ -28,11 +28,9 @@ use Drupal\Core\Field\BaseFieldDefinition;
  *     }
  *   },
  *   base_table = "identity_data_source",
- *   revision_table = "identity_data_source_revision",
  *   admin_permission = "administer identities",
  *   entity_keys = {
  *     "id" = "id",
- *     "revision" = "vid",
  *     "uuid" = "uuid",
  *   },
  * )
@@ -47,8 +45,20 @@ class IdentityDataSource extends ContentEntityBase implements IdentityDataSource
 
     $fields['label'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Title'))
-      ->setRevisionable(TRUE)
       ->setDefaultValueCallback('\Drupal\identity\Entity\IdentityDataSource::createLabel')
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['app'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Application'))
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['notification_url'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Notification URL'))
+      ->setDescription(t('The URL update notifications will be sent to.'))
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['reference'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Reference'))
       ->setDisplayConfigurable('view', TRUE);
 
     return $fields;

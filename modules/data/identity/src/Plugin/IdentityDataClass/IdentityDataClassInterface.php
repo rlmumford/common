@@ -39,4 +39,15 @@ interface IdentityDataClassInterface extends BundlePluginInterface {
    *   Type options for this data class.
    */
   public function typeOptions();
+
+  /**
+   * Create a piece of data of this class.
+   *
+   * @param string $type
+   * @param string $reference
+   * @param mixed $value
+   *
+   * @return IdentityData
+   */
+  public function createData($type, $reference, $value = NULL);
 }

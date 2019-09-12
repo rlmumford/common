@@ -2,14 +2,9 @@
 
 namespace Drupal\identity\Entity;
 
-use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
-use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
-use Drupal\Core\Render\BubbleableMetadata;
-use Drupal\identity\Entity\IdentityDataInterface;
-use Drupal\identity\Entity\IdentityDataClass;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\identity\IdentityMatch;
@@ -157,13 +152,29 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface, E
   }
 
   /**
+   * Create Identity Data
+   *
+   * @param $class
+   * @param $type
+   * @param $reference
+   * @param null $value
+   *
+   * @return \Drupal\identity\Entity\IdentityData
+   */
+  public static function createData($class, $type, $reference, $value = NULL) {
+    /** @var \Drupal\identity\Plugin\IdentityDataClass\IdentityDataClassInterface $plugin */
+    $plugin = \Drupal::service('plugin.manager.identity_data_class')->createInstance($class);
+    return $plugin->createData($type, $reference, $value);
+  }
+
+  /**
    * Get the data type plugin.
    *
    * @return \Drupal\identity\Plugin\IdentityDataClass\IdentityDataClassInterface
    */
   public function getClass() {
     if (!$this->_class) {
-      $this->_class = \Drupal::service('plugin.manager.identity_data_type')
+      $this->_class = \Drupal::service('plugin.manager.identity_data_class')
         ->createInstance($this->class->value);
     }
 

@@ -92,6 +92,14 @@ class Identity extends ContentEntityBase implements IdentityInterface {
     return $fields;
   }
 
+  public static function createLabel(Identity $entity, FieldDefinitionInterface $definition) {
+    if ($data = $entity->getData('personal_name')) {
+      return reset($data)->full_name->value;
+    }
+
+    return '';
+  }
+
   /**
    * {@inheritdoc}
    */
@@ -115,7 +123,7 @@ class Identity extends ContentEntityBase implements IdentityInterface {
     /** @var \Drupal\identity\Entity\IdentityDataStorage $data_storage */
     $data_storage = \Drupal::entityTypeManager()->getStorage('identity_data');
     /** @var \Drupal\identity\IdentityDataClassManager $data_type_manager */
-    $data_type_manager = \Drupal::service('plugin.manager.identity_data_type');
+    $data_type_manager = \Drupal::service('plugin.manager.identity_data_class');
     $classes = $data_type_manager->getDefinitions();
 
     $all_data = [];

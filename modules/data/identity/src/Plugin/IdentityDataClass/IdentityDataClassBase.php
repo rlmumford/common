@@ -92,4 +92,15 @@ class IdentityDataClassBase extends PluginBase implements IdentityDataClassInter
   public function typeOptions() {
     return [];
   }
+
+  /**
+   * @inheritdoc}
+   */
+  public function createData($type, $reference, $value = NULL) {
+    return $this->identityDataStorage->create([
+      'class' => $this->getPluginId(),
+      'type' => $type,
+      'reference' => $reference,
+    ]);
+  }
 }

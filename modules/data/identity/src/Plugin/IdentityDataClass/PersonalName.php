@@ -6,6 +6,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity\BundleFieldDefinition;
 use Drupal\identity\Entity\IdentityData;
 use Drupal\identity\IdentityMatch;
+use Drupal\name\Plugin\Field\FieldType\NameItem;
 
 /**
  * Class PersonalName
@@ -127,5 +128,26 @@ class PersonalName extends IdentityDataClassBase {
       static::TYPE_ALIAS => new TranslatableMarkup('Alias'),
       static::TYPE_NICK => new TranslatableMarkup('Nickname'),
     ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function createData($type, $reference, $value = NULL) {
+    $data = parent::createData($type, $reference, $value);
+
+    if (is_array($value)) {
+      $data->name = $value;
+      $data->full_name = "{$value['given']} {$value['family']}";
+    }
+    else if (is_string($value)) {
+      $data->full_name = $value;
+    }
+    else if ($value instanceof NameItem) {
+      $data->name = $value->toArray();
+      $data->full_name = "{$value->given} {$value->family}";
+    }
+
+    return $data;
   }
 }
