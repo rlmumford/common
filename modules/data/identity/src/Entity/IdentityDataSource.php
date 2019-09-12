@@ -31,11 +31,7 @@ use Drupal\Core\Field\BaseFieldDefinition;
  *   admin_permission = "administer identities",
  *   entity_keys = {
  *     "id" = "id",
-<<<<<<< Updated upstream
-=======
  *     "label" = "label",
- *     "revision" = "vid",
->>>>>>> Stashed changes
  *     "uuid" = "uuid",
  *   },
  * )
