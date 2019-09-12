@@ -57,7 +57,7 @@
               "Fix Label for Context Definition in Relationship Deriver": "https://www.drupal.org/files/issues/2019-09-03/3079000-2.patch"
           },
           "drupal/decoupled_auth": {
-              "Allow unsaved profiles": "https://www.drupal.org/files/issues/2019-08-13/3058223-4.patch"
+              "Allow unsaved profiles": "https://www.drupal.org/files/issues/2019-09-12/3058223-5.patch"
           },
           "drupal/core": {
               "Layout builder context hook": "https://www.drupal.org/files/issues/2019-05-10/3001188-5.patch",
