@@ -1,0 +1,5 @@
+services:
+  identity_service.normalizer.identity_acquisition_result:
+   class: Drupal\identity_service\Normalizer\IdentityAcquisitionResultNormalizer
+   tags:
+   - { name: normalizer, priority: 10 }

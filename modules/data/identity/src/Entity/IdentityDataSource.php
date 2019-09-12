@@ -31,6 +31,11 @@ use Drupal\Core\Field\BaseFieldDefinition;
  *   admin_permission = "administer identities",
  *   entity_keys = {
  *     "id" = "id",
+<<<<<<< Updated upstream
+=======
+ *     "label" = "label",
+ *     "revision" = "vid",
+>>>>>>> Stashed changes
  *     "uuid" = "uuid",
  *   },
  * )
@@ -45,7 +50,6 @@ class IdentityDataSource extends ContentEntityBase implements IdentityDataSource
 
     $fields['label'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Title'))
-      ->setDefaultValueCallback('\Drupal\identity\Entity\IdentityDataSource::createLabel')
       ->setDisplayConfigurable('view', TRUE);
 
     $fields['app'] = BaseFieldDefinition::create('string')

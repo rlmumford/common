@@ -100,6 +100,21 @@ class ServiceController extends ControllerBase {
 
     $data = [];
     foreach ($unserialized['data'] as $unserialized_data) {
+      // We need to massage data a little.
+      foreach ($unserialized_data as $key => $field_value) {
+        if ($key == 'class') {
+          continue;
+        }
+
+        // If the value is scalar or the value is an associative array then we
+        // need to make it an array to allow the normalizer to interpret deltas.
+        if (!is_array($field_value) || is_string(key($field_value))) {
+          $unserialized_data[$key] = [
+            $unserialized_data[$key]
+          ];
+        }
+      }
+
       try {
         $datum = $this->serializer->denormalize(
           $unserialized_data,
@@ -119,6 +134,16 @@ class ServiceController extends ControllerBase {
 
     $source = NULL;
     if (!empty($unserialized['source'])) {
+      foreach ($unserialized['source'] as $key => $value) {
+        // If the value is scalar or the value is an associative array then we
+        // need to make it an array to allow the normalizer to interpret deltas.
+        if (!is_array($value) || is_string(key($value))) {
+          $unserialized['source'][$key] = [
+            $unserialized['source'][$key]
+          ];
+        }
+      }
+
       try {
         $this->serializer->denormalize(
           $unserialized['source'],
