@@ -55,7 +55,7 @@ class TelephoneNumber extends IdentityDataClassBase {
    */
   public function findMatches(IdentityData $data) {
     $query = $this->identityDataStorage->getQuery('AND');
-    $query->condition('type', $this->pluginId);
+    $query->condition('class', $this->pluginId);
     $query->condition('telephone_number', $data->telephone_number->value);
 
     $matches = [];

@@ -56,7 +56,7 @@ class PersonalName extends IdentityDataClassBase {
    */
   public function findMatches(IdentityData $data) {
     $query = $this->identityDataStorage->getQuery('AND');
-    $query->condition('type', $this->pluginId);
+    $query->condition('class', $this->pluginId);
     $or_condition = $query->orConditionGroup();
 
     $not_enough_data = TRUE;
