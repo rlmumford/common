@@ -360,14 +360,14 @@ class ThirdPartyID extends IdentityDataClassBase {
   }
 
   protected function encryptValue($value) {
-    if (!($key = @file_get_contents('private:://.third_party_id.key'))) {
+    if (!($key = @file_get_contents('private://.third_party_id.key'))) {
       $this->loggerChannelFactory->get('identity')->warning(
         'Creating new encrytion key for third party ids'
       );
 
       $key = random_bytes(SODIUM_CRYPTO_SECRETBOX_KEYBYTES);
 
-      file_put_contents('private:://.third_party_id.key', $key);
+      file_put_contents('private://.third_party_id.key', $key);
     }
 
     $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
@@ -381,7 +381,7 @@ class ThirdPartyID extends IdentityDataClassBase {
 
     $nonce = mb_substr($decoded, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, '8bit');
     $cipher = mb_substr($decoded, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, NULL, '8bit');
-    $key = @file_get_contents('private:://.third_party_id.key');
+    $key = @file_get_contents('private://.third_party_id.key');
 
     if (empty($key)) {
       throw new \Exception('No encryption key discoved');

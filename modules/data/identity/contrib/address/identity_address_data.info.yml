@@ -1,0 +1,9 @@
+type: module
+core: 8.x
+name: Identity Address Data
+description: "Stores Identity Address Data"
+package: RLMumford
+
+dependencies:
+ - rlmumford:identity
+ - address:address
