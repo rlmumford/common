@@ -5,6 +5,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity\BundleFieldDefinition;
 use Drupal\identity\Entity\IdentityData;
 use Drupal\identity\IdentityMatch;
+use Drupal\telephone\Plugin\Field\FieldType\TelephoneItem;
 
 /**
  * Class TelephoneNumber
@@ -21,6 +22,31 @@ class TelephoneNumber extends IdentityDataClassBase {
   const TYPE_HOME = 'home';
   const TYPE_WORK = 'work';
   const TYPE_CELL = 'cell';
+
+  /**
+   * @param string $type
+   * @param string $reference
+   * @param null $value
+   *
+   * @return \Drupal\Core\Entity\EntityInterface|\Drupal\identity\Entity\IdentityData
+   */
+  public function createData($type, $reference, $value = NULL) {
+    $data = parent::createData($type, $reference, $value);
+
+    if (is_string($data)) {
+      $data->telephone_number = $data;
+    }
+    else if (is_array($data)) {
+      $data->telephone_number = $value['telephone_number'];
+      $data->can_sms = !empty($value['can_sms']);
+      $data->can_vm = !empty($value['can_vm']);
+    }
+    else if ($value instanceof TelephoneItem) {
+      $data->telephone_number = $value->toArray();
+    }
+
+    return $data;
+  }
 
   /**
    * {@inheritdoc}
