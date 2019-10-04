@@ -260,13 +260,13 @@ class ThirdPartyID extends IdentityDataClassBase {
 
     $fields['is_encrypted'] = BundleFieldDefinition::create('boolean')
       ->setLabel(new TranslatableMarkup('Is Encrypted?'))
-      ->setDefaultValueCallback([static::class, 'isEncryptedDefaultValue'])
+      ->setDefaultValueCallback(static::class.'::isEncryptedDefaultValue')
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
 
     $fields['is_one_to_one'] = BundleFieldDefinition::create('boolean')
       ->setLabel(new TranslatableMarkup('Is one to one'))
-      ->setDefaultValueCallback([static::class, 'isOneToOne'])
+      ->setDefaultValueCallback(static::class.'::isOneToOneDefaultValue')
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
 
