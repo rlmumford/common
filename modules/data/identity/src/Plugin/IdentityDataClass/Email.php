@@ -19,6 +19,23 @@ use Drupal\identity\IdentityMatch;
 class Email extends IdentityDataClassBase {
 
   /**
+   * Type constants
+   */
+  const TYPE_UNKNOWN = 'unknown';
+  const TYPE_PERSONAL = 'personal';
+  const TYPE_WORK = 'work';
+  const TYPE_OTHER = 'other';
+
+  /**
+   * {@inheritdoc}
+   */
+  public function createData($type, $reference, $value = NULL) {
+    $data = parent::createData($type, $reference, $value);
+    $data->email_address = $value;
+    return $data;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function buildFieldDefinitions() {
@@ -37,10 +54,10 @@ class Email extends IdentityDataClassBase {
    */
   public function typeOptions() {
     return [
-      'unknown' => new TranslatableMarkup('Unknown'),
-      'personal' => new TranslatableMarkup('Personal'),
-      'work' => new TranslatableMarkup('Work'),
-      'other' => new TranslatableMarkup('Other')
+      static::TYPE_UNKNOWN => new TranslatableMarkup('Unknown'),
+      static::TYPE_PERSONAL => new TranslatableMarkup('Personal'),
+      static::TYPE_WORK => new TranslatableMarkup('Work'),
+      static::TYPE_OTHER => new TranslatableMarkup('Other')
     ];
   }
 

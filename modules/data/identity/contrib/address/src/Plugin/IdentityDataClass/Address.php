@@ -20,6 +20,22 @@ use Drupal\identity\Plugin\IdentityDataClass\IdentityDataClassBase;
  */
 class Address extends IdentityDataClassBase {
 
+  const TYPE_MAILING = 'mailing';
+  const TYPE_PHYSICAL = 'physical';
+
+  /**
+   * {@inheritdoc}
+   */
+  public function createData($type, $reference, $value = NULL) {
+    $data = parent::createData($type, $reference, $value);
+
+    if (is_array($value)) {
+      $data->address = $value;
+    }
+
+    return $data;
+  }
+
   /**
    * {@inheritdoc}
    */
@@ -96,8 +112,8 @@ class Address extends IdentityDataClassBase {
 
   public function typeOptions() {
     return [
-      'mailing' => new TranslatableMarkup('Mailing'),
-      'physical' => new TranslatableMarkup('Physical'),
+      static::TYPE_MAILING => new TranslatableMarkup('Mailing'),
+      static::TYPE_PHYSICAL => new TranslatableMarkup('Physical'),
     ];
   }
 }
