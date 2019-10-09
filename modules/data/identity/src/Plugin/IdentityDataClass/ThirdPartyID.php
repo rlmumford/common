@@ -184,10 +184,10 @@ class ThirdPartyID extends IdentityDataClassBase {
         STR_PAD_LEFT
       );
 
-      $query->condition('value_search', $value_search);
+      $query->condition('value_searchable', $value_search);
     }
     else {
-      $query->condition('value_search', $data->value->value);
+      $query->condition('value_searchable', $data->value->value);
     }
 
     /** @var \Drupal\identity\IdentityMatch[] $matches */
@@ -326,7 +326,7 @@ class ThirdPartyID extends IdentityDataClassBase {
         '',
         $value
       ));
-      $data->value_search = str_pad(
+      $data->value_searchable = str_pad(
         substr($trimmed_and_cleaned, -4),
         strlen($trimmed_and_cleaned),
         'X',
@@ -336,7 +336,7 @@ class ThirdPartyID extends IdentityDataClassBase {
       $data->__unencypted_value = $value;
     }
     else {
-      $data->value_search = $data->value->value;
+      $data->value_searchable = $data->value->value;
     }
   }
 
