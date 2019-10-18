@@ -236,7 +236,11 @@ class ServiceController extends ControllerBase {
     }
     $identity->save();
 
-    return new ResourceResponse($result, 200);
+    return new ResourceResponse([
+      'id' => $identity->id(),
+      'label' => $identity->label(),
+      'uuid' => $identity->uuid(),
+    ], 200);
   }
 
   /**
