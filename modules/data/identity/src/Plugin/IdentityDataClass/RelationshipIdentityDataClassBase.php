@@ -88,12 +88,18 @@ class RelationshipIdentityDataClassBase extends IdentityDataClassBase {
   public function createData($type, $reference, $value = NULL) {
     $data = parent::createData($type, $reference);
 
-    if (isset($data['other_identity'])) {
+    if (isset($value['other_identity'])) {
       $this->initOtherIdentity($data, $value['other_identity']);
+
+      $metadata = $value;
+      unset($metadata['other_identity']);
     }
     else {
       $this->initOtherIdentity($data, $value);
+      $metadata = !empty($value['metadata']) ? $value['metadata'] : [];
     }
+
+    $this->initMetadata($data, $metadata);
 
     return $data;
   }
@@ -125,6 +131,14 @@ class RelationshipIdentityDataClassBase extends IdentityDataClassBase {
   }
 
   /**
+   * Correctly place any relationship metadata on the data.
+   *
+   * @param $data
+   * @param $metadata
+   */
+  protected function initMetadata($data, $metadata) {}
+
+  /**
    * Run an acquisition on the other identity.
    *
    * @param $data
@@ -133,7 +147,7 @@ class RelationshipIdentityDataClassBase extends IdentityDataClassBase {
   protected function initOtherIdentity($data, $other_identity) {
     if (
       ($other_identity instanceof IdentityDataGroup) ||
-      (is_array($other_identity) && !isset($other_identity['target_id']))
+      (is_array($other_identity) && !isset($other_identity['target_id']) && !isset($other_identity['target_uuid']))
     ) {
       $group = $other_identity;
       if (!($group instanceof IdentityDataGroup)) {
@@ -144,7 +158,19 @@ class RelationshipIdentityDataClassBase extends IdentityDataClassBase {
       $data->other_identity = $result->getIdentity();
     }
     else {
-      $data->other_identity = $other_identity;
+      if (!isset($other_identity['target_id']) && !empty($other_identity['target_uuid'])) {
+        $query = $this->identityStorage->getQuery();
+        $query->condition('uuid', $other_identity['target_uuid']);
+        $ids = $query->execute();
+
+        if ($ids) {
+          $other_identity['target_id'] = reset($ids);
+        }
+      }
+
+      if (isset($other_identity['target_id'])) {
+        $data->other_identity = $other_identity;
+      }
     }
   }
 
