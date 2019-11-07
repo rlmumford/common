@@ -10,17 +10,18 @@ use Drupal\entity\BundleFieldDefinition;
  * Class MemberOf
  *
  * @IdentityDataClass(
- *   id = "member_of",
- *   label = @Translation("Member Of"),
+ *   id = "works_at",
+ *   label = @Translation("Works At"),
  * );
  *
  * @package Drupal\identity\Plugin\IdentityDataClass
  */
-class MemberOf extends RelationshipIdentityDataClassBase {
+class WorksAt extends RelationshipIdentityDataClassBase {
 
   const TYPE_EMPLOYEE = 'employee';
   const TYPE_DIRECTOR = 'director';
   const TYPE_OWNER = 'owner';
+  const TYPE_UNKNOWN = 'unknown';
 
   /**
    * {@inheritdoc}
@@ -29,7 +30,8 @@ class MemberOf extends RelationshipIdentityDataClassBase {
     return [
       static::TYPE_EMPLOYEE => new TranslatableMarkup('Employee'),
       static::TYPE_DIRECTOR => new TranslatableMarkup('Director'),
-      static::TYPE_OWNER => new TranslatableMarkup('Ownder'),
+      static::TYPE_OWNER => new TranslatableMarkup('Owner'),
+      static::TYPE_UNKNOWN => new TranslatableMarkup('Unknown'),
     ];
   }
 
