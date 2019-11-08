@@ -5,3 +5,6 @@ services:
   identity.acquirer:
     class: Drupal\identity\IdentityDataIdentityAcquirer
     arguments: [ '@entity_type.manager' ]
+  identity.merger:
+    class: Drupal\identity\IdentityMerger
+    arguments: [ '@entity_type.manager', '@event_dispatcher' ]
