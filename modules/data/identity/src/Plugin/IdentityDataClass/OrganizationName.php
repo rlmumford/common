@@ -52,7 +52,7 @@ class OrganizationName extends IdentityDataClassBase {
   public function buildFieldDefinitions() {
     $fields = parent::buildFieldDefinitions();
 
-    $fields['name'] = BundleFieldDefinition::create('string')
+    $fields['org_name'] = BundleFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Name'))
       ->setRevisionable(TRUE)
       ->setDisplayConfigurable('view', TRUE)
@@ -67,8 +67,8 @@ class OrganizationName extends IdentityDataClassBase {
   public function findMatches(IdentityData $data) {
     $query = $this->identityDataStorage->getQuery();
     $query->condition('class', $this->pluginId);
-    if ($data->name->value) {
-      $query->condition('name', $data->name->value);
+    if ($data->org_name->value) {
+      $query->condition('org_name', $data->org_name->value);
     }
     else {
       return [];
@@ -96,7 +96,7 @@ class OrganizationName extends IdentityDataClassBase {
   public function supportOrOppose(IdentityData $data, IdentityMatch $match) {
     $identity = $match->getIdentity();
     foreach ($identity->getData($this->pluginId) as $identity_data) {
-      if ($data->name->value == $identity_data->name->value) {
+      if ($data->org_name->value == $identity_data->org_name->value) {
         $match->supportMatch($identity_data, 10);
       }
     }
