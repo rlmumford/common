@@ -64,6 +64,9 @@
               "Layout builder visibility rules": "https://www.drupal.org/files/issues/2019-05-03/2916876-52.patch",
               "Layout builder form blocks": "https://www.drupal.org/files/issues/2019-08-12/3045171-79.patch",
               "Entity reference views autocomplete filters": "https://www.drupal.org/files/issues/2019-05-07/generic_entityreference_filter_22429699-162.patch"
+          },
+          "drupal/name": {
+              "Fix conditional to check if component is active": "https://www.drupal.org/files/issues/2019-11-13/3094247-2.patch"
           }
       }
     },
