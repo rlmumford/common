@@ -71,9 +71,13 @@ class RelationshipIdentityDataClassBase extends IdentityDataClassBase {
     $fields['other_identity'] = BaseFieldDefinition::create('entity_reference')
       ->setSetting('target_type', 'identity')
       ->setLabel(new TranslatableMarkup('Other Identity'))
-      ->setClass(IdentityEntityReferenceItem::class)
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
+    $fields['other_identity']->setItemDefinition(
+      $fields['other_identity']
+        ->getItemDefinition()
+        ->setClass(IdentityEntityReferenceItem::class)
+    );
 
     return $fields;
   }
