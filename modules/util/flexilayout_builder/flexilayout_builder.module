@@ -4,6 +4,8 @@ use Drupal\Component\Plugin\Exception\ContextException;
 use Drupal\Component\Plugin\Exception\MissingValueContextException;
 use Drupal\Core\Config\Entity\ThirdPartySettingsInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Plugin\Context\Context;
+use Drupal\Core\Plugin\Context\ContextDefinition;
 use Drupal\Core\Plugin\Context\EntityContext;
 use Drupal\Core\Url;
 use Drupal\ctools_block\Plugin\Block\EntityField;
@@ -201,7 +203,15 @@ function flexilayout_builder_layout_builder_view_context_alter(array &$contexts,
       $plugin = $relationship_manager->createInstance($relationship['plugin'], $relationship['settings'] ?: []);
       $context_handler->applyContextMapping($plugin, $contexts);
 
-      $context = $plugin->getRelationship();
+      try {
+        $context = $plugin->getRelationship();
+      }
+      catch (TypeError $error) {
+        $plugin_definition = $plugin->getPluginDefinition();
+        $data_type = $plugin_definition['data_type'];
+        $context_definition = new ContextDefinition($data_type, $plugin_definition['label']);
+        $context = new Context($context_definition);
+      }
       if (!$context->hasContextValue() && $allow_sample) {
         $definition = $context->getContextDefinition();
         if (stripos($definition->getDataType(), 'entity:') === 0) {
