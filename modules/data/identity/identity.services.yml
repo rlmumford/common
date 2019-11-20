@@ -8,3 +8,8 @@ services:
   identity.merger:
     class: Drupal\identity\IdentityMerger
     arguments: [ '@entity_type.manager', '@event_dispatcher' ]
+  identity.query.sql:
+    class: Drupal\identity\Entity\Query\IdentityQueryFactory
+    arguments: ['@database']
+    tags:
+      - { name: backend_overridable }

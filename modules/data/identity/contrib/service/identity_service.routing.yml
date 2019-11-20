@@ -5,7 +5,7 @@ identity_service.query_data:
   options:
     _auth: ['basic_auth']
     no_cache: 'TRUE'
-  methods: ['POST']
+  methods: ['GET']
   requirements:
     _permission: 'query identity data'
     _format: 'json|hal_json'

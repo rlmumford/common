@@ -1,13 +1,16 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Rob
- * Date: 15/11/2019
- * Time: 17:44
- */
 
 namespace Drupal\identity\Entity\Query;
 
-class IdentityQueryFactory {
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Entity\Query\Sql\QueryFactory;
 
+class IdentityQueryFactory extends QueryFactory {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function get(EntityTypeInterface $entity_type, $conjunction) {
+    return new IdentityQuery($entity_type, $conjunction, $this->connection, $this->namespaces);
+  }
 }

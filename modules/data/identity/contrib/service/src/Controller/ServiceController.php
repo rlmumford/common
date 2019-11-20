@@ -4,6 +4,7 @@ namespace Drupal\identity_service\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Entity\Query\ConditionInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\identity\Entity\Identity;
@@ -212,10 +213,63 @@ class ServiceController extends ControllerBase {
    * @return \Drupal\rest\ResourceResponse
    */
   public function queryData(Request $request) {
-    $group = $this->deserializeDataGroup($request);
-    $result = $this->identityAcquirer->acquireIdentity($group);
+    $storage = $this->entityTypeManager->getStorage('identity');
+
+    $conditions = $request->query->get('conditions', []);
+
+    $query = $storage->getQuery(
+      !empty($conditions['conjunction']) ? $conditions['conjunction'] : 'AND'
+    );
+    $this->queryDataCompileConditions($query, $conditions);
+
+    $ids = $query->execute();
+    $result = [];
+    foreach ($storage->loadMultiple($ids) as $identity) {
+      $result[] = [
+        'id' => $identity->id(),
+        'label' => $identity->label(),
+        'relevance' => 1,
+      ];
+    }
 
     return new ResourceResponse($result, 200);
+  }
+
+  /**
+   * Compile a condition set into a query object.
+   *
+   * @param ConditionInterface|\Drupal\Core\Entity\Query\QueryInterface $condition_set
+   * @param array $conditions
+   */
+  protected function queryDataCompileConditions($condition_set, array $conditions) {
+    foreach ($conditions as $key => $condition) {
+      if (!is_numeric($key)) {
+        continue;
+      }
+
+      if (isset($condition['_t']) && ($condition['_t'] === 'set')) {
+        if ($condition['conjunction'] === 'AND') {
+          $condition_group = $condition_set->andConditionGroup();
+        }
+        else {
+          $condition_group = $condition_set->orConditionGroup();
+        }
+
+        $this->queryDataCompileConditions($condition_group, $condition);
+        $condition_set->condition($condition_group);
+      }
+      else {
+        $class = $condition['class'];
+
+        foreach ($condition as $field => $value) {
+          if (in_array($field, ['_t', 'class'])) {
+            continue;
+          }
+
+          $condition_set->condition($class.'::'.$field, $value['value'], $value['op']);
+        }
+      }
+    }
   }
 
   /**
