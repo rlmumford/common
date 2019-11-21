@@ -2,9 +2,12 @@
 
 namespace Drupal\identity\Plugin\IdentityDataClass;
 
+use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity\BundleFieldDefinition;
+use Drupal\identity\Entity\Identity;
 use Drupal\identity\Entity\IdentityData;
+use Drupal\identity\IdentityLabelContext;
 use Drupal\identity\IdentityMatch;
 use Drupal\name\Plugin\Field\FieldType\NameItem;
 
@@ -18,7 +21,8 @@ use Drupal\name\Plugin\Field\FieldType\NameItem;
  *
  * @package Drupal\identity\Plugin\IdentityDataClass
  */
-class PersonalName extends IdentityDataClassBase {
+class PersonalName extends IdentityDataClassBase implements LabelingIdentityDataClassInterface {
+  use LabelingIdentityDataClassTrait;
 
   const TYPE_ALIAS = 'alias';
   const TYPE_FULL = 'full';
@@ -149,5 +153,12 @@ class PersonalName extends IdentityDataClassBase {
     }
 
     return $data;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function buildIdentityLabel(IdentityData $data) {
+    return $data->full_name->value;
   }
 }

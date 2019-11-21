@@ -2,9 +2,12 @@
 
 namespace Drupal\identity\Plugin\IdentityDataClass;
 
+use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity\BundleFieldDefinition;
+use Drupal\identity\Entity\Identity;
 use Drupal\identity\Entity\IdentityData;
+use Drupal\identity\IdentityLabelContext;
 use Drupal\identity\IdentityMatch;
 
 /**
@@ -17,7 +20,8 @@ use Drupal\identity\IdentityMatch;
  *
  * @package Drupal\identity\Plugin\IdentityDataClass
  */
-class OrganizationName extends IdentityDataClassBase {
+class OrganizationName extends IdentityDataClassBase implements LabelingIdentityDataClassInterface {
+  use LabelingIdentityDataClassTrait;
 
   /**
    * Type constants
@@ -100,5 +104,12 @@ class OrganizationName extends IdentityDataClassBase {
         $match->supportMatch($identity_data, 10);
       }
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function buildIdentityLabel(IdentityData $data) {
+    return $data->org_name->value;
   }
 }

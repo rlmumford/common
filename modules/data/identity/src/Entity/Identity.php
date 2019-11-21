@@ -93,11 +93,7 @@ class Identity extends ContentEntityBase implements IdentityInterface {
   }
 
   public static function createLabel(Identity $entity, FieldDefinitionInterface $definition) {
-    if ($data = $entity->getData('personal_name')) {
-      return reset($data)->full_name->value;
-    }
-
-    return '';
+    return \Drupal::service('identity.labeler')->label($entity);
   }
 
   /**

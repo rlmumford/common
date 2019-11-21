@@ -43,3 +43,15 @@ identity_service.identity.data_get:
   requirements:
     _entity_access: 'identity.view'
     _format: 'json|hal_json'
+identity_service.identity.label_get:
+  path: '/api/identity/{identity}/label'
+  defaults:
+    _controller: '\Drupal\identity_service\Controller\ServiceController::getIdentityLabel'
+  options:
+    _auth: [ 'basic_auth' ]
+    no_cache: 'TRUE'
+  methods: [ 'GET' ]
+  requirements:
+    _entity_access: 'identity.view'
+    _format: 'json|hal_json'
+

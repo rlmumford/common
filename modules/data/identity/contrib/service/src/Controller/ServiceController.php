@@ -12,8 +12,11 @@ use Drupal\identity\Entity\IdentityData;
 use Drupal\identity\Entity\IdentityDataSource;
 use Drupal\identity\IdentityDataGroup;
 use Drupal\identity\IdentityDataIdentityAcquirer;
+use Drupal\identity\IdentityLabelContext;
+use Drupal\identity\IdentityLabelerInterface;
 use Drupal\rest\ResourceResponse;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -38,6 +41,13 @@ class ServiceController extends ControllerBase {
   protected $identityAcquirer;
 
   /**
+   * The identity labeler service
+   *
+   * @var \Drupal\identity\IdentityLabelerInterface
+   */
+  protected $identityLabeler;
+
+  /**
    * @var \Drupal\Core\Render\RendererInterface
    */
   protected $renderer;
@@ -50,7 +60,8 @@ class ServiceController extends ControllerBase {
       $container->get('entity_type.manager'),
       $container->get('serializer'),
       $container->get('renderer'),
-      $container->get('identity.acquirer')
+      $container->get('identity.acquirer'),
+      $container->get('identity.labeler')
     );
   }
 
@@ -65,12 +76,14 @@ class ServiceController extends ControllerBase {
     EntityTypeManagerInterface $entity_type_manager,
     SerializerInterface $serializer,
     RendererInterface $renderer,
-    IdentityDataIdentityAcquirer $identity_acquirer
+    IdentityDataIdentityAcquirer $identity_acquirer,
+    IdentityLabelerInterface $identity_labeler
   ) {
     $this->entityTypeManager = $entity_type_manager;
     $this->serializer = $serializer;
     $this->renderer = $renderer;
     $this->identityAcquirer = $identity_acquirer;
+    $this->identityLabeler = $identity_labeler;
   }
 
   /**
@@ -227,6 +240,7 @@ class ServiceController extends ControllerBase {
     foreach ($storage->loadMultiple($ids) as $identity) {
       $result[] = [
         'id' => $identity->id(),
+        'uuid' => $identity->uuid(),
         'label' => $identity->label(),
         'relevance' => 1,
       ];
@@ -326,5 +340,21 @@ class ServiceController extends ControllerBase {
       $data = $identity->getAllData();
       return new ResourceResponse($data, 200);
     }
+  }
+
+  /**
+   * Get the identity label
+   *
+   * @param \Drupal\identity\Entity\Identity $identity
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   */
+  public function getIdentityLabel(Identity $identity, Request $request) {
+    $context = new IdentityLabelContext(array_filter([
+      IdentityLabelContext::DATA_PREFERENCE_CLASS => $request->query->get('class_preference'),
+      IdentityLabelContext::DATA_PREFERENCE_TYPE => $request->query->get('type_preference'),
+    ]));
+    $label = $this->identityLabeler->label($identity, $context);
+
+    return new JsonResponse(['label' => $label], 200);
   }
 }
