@@ -221,6 +221,12 @@ class ServiceController extends ControllerBase {
   /**
    * Query Data Callback
    *
+   * This is the endpoint for querying identity data. Accepted request query
+   * parameters:
+   * - conditions: an array of conditions for the query.
+   * - label_dpclass: (string) the preferred class to use to generate the label
+   * - label_dptype: (string) the preferred type to use to generate the label
+   *
    * @param \Symfony\Component\HttpFoundation\Request $request
    *
    * @return \Drupal\rest\ResourceResponse
@@ -235,13 +241,19 @@ class ServiceController extends ControllerBase {
     );
     $this->queryDataCompileConditions($query, $conditions);
 
+    // Prepare labeling context.
+    $label_context = new IdentityLabelContext(array_filter([
+      IdentityLabelContext::DATA_PREFERENCE_CLASS => $request->query->get('label_dpclass', NULL),
+      IdentityLabelContext::DATA_PREFERENCE_TYPE => $request->query->get('label_dptype', NULL),
+    ]));
+
     $ids = $query->execute();
     $result = [];
     foreach ($storage->loadMultiple($ids) as $identity) {
       $result[] = [
         'id' => $identity->id(),
         'uuid' => $identity->uuid(),
-        'label' => $identity->label(),
+        'label' => $this->identityLabeler->label($identity, $label_context),
         'relevance' => 1,
       ];
     }
