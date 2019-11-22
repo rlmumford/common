@@ -87,7 +87,7 @@ class IdentityDataIdentityAcquirer implements IdentityDataIdentityAcquirerInterf
     });
 
     $top_match = array_shift($all_matches);
-    if ($top_match && $top_match->getScore() > $threshold) {
+    if ($top_match && $top_match->getScore() >= $threshold) {
       // @todo: Check if there are other > threshold matches and trigger
       // merge requests.
 

@@ -4,7 +4,7 @@ services:
     parent: default_plugin_manager
   identity.acquirer:
     class: Drupal\identity\IdentityDataIdentityAcquirer
-    arguments: [ '@entity_type.manager' ]
+    arguments: [ '@entity_type.manager', '@event_dispatcher' ]
   identity.merger:
     class: Drupal\identity\IdentityMerger
     arguments: [ '@entity_type.manager', '@event_dispatcher' ]
