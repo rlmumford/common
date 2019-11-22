@@ -21,6 +21,20 @@ interface IdentityDataInterface {
   public function setIdentity(IdentityInterface $identity);
 
   /**
+   * @return \Drupal\identity\Entity\IdentityDataSource
+   */
+  public function getSource();
+
+  /**
+   * Set the identity data source.
+   *
+   * @param \Drupal\identity\Entity\IdentityDataSource $source
+   *
+   * @return \Drupal\identity\Entity\IdentityDataInterface
+   */
+  public function setSource(IdentityDataSource $source);
+
+  /**
    * @param bool $skip
    *
    * @return static

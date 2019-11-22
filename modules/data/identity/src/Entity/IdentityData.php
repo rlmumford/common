@@ -210,6 +210,21 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface, E
   /**
    * {@inheritdoc}
    */
+  public function getSource() {
+    return $this->source->entity;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setSource(IdentityDataSource $source) {
+    $this->source = $source;
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function skipIdentitySave($skip = TRUE) {
     $this->_skipIdentitySave = $skip;
     return $this;

@@ -159,7 +159,7 @@ class ServiceController extends ControllerBase {
       }
 
       try {
-        $this->serializer->denormalize(
+        $source = $this->serializer->denormalize(
           $unserialized['source'],
           IdentityDataSource::class,
           $format,
@@ -312,7 +312,10 @@ class ServiceController extends ControllerBase {
 
     $identity = $result->getIdentity();
     foreach ($group->getDatas() as $data) {
-      $data->setIdentity($identity)->skipIdentitySave()->save();
+      $data->setSource($group->getSource())
+        ->setIdentity($identity)
+        ->skipIdentitySave()
+        ->save();
     }
     $identity->save();
 
