@@ -135,7 +135,7 @@ class Identity extends ContentEntityBase implements IdentityInterface {
 
     if (!empty($unloaded_classes)) {
       $query = $data_storage->getQuery();
-      $query->condition('class', $unloaded_classes);
+      $query->condition('class', $unloaded_classes, 'IN');
       $query->condition('identity', $this->id());
 
       /** @var \Drupal\identity\Entity\IdentityData[] $loaded_data */
