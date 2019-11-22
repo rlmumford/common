@@ -1,0 +1,5 @@
+services:
+  identity_data_address.pre_acquisition_listener:
+    class: Drupal\identity_address_data\EventSubscriber\IdentityPreAcquisition
+    tags:
+      - { name: 'event_subscriber' }

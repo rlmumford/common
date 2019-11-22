@@ -2,12 +2,9 @@
 
 namespace Drupal\identity\Plugin\IdentityDataClass;
 
-use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity\BundleFieldDefinition;
-use Drupal\identity\Entity\Identity;
 use Drupal\identity\Entity\IdentityData;
-use Drupal\identity\IdentityLabelContext;
 use Drupal\identity\IdentityMatch;
 
 /**

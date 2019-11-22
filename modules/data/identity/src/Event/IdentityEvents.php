@@ -10,4 +10,11 @@ final class IdentityEvents {
    * @Event
    */
   const POST_MERGE = 'identity.post_merge';
+
+  /**
+   * Name of event filed just before acquisition process.
+   *
+   * @Event
+   */
+  const PRE_ACQUISITION = 'identity.pre_acquisition';
 }

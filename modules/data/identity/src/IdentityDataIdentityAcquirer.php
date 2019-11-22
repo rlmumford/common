@@ -4,6 +4,9 @@ namespace Drupal\identity;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\identity\Entity\IdentityDataInterface;
+use Drupal\identity\Event\IdentityEvents;
+use Drupal\identity\Event\PreAcquisitionEvent;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Class IdentityDataIdentityAcquirer
@@ -18,12 +21,18 @@ class IdentityDataIdentityAcquirer implements IdentityDataIdentityAcquirerInterf
   protected $entityTypeManager;
 
   /**
+   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+   */
+  protected $eventDispatcher;
+
+  /**
    * IdentityDataIdentityAcquirer constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, EventDispatcherInterface $event_dispatcher) {
     $this->entityTypeManager = $entity_type_manager;
+    $this->eventDispatcher = $event_dispatcher;
   }
 
   /**
@@ -36,7 +45,11 @@ class IdentityDataIdentityAcquirer implements IdentityDataIdentityAcquirerInterf
    * @return \Drupal\identity\IdentityAcquisitionResult
    */
   public function acquireIdentity(IdentityDataGroup $data_group, array $options = []) {
-    $threshold = 100;
+    $threshold = static::ACQUISITION_CONFIDENCE_THRESHOLD;
+
+    // Allow modules to massage data in the group
+    $event = new PreAcquisitionEvent($data_group);
+    $this->eventDispatcher->dispatch(IdentityEvents::PRE_ACQUISITION, $event);
 
     // Order datas by their acquisition priority.
     $datas = $data_group->getDatas();

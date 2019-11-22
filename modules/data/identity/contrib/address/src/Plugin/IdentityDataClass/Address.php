@@ -67,28 +67,47 @@ class Address extends IdentityDataClassBase {
    */
   public function findMatches(IdentityData $data) {
     $query = $this->identityDataStorage->getQuery();
+
     $query->condition('class', $this->pluginId);
-    $enough_data = FALSE;
+    $has_personal_name = $has_org_name = $has_admin_local = $enough_data = FALSE;
     if ($data->address->country_code) {
-      $query->condition('address__country_code', $data->address->country_code);
+      $query->condition('address.country_code', $data->address->country_code);
     }
     if ($data->address->administrative_area) {
-      $query->condition('address__administrative_area', $data->address->administrative_area);
+      $has_admin_local = TRUE;
+      $query->condition('address.administrative_area', $data->address->administrative_area);
     }
     if ($data->address->locality) {
-      $query->condition('address__locality', $data->address->locality);
+      $has_admin_local = TRUE;
+      $query->condition('address.locality', $data->address->locality);
     }
-    if ($data->address_line1) {
-      $enough_data = TRUE;
-      $query->condition('address__address_line1', $data->address->address_line1);
+    if ($data->address->address_line1) {
+      $enough_data = $has_admin_local;
+      $query->condition('address.address_line1', $data->address->address_line1);
     }
+
+    if ($data->address->given_name && $data->address->family_name) {
+      $query->condition('address.given_name', $data->address->given_name);
+      $query->condition('address.family_name', $data->address->family_name);
+      $has_personal_name = TRUE;
+    }
+
+    if ($data->address->organization) {
+      $query->condition('address.organization', $data->address->organization);
+      $has_org_name = TRUE;
+    }
+
     if (!$enough_data) {
       return [];
     }
     $matches = [];
     foreach ($this->identityDataStorage->loadMultiple($query->execute()) as $match_data) {
       /** @var IdentityData $match_data */
-      $matches[$match_data->getIdentity()->id()] = new IdentityMatch(10, $match_data, $data);
+      $matches[$match_data->getIdentity()->id()] = new IdentityMatch(
+        ($has_org_name || $has_personal_name) ? 100 : 50,
+        $match_data,
+        $data
+      );
     }
     return $matches;
   }

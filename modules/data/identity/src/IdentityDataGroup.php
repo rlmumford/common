@@ -45,10 +45,25 @@ class IdentityDataGroup {
   }
 
   /**
+   * Get the datas from this group. Filter by class.
+   *
+   * @param string $class
+   *
    * @return \Drupal\identity\Entity\IdentityData[]
    */
-  public function getDatas() {
-    return $this->datas;
+  public function getDatas($class = FALSE) {
+    if (empty($class)) {
+      return $this->datas;
+    }
+
+    $class_datas = [];
+    foreach ($this->datas as $data) {
+      if ($data->bundle() === $class) {
+        $class_datas[] = $data;
+      }
+    }
+
+    return $class_datas;
   }
 
   /**
