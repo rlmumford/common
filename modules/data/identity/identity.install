@@ -66,7 +66,7 @@ function identity_update_8003() {
 /**
  * Install role data class.
  */
-function identity_update_8004() {
+function identity_update_8005() {
   $entity_type_manager = \Drupal::entityTypeManager();
   $entity_type = $entity_type_manager->getDefinition('identity_data');
 
@@ -75,7 +75,7 @@ function identity_update_8004() {
   $field_storage_definition_listener = \Drupal::service('field_storage_definition.listener');
   $field_definition_listener = \Drupal::service('field_definition.listener');
 
-  foreach (['works_at'] as $bundle) {
+  foreach (['role'] as $bundle) {
     $entity_bundle_listener->onBundleCreate($bundle, $entity_type->id());
     foreach ($bundle_handler->getFieldDefinitions($bundle) as $definition) {
       $field_storage_definition_listener->onFieldStorageDefinitionCreate($definition);
