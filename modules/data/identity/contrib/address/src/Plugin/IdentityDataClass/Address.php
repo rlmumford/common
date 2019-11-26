@@ -94,6 +94,13 @@ class Address extends IdentityDataClassBase {
 
     if ($data->address->organization) {
       $query->condition('address.organization', $data->address->organization);
+
+      // We do this to stop individuals being found as organizations.
+      if (!$has_personal_name) {
+        $query->notExists('address.given_name');
+        $query->notExists('address.family_name');
+      }
+
       $has_org_name = TRUE;
     }
 
