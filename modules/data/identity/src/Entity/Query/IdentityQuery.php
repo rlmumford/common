@@ -21,4 +21,16 @@ class IdentityQuery extends Query {
   public function getTables(SelectInterface $sql_query) {
     return new IdentityTables($sql_query);
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function prepare() {
+    parent::prepare();
+
+    $this->sqlQuery->distinct(TRUE);
+
+    return $this;
+  }
+
 }

@@ -247,6 +247,11 @@ class ServiceController extends ControllerBase {
       IdentityLabelContext::DATA_PREFERENCE_TYPE => $request->query->get('label_dptype', NULL),
     ]));
 
+    $query->range(
+      $request->query->get('start', 0),
+      $request->query->get('end', 10)
+    );
+
     $ids = $query->execute();
     $result = [];
     foreach ($storage->loadMultiple($ids) as $identity) {

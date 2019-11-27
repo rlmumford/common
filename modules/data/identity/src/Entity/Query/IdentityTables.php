@@ -26,17 +26,19 @@ class IdentityTables extends Tables {
 
       // Ensure the identity data table is present.
       if (empty($this->identityDataTables[$identity_data])) {
-        $condition = '%alias.identity = base_table.id AND %alias.class = :class';
-        $args = [
-          ':class' => $identity_data,
-        ];
-
         if (strpos($identity_data, '.')) {
-          $condition .= ' AND %alias.type = :type';
           list($class, $data_type) = explode('.', $identity_data, 2);
+          $condition = '%alias.identity = base_table.id AND %alias.class = :class__'.$class;
+          $condition .= ' AND %alias.type = :type';
           $args = [
-            ':class' => $class,
+            ':class__'.$class => $class,
             ':type' => $data_type,
+          ];
+        }
+        else {
+          $condition = '%alias.identity = base_table.id AND %alias.class = :class__'.$identity_data;
+          $args = [
+            ':class__'.$identity_data => $identity_data,
           ];
         }
 
