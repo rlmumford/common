@@ -1,0 +1,33 @@
+<?php
+
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\identity\Field\IdentityDataReferenceItemList;
+
+/**
+ * Implements hook_entity_base_field_info().
+ */
+function identity_ui_entity_base_field_info(EntityTypeInterface $entity_type) {
+  if ($entity_type->id() !== 'identity') {
+    return [];
+  }
+
+  /** @var \Drupal\identity\IdentityDataClassManager $data_class_manager */
+  $data_class_manager = \Drupal::service('plugin.manager.identity_data_class');
+
+  $fields = [];
+  foreach ($data_class_manager->getDefinitions() as $plugin_id => $definition) {
+    $fields[$plugin_id . '_data'] = BaseFieldDefinition::create('entityreference')
+      ->setLabel(new TranslatableMarkup(
+        '@class Data',
+        ['@class' => $definition['label']]
+      ))
+      ->setSetting('target_type', 'identity_data')
+      ->setClass(IdentityDataReferenceItemList::class)
+      ->setDisplayConfigurable('view', TRUE)
+      ->setComputed(TRUE);
+  }
+
+  return $fields;
+}

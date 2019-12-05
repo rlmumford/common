@@ -1,0 +1,11 @@
+<?php
+
+/**
+ *
+ */
+function identity_service_update_8001() {
+  $update_manager = \Drupal::entityDefinitionUpdateManager();
+  $subscription = \Drupal::entityTypeManager()->getDefinition('identity_subscription');
+
+  $update_manager->installEntityType($subscription);
+}

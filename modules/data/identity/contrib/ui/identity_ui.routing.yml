@@ -1,0 +1,6 @@
+identity_ui.merge_form:
+  path: '/identity/merge'
+  defaults:
+    _form: '\Drupal\identity_ui\Form\IdentityMergeForm'
+  requirements:
+    _permission: 'ui merge identities'
