@@ -161,7 +161,7 @@ class RelationshipIdentityDataClassBase extends IdentityDataClassBase {
       $data->__acquisitionResult = $result = $this->identityAcquirer->acquireIdentity($group);
       $data->other_identity = $result->getIdentity();
     }
-    else {
+    else if (is_array($other_identity)) {
       if (!isset($other_identity['target_id']) && !empty($other_identity['target_uuid'])) {
         $query = $this->identityStorage->getQuery();
         $query->condition('uuid', $other_identity['target_uuid']);
@@ -174,6 +174,19 @@ class RelationshipIdentityDataClassBase extends IdentityDataClassBase {
 
       if (isset($other_identity['target_id'])) {
         $data->other_identity = $other_identity;
+      }
+    }
+    else if (is_numeric($other_identity)) {
+      $data->other_identity = $other_identity;
+    }
+    else if (is_string($other_identity)) {
+      $query = $this->identityStorage->getQuery();
+      $query->condition('uuid', $other_identity);
+      $query->range(0, 1);
+      $ids = $query->execute();
+
+      if (count($ids)) {
+        $data->other_identity = reset($ids);
       }
     }
   }

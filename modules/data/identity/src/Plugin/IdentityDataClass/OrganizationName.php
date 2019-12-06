@@ -68,6 +68,7 @@ class OrganizationName extends IdentityDataClassBase implements LabelingIdentity
   public function findMatches(IdentityData $data) {
     $query = $this->identityDataStorage->getQuery();
     $query->condition('class', $this->pluginId);
+    $query->exists('identity');
     if ($data->org_name->value) {
       $query->condition('org_name', $data->org_name->value);
     }
@@ -78,11 +79,10 @@ class OrganizationName extends IdentityDataClassBase implements LabelingIdentity
     $matches = [];
     foreach ($this->identityDataStorage->loadMultiple($query->execute()) as $match_data) {
       /** @var IdentityData $match_data */
-      $matches[$match_data->getIdentity()->id()] = new IdentityMatch(
-        10,
-        $match_data,
-        $data
-      );
+      if ($match_data->getIdentity()) {
+        $matches[$match_data->getIdentity()->id()]
+          = new IdentityMatch(10, $match_data, $data);
+      }
     }
 
     return $matches;

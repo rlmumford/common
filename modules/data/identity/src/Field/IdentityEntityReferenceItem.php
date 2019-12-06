@@ -67,4 +67,17 @@ class IdentityEntityReferenceItem extends EntityReferenceItem {
   public function isEmpty() {
     return parent::isEmpty() && empty($this->data);
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setValue($values, $notify = TRUE) {
+    if (is_string($values) && !is_numeric($values)) {
+      $storage = \Drupal::entityTypeManager()->getStorage('identity');
+      $ids = $storage->getQuery()->condition('uuid', $values)->range(0, 1)->execute();
+      $values = reset($ids);
+    }
+
+    parent::setValue($values, $notify);
+  }
 }

@@ -219,6 +219,64 @@ class ServiceController extends ControllerBase {
   }
 
   /**
+   * Subscribe to an identity.
+   *
+   * @param \Drupal\identity\Entity\Identity $identity
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   */
+  public function subscribeToIdentity(Identity $identity, Request $request) {
+    $received = $request->getContent();
+    $unserialized = NULL;
+    if (!empty($received)) {
+      $method = strtolower($request->getMethod());
+      $format = $request->getContentType();
+
+      try {
+        $unserialized = $this->serializer->decode($received, $format, ['request_method' => $method]);
+      }
+      catch (UnexpectedValueException $e) {
+        throw new BadRequestHttpException($e->getMessage(), $e);
+      }
+    }
+
+    $subscription_storage = $this->entityTypeManager->getStorage('identity_subscription');
+    if (empty($unserialized['events']) && !empty($unserialized['event'])) {
+      $unserialized['events'] = [$unserialized['event']];
+    }
+
+    if (empty($unserialized['events'])) {
+      throw new BadRequestHttpException('No events specified for subscription');
+    }
+
+    $results = [];
+    foreach ($unserialized['events'] as $event) {
+      // Try to load an identical subscription.
+      $query = $subscription_storage->getQuery();
+      $query->condition('notification_url', $unserialized['notification_url']);
+      $query->condition('event', $event);
+      $query->condition('identity', $identity->id());
+      $query->range(0, 1);
+
+      $ids = $query->execute();
+      if (count($ids)) {
+        $results[$event] = 'already_subscribed';
+      }
+      else {
+        $subscription_storage->create([
+          'identity' => $identity,
+          'notification_url' => $unserialized['notification_url'],
+          'event' => $event,
+        ]);
+        $subscription_storage->save();
+
+        $results[$event] = 'subscribed';
+      }
+    }
+
+    return ResourceResponse::create($results);
+  }
+
+  /**
    * Query Data Callback
    *
    * This is the endpoint for querying identity data. Accepted request query

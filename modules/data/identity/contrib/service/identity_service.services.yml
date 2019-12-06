@@ -1,5 +1,13 @@
 services:
+  identity_service.subscription_notifier:
+    class: Drupal\identity_service\IdentitySubscriptionNotifier
+    arguments: [ '@http_client', '@entity_type.manager' ]
+  identity_service.merge_subscriber:
+    class: Drupal\identity_service\EventSubscriber\IdentityMergeSubscriber
+    arguments: [ '@identity_service.subscription_notifier' ]
+    tags:
+      - { name: event_subscriber }
   identity_service.normalizer.identity_acquisition_result:
-   class: Drupal\identity_service\Normalizer\IdentityAcquisitionResultNormalizer
-   tags:
-   - { name: normalizer, priority: 10 }
+    class: Drupal\identity_service\Normalizer\IdentityAcquisitionResultNormalizer
+    tags:
+    - { name: normalizer, priority: 10 }

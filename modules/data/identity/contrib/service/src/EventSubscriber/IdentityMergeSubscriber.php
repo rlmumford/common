@@ -2,17 +2,19 @@
 
 namespace Drupal\identity_service\EventSubscriber;
 
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\identity\Event\IdentityEvents;
 use Drupal\identity\Event\PostIdentityMergeEvent;
+use Drupal\identity_service\IdentitySubscriptionNotifierInterface;
 use GuzzleHttp\ClientInterface;
+use function GuzzleHttp\Promise\settle;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class IdentityMergeSubscriber implements EventSubscriberInterface {
-
   /**
-   * @var \GuzzleHttp\ClientInterface
+   * @var \Drupal\identity_service\IdentitySubscriptionNotifierInterface
    */
-  protected $httpClient;
+  protected $notifier;
 
   /**
    * [@inheritdoc}
@@ -28,14 +30,32 @@ class IdentityMergeSubscriber implements EventSubscriberInterface {
    *
    * @param \GuzzleHttp\ClientInterface $http_client
    */
-  public function __construct(ClientInterface $http_client) {
-    $this->httpClient = $http_client;
+  public function __construct(IdentitySubscriptionNotifierInterface $notifier) {
+    $this->notifier = $notifier;
   }
 
   /**
    * @param \Drupal\identity\Event\PostIdentityMergeEvent $event
    */
   public function postMergeNotifySubscribers(PostIdentityMergeEvent $event) {
+    /** @var \Drupal\identity\Entity\Identity[] $identities */
+    $identities = array_filter([
+      $event->getIdentityOne(),
+      $event->getIdentityTwo(),
+    ]);
 
+    /** @var \GuzzleHttp\Psr7\Request[] $requests */
+    $requests = [];
+    foreach ($identities as $identity) {
+      $requests = array_merge(
+        $requests,
+        $this->notifier->notifyAsync($identity,IdentityEvents::POST_MERGE, [
+          'identity' => $identity->id(),
+          'result_identity' => $event->getIdentityResult()->id(),
+        ])
+      );
+    }
+
+    settle($requests)->wait();
   }
 }

@@ -69,6 +69,8 @@ class Address extends IdentityDataClassBase {
     $query = $this->identityDataStorage->getQuery();
 
     $query->condition('class', $this->pluginId);
+    $query->exists('identity');
+
     $has_personal_name = $has_org_name = $has_admin_local = $enough_data = FALSE;
     if ($data->address->country_code) {
       $query->condition('address.country_code', $data->address->country_code);
@@ -110,11 +112,13 @@ class Address extends IdentityDataClassBase {
     $matches = [];
     foreach ($this->identityDataStorage->loadMultiple($query->execute()) as $match_data) {
       /** @var IdentityData $match_data */
-      $matches[$match_data->getIdentity()->id()] = new IdentityMatch(
-        ($has_org_name || $has_personal_name) ? 100 : 50,
-        $match_data,
-        $data
-      );
+      if ($match_data->getIdentity()) {
+        $matches[$match_data->getIdentity()->id()] = new IdentityMatch(
+          ($has_org_name || $has_personal_name) ? 100 : 50,
+          $match_data,
+          $data
+        );
+      }
     }
     return $matches;
   }

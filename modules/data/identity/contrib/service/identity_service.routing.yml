@@ -20,6 +20,17 @@ identity_service.data:
   requirements:
     _permission: 'post identity data'
     _format: 'json|hal_json'
+identity_service.identity.subscribe:
+  path: '/api/identity/{identity}/subscribe'
+  defaults:
+    _controller: '\Drupal\identity_service\Controller\ServiceController::subscribeToIdentity'
+  options:
+    _auth: [ 'basic_auth' ]
+    no_cache: 'TRUE'
+  methods: [ 'POST' ]
+  requirements:
+    _permission: 'subscribe to identity data'
+    _format: 'json|hal_json'
 identity_service.identity.data_post:
   path: '/api/identity/{identity}/data'
   defaults:

@@ -61,6 +61,7 @@ class PersonalName extends IdentityDataClassBase implements LabelingIdentityData
   public function findMatches(IdentityData $data) {
     $query = $this->identityDataStorage->getQuery('AND');
     $query->condition('class', $this->pluginId);
+    $query->exists('identity');
     $or_condition = $query->orConditionGroup();
 
     $not_enough_data = TRUE;
@@ -86,7 +87,10 @@ class PersonalName extends IdentityDataClassBase implements LabelingIdentityData
     $matches = [];
     foreach ($this->identityDataStorage->loadMultiple($query->execute()) as $match_data) {
       /** @var IdentityData $match_data */
-      $matches[$match_data->getIdentity()->id()] = new IdentityMatch(10, $match_data, $data);
+      if ($match_data->getIdentity()) {
+        $matches[$match_data->getIdentity()->id()]
+          = new IdentityMatch(10, $match_data, $data);
+      }
     }
 
     return $matches;
