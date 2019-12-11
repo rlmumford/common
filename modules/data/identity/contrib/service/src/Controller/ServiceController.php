@@ -14,6 +14,7 @@ use Drupal\identity\IdentityDataGroup;
 use Drupal\identity\IdentityDataIdentityAcquirer;
 use Drupal\identity\IdentityLabelContext;
 use Drupal\identity\IdentityLabelerInterface;
+use Drupal\identity_service\IdentitySubscriberInterface;
 use Drupal\rest\ResourceResponse;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -48,6 +49,13 @@ class ServiceController extends ControllerBase {
   protected $identityLabeler;
 
   /**
+   * The identity subscriber service.
+   *
+   * @var \Drupal\identity_service\IdentitySubscriberInterface
+   */
+  protected $identitySubscriber;
+
+  /**
    * @var \Drupal\Core\Render\RendererInterface
    */
   protected $renderer;
@@ -61,7 +69,8 @@ class ServiceController extends ControllerBase {
       $container->get('serializer'),
       $container->get('renderer'),
       $container->get('identity.acquirer'),
-      $container->get('identity.labeler')
+      $container->get('identity.labeler'),
+      $container->get('identity_service.identity_subscriber')
     );
   }
 
@@ -77,13 +86,15 @@ class ServiceController extends ControllerBase {
     SerializerInterface $serializer,
     RendererInterface $renderer,
     IdentityDataIdentityAcquirer $identity_acquirer,
-    IdentityLabelerInterface $identity_labeler
+    IdentityLabelerInterface $identity_labeler,
+    IdentitySubscriberInterface $identity_subscriber
   ) {
     $this->entityTypeManager = $entity_type_manager;
     $this->serializer = $serializer;
     $this->renderer = $renderer;
     $this->identityAcquirer = $identity_acquirer;
     $this->identityLabeler = $identity_labeler;
+    $this->identitySubscriber = $identity_subscriber;
   }
 
   /**
@@ -239,7 +250,6 @@ class ServiceController extends ControllerBase {
       }
     }
 
-    $subscription_storage = $this->entityTypeManager->getStorage('identity_subscription');
     if (empty($unserialized['events']) && !empty($unserialized['event'])) {
       $unserialized['events'] = [$unserialized['event']];
     }
@@ -248,30 +258,11 @@ class ServiceController extends ControllerBase {
       throw new BadRequestHttpException('No events specified for subscription');
     }
 
-    $results = [];
-    foreach ($unserialized['events'] as $event) {
-      // Try to load an identical subscription.
-      $query = $subscription_storage->getQuery();
-      $query->condition('notification_url', $unserialized['notification_url']);
-      $query->condition('event', $event);
-      $query->condition('identity', $identity->id());
-      $query->range(0, 1);
-
-      $ids = $query->execute();
-      if (count($ids)) {
-        $results[$event] = 'already_subscribed';
-      }
-      else {
-        $subscription_storage->create([
-          'identity' => $identity,
-          'notification_url' => $unserialized['notification_url'],
-          'event' => $event,
-        ]);
-        $subscription_storage->save();
-
-        $results[$event] = 'subscribed';
-      }
-    }
+    $results = $this->identitySubscriber->subscribe(
+      $identity,
+      $unserialized['events'],
+      $unserialized['notification_url']
+    );
 
     return ResourceResponse::create($results);
   }
@@ -381,6 +372,13 @@ class ServiceController extends ControllerBase {
         ->save();
     }
     $identity->save();
+
+    if (
+      $subscribe = $request->query->get('subscribe', []) &&
+      $url = $request->query->get('subscribe_url')
+    ) {
+      $this->identitySubscriber->subscribe($identity, $subscribe, $url);
+    }
 
     return new ResourceResponse($result, 200);
   }

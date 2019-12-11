@@ -1,4 +1,7 @@
 services:
+  identity_service.identity_subscriber:
+    class: Drupal\identity_service\IdentitySubscriber
+    arguments: [ '@entity_type.manager', '@current_user' ]
   identity_service.subscription_notifier:
     class: Drupal\identity_service\IdentitySubscriptionNotifier
     arguments: [ '@http_client', '@entity_type.manager' ]
