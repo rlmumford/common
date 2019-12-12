@@ -50,8 +50,16 @@ class IdentityMergeSubscriber implements EventSubscriberInterface {
       $requests = array_merge(
         $requests,
         $this->notifier->notifyAsync($identity,IdentityEvents::POST_MERGE, [
-          'identity' => $identity->id(),
-          'result_identity' => $event->getIdentityResult()->id(),
+          'identity' => [
+            'id' => $identity->id(),
+            'label' => $identity->label(),
+            'uuid' => $identity->uuid(),
+          ],
+          'result_identity' => [
+            'id' => $event->getIdentityResult()->id(),
+            'label' => $event->getIdentityResult()->label(),
+            'uuid' => $event->getIdentityResult()->uuid(),
+          ],
         ])
       );
     }
