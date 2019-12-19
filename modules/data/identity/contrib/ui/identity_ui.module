@@ -18,7 +18,7 @@ function identity_ui_entity_base_field_info(EntityTypeInterface $entity_type) {
 
   $fields = [];
   foreach ($data_class_manager->getDefinitions() as $plugin_id => $definition) {
-    $fields[$plugin_id . '_data'] = BaseFieldDefinition::create('entityreference')
+    $fields[$plugin_id . '_data'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup(
         '@class Data',
         ['@class' => $definition['label']]

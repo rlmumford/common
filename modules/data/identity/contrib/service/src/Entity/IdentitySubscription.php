@@ -45,7 +45,7 @@ class IdentitySubscription extends ContentEntityBase implements EntityOwnerInter
     $fields = parent::baseFieldDefinitions($entity_type);
     $fields += static::ownerBaseFieldDefinitions($entity_type);
 
-    $fields['identity'] = BaseFieldDefinition::create('entityreference')
+    $fields['identity'] = BaseFieldDefinition::create('entity_reference')
       ->setSetting('target_type', 'identity')
       ->setLabel(new TranslatableMarkup('Identity'));
 
