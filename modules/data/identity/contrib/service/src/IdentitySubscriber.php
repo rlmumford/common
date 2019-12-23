@@ -29,7 +29,7 @@ class IdentitySubscriber implements IdentitySubscriberInterface {
     AccountInterface $current_user
   ) {
     $this->subscriptionStorage = $entity_type_manager
-      ->getStorage('identity_subsription');
+      ->getStorage('identity_subscription');
     $this->currentUser = $current_user;
   }
 
