@@ -11,6 +11,13 @@ class IdentityDataStorage extends SqlContentEntityStorage {
   /**
    * {@inheritdoc}
    */
+  protected function getQueryServiceName() {
+    return 'identity.query.sql';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function doPreSave(EntityInterface $entity) {
     /** @var \Drupal\identity\Entity\IdentityData $entity */
     $return = parent::doPreSave($entity);
