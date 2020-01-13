@@ -76,6 +76,13 @@ class OrganizationName extends IdentityDataClassBase implements LabelingIdentity
       return [];
     }
 
+    // If there are more than 100 organizations with this name,
+    // its unlikely that we are going to be able a decent match
+    // from here, so lets not bother.
+    if ((clone $query)->count()->execute() > 100) {
+      return [];
+    }
+
     $matches = [];
     foreach ($this->identityDataStorage->loadMultiple($query->execute()) as $match_data) {
       /** @var IdentityData $match_data */

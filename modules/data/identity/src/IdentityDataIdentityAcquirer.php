@@ -81,13 +81,16 @@ class IdentityDataIdentityAcquirer implements IdentityDataIdentityAcquirerInterf
       // @todo: Find a way of not going any further if the score is high enough.
     }
 
-    // Sort the matches by the match score.
-    uasort($all_matches, function (IdentityMatch $match_a, IdentityMatch $match_b) {
-      return $match_a->getScore() > $match_b->getScore() ? -1 : 1;
-    });
+    /** @var \Drupal\identity\IdentityMatch $top_match */
+    $top_match = NULL;
+    foreach ($all_matches as $match) {
+      if (empty($top_match) || $match->getScore() > $top_match->getScore()) {
+        $top_match = $match;
+      }
+    }
 
     $top_match = array_shift($all_matches);
-    if ($top_match && $top_match->getScore() >= $threshold) {
+    if ($top_match && ($top_match->getScore() >= $threshold)) {
       // @todo: Check if there are other > threshold matches and trigger
       // merge requests.
 

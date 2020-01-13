@@ -84,6 +84,13 @@ class PersonalName extends IdentityDataClassBase implements LabelingIdentityData
       return [];
     }
 
+    // If we have more than 100 matches, it would be better
+    // to start from the address or SSN, so lets not clog up
+    // the matcher with pointless names.
+    if ((clone $query)->count()->execute() > 100) {
+      return [];
+    }
+
     $matches = [];
     foreach ($this->identityDataStorage->loadMultiple($query->execute()) as $match_data) {
       /** @var IdentityData $match_data */
