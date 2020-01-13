@@ -66,7 +66,9 @@ class Address extends IdentityDataClassBase {
    * {@inheritdoc}
    */
   public function findMatches(IdentityData $data) {
+    /** @var \Drupal\identity\Entity\Query\IdentityDataQueryInterface $query */
     $query = $this->identityDataStorage->getQuery();
+    $query->identityDistinct();
 
     $query->condition('class', $this->pluginId);
     $query->exists('identity');
@@ -112,8 +114,8 @@ class Address extends IdentityDataClassBase {
     $matches = [];
     foreach ($this->identityDataStorage->loadMultiple($query->execute()) as $match_data) {
       /** @var IdentityData $match_data */
-      if ($match_data->getIdentity()) {
-        $matches[$match_data->getIdentity()->id()] = new IdentityMatch(
+      if ($match_data->getIdentityId()) {
+        $matches[$match_data->getIdentityId()] = new IdentityMatch(
           ($has_org_name || $has_personal_name) ? 100 : 50,
           $match_data,
           $data
@@ -135,7 +137,23 @@ class Address extends IdentityDataClassBase {
         $data->address->locality == $identity_data->address->locality &&
         $data->address->address_line1 == $identity_data->address->address_line1
       ) {
-        $match->supportMatch($identity_data, 10);
+        $score_inc = 50;
+        if ($data->address->given_name || $data->address->family_name) {
+          if (
+            $data->address->given_name == $identity_data->address->given_name
+            && $data->address->family_name == $identity_data->address->family_name
+          ) {
+            $score_inc = 100;
+          }
+        }
+        else if (
+          $data->address->organization
+          && $data->address->organization == $identity_data->address->organization
+        ) {
+          $score_inc = 100;
+        }
+
+        $match->supportMatch($identity_data, $score_inc);
       }
     }
   }

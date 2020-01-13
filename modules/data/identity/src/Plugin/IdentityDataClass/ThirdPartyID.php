@@ -160,7 +160,9 @@ class ThirdPartyID extends IdentityDataClassBase {
    * {@inheritdoc}
    */
   public function findMatches(IdentityData $data) {
+    /** @var \Drupal\identity\Entity\Query\IdentityDataQueryInterface $query */
     $query = $this->identityDataStorage->getQuery('AND');
+    $query->identityDistinct();
     $query->condition('class', $this->pluginId);
     $query->condition('type', $data->type->value);
 
@@ -199,13 +201,13 @@ class ThirdPartyID extends IdentityDataClassBase {
       if ($data->is_encrypted->value) {
         if ($data->value->value == $match_data->value->value){
           // If the SSNs match exactly boost the score.
-          $score = 1000;
+          $score = 10000;
         }
       }
 
       /** @var IdentityData $match_data */
-      if (!isset($matches[$match_data->getIdentity()->id()]) || $score > $matches[$match_data->getIdentity()->id()]->getScore()) {
-        $matches[$match_data->getIdentity()->id()] = new IdentityMatch($score, $match_data, $data);
+      if (!isset($matches[$match_data->getIdentityId()]) || $score > $matches[$match_data->getIdentityId()]->getScore()) {
+        $matches[$match_data->getIdentityId()] = new IdentityMatch($score, $match_data, $data);
       }
     }
 
@@ -223,7 +225,7 @@ class ThirdPartyID extends IdentityDataClassBase {
         $data->third_party->value == $identity_data->third_party->value &&
         $data->value->value == $identity_data->value->value
       ) {
-        $match->supportMatch($identity_data, ($data->is_encrypted->value ? 100 : 1000));
+        $match->supportMatch($identity_data, ($data->is_encrypted->value ? 100 : 10000));
       }
 
       if (
@@ -231,7 +233,7 @@ class ThirdPartyID extends IdentityDataClassBase {
         $data->is_one_to_one->value &&
         $data->value->value != $identity_data->value->value
       ) {
-        $match->opposeMatch($identity_data, ($data->is_encrypted->value ? 100 : 1000));
+        $match->opposeMatch($identity_data, ($data->is_encrypted->value ? 100 : 10000));
       }
     }
   }

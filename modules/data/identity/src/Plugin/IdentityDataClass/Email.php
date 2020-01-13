@@ -65,7 +65,9 @@ class Email extends IdentityDataClassBase {
    * {@inheritdoc}
    */
   public function findMatches(IdentityData $data) {
+    /** @var \Drupal\identity\Entity\Query\IdentityDataQueryInterface $query */
     $query = $this->identityDataStorage->getQuery();
+    $query->identityDistinct();
     $query->condition('class', $this->pluginId);
     if ($data->email_address->value) {
       $query->condition('email_address', $data->email_address->value);
@@ -75,8 +77,10 @@ class Email extends IdentityDataClassBase {
     }
     $matches = [];
     foreach ($this->identityDataStorage->loadMultiple($query->execute()) as $match_data) {
-      /** @var IdentityData $match_data */
-      $matches[$match_data->getIdentity()->id()] = new IdentityMatch(1000, $match_data, $data);
+      if ($match_data->getIdentityId()) {
+        /** @var IdentityData $match_data */
+        $matches[$match_data->getIdentityId()] = new IdentityMatch(1000, $match_data, $data);
+      }
     }
     return $matches;
   }

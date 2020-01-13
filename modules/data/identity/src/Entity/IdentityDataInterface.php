@@ -14,6 +14,13 @@ interface IdentityDataInterface {
   public function getIdentity();
 
   /**
+   * Get the identity id of this
+   *
+   * @return integer
+   */
+  public function getIdentityId();
+
+  /**
    * Set the identity this data is associated with.
    *
    * @return static

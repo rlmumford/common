@@ -191,6 +191,15 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface, E
   }
 
   /**
+   * Get the identity id of this match.
+   *
+   * @return integer
+   */
+  public function getIdentityId() {
+    return $this->identity->target_id;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function setIdentity(IdentityInterface $identity) {

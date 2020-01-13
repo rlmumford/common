@@ -59,7 +59,9 @@ class PersonalName extends IdentityDataClassBase implements LabelingIdentityData
    * {@inheritdoc}
    */
   public function findMatches(IdentityData $data) {
+    /** @var \Drupal\identity\Entity\Query\IdentityDataQueryInterface $query */
     $query = $this->identityDataStorage->getQuery('AND');
+    $query->identityDistinct();
     $query->condition('class', $this->pluginId);
     $query->exists('identity');
     $or_condition = $query->orConditionGroup();

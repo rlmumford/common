@@ -80,14 +80,16 @@ class TelephoneNumber extends IdentityDataClassBase {
    * {@inheritdoc}
    */
   public function findMatches(IdentityData $data) {
+    /** @var \Drupal\identity\Entity\Query\IdentityDataQueryInterface $query */
     $query = $this->identityDataStorage->getQuery('AND');
+    $query->identityDistinct();
     $query->condition('class', $this->pluginId);
     $query->condition('telephone_number', $data->telephone_number->value);
 
     $matches = [];
     foreach ($this->identityDataStorage->loadMultiple($query->execute()) as $matching_data) {
       /** @var \Drupal\identity\Entity\IdentityData $matching_data */
-      $matches[$matching_data->getIdentity()->id()] = new IdentityMatch(20, $matching_data, $data);
+      $matches[$matching_data->getIdentityId()] = new IdentityMatch(20, $matching_data, $data);
     }
 
     return $matches;

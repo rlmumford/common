@@ -33,6 +33,8 @@ class IdentityDataQuery extends Query implements IdentityDataQueryInterface {
   public function identityDistinct($grouping_method = 'MAX') {
     $this->forceIdentityDistinct = TRUE;
     $this->forceIdentityDistinctGroupingMethod = $grouping_method;
+
+    return $this;
   }
 
   /**

@@ -66,7 +66,9 @@ class OrganizationName extends IdentityDataClassBase implements LabelingIdentity
    * {@inheritdoc}
    */
   public function findMatches(IdentityData $data) {
+    /** @var \Drupal\identity\Entity\Query\IdentityDataQueryInterface $query */
     $query = $this->identityDataStorage->getQuery();
+    $query->identityDistinct();
     $query->condition('class', $this->pluginId);
     $query->exists('identity');
     if ($data->org_name->value) {
@@ -86,8 +88,8 @@ class OrganizationName extends IdentityDataClassBase implements LabelingIdentity
     $matches = [];
     foreach ($this->identityDataStorage->loadMultiple($query->execute()) as $match_data) {
       /** @var IdentityData $match_data */
-      if ($match_data->getIdentity()) {
-        $matches[$match_data->getIdentity()->id()]
+      if ($match_data->getIdentityId()) {
+        $matches[$match_data->getIdentityId()]
           = new IdentityMatch(10, $match_data, $data);
       }
     }
@@ -103,6 +105,9 @@ class OrganizationName extends IdentityDataClassBase implements LabelingIdentity
    */
   public function supportOrOppose(IdentityData $data, IdentityMatch $match) {
     $identity = $match->getIdentity();
+
+    // @todo: Consider maxing out how much one identity data can be supporting
+    //        a match. Limit organization name to 100 for example?
     foreach ($identity->getData($this->pluginId) as $identity_data) {
       if ($data->org_name->value == $identity_data->org_name->value) {
         $match->supportMatch($identity_data, 10);
