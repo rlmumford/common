@@ -90,7 +90,7 @@ class IdentityDataQuery extends Query implements IdentityDataQueryInterface {
             $this->queryNeedsIdVidSplit = TRUE;
             $this->sqlQuery->addExpression(
               "{$this->forceIdentityDistinctGroupingMethod}(CONCAT(base_table.{$id_field}, '.', base_table.{$revision_field}))",
-              $id_field
+              "id_vid"
             );
         }
       }
@@ -108,9 +108,9 @@ class IdentityDataQuery extends Query implements IdentityDataQueryInterface {
     }
 
     if ($this->queryNeedsIdVidSplit) {
-      $wrapper_query = $this->connection->select($this->sqlQuery);
-      $wrapper_query->addExpression("SUBSTRING_INDEX(SUBSTRING_INDEX(id_vid, '.', 2), '.', -1)", 'vid');
-      $wrapper_query->addExpression("SUBSTRING_INDEX(id_vid, '.', 1)", "id");
+      $wrapper_query = $this->connection->select($this->sqlQuery, 'sub');
+      $wrapper_query->addExpression("SUBSTRING_INDEX(SUBSTRING_INDEX(sub.id_vid, '.', 2), '.', -1)", 'vid');
+      $wrapper_query->addExpression("SUBSTRING_INDEX(sub.id_vid, '.', 1)", "id");
 
       return $wrapper_query->execute()->fetchAllKeyed();
     }
