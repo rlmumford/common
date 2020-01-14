@@ -17,6 +17,7 @@ use Drupal\name\Plugin\Field\FieldType\NameItem;
  * @IdentityDataClass(
  *   id = "personal_name",
  *   label = @Translation("Personal Name"),
+ *   plural_label = @Translation("Personal Names"),
  * );
  *
  * @package Drupal\identity\Plugin\IdentityDataClass
@@ -38,13 +39,23 @@ class PersonalName extends IdentityDataClassBase implements LabelingIdentityData
     $fields['full_name'] = BundleFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Full Name'))
       ->setRevisionable(TRUE)
+      ->setDisplayOptions('view', [
+        'type' => 'string',
+      ])
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
 
     $fields['name'] = BundleFieldDefinition::create('name')
       ->setLabel(new TranslatableMarkup('Name'))
       ->setRevisionable(TRUE)
+      ->setDisplayOptions('view', [
+        'label' => 'inline',
+        'type' => 'name_default',
+      ])
       ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'name_default',
+      ])
       ->setDisplayConfigurable('form', TRUE);
 
     $fields['is_formal'] = BundleFieldDefinition::create('boolean')
@@ -53,6 +64,19 @@ class PersonalName extends IdentityDataClassBase implements LabelingIdentityData
       ->setDisplayConfigurable('form', TRUE);
 
     return $fields;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function dataLabel(IdentityData $data) {
+    if (!$data->name->isEmpty()) {
+      $render = $data->name->view(['type' => 'name_default']);
+      return $render[0]['#markup'];
+    }
+    else {
+      return $data->full_name->value;
+    }
   }
 
   /**
@@ -172,6 +196,12 @@ class PersonalName extends IdentityDataClassBase implements LabelingIdentityData
    * {@inheritdoc}
    */
   protected function buildIdentityLabel(IdentityData $data) {
-    return $data->full_name->value;
+    if (!$data->name->isEmpty()) {
+      $render = $data->name->view(['type' => 'name_default']);
+      return $render[0]['#markup'];
+    }
+    else {
+      return $data->full_name->value;
+    }
   }
 }

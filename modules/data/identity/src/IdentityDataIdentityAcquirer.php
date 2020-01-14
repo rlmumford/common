@@ -45,7 +45,8 @@ class IdentityDataIdentityAcquirer implements IdentityDataIdentityAcquirerInterf
    * @return \Drupal\identity\IdentityAcquisitionResult
    */
   public function acquireIdentity(IdentityDataGroup $data_group, array $options = []) {
-    $threshold = static::ACQUISITION_CONFIDENCE_THRESHOLD;
+    $threshold = isset($options['confidence_threshold']) ? $options['confidence_threshold'] : static::ACQUISITION_CONFIDENCE_THRESHOLD;
+    $inclusion_threshold = isset($options['inclusion_threshold']) ? $options['inclusion_threshold'] : static::ACQUISITION_INCLUSION_THRESHOLD;
 
     // Allow modules to massage data in the group
     $event = new PreAcquisitionEvent($data_group);
@@ -89,7 +90,6 @@ class IdentityDataIdentityAcquirer implements IdentityDataIdentityAcquirerInterf
       }
     }
 
-    $top_match = array_shift($all_matches);
     if ($top_match && ($top_match->getScore() >= $threshold)) {
       // @todo: Check if there are other > threshold matches and trigger
       // merge requests.

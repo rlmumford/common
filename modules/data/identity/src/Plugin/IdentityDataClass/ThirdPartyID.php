@@ -19,6 +19,10 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * @IdentityDataClass(
  *   id = "third_party_id",
  *   label = @Translation("Third Party ID"),
+ *   plural_label = @Translation("Third Party IDs"),
+ *   form_defaults = {
+ *     "hidden" = TRUE,
+ *   }
  * );
  *
  * @package Drupal\identity\Plugin\IdentityDataClass

@@ -13,6 +13,11 @@ interface IdentityDataIdentityAcquirerInterface {
   const ACQUISITION_CONFIDENCE_THRESHOLD = 100;
 
   /**
+   * The threshold to include a match in results at all.
+   */
+  const ACQUISITION_INCLUSION_THRESHOLD = 10;
+
+  /**
    * Acquire an identity for the
    *
    * @param \Drupal\identity\IdentityDataGroup $data_group

@@ -1,0 +1,16 @@
+/* Bar styling (first row), currently unused. */
+.toolbar-bar .toolbar-icon-views-view\:views-rlmcrm-ui-contacts-list:before {
+  background-image: url("../icons/bebebe/contacts.svg");
+}
+.toolbar-bar .toolbar-icon-views-view\:views-rlmcrm-ui-contacts-list:active:before {
+  background-image: url("../icons/ffffff/contacts.svg");
+}
+
+/* Tray styling (second row) */
+.toolbar-tray .toolbar-icon.toolbar-icon-views-view\:views-rlmcrm-ui-contacts-list:before {
+  background-image: url("../icons/787878/contacts.svg");
+}
+.toolbar-tray .toolbar-icon.toolbar-icon-views-view\:views-rlmcrm-ui-contacts-list:active:before,
+.toolbar-tray .toolbar-icon.toolbar-icon-views-view\:views-rlmcrm-ui-contacts-list.is-active:before {
+  background-image: url("../icons/000000/contacts.svg");
+}

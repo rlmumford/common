@@ -14,6 +14,10 @@ use Drupal\identity\IdentityMatch;
  * @IdentityDataClass(
  *   id = "date",
  *   label = @Translation("Date"),
+ *   plural_label = @Translation("Dates"),
+ *   form_defaults = {
+ *     "weight" = 5,
+ *   }
  * );
  *
  * @package Drupal\identity\Plugin\IdentityDataClass
@@ -46,7 +50,13 @@ class Date extends IdentityDataClassBase {
     $fields['date'] = BundleFieldDefinition::create('datetime')
       ->setSetting('datetime_type', DateTimeItem::DATETIME_TYPE_DATE)
       ->setLabel(new TranslatableMarkup('Date'))
+      ->setDisplayOptions('view', [
+        'type' => 'datetime_default',
+      ])
       ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'datetime_default',
+      ])
       ->setDisplayConfigurable('form', TRUE);
 
     return $fields;

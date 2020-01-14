@@ -54,4 +54,13 @@ class IdentityAcquisitionResult {
   public function getIdentity() {
     return $this->identity;
   }
+
+  /**
+   * Get all the matches.
+   *
+   * @return array|\Drupal\identity\IdentityMatch[]
+   */
+  public function getAllMatches() {
+    return $this->matches;
+  }
 }

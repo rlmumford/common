@@ -11,7 +11,8 @@ use Drupal\entity\BundleFieldDefinition;
  *
  * @IdentityDataClass(
  *   id = "works_at",
- *   label = @Translation("Works At"),
+ *   label = @Translation("Works At Relationship"),
+ *   plural_label = @Translation("Works At Relationships"),
  * );
  *
  * @package Drupal\identity\Plugin\IdentityDataClass

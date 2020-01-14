@@ -59,7 +59,7 @@ class IdentityLabeler implements IdentityLabelerInterface {
     $context = $context ?: new IdentityLabelContext();
     $cid = 'identity:'.$identity->id().':label'. $context->getCacheCid();
 
-    if ($cache = $this->cache->get($cid)) {
+    if (($cache = $this->cache->get($cid)) && !empty($cache->data)) {
       return $cache->data;
     }
     else {
@@ -88,6 +88,7 @@ class IdentityLabeler implements IdentityLabelerInterface {
         $label_providing_classes[] = $plugin;
       }
     }
+
     usort(
       $label_providing_classes,
       function (
@@ -100,7 +101,9 @@ class IdentityLabeler implements IdentityLabelerInterface {
 
     $label = NULL;
     foreach ($label_providing_classes as $label_providing_class) {
+      dpm($label_providing_class, 'Class');
       $label = $label_providing_class->identityLabel($identity, $context, $bubbleable_metadata);
+      dpm($label);
 
       if ($label) {
         break;

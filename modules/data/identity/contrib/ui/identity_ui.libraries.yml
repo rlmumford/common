@@ -1,0 +1,10 @@
+toolbar:
+  version: VERSION
+  css:
+    theme:
+      css/identity_ui.icons.css: {}
+contact_page:
+  version: VERSION
+  css:
+    theme:
+      css/contact_page.css: {}

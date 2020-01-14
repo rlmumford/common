@@ -13,6 +13,7 @@ use Drupal\telephone\Plugin\Field\FieldType\TelephoneItem;
  * @IdentityDataClass(
  *   id = "telephone_number",
  *   label = @Translation("Telephone Number"),
+ *   plural_label = @Translation("Telephone Numbers"),
  * );
  *
  * @package Drupal\identity\Plugin\IdentityDataClass
@@ -58,13 +59,22 @@ class TelephoneNumber extends IdentityDataClassBase {
       ->setLabel(new TranslatableMarkup('Number'))
       ->setRequired(TRUE)
       ->setRevisionable(TRUE)
+      ->setDisplayOptions('view', [
+        'type' => 'telephone_default',
+      ])
       ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'telephone_default',
+      ])
       ->setDisplayConfigurable('form', TRUE);
 
     $fields['can_sms'] = BundleFieldDefinition::create('boolean')
       ->setLabel(new TranslatableMarkup('Can receive SMS messages?'))
       ->setRevisionable(TRUE)
       ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'boolean_checkbox',
+      ])
       ->setDisplayConfigurable('form', TRUE);
 
     $fields['can_vm'] = BundleFieldDefinition::create('boolean')

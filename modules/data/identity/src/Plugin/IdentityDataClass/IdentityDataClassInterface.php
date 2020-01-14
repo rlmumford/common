@@ -9,6 +9,15 @@ use Drupal\identity\IdentityMatch;
 interface IdentityDataClassInterface extends BundlePluginInterface {
 
   /**
+   * Get the identity data label.
+   *
+   * @param \Drupal\identity\Entity\IdentityData $data
+   *
+   * @return string
+   */
+  public function dataLabel(IdentityData $data);
+
+  /**
    * @param \Drupal\identity\Entity\IdentityData $data
    *
    * @return integer

@@ -11,7 +11,8 @@ use Drupal\identity\IdentityMatch;
  *
  * @IdentityDataClass(
  *   id = "email",
- *   label = @Translation("Email"),
+ *   label = @Translation("Email Address"),
+ *   plural_label = @Translation("Email Addresses")
  * );
  *
  * @package Drupal\identity\Plugin\IdentityDataClass
@@ -43,7 +44,13 @@ class Email extends IdentityDataClassBase {
 
     $fields['email_address'] = BundleFieldDefinition::create('email')
       ->setLabel(new TranslatableMarkup('Address'))
+      ->setDisplayOptions('view', [
+        'type' => 'email_mailto',
+      ])
       ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'email_default',
+      ])
       ->setDisplayConfigurable('form', TRUE);
 
     return $fields;

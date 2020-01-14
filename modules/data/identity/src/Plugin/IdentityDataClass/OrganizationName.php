@@ -13,6 +13,7 @@ use Drupal\identity\IdentityMatch;
  * @IdentityDataClass(
  *   id = "organization_name",
  *   label = @Translation("Organization Name"),
+ *   plural_label = @Translation("Organization Names"),
  * );
  *
  * @package Drupal\identity\Plugin\IdentityDataClass
@@ -56,10 +57,23 @@ class OrganizationName extends IdentityDataClassBase implements LabelingIdentity
     $fields['org_name'] = BundleFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Name'))
       ->setRevisionable(TRUE)
+      ->setDisplayOptions('view', [
+        'type' => 'string',
+      ])
       ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'string_textfield',
+      ])
       ->setDisplayConfigurable('form', TRUE);
 
     return $fields;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function dataLabel(IdentityData $data) {
+    return $data->org_name->value;
   }
 
   /**

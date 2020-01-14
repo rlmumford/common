@@ -52,6 +52,13 @@ class IdentityDataClassBase extends PluginBase implements IdentityDataClassInter
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function dataLabel(IdentityData $data) {
+    return $this->pluginDefinition['label'];
+  }
+
+  /**
    * Builds the field definitions for entities of this bundle.
    *
    * Important:

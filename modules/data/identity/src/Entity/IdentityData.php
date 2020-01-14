@@ -91,13 +91,6 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface, E
       ->setLabel(t('Identity'))
       ->setRevisionable(TRUE)
       ->setSetting('target_type', 'identity')
-      ->setDisplayOptions('view', [
-        'label' => 'inline',
-        'type' => 'entity_reference_label',
-      ])
-      ->setDisplayOptions('form', [
-        'type' => 'entity_reference_autocomplete',
-      ])
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
 
@@ -111,13 +104,6 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface, E
     $fields['created'] = BaseFieldDefinition::create('created')
       ->setLabel(t('Created'))
       ->setRevisionable(TRUE)
-      ->setDisplayOptions('view', [
-        'label' => 'hidden',
-        'type' => 'timestamp',
-      ])
-      ->setDisplayOptions('form', [
-        'type' => 'datetime_timestamp',
-      ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
@@ -165,6 +151,13 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface, E
     /** @var \Drupal\identity\Plugin\IdentityDataClass\IdentityDataClassInterface $plugin */
     $plugin = \Drupal::service('plugin.manager.identity_data_class')->createInstance($class);
     return $plugin->createData($type, $reference, $value);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function label() {
+    return $this->getClass()->dataLabel($this);
   }
 
   /**
@@ -245,9 +238,12 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface, E
   public function postSave(EntityStorageInterface $storage, $update = TRUE) {
     parent::postSave($storage, $update);
 
-    if (!$this->_skipIdentitySave) {
+    if (!$this->_skipIdentitySave && $this->getIdentity()) {
       $this->getIdentity()->save();
-      $this->_oldIdentity->save();
+
+      if ($this->_oldIdentity) {
+        $this->_oldIdentity->save();
+      }
 
       $this->_skipIdentitySave = FALSE;
     }

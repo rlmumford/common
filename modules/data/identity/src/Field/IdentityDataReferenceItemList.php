@@ -37,8 +37,11 @@ class IdentityDataReferenceItemList extends EntityReferenceFieldItemList {
     $query = $data_storage->getQuery();
     $query->condition('identity', $this->getEntity()->id());
 
-    if ($data_class = $field_definition->getSetting('identity_data_class')) {
-      $query->condition('class', $data_class);
+    if (
+      ($handler_settings = $field_definition->getSetting('handler_settings'))
+      && !empty($handler_settings['target_bundles'])
+    ) {
+      $query->condition('class', $handler_settings['target_bundles'], 'IN');
     }
 
     return $query->execute();

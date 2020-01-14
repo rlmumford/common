@@ -11,6 +11,7 @@ use Drupal\entity\BundleFieldDefinition;
  *  @IdentityDataClass(
  *   id = "role",
  *   label = @Translation("Role"),
+ *   plural_label = @Translation("Roles"),
  * );
  *
  * @package Drupal\identity\Plugin\IdentityDataClass

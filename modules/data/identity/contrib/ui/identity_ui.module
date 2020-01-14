@@ -1,9 +1,40 @@
 <?php
 
+use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\identity\Field\IdentityDataReferenceItemList;
+use Drupal\identity_ui\Entity\IdentityHtmlRouteProvider;
+use Drupal\identity_ui\Form\IdentityAddForm;
+
+/**
+ * Implements hook_entity_type_build().
+ */
+function identity_ui_entity_type_build($entity_types) {
+  if (isset($entity_types['identity'])) {
+    /** @var \Drupal\Core\Entity\ContentEntityType $identity */
+    $identity = $entity_types['identity'];
+
+    $providers = $identity->getRouteProviderClasses() ?: [];
+    $providers['html'] = IdentityHtmlRouteProvider::class;
+    $identity->setHandlerClass('route_provider', $providers);
+
+    $identity->setFormClass('add', IdentityAddForm::class);
+    $identity->setLinkTemplate('add-form', '/identity/add');
+
+    $identity->setFormClass('edit', ContentEntityForm::class);
+    $identity->setLinkTemplate('edit-form', '/identity/{identity}/edit');
+  }
+}
+
+/**
+ * Implements hook_toolbar_alter().
+ */
+function identity_ui_toolbar_alter(&$items) {
+  $items['administration']['#attached']['library'][] = 'identity_ui/toolbar';
+}
 
 /**
  * Implements hook_entity_base_field_info().
@@ -20,13 +51,38 @@ function identity_ui_entity_base_field_info(EntityTypeInterface $entity_type) {
   foreach ($data_class_manager->getDefinitions() as $plugin_id => $definition) {
     $fields[$plugin_id . '_data'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup(
-        '@class Data',
-        ['@class' => $definition['label']]
+        '@class',
+        [
+          '@class' => isset($definition['plural_label']) ? $definition['plural_label'] : "{$definition['label']}s",
+        ]
       ))
       ->setSetting('target_type', 'identity_data')
+      ->setSetting('handler_settings', [
+        'target_bundles' => [
+          $plugin_id => $plugin_id,
+        ]
+      ])
       ->setClass(IdentityDataReferenceItemList::class)
+      ->setDisplayOptions('view', [
+        'type' => 'entity_reference_entity_view',
+      ])
       ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'inline_entity_form_complex',
+        'weight' => !empty($definition['form_defaults']['weight']) ? $definition['form_defaults']['weight'] : 0,
+        'settings' => [
+          'override_labels' => TRUE,
+          'label_singular' => $definition['label'],
+          'label_plural' => isset($definition['plural_label']) ? $definition['plural_label'] : "{$definition['label']}s",
+        ]
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
       ->setComputed(TRUE);
+
+    if (!empty($definition['form_defaults']['hidden'])) {
+      $fields[$plugin_id.'_data']->setDisplayOptions('form', []);
+    }
   }
 
   return $fields;

@@ -68,13 +68,8 @@ class Identity extends ContentEntityBase implements IdentityInterface {
       ->setLabel(t('Active?'))
       ->setRevisionable(TRUE)
       ->setDefaultValue(TRUE)
-      ->setDisplayOptions('form', [
-        'type' => 'boolean_checkbox',
-        'settings' => [
-          'display_label' => TRUE,
-        ],
-      ])
-      ->setDisplayConfigurable('form', TRUE);
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
 
     $fields['created'] = BaseFieldDefinition::create('created')
       ->setLabel(t('Created'))
@@ -82,9 +77,6 @@ class Identity extends ContentEntityBase implements IdentityInterface {
       ->setDisplayOptions('view', [
         'label' => 'hidden',
         'type' => 'timestamp',
-      ])
-      ->setDisplayOptions('form', [
-        'type' => 'datetime_timestamp',
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);

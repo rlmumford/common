@@ -14,6 +14,10 @@ use Drupal\identity\Plugin\IdentityDataClass\IdentityDataClassBase;
  * @IdentityDataClass(
  *   id = "address",
  *   label = @Translation("Address"),
+ *   plural_label = @Translation("Addresses"),
+ *   form_defaults = {
+ *     "weight" = 1
+ *   }
  * );
  *
  * @package Drupal\identity_address_data\Plugin\IdentityDataClass
@@ -45,13 +49,16 @@ class Address extends IdentityDataClassBase {
     $fields['address'] = BundleFieldDefinition::create('address')
       ->setLabel(new TranslatableMarkup('Address'))
       ->setCardinality(1)
-      ->setDisplayConfigurable('view', TRUE)
       ->setSetting('available_countries', ['US' => 'US'])
       ->setSetting('field_overrides', [
         'givenName' => ['override' => 'hidden'],
         'familyName' => ['override' => 'hidden'],
         'organization' => ['override' => 'hidden']
       ])
+      ->setDisplayOptions('view', [
+        'type' => 'address_default',
+      ])
+      ->setDisplayConfigurable('view', TRUE)
       ->setDisplayOptions('form', [
         'type' => 'address',
       ])
@@ -60,6 +67,17 @@ class Address extends IdentityDataClassBase {
     // @todo: Consider storing geolocation data for better supporting logic.
 
     return $fields;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function dataLabel(IdentityData $data) {
+    $render = $data->address->view([
+      'type' => 'address_plain',
+      'label' => 'hidden',
+    ]);
+    return drupal_render($render);
   }
 
   /**
