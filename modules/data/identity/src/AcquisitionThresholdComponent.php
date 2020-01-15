@@ -60,8 +60,8 @@ class AcquisitionThresholdComponent {
 
     foreach ($relevant_datas as $relevant_data) {
       /** @var \Drupal\identity\Entity\IdentityData $id_data */
-      $id_data = $relevant_data['data'];
-      if ($id_data->bundle() != $this->class) {
+      $id_data = $relevant_data['search_data'];
+      if ($id_data->bundle() === $this->class) {
         if (!$this->type || ($this->type == $id_data->type->value)) {
           if (empty($this->required_level)) {
             return $this->s_or_f;

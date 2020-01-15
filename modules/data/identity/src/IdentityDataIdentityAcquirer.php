@@ -79,10 +79,14 @@ class IdentityDataIdentityAcquirer implements IdentityDataIdentityAcquirerInterf
           $data_match->getIdentityId() => [],
         ];
 
+        // Get the supporting and opposing datas
+        $supporting_datas = $data_match->getSupportingDatas();
+        $opposing_datas = $data_match->getOpposingDatas();
+
         // If we already have a match for this identity, count this found match
         // as a support.
         if (isset($all_matches[$data_match->getIdentityId()])) {
-          if ($supporting_match = reset($data_match->getSupportingDatas())) {
+          if ($supporting_match = reset($supporting_datas)) {
             if (
               $all_matches[$data_match->getIdentityId()]->supportMatch(
                 $search_data,
@@ -94,17 +98,15 @@ class IdentityDataIdentityAcquirer implements IdentityDataIdentityAcquirerInterf
               $fully_supported[$data_match->getIdentityId()][$search_data->uuid()] = TRUE;
             }
           }
-          else {
-            if ($opposing_match = reset($data_match->getOpposingDatas())) {
-              $all_matches[$data_match->getIdentityId()]->opposeMatch($search_data, reset($opposing_match['match_data']), $opposing_match['effect'], $opposing_match['level']);
-            }
+          else if ($opposing_match = reset($opposing_datas)) {
+            $all_matches[$data_match->getIdentityId()]->opposeMatch($search_data, reset($opposing_match['match_data']), $opposing_match['effect'], $opposing_match['level']);
           }
         }
         else {
           $all_matches[$data_match->getIdentityId()] = $data_match;
 
           // Compute whether this is fully supported or not.
-          $supporting_match = reset($data_match->getSupportingDatas());
+          $supporting_match = reset($supporting_datas);
           $possible_levels = $search_data->possibleMatchSupportLevels();
           if (empty($possible_levels) || (count(array_intersect($possible_levels, $supporting_match['level'])) === count($possible_levels))) {
             $fully_supported[$data_match->getIdentityId()][$search_data->uuid()] = TRUE;
