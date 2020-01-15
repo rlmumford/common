@@ -33,7 +33,7 @@ class IdentityDataIterator implements \Iterator, \ArrayAccess {
    *
    * @var int
    */
-  protected $batchSize = 40;
+  protected $batchSize = 20;
 
   /**
    * The identity data storage.
@@ -79,11 +79,11 @@ class IdentityDataIterator implements \Iterator, \ArrayAccess {
    */
   public function current() {
     $id = $this->ids[$this->current];
-    if (is_int($this->entities[$id])) {
+    if (is_numeric($this->entities[$id])) {
       $to_load = array_slice($this->ids, $this->current, $this->batchSize);
       $entities = $this->entities;
       $to_load = array_filter($to_load, function($value) use ($entities) {
-        return is_int($entities[$value]);
+        return is_numeric($entities[$value]);
       });
 
       foreach ($this->storage()->loadMultiple($to_load) as $id => $entity) {
@@ -174,7 +174,7 @@ class IdentityDataIterator implements \Iterator, \ArrayAccess {
    * @since 5.0.0
    */
   public function offsetGet($offset) {
-    if (isset($this->entities[$offset]) && is_int($this->entities[$offset])) {
+    if (isset($this->entities[$offset]) && is_numeric($this->entities[$offset])) {
       $this->entities[$offset] = $this->storage()->load($offset);
     }
 
