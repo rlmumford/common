@@ -116,7 +116,7 @@ class IdentityDataQuery extends Query implements IdentityDataQueryInterface {
       return $wrapper_query->execute()->fetchAllKeyed();
     }
 
-    return $this->sqlQuery->execute()->fetchAllKeyed(count($this->sqlQuery->getFields()), count($this->sqlQuery->getFields()) + 1);
+    return $this->sqlQuery->execute()->fetchAllKeyed();
   }
 
   /**
