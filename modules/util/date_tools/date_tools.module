@@ -1,0 +1,12 @@
+<?php
+
+/**
+ * Implements hook_module_implements_alter().
+ */
+function date_tools_module_implements_alter(&$implementations, $hook) {
+  if ($hook == 'views_data_alter') {
+    $group = $implementations['date_tools'];
+    unset($implementations['date_tools']);
+    $implementations['date_tools'] = $group;
+  }
+}
