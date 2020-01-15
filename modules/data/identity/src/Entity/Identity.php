@@ -8,6 +8,7 @@ use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\identity\IdentityDataIterator;
 
 /**
  * Entity class for Identities.
@@ -98,7 +99,12 @@ class Identity extends ContentEntityBase implements IdentityInterface {
       $query->condition('identity', $this->id());
       $query->condition('class', $class);
 
-      $this->_data[$class] = $data_storage->loadMultiple($query->execute());
+      if ((clone $query)->count()->execute() > 40) {
+        $this->_data[$class] = new IdentityDataIterator($query->execute());
+      }
+      else {
+        $this->_data[$class] = $data_storage->loadMultiple($query->execute());
+      }
     }
 
     return $this->applyDataFilters($this->_data[$class], $filters);

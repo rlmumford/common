@@ -59,41 +59,77 @@ class IdentityDataIdentityAcquirer implements IdentityDataIdentityAcquirerInterf
     });
 
     $ordered_datas = $datas;
+
+    /** @var \Drupal\identity\IdentityMatch[] $all_matches */
     $all_matches = [];
-    while ($data = array_shift($ordered_datas)) {
+
+    // Keep track of whether a match is fully supported from each data. Saves
+    // time later. Once a search data has fully supported we don't need to keep
+    // processing data.
+    // This puts a cap on repeated data in the database skewing acquisition
+    // results
+    // @todo: The same thing for oppostion.
+    $fully_supported = [];
+    foreach ($ordered_datas as $search_data) {
       // Find all matching parties
-      $data_matches = $data->findMatches();
+      $matches = $search_data->findMatches();
 
-      foreach ($data_matches as $data_match) {
-        if (isset($all_matches[$data_match->getIdentity()->id()])) {
-          continue;
-        }
+      foreach ($matches as $data_match) {
+        $fully_supported += [
+          $data_match->getIdentityId() => [],
+        ];
 
-        $all_matches[$data_match->getIdentity()->id()] = $data_match;
-        foreach ($datas as $so_data) {
-          if ($so_data == $data) {
-            continue;
+        // If we already have a match for this identity, count this found match
+        // as a support.
+        if (isset($all_matches[$data_match->getIdentityId()])) {
+          if ($supporting_match = reset($data_match->getSupportingDatas())) {
+            if (
+              $all_matches[$data_match->getIdentityId()]->supportMatch(
+                $search_data,
+                reset($supporting_match['match_data']),
+                $supporting_match['effect'],
+                $supporting_match['level']
+              )
+            ) {
+              $fully_supported[$data_match->getIdentityId()][$search_data->uuid()] = TRUE;
+            }
           }
+          else {
+            if ($opposing_match = reset($data_match->getOpposingDatas())) {
+              $all_matches[$data_match->getIdentityId()]->opposeMatch($search_data, reset($opposing_match['match_data']), $opposing_match['effect'], $opposing_match['level']);
+            }
+          }
+        }
+        else {
+          $all_matches[$data_match->getIdentityId()] = $data_match;
 
-          $so_data->supportOrOppose($data_match);
+          // Compute whether this is fully supported or not.
+          $supporting_match = reset($data_match->getSupportingDatas());
+          $possible_levels = $search_data->possibleMatchSupportLevels();
+          if (empty($possible_levels) || (count(array_intersect($possible_levels, $supporting_match['level'])) === count($possible_levels))) {
+            $fully_supported[$data_match->getIdentityId()][$search_data->uuid()] = TRUE;
+          }
         }
       }
+    }
 
-      // @todo: Find a way of not going any further if the score is high enough.
+    foreach ($all_matches as $identity_id => $identity_match) {
+      foreach ($ordered_datas as $search_data) {
+        if (empty($fully_supported[$identity_id][$search_data->uuid()])) {
+          $search_data->supportOrOppose($identity_match);
+        }
+      }
     }
 
     /** @var \Drupal\identity\IdentityMatch $top_match */
     $top_match = NULL;
     foreach ($all_matches as $match) {
-      if (empty($top_match) || $match->getScore() > $top_match->getScore()) {
+      if ($match->isSufficient() && (empty($top_match) || $match->getScore() > $top_match->getScore())) {
         $top_match = $match;
       }
     }
 
-    if ($top_match && ($top_match->getScore() >= $threshold)) {
-      // @todo: Check if there are other > threshold matches and trigger
-      // merge requests.
-
+    if ($top_match) {
       return new IdentityAcquisitionResult($top_match->getIdentity(), IdentityAcquisitionResult::METHOD_FOUND, $all_matches);
     }
     else {

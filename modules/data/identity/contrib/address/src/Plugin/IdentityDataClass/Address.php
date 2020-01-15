@@ -5,6 +5,7 @@ namespace Drupal\identity_address_data\Plugin\IdentityDataClass;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity\BundleFieldDefinition;
 use Drupal\identity\Entity\IdentityData;
+use Drupal\identity\Entity\IdentityDataInterface;
 use Drupal\identity\IdentityMatch;
 use Drupal\identity\Plugin\IdentityDataClass\IdentityDataClassBase;
 
@@ -53,7 +54,7 @@ class Address extends IdentityDataClassBase {
       ->setSetting('field_overrides', [
         'givenName' => ['override' => 'hidden'],
         'familyName' => ['override' => 'hidden'],
-        'organization' => ['override' => 'hidden']
+        'organization' => ['override' => 'hidden'],
       ])
       ->setDisplayOptions('view', [
         'type' => 'address_default',
@@ -106,6 +107,9 @@ class Address extends IdentityDataClassBase {
     if ($data->address->address_line1) {
       $enough_data = $has_admin_local;
       $query->condition('address.address_line1', $data->address->address_line1);
+      if ($data->address->address_line2) {
+        $query->condition('address.address_line2', $data->address->address_line2);
+      }
     }
 
     if ($data->address->given_name && $data->address->family_name) {
@@ -134,9 +138,9 @@ class Address extends IdentityDataClassBase {
       /** @var IdentityData $match_data */
       if ($match_data->getIdentityId()) {
         $matches[$match_data->getIdentityId()] = new IdentityMatch(
-          ($has_org_name || $has_personal_name) ? 100 : 50,
+          $data,
           $match_data,
-          $data
+          ($has_org_name || $has_personal_name) ? 100 : 50
         );
       }
     }
@@ -146,32 +150,47 @@ class Address extends IdentityDataClassBase {
   /**
    * {@inheritdoc}
    */
-  public function supportOrOppose(IdentityData $data, IdentityMatch $match) {
+  public function supportOrOppose(IdentityData $search_data, IdentityMatch $match) {
     $identity = $match->getIdentity();
-    foreach ($identity->getData($this->pluginId) as $identity_data) {
+
+    /** @var \Drupal\identity\Entity\IdentityData $match_data */
+    foreach ($identity->getData($this->pluginId) as $match_data) {
       if (
-        $data->address->country_code == $identity_data->address->country_code &&
-        $data->address->administrative_area == $identity_data->address->administrative_area &&
-        $data->address->locality == $identity_data->address->locality &&
-        $data->address->address_line1 == $identity_data->address->address_line1
+        $search_data->address->country_code == $match_data->address->country_code &&
+        $search_data->address->postal_code == $match_data->address->postal_code
       ) {
-        $score_inc = 50;
-        if ($data->address->given_name || $data->address->family_name) {
+        $levels = ['postal_code'];
+        $score_inc = 30;
+
+        if (
+          $search_data->address->address_line1 == $match_data->address->address_line1
+          && $search_data->address->address_line2 == $match_data->address->address_line2
+        ) {
+          $levels[] = 'street';
+          $score_inc = 70;
+        }
+
+        if ($search_data->address->given_name || $search_data->address->family_name) {
           if (
-            $data->address->given_name == $identity_data->address->given_name
-            && $data->address->family_name == $identity_data->address->family_name
+            $search_data->address->given_name == $match_data->address->given_name
+            && $search_data->address->family_name == $match_data->address->family_name
           ) {
+            $levels[] = 'personal_name';
             $score_inc = 100;
           }
         }
         else if (
-          $data->address->organization
-          && $data->address->organization == $identity_data->address->organization
+          $search_data->address->organization
+          && $search_data->address->organization == $match_data->address->organization
         ) {
+          $levels[] = 'organization_name';
           $score_inc = 100;
         }
 
-        $match->supportMatch($identity_data, $score_inc);
+        // Once the match is fully supported we return.
+        if ($match->supportMatch($search_data, $match_data, $score_inc, $levels)) {
+          return;
+        }
       }
     }
   }
@@ -181,5 +200,20 @@ class Address extends IdentityDataClassBase {
       static::TYPE_MAILING => new TranslatableMarkup('Mailing'),
       static::TYPE_PHYSICAL => new TranslatableMarkup('Physical'),
     ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function possibleMatchSupportLevels(IdentityDataInterface $search_data) {
+    $levels = ['postal_code', 'street'];
+    if ($search_data->address->given_name) {
+      $levels[] = 'personal_name';
+    }
+    if ($search_data->address->organization) {
+      $levels[] = 'organization_name';
+    }
+
+    return $levels;
   }
 }

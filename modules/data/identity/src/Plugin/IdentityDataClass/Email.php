@@ -84,9 +84,9 @@ class Email extends IdentityDataClassBase {
     }
     $matches = [];
     foreach ($this->identityDataStorage->loadMultiple($query->execute()) as $match_data) {
-      if ($match_data->getIdentityId()) {
+      if ($match_data->getIdentityId() && empty($matches[$match_data->getIdentityId()])) {
         /** @var IdentityData $match_data */
-        $matches[$match_data->getIdentityId()] = new IdentityMatch(1000, $match_data, $data);
+        $matches[$match_data->getIdentityId()] = new IdentityMatch($data, $match_data, 1000);
       }
     }
     return $matches;
@@ -98,11 +98,13 @@ class Email extends IdentityDataClassBase {
    * @param \Drupal\identity\Entity\IdentityData $data
    * @param \Drupal\identity\IdentityMatch $match
    */
-  public function supportOrOppose(IdentityData $data, IdentityMatch $match) {
+  public function supportOrOppose(IdentityData $search_data, IdentityMatch $match) {
     $identity = $match->getIdentity();
-    foreach ($identity->getData($this->pluginId) as $identity_data) {
-      if ($data->email_address->value == $identity_data->email_address->value) {
-        $match->supportMatch($identity_data, 1000);
+    foreach ($identity->getData($this->pluginId) as $match_data) {
+      if ($search_data->email_address->value == $match_data->email_address->value) {
+        if ($match->supportMatch($search_data, $match_data, 90)) {
+          return;
+        }
       }
     }
   }

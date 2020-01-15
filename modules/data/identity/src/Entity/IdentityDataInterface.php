@@ -2,9 +2,10 @@
 
 namespace Drupal\identity\Entity;
 
+use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\identity\IdentityMatch;
 
-interface IdentityDataInterface {
+interface IdentityDataInterface extends ContentEntityInterface {
 
   /**
    * Get the identity of this data.
@@ -66,5 +67,19 @@ interface IdentityDataInterface {
    * @param \Drupal\identity\IdentityMatch $match
    */
   public function supportOrOppose(IdentityMatch $match);
+
+  /**
+   * Possible match support levels.
+   *
+   * @return string[]
+   */
+  public function possibleMatchSupportLevels();
+
+  /**
+   * Possible match opposition levels.
+   *
+   * @return string[]
+   */
+  public function possibleMatchOppositionLevels();
 
 }

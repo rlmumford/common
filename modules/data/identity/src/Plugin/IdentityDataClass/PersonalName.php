@@ -7,6 +7,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity\BundleFieldDefinition;
 use Drupal\identity\Entity\Identity;
 use Drupal\identity\Entity\IdentityData;
+use Drupal\identity\Entity\IdentityDataInterface;
 use Drupal\identity\IdentityLabelContext;
 use Drupal\identity\IdentityMatch;
 use Drupal\name\Plugin\Field\FieldType\NameItem;
@@ -120,9 +121,9 @@ class PersonalName extends IdentityDataClassBase implements LabelingIdentityData
     $matches = [];
     foreach ($this->identityDataStorage->loadMultiple($query->execute()) as $match_data) {
       /** @var IdentityData $match_data */
-      if ($match_data->getIdentity()) {
-        $matches[$match_data->getIdentity()->id()]
-          = new IdentityMatch(10, $match_data, $data);
+      if ($match_data->getIdentityId() && empty($matches[$match_data->getIdentityId()])) {
+        $matches[$match_data->getIdentityId()]
+          = new IdentityMatch($data, $match_data, 10);
       }
     }
 
@@ -132,27 +133,52 @@ class PersonalName extends IdentityDataClassBase implements LabelingIdentityData
   /**
    * Work out whether the data supports or opposes
    *
-   * @param \Drupal\identity\Entity\IdentityData $data
+   * @param \Drupal\identity\Entity\IdentityData $search_data
    * @param \Drupal\identity\IdentityMatch $match
    */
-  public function supportOrOppose(IdentityData $data, IdentityMatch $match) {
+  public function supportOrOppose(IdentityData $search_data, IdentityMatch $match) {
     $identity = $match->getIdentity();
 
     // Only match on full or legal.
-    if (!in_array($data->type->value, [static::TYPE_FULL, static::TYPE_LEGAL])) {
+    if (!in_array($search_data->type->value, [static::TYPE_FULL, static::TYPE_LEGAL])) {
       return;
     }
 
-    foreach ($identity->getData($this->pluginId) as $identity_data) {
-      if (!in_array($identity_data->type->value, [static::TYPE_FULL, static::TYPE_LEGAL])) {
+    /** @var \Drupal\identity\Entity\IdentityData $match_data */
+    foreach ($identity->getData($this->pluginId) as $match_data) {
+      if (!in_array($match_data->type->value, [static::TYPE_FULL, static::TYPE_LEGAL])) {
         continue;
       }
 
-      if ($data->full_name->value == $identity_data->full_name->value) {
-        $match->supportMatch($identity_data, 10);
+      if (!$search_data->name->isEmpty()) {
+        $levels = [];
+        $score = 0;
+
+        if ($search_data->name->given == $match_data->name->given) {
+          $levels[] = 'first';
+          $score += 10;
+        }
+
+        if ($search_data->name->family == $match_data->name->family) {
+          $levels[] = 'family';
+          $score += 10;
+        }
+
+        if ($search_data->name->generational == $match_data->name->generational) {
+          $levels[] = 'suffix';
+        }
+        else {
+          $score -= 10;
+        }
+
+        if ($match->supportMatch($search_data, $match_data, $score, $levels)) {
+          return;
+        }
       }
-      else if ($data->name->given == $identity_data->name->given && $data->name->family == $identity_data->name->family) {
-        $match->supportMatch($identity_data, 8);
+      else if (!$search_data->full_name->isEmpty() && $search_data->full_name->value == $match_data->full_name->value) {
+        if ($match->supportMatch($search_data, $match_data, 10, ['full'])) {
+          return;
+        }
       }
 
       // @todo: Consider opposing matches.
@@ -202,6 +228,15 @@ class PersonalName extends IdentityDataClassBase implements LabelingIdentityData
     }
     else {
       return $data->full_name->value;
+    }
+  }
+
+  public function possibleMatchSupportLevels(IdentityDataInterface $search_data) {
+    if (!$search_data->name->isEmpty()) {
+      return ['first', 'family', 'suffix'];
+    }
+    else {
+      return ['full'];
     }
   }
 }

@@ -5,6 +5,7 @@ namespace Drupal\identity\Plugin\IdentityDataClass;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Plugin\PluginBase;
 use Drupal\identity\Entity\IdentityData;
+use Drupal\identity\Entity\IdentityDataInterface;
 use Drupal\identity\Entity\IdentityDataStorage;
 use Drupal\identity\Entity\IdentityStorage;
 use Drupal\identity\IdentityMatch;
@@ -109,5 +110,19 @@ class IdentityDataClassBase extends PluginBase implements IdentityDataClassInter
       'type' => $type,
       'reference' => $reference,
     ]);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function possibleMatchSupportLevels(IdentityDataInterface $search_data) {
+    return [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function possibleMatchOppositionLevels(IdentityDataInterface $search_data) {
+    return [];
   }
 }

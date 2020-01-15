@@ -8,6 +8,7 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity\BundleFieldDefinition;
 use Drupal\identity\Entity\IdentityData;
+use Drupal\identity\Entity\IdentityDataInterface;
 use Drupal\identity\Entity\IdentityDataStorage;
 use Drupal\identity\Entity\IdentityStorage;
 use Drupal\identity\IdentityMatch;
@@ -211,7 +212,8 @@ class ThirdPartyID extends IdentityDataClassBase {
 
       /** @var IdentityData $match_data */
       if (!isset($matches[$match_data->getIdentityId()]) || $score > $matches[$match_data->getIdentityId()]->getScore()) {
-        $matches[$match_data->getIdentityId()] = new IdentityMatch($score, $match_data, $data);
+        /** @var \Drupal\identity\Entity\IdentityData $match_Data */
+        $matches[$match_data->getIdentityId()] = new IdentityMatch($data, $match_data, $score);
       }
     }
 
@@ -221,23 +223,23 @@ class ThirdPartyID extends IdentityDataClassBase {
   /**
    * {@identity}
    */
-  public function supportOrOppose(IdentityData $data, IdentityMatch $match) {
+  public function supportOrOppose(IdentityData $search_data, IdentityMatch $match) {
     $identity = $match->getIdentity();
 
-    foreach ($identity->getData($this->pluginId, ['type' => $data->type->value]) as $identity_data) {
+    foreach ($identity->getData($this->pluginId, ['type' => $search_data->type->value]) as $match_data) {
       if (
-        $data->third_party->value == $identity_data->third_party->value &&
-        $data->value->value == $identity_data->value->value
+        $search_data->third_party->value == $match_data->third_party->value &&
+        $search_data->value->value == $match_data->value->value
       ) {
-        $match->supportMatch($identity_data, ($data->is_encrypted->value ? 100 : 10000));
+        $match->supportMatch($search_data, $match_data, ($search_data->is_encrypted->value ? 100 : 10000), ['full', 'last4']);
       }
 
       if (
-        $data->third_party->value == $identity_data->third_party->value &&
-        $data->is_one_to_one->value &&
-        $data->value->value != $identity_data->value->value
+        $search_data->third_party->value == $match_data->third_party->value &&
+        $search_data->is_one_to_one->value &&
+        $search_data->value->value != $match_data->value->value
       ) {
-        $match->opposeMatch($identity_data, ($data->is_encrypted->value ? 100 : 10000));
+        $match->opposeMatch($search_data, $match_data, ($search_data->is_encrypted->value ? 100 : 10000));
       }
     }
   }
@@ -396,5 +398,18 @@ class ThirdPartyID extends IdentityDataClassBase {
     $plaintext = sodium_crypto_secretbox_open($cipher, $nonce, $key);
 
     return $plaintext;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function possibleMatchSupportLevels(IdentityDataInterface $search_data) {
+    $levels = ['full'];
+
+    if ($search_data->type->value == static::TYPE_SSN) {
+      $levels[] = 'last4';
+    }
+
+    return $levels;
   }
 }

@@ -88,15 +88,17 @@ class Date extends IdentityDataClassBase {
    * @param \Drupal\identity\Entity\IdentityData $data
    * @param \Drupal\identity\IdentityMatch $match
    */
-  public function supportOrOppose(IdentityData $data, IdentityMatch $match) {
+  public function supportOrOppose(IdentityData $search_data, IdentityMatch $match) {
     $identity = $match->getIdentity();
-    foreach ($identity->getData($this->pluginId) as $identity_data) {
+    foreach ($identity->getData($this->pluginId) as $match_data) {
       if (
-        $data->type->value == static::TYPE_DOB &&
-        $data->type->value == $identity_data->type->value &&
-        $data->date->value == $identity_data->date->value
+        $search_data->type->value == static::TYPE_DOB &&
+        $search_data->type->value == $match_data->type->value &&
+        $search_data->date->value == $match_data->date->value
       ) {
-        $match->supportMatch($identity_data, 10);
+        if ($match->supportMatch($search_data, $match_data, 10)) {
+          return;
+        }
       }
     }
   }

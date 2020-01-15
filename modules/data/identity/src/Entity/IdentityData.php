@@ -277,6 +277,24 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface, E
   }
 
   /**
+   * Possible match support levels.
+   *
+   * @return string[]
+   */
+  public function possibleMatchSupportLevels() {
+    return $this->getClass()->possibleMatchSupportLevels($this);
+  }
+
+  /**
+   * Possible match opposition levels.
+   *
+   * @return string[]
+   */
+  public function possibleMatchOppositionLevels() {
+    return $this->getClass()->possibleMatchOppositionLevels($this);
+  }
+
+  /**
    * Get the allowed values for the type field
    *
    * @param \Drupal\Core\Field\FieldStorageDefinitionInterface $definition

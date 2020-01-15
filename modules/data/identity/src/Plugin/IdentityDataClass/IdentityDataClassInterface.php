@@ -4,6 +4,7 @@ namespace Drupal\identity\Plugin\IdentityDataClass;
 
 use Drupal\entity\BundlePlugin\BundlePluginInterface;
 use Drupal\identity\Entity\IdentityData;
+use Drupal\identity\Entity\IdentityDataInterface;
 use Drupal\identity\IdentityMatch;
 
 interface IdentityDataClassInterface extends BundlePluginInterface {
@@ -40,6 +41,24 @@ interface IdentityDataClassInterface extends BundlePluginInterface {
    *   The match that has been found by find matches.
    */
   public function supportOrOppose(IdentityData $data, IdentityMatch $match);
+
+  /**
+   * The possible match support levels for this search data.
+   *
+   * @param \Drupal\identity\Entity\IdentityDataInterface $search_data
+   *
+   * @return string[]
+   */
+  public function possibleMatchSupportLevels(IdentityDataInterface $search_data);
+
+  /**
+   * The possible match opposition levels for this search data.
+   *
+   * @param \Drupal\identity\Entity\IdentityDataInterface $search_data
+   *
+   * @return string[]
+   */
+  public function possibleMatchOppositionLevels(IdentityDataInterface $search_data);
 
   /**
    * Get the type options.

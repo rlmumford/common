@@ -119,7 +119,9 @@ class RelationshipIdentityDataClassBase extends IdentityDataClassBase {
 
     foreach ($identity->getData($this->pluginId) as $identity_data) {
       if ($data->other_identity->target_id == $identity_data->other_identity->target_id) {
-        $match->supportMatch($identity_data, $this->getSupportScore($data, $identity_data));
+        if ($match->supportMatch($data, $identity_data, $this->getSupportScore($data, $identity_data))) {
+          return;
+        }
       }
     }
   }

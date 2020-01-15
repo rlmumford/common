@@ -99,7 +99,9 @@ class TelephoneNumber extends IdentityDataClassBase {
     $matches = [];
     foreach ($this->identityDataStorage->loadMultiple($query->execute()) as $matching_data) {
       /** @var \Drupal\identity\Entity\IdentityData $matching_data */
-      $matches[$matching_data->getIdentityId()] = new IdentityMatch(20, $matching_data, $data);
+      if ($matching_data->getIdentityId() && empty($matches[$matching_data->getIdentityId()])) {
+        $matches[$matching_data->getIdentityId()] = new IdentityMatch($data, $matching_data, 20);
+      }
     }
 
     return $matches;
@@ -111,7 +113,9 @@ class TelephoneNumber extends IdentityDataClassBase {
   public function supportOrOppose(IdentityData $data, IdentityMatch $match) {
     foreach ($match->getIdentity()->getData($this->getPluginId()) as $identity_data) {
       if ($identity_data->telephone_number->value == $data->telephone_number->value) {
-        $match->supportMatch($data, 20);
+        if ($match->supportMatch($data, $identity_data, 20)) {
+          return;
+        }
       }
     }
   }
