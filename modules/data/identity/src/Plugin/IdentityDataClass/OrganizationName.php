@@ -44,7 +44,7 @@ class OrganizationName extends IdentityDataClassBase implements LabelingIdentity
    */
   public function createData($type, $reference, $value = NULL) {
     $data = parent::createData($type, $reference, $value);
-    $data->name = $value;
+    $data->org_name = $value;
     return $data;
   }
 
@@ -85,17 +85,15 @@ class OrganizationName extends IdentityDataClassBase implements LabelingIdentity
     $query->identityDistinct();
     $query->condition('class', $this->pluginId);
     $query->exists('identity');
+
+    // This is a bit artificial.
+    $query->sort('identity');
+    $query->range(0 , 50);
+
     if ($data->org_name->value) {
       $query->condition('org_name', $data->org_name->value);
     }
     else {
-      return [];
-    }
-
-    // If there are more than 100 organizations with this name,
-    // its unlikely that we are going to be able a decent match
-    // from here, so lets not bother.
-    if ((clone $query)->count()->execute() > 100) {
       return [];
     }
 
@@ -118,14 +116,13 @@ class OrganizationName extends IdentityDataClassBase implements LabelingIdentity
    * @param \Drupal\identity\IdentityMatch $match
    */
   public function supportOrOppose(IdentityData $search_data, IdentityMatch $match) {
-    $identity = $match->getIdentity();
+    $query = $this->identityDataStorage->getQuery();
+    $query->identityDistinct();
+    $query->condition('identity', $match->getIdentityId());
+    $query->condition('org_name', $search_data->org_name->value);
 
-    foreach ($identity->getData($this->pluginId) as $match_data) {
-      if ($search_data->org_name->value == $match_data->org_name->value) {
-        if ($match->supportMatch($search_data, $match_data, 10)) {
-          return;
-        }
-      }
+    if ($ids = $query->execute()) {
+      $match->supportMatch($search_data, $this->identityDataStorage->laod(reset($ids)), 10);
     }
   }
 
