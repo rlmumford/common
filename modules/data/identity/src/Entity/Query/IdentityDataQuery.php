@@ -45,36 +45,26 @@ class IdentityDataQuery extends Query implements IdentityDataQueryInterface {
 
     if ($this->forceIdentityDistinct) {
       $id_field = $this->entityType->getKey('id');
+      $revision_field = $this->entityType->getKey('revision');
+
       $this->sqlGroupBy[] = 'base_table.identity';
+      $this->sqlFields['base_table.identity'] = ['base_table', 'identity'];
       unset($this->sqlFields["base_table.{$id_field}"]);
-      if ($revision_field = $this->entityType->getKey('revision')) {
+      if ($revision_field) {
         unset($this->sqlFields["base_table.{$revision_field}"]);
       }
       else {
         unset($this->sqlFields["base_table.{$id_field}_1"]);
       }
-    }
 
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function finish() {
-    parent::finish();
-
-    if ($this->forceIdentityDistinct) {
       $version = $this->connection->version();
-      $id_field = $this->entityType->getKey('id');
-      $revision_field = $this->entityType->getKey('revision');
 
       if ($this->supportsFirstValueFunction($version)) {
         switch ($this->forceIdentityDistinctGroupingMethod) {
           case "MIN":
           case "MAX":
             $this->sqlQuery->addExpression(
-              "FIRST_VALUE(base_table.{$revision_field}) OVER(PARTITION BY base_table.{$id_field})",
+              "FIRST_VALUE(base_table.{$revision_field}) OVER(PARTITION BY base_table.identity ORDER BY base_table.{$id_field} DESC)",
               "base_table__{$revision_field}"
             );
             $this->sqlQuery->addExpression(
@@ -102,6 +92,17 @@ class IdentityDataQuery extends Query implements IdentityDataQueryInterface {
   /**
    * {@inheritdoc}
    */
+  protected function getSqlField($field, $langcode) {
+    if ($field === 'identity') {
+      return 'base_table.identity';
+    }
+
+    return parent::getSqlField($field, $langcode);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   protected function result() {
     if ($this->count) {
       return $this->sqlQuery->countQuery()->execute()->fetchField();
@@ -115,7 +116,7 @@ class IdentityDataQuery extends Query implements IdentityDataQueryInterface {
       return $wrapper_query->execute()->fetchAllKeyed();
     }
 
-    return $this->sqlQuery->execute()->fetchAllKeyed();
+    return $this->sqlQuery->execute()->fetchAllKeyed(count($this->sqlQuery->getFields()), count($this->sqlQuery->getFields()) + 1);
   }
 
   /**
@@ -125,6 +126,8 @@ class IdentityDataQuery extends Query implements IdentityDataQueryInterface {
    * @param $version
    */
   protected function supportsFirstValueFunction($version) {
+    // @todo: Work out how the hell first value works!
+    return FALSE;
     if (stripos($version, 'mariadb')) {
       // For reasons, mariadb prefixes its version with 5.5.5-. We strip this
       // off before checking the version of mariadb.

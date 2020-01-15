@@ -122,7 +122,7 @@ class OrganizationName extends IdentityDataClassBase implements LabelingIdentity
     $query->condition('org_name', $search_data->org_name->value);
 
     if ($ids = $query->execute()) {
-      $match->supportMatch($search_data, $this->identityDataStorage->laod(reset($ids)), 10);
+      $match->supportMatch($search_data, $this->identityDataStorage->load(reset($ids)), 10);
     }
   }
 
