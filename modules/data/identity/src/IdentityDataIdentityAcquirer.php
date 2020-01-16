@@ -121,6 +121,10 @@ class IdentityDataIdentityAcquirer implements IdentityDataIdentityAcquirerInterf
           $search_data->supportOrOppose($identity_match);
         }
       }
+
+      if ($identity_match->isSufficient()) {
+        return new IdentityAcquisitionResult($identity_match->getIdentity(), IdentityAcquisitionResult::METHOD_FOUND);
+      }
     }
 
     /** @var \Drupal\identity\IdentityMatch $top_match */
