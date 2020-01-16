@@ -87,7 +87,7 @@ class OrganizationName extends IdentityDataClassBase implements LabelingIdentity
     $query->exists('identity');
 
     // This is a bit artificial.
-    $query->sort('identity');
+    $query->sort('identity', 'ASC');
     $query->range(0 , 50);
 
     if ($data->org_name->value) {

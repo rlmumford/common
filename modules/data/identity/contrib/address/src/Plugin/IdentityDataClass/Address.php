@@ -91,7 +91,7 @@ class Address extends IdentityDataClassBase {
 
     $query->condition('class', $this->pluginId);
     $query->exists('identity');
-    $query->sort('identity');
+    $query->sort('identity', 'ASC');
     $query->range(0 , 50);
 
     $has_personal_name = $has_org_name = $has_admin_local = $enough_data = FALSE;
