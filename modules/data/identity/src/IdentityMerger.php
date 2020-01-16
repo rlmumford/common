@@ -55,6 +55,7 @@ class IdentityMerger implements IdentityMergerInterface {
     }
 
     $identity_two->state->value = FALSE;
+    $identity_two->merged_into = $identity_one;
     $identity_two->save();
 
     $event = new PostIdentityMergeEvent($identity_one, $identity_two, $identity_one);

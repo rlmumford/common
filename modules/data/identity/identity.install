@@ -1,5 +1,8 @@
 <?php
 
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+
 /**
  * Install works at relationship.
  */
@@ -82,4 +85,21 @@ function identity_update_8005() {
       $field_definition_listener->onFieldDefinitionCreate($definition);
     }
   }
+}
+
+/**
+ * Install the merged_into field.
+ */
+function identity_update_8006() {
+  $updater = \Drupal::entityDefinitionUpdateManager();
+  $updater->installFieldStorageDefinition(
+    'merged_into',
+    'identity',
+    'identity',
+    BaseFieldDefinition::create('entity_reference')
+      ->setSetting('target_type', 'identity')
+      ->setLabel(t('Merged Into'))
+      ->setDescription(new TranslatableMarkup('Which identity has this been merged into.'))
+      ->setDisplayConfigurable('view', TRUE)
+  );
 }

@@ -8,6 +8,7 @@ use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\identity\IdentityDataIterator;
 
 /**
@@ -63,6 +64,12 @@ class Identity extends ContentEntityBase implements IdentityInterface {
       ->setLabel(t('Title'))
       ->setRevisionable(TRUE)
       ->setDefaultValueCallback('\Drupal\identity\Entity\Identity::createLabel')
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['merged_into'] = BaseFieldDefinition::create('entity_reference')
+      ->setSetting('target_type', 'identity')
+      ->setLabel(t('Merged Into'))
+      ->setDescription(new TranslatableMarkup('Which identity has this been merged into.'))
       ->setDisplayConfigurable('view', TRUE);
 
     $fields['state'] = BaseFieldDefinition::create('boolean')
