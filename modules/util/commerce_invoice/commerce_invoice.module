@@ -1,0 +1,23 @@
+<?php
+
+use Drupal\commerce_invoice\Form\InvoiceGenerateForm;
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Entity\EntityInterface;
+
+/**
+ * Implements hook_entity_view_alter().
+ */
+function commerce_invoice_commerce_order_view_alter(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display) {
+  if ($build['#view_mode'] === 'admin') {
+    $build['invoice_generate'] = \Drupal::formBuilder()->getForm(InvoiceGenerateForm::class, $entity);
+  }
+}
+
+/**
+ * Implements hook_theme_registry_alter().
+ */
+function commerce_invoice_theme_registry_alter(&$theme_registry) {
+  $path = drupal_get_path('module', 'commerce_invoice');
+
+  $theme_registry['commerce_order__admin']['path'] = $path.'/templates';
+}

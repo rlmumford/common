@@ -1,0 +1,8 @@
+name: PDF Tools Docker
+description: "Provides tools and services for working with PDFs and Docker."
+type: module
+package: RLMumford
+core: 8.x
+
+dependencies:
+ - pdf_tools

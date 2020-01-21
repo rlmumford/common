@@ -1,0 +1,23 @@
+uuid: 4d39ffa6-bd2d-4d88-b12c-2bcaf06g644a
+langcode: en
+status: true
+dependencies:
+  module:
+    - commerce_order
+    - file
+id: commerce_order.invoice_pdf
+field_name: invoice_pdf
+entity_type: commerce_order
+type: file
+settings:
+  display_field: false
+  display_default: false
+  uri_scheme: private
+  target_type: file
+module: file
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

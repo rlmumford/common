@@ -5,11 +5,15 @@ namespace Drupal\commerce_invoice\Form;
 use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityViewBuilderInterface;
-use Drupal\Core\File\MimeType\MimeTypeGuesser;
+use Drupal\Core\File\Exception\FileException;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\pdf_tools\PDFGeneratorInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\File\MimeType\MimeTypeGuesserInterface;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 class InvoiceGenerateForm extends FormBase {
 
@@ -42,6 +46,13 @@ class InvoiceGenerateForm extends FormBase {
   protected $fileStorage;
 
   /**
+   * The file system
+   *
+   * @var \Drupal\Core\File\FileSystemInterface
+   */
+  protected $fileSystem;
+
+  /**
    * The file mimetype guesser.
    *
    * @var \Drupal\Core\File\MimeType\MimeTypeGuesser
@@ -57,11 +68,13 @@ class InvoiceGenerateForm extends FormBase {
     PDFGeneratorInterface $pdf_generator,
     EntityViewBuilderInterface $view_builder,
     EntityStorageInterface $file_storage,
-    MimeTypeGuesser $mime_type_guesser
+    FileSystemInterface $file_system,
+    MimeTypeGuesserInterface $mime_type_guesser
   ) {
     $this->pdfGenerator = $pdf_generator;
     $this->viewBuilder = $view_builder;
     $this->fileStorage = $file_storage;
+    $this->fileSystem = $file_system;
     $this->mimeTypeGuesser = $mime_type_guesser;
   }
 
@@ -70,6 +83,7 @@ class InvoiceGenerateForm extends FormBase {
       $container->get('pdf_tools.generator'),
       $container->get('entity_type.manager')->getViewBuilder('commerce_order'),
       $container->get('entity_type.manager')->getStorage('file'),
+      $container->get('file_system'),
       $container->get('file.mime_type.guesser')
     );
   }
@@ -108,10 +122,20 @@ class InvoiceGenerateForm extends FormBase {
     $form['actions']['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Generate'),
-      '#ajax' => [
-        'callback' => [$this, 'downloadFileAjaxCallback'],
+      '#submit' => [
+        '::submitForm',
+        '::downloadInvoice',
       ]
     ];
+
+    if (!$this->order->invoice_pdf->isEmpty()) {
+      $form['actions']['submit']['#value'] = $this->t('Re-generate');
+
+      $form['current_invoice'] = $this->order->invoice_pdf->view([
+        'type' => 'file_default',
+        'label' => 'hidden',
+      ]);
+    }
 
     return $form;
   }
@@ -127,12 +151,12 @@ class InvoiceGenerateForm extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $options = [
       '__destination' => 'private://invoices/invoice_'.$this->order->getOrderNumber().'.pdf',
+      'page-size' => 'A4',
     ];
-    $uri = $this->pdfGenerator->generateFromHTML(
-      render($this->viewBuilder->view($this->order, 'invoice')),
-      $options
-    );
+    \Drupal::moduleHandler()->alter('commerce_invoice_pdf_options', $options, $this->order);
+    $uri = $this->pdfGenerator->entityToPDF($this->order, 'invoice', $options);
 
+    /** @var \Drupal\file\Entity\File $file */
     $file = $this->fileStorage->create([
       'uri' => $uri,
       'size' => filesize($uri),
@@ -141,14 +165,29 @@ class InvoiceGenerateForm extends FormBase {
       'filename' => basename($uri),
       'filemime' => $this->mimeTypeGuesser->guess($uri),
     ]);
+
+    $this->fileSystem->chmod($file->getFileUri());
     $file->save();
 
     $form_state->set('file', $file);
+
+    $this->order->invoice_pdf = $file;
+    $this->order->save();
   }
 
   /**
    *
    */
-  public function downloadFileAjaxCallback(array $form, FormStateInterface $form_state) {
+  public function downloadInvoice(array $form, FormStateInterface $form_state) {
+    /** @var \Drupal\file\Entity\File $file */
+    if ($file = $form_state->get('file')) {
+      $form_state->setResponse(new BinaryFileResponse(
+        $file->getFileUri(),
+        200,
+        [],
+        TRUE,
+        ResponseHeaderBag::DISPOSITION_ATTACHMENT
+      ));
+    }
   }
 }

@@ -1,0 +1,10 @@
+pdf_tools.docker.containers:
+  type: config_object
+  label: 'Docker Containers'
+  mapping:
+    wkhtmltopdf:
+      type: string
+      label: 'WKHTMLtoPDF Container Name'
+    web:
+      type: string
+      label: 'Web Server Container Name'

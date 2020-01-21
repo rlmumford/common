@@ -1,0 +1,10 @@
+uuid: 45c824b7-3ce1-4390-91a4-af1b0163c15f
+langcode: en
+status: true
+dependencies:
+  module:
+    - commerce_order
+id: commerce_order.invoice
+label: Invoice
+targetEntityType: commerce_order
+cache: true
