@@ -153,47 +153,61 @@ class Address extends IdentityDataClassBase {
    * {@inheritdoc}
    */
   public function supportOrOppose(IdentityData $search_data, IdentityMatch $match) {
-    $identity = $match->getIdentity();
+    $query = $this->identityDataStorage->getQuery();
+    $query->identityDistinct();
+    $query->condition('identity', $match->getIdentityId());
+    $query->condition('address.country_code', $search_data->address->country_code);
+    $query->condition('address.postal_code', $search_data->address->postal_code);
 
-    /** @var \Drupal\identity\Entity\IdentityData $match_data */
-    foreach ($identity->getData($this->pluginId) as $match_data) {
-      if (
-        $search_data->address->country_code == $match_data->address->country_code &&
-        $search_data->address->postal_code == $match_data->address->postal_code
-      ) {
-        $levels = ['postal_code'];
-        $score_inc = 30;
+    $street_query = clone $query;
+    $street_query->condition('address.address_line1', $search_data->address->address_line1);
+    $street_query->condition('address.address_line2', $search_data->address->address_line2);
 
-        if (
-          $search_data->address->address_line1 == $match_data->address->address_line1
-          && $search_data->address->address_line2 == $match_data->address->address_line2
-        ) {
-          $levels[] = 'street';
-          $score_inc = 70;
-        }
+    if ($search_data->address->given_name || $search_data->address->family_name) {
+      $personal_query = clone $street_query;
+      $personal_query->condition('address.given_name', $search_data->address->given_name);
+      $personal_query->condition('address.family_name', $search_data->address->family_name);
 
-        if ($search_data->address->given_name || $search_data->address->family_name) {
-          if (
-            $search_data->address->given_name == $match_data->address->given_name
-            && $search_data->address->family_name == $match_data->address->family_name
-          ) {
-            $levels[] = 'personal_name';
-            $score_inc = 100;
-          }
-        }
-        else if (
-          $search_data->address->organization
-          && $search_data->address->organization == $match_data->address->organization
-        ) {
-          $levels[] = 'organization_name';
-          $score_inc = 100;
-        }
-
-        // Once the match is fully supported we return.
-        if ($match->supportMatch($search_data, $match_data, $score_inc, $levels)) {
-          return;
-        }
+      if ($ids = $personal_query->execute()) {
+        $match->supportMatch(
+          $search_data,
+          $this->identityDataStorage->load(reset($ids)),
+          100,
+          ['postal_code', 'street', 'personal_name']
+        );
+        return;
       }
+    }
+    else if ($search_data->address->organization) {
+      $organization_query = clone $street_query;
+      $organization_query->condition('address.organization', $search_data->address->organization);
+
+      if ($ids = $organization_query->execute()) {
+        $match->supportMatch(
+          $search_data,
+          $this->identityDataStorage->load(reset($ids)),
+          100,
+          ['postal_code', 'street', 'organization_name']
+        );
+        return;
+      }
+    }
+
+    if ($ids = $street_query->execute()) {
+      $match->supportMatch(
+        $search_data,
+        $this->identityDataStorage->load(reset($ids)),
+        70,
+        ['postal_code', 'street']
+      );
+    }
+    else if ($ids = $query->execute()) {
+      $match->supportMatch(
+        $search_data,
+        $this->identityDataStorage->load(reset($ids)),
+        30,
+        ['postal_code']
+      );
     }
   }
 
