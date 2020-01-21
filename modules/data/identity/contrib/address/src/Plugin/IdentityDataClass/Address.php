@@ -161,7 +161,9 @@ class Address extends IdentityDataClassBase {
 
     $street_query = clone $query;
     $street_query->condition('address.address_line1', $search_data->address->address_line1);
-    $street_query->condition('address.address_line2', $search_data->address->address_line2);
+    if ($search_data->address->address_line2) {
+      $street_query->condition('address.address_line2', $search_data->address->address_line2);
+    }
 
     if ($search_data->address->given_name || $search_data->address->family_name) {
       $personal_query = clone $street_query;
