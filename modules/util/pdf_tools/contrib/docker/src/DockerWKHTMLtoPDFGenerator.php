@@ -163,8 +163,6 @@ class DockerWKHTMLtoPDFGenerator extends WKHTMLtoPDFGenerator {
       }
     }
 
-    dpm($prepared_options, 'After');
-
     return $prepared_options;
   }
 
