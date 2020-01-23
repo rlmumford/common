@@ -1,5 +1,0 @@
-name: PDF Tools
-description: "Provides tools and services for working with PDFs."
-type: module
-package: RLMumford
-core: 8.x
