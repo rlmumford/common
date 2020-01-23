@@ -25,6 +25,7 @@
         "drupal/mini_layouts": "1.x-dev",
         "drupal/paragraphs": "^1.8",
         "drupal/block_class": "1.x-dev",
+        "drupal/pdf_tools": "1.x-dev",
         "aws/aws-sdk-php": "3.*"
     },
     "repositories": [
