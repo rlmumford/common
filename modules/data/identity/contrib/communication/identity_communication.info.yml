@@ -1,0 +1,10 @@
+type: module
+name: Identity Communication
+description: 'Communication Identity Contacts'
+core: 8.x
+package: Communication
+
+dependencies:
+  - communication:communication
+  - rlmumford:identity
+  - rlmumford:identity_address
