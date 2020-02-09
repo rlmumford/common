@@ -66,7 +66,7 @@ function profile_tools_profile_insert(ProfileInterface $entity) {
 
   if (\Drupal::moduleHandler()->moduleExists('search_api')) {
     if (empty($entity->search_api_skip_tracking)) {
-      search_api_entity_update($entity->getOwner());
+      search_api_entity_insert($entity->getOwner());
     }
   }
 }
