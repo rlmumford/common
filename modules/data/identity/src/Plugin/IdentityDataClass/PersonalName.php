@@ -2,13 +2,10 @@
 
 namespace Drupal\identity\Plugin\IdentityDataClass;
 
-use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\entity\BundleFieldDefinition;
-use Drupal\identity\Entity\Identity;
 use Drupal\identity\Entity\IdentityData;
 use Drupal\identity\Entity\IdentityDataInterface;
-use Drupal\identity\IdentityLabelContext;
+use Drupal\identity\Field\BundleFieldDefinition;
 use Drupal\identity\IdentityMatch;
 use Drupal\name\Plugin\Field\FieldType\NameItem;
 
@@ -40,6 +37,9 @@ class PersonalName extends IdentityDataClassBase implements LabelingIdentityData
     $fields['full_name'] = BundleFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Full Name'))
       ->setRevisionable(TRUE)
+      ->setIndexes([
+        'value' => ['value'],
+      ])
       ->setDisplayOptions('view', [
         'type' => 'string',
       ])
