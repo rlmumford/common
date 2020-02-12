@@ -89,37 +89,31 @@ class PersonalName extends IdentityDataClassBase implements LabelingIdentityData
     $query->identityDistinct();
     $query->condition('class', $this->pluginId);
     $query->exists('identity');
-    $or_condition = $query->orConditionGroup();
 
     $not_enough_data = TRUE;
     if ($data->full_name->value) {
+      $fnq = clone $query;
       // @todo: Find a way to use SOUNDEX() to do some fuzzy matching
-      $not_enough_data = FALSE;
-      $or_condition->condition('full_name', $data->full_name->value);
+      $fnq->condition('full_name', $data->full_name->value);
+      $fnq_ids = $fnq->execute();
     }
     if ($data->name->given && $data->name->family) {
-      $not_enough_data = FALSE;
-      $or_condition->condition(
+      $npq = clone $query;
+      $npq->condition(
         $query->andConditionGroup()
           ->condition('name.given', $data->name->given)
           ->condition('name.family', $data->name->family)
       );
+      $npq_ids = $npq->execute();
     }
-    $query->condition($or_condition);
+    $ids = $fnq_ids + $npq_ids;
 
-    if ($not_enough_data) {
-      return [];
-    }
-
-    // If we have more than 100 matches, it would be better
-    // to start from the address or SSN, so lets not clog up
-    // the matcher with pointless names.
-    if ((clone $query)->count()->execute() > 100) {
+    if (empty($ids)) {
       return [];
     }
 
     $matches = [];
-    foreach ($this->identityDataStorage->loadMultiple($query->execute()) as $match_data) {
+    foreach ($this->identityDataStorage->loadMultiple($ids) as $match_data) {
       /** @var IdentityData $match_data */
       if ($match_data->getIdentityId() && empty($matches[$match_data->getIdentityId()])) {
         $matches[$match_data->getIdentityId()]
