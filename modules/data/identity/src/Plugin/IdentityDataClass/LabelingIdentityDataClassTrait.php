@@ -27,8 +27,7 @@ trait LabelingIdentityDataClassTrait {
       return NULL;
     }
 
-    // @todo: Sort data by credibility.
-    $datum = reset($data);
+    $datum = is_array($data) ? reset($data) : $data->current();
     $bubbleable_metadata->addCacheableDependency($datum);
 
     return $this->buildIdentityLabel($datum);
