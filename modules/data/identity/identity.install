@@ -104,16 +104,3 @@ function identity_update_8006() {
       ->setDisplayConfigurable('view', TRUE)
   );
 }
-
-/**
- * Add value index to full name field.
- */
-function identity_update_8007() {
-  $updater = \Drupal::entityDefinitionUpdateManager();
-  $def = $updater->getFieldStorageDefinition('full_name', 'identity_data');
-  $def = BundleFieldDefinition::createFromFieldStorageDefinition($def);
-  $def->setIndexes([
-    'value' => ['value'],
-  ]);
-  $updater->updateFieldStorageDefinition($def);
-}
