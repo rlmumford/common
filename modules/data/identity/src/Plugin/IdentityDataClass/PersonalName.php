@@ -90,7 +90,7 @@ class PersonalName extends IdentityDataClassBase implements LabelingIdentityData
     $query->condition('class', $this->pluginId);
     $query->exists('identity');
 
-    $not_enough_data = TRUE;
+    $fnq_ids = $npq_ids = [];
     if ($data->full_name->value) {
       $fnq = clone $query;
       // @todo: Find a way to use SOUNDEX() to do some fuzzy matching
