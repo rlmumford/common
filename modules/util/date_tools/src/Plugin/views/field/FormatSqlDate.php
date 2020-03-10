@@ -97,7 +97,7 @@ class FormatSqlDate extends Date {
       return $value;
     }
 
-    $format = $this->definition['type'] == 'datetime'
+    $format = isset($this->definition['type']) && $this->definition['type'] == 'datetime'
       ? DateTimeItemInterface::DATETIME_STORAGE_FORMAT
       : DateTimeItemInterface::DATE_STORAGE_FORMAT;
     return DrupalDateTime::createFromFormat($format, $value)->getTimestamp();

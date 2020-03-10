@@ -11,6 +11,8 @@ use Drupal\service\ServiceInterface;
 use Drupal\service\Entity\ServiceType;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\user\EntityOwnerInterface;
+use Drupal\user\EntityOwnerTrait;
 
 /**
  * Entity class for Services.
@@ -46,6 +48,7 @@ use Drupal\Core\Field\BaseFieldDefinition;
  *     "bundle" = "type",
  *     "uuid" = "uuid",
  *     "label" = "label",
+ *     "owner" = "manager",
  *   },
  *   has_notes = "true",
  *   bundle_entity_type = "service_type",
@@ -57,13 +60,15 @@ use Drupal\Core\Field\BaseFieldDefinition;
  *   }
  * )
  */
-class Service extends ContentEntityBase implements ServiceInterface {
+class Service extends ContentEntityBase implements ServiceInterface, EntityOwnerInterface {
+  use EntityOwnerTrait;
 
   /**
    * {@inheritdoc}
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
+    $fields += static::ownerBaseFieldDefinitions($entity_type);
 
     $fields['label'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Title'))
@@ -115,21 +120,6 @@ class Service extends ContentEntityBase implements ServiceInterface {
       ->setLabel(t('Service'))
       ->setRevisionable(TRUE)
       ->setSetting('target_type', 'service')
-      ->setDisplayOptions('view', [
-        'label' => 'inline',
-        'type' => 'entity_reference_label',
-      ])
-      ->setDisplayOptions('form', [
-        'type' => 'entity_reference_autocomplete',
-      ])
-      ->setDisplayConfigurable('view', TRUE)
-      ->setDisplayConfigurable('form', TRUE);
-
-    $fields['manager'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('Manager'))
-      ->setRevisionable(TRUE)
-      ->setSetting('target_type', 'user')
-      ->setDefaultValueCallback('\Drupal\service\Entity\Service::getCurrentUserId')
       ->setDisplayOptions('view', [
         'label' => 'inline',
         'type' => 'entity_reference_label',
