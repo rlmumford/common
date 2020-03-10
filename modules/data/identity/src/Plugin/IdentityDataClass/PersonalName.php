@@ -88,6 +88,7 @@ class PersonalName extends IdentityDataClassBase implements LabelingIdentityData
     $query = $this->identityDataStorage->getQuery('AND');
     $query->identityDistinct();
     $query->condition('class', $this->pluginId);
+    $query->range(0, 50);
     $query->exists('identity');
 
     $fnq_ids = $npq_ids = [];
