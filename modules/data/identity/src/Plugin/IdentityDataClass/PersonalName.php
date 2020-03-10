@@ -116,8 +116,15 @@ class PersonalName extends IdentityDataClassBase implements LabelingIdentityData
     foreach ($this->identityDataStorage->loadMultiple($ids) as $match_data) {
       /** @var IdentityData $match_data */
       if ($match_data->getIdentityId() && empty($matches[$match_data->getIdentityId()])) {
+        $levels = [];
+        if (in_array($match_data->id(), $fnq_ids)) {
+          $levels = ['full'];
+        }
+        if (in_array($match_data->id(), $npq_ids)) {
+          $levels = array_merge($levels, ['given', 'family']);
+        }
         $matches[$match_data->getIdentityId()]
-          = new IdentityMatch($data, $match_data, 10);
+          = new IdentityMatch($data, $match_data, 10, $levels);
       }
     }
 
@@ -149,7 +156,7 @@ class PersonalName extends IdentityDataClassBase implements LabelingIdentityData
         $score = 0;
 
         if ($search_data->name->given == $match_data->name->given) {
-          $levels[] = 'first';
+          $levels[] = 'given';
           $score += 10;
         }
 

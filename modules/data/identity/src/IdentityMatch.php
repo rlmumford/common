@@ -235,17 +235,17 @@ class IdentityMatch {
       AcquisitionThreshold::create()->addComponent('third_party_id', 'ssn','full'),
       AcquisitionThreshold::create()->addComponent('third_party_id', 'att'),
       AcquisitionThreshold::create()
-        ->addComponent('personal_name', NULL, ['first', 'last', 'suffix'])
+        ->addComponent('personal_name', NULL, ['given', 'family', 'suffix'])
         ->addComponent('address', NULL, ['postal_code'])
         ->addComponent('third_party_id', 'ssn', ['last4']),
       AcquisitionThreshold::create()
-        ->addComponent('personal_name', NULL, ['first', 'last', 'suffix'])
+        ->addComponent('personal_name', NULL, ['given', 'family', 'suffix'])
         ->addComponent('address', NULL, ['postal_code', 'street']),
       AcquisitionThreshold::create()
-        ->addComponent('personal_name', NULL, ['first', 'last', 'suffix'])
+        ->addComponent('personal_name', NULL, ['given', 'family', 'suffix'])
         ->addComponent('telephone_number'),
       AcquisitionThreshold::create()
-        ->addComponent('personal_name', NULL, ['first', 'last', 'suffix'])
+        ->addComponent('personal_name', NULL, ['given', 'family', 'suffix'])
         ->addComponent('email_address'),
       AcquisitionThreshold::create()
         ->addComponent('personal_name', NULL, ['full'])
