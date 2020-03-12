@@ -65,4 +65,18 @@ identity_service.identity.label_get:
   requirements:
     _entity_access: 'identity.view'
     _format: 'json|hal_json'
-
+identity_service.identity.merge:
+  path: '/api/identity/{identity_two}/mergeinto/{identity_one}'
+  defaults:
+    _controller: '\Drupal\identity_service\Controller\ServiceController::mergeIdentities'
+  options:
+    _auth: [ 'basic_auth' ]
+    no_cache: 'TRUE'
+    parameters:
+      identity_one:
+        type: 'entity:identity'
+      identity_two:
+        type: 'entity:identity'
+  methods: [ 'POST' ]
+  requirements:
+    _format: 'json|hal_json'

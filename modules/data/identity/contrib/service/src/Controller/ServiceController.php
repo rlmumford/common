@@ -14,12 +14,14 @@ use Drupal\identity\IdentityDataGroup;
 use Drupal\identity\IdentityDataIdentityAcquirer;
 use Drupal\identity\IdentityLabelContext;
 use Drupal\identity\IdentityLabelerInterface;
+use Drupal\identity\IdentityMergerInterface;
 use Drupal\identity_service\IdentitySubscriberInterface;
 use Drupal\rest\ResourceResponse;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Serializer\Exception\InvalidArgumentException;
 use Symfony\Component\Serializer\Exception\UnexpectedValueException;
@@ -56,6 +58,13 @@ class ServiceController extends ControllerBase {
   protected $identitySubscriber;
 
   /**
+   * The identity merger.
+   *
+   * @var \Drupal\identity\IdentityMergerInterface
+   */
+  protected $identityMerger;
+
+  /**
    * @var \Drupal\Core\Render\RendererInterface
    */
   protected $renderer;
@@ -70,7 +79,8 @@ class ServiceController extends ControllerBase {
       $container->get('renderer'),
       $container->get('identity.acquirer'),
       $container->get('identity.labeler'),
-      $container->get('identity_service.identity_subscriber')
+      $container->get('identity_service.identity_subscriber'),
+      $container->get('identity.merger')
     );
   }
 
@@ -87,7 +97,8 @@ class ServiceController extends ControllerBase {
     RendererInterface $renderer,
     IdentityDataIdentityAcquirer $identity_acquirer,
     IdentityLabelerInterface $identity_labeler,
-    IdentitySubscriberInterface $identity_subscriber
+    IdentitySubscriberInterface $identity_subscriber,
+    IdentityMergerInterface $identity_merger
   ) {
     $this->entityTypeManager = $entity_type_manager;
     $this->serializer = $serializer;
@@ -95,6 +106,7 @@ class ServiceController extends ControllerBase {
     $this->identityAcquirer = $identity_acquirer;
     $this->identityLabeler = $identity_labeler;
     $this->identitySubscriber = $identity_subscriber;
+    $this->identityMerger = $identity_merger;
   }
 
   /**
@@ -432,5 +444,26 @@ class ServiceController extends ControllerBase {
     $label = $this->identityLabeler->label($identity, $context);
 
     return new JsonResponse(['label' => $label], 200);
+  }
+
+  /**
+   * Merge identity two into identity one
+   *
+   * @param \Drupal\identity\Entity\Identity $identity_one
+   * @param \Drupal\identity\Entity\Identity $identity_two
+   */
+  public function mergeIdentities(Identity $identity_one, Identity $identity_two) {
+    if (!$identity_one->access('update') || !$identity_two->access('update')) {
+      throw new AccessDeniedHttpException();
+    }
+
+    try {
+      $this->identityMerger->mergeIdentities($identity_one, $identity_two);
+    }
+    catch (\Exception $exception) {
+      throw new BadRequestHttpException();
+    }
+
+    return new ResourceResponse($identity_one, 200);
   }
 }
