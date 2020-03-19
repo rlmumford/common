@@ -109,6 +109,7 @@ class IdentityMergeForm extends FormBase {
     if ($form_state->get('identity1') && $form_state->get('identity2')) {
       $form['actions']['confirm'] = [
         '#value' => new TranslatableMarkup('Confirm Merge'),
+        '#type' => 'submit',
         '#submit' => [
           '::submitForm',
         ],
@@ -117,6 +118,7 @@ class IdentityMergeForm extends FormBase {
     else {
       $form['actions']['select'] = [
         '#value' => new TranslatableMarkup('Update Identities'),
+        '#type' => 'submit',
         '#submit' => [
           '::submitFormUpdateIdentities',
         ],

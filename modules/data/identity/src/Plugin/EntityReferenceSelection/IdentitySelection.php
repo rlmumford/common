@@ -47,5 +47,7 @@ class IdentitySelection extends DefaultSelection {
     if ($configuration['sort']['field'] !== '_none') {
       $query->sort($configuration['sort']['field'], $configuration['sort']['direction']);
     }
+
+    return $query;
   }
 }

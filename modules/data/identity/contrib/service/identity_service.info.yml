@@ -5,6 +5,7 @@ description: "Provides Identity Web Service Routes"
 package: RLMumford
 
 dependencies:
+  - rlmumford:identity
   - drupal:basic_auth
   - drupal:serialization
   - drupal:rest
