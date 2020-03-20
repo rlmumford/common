@@ -45,8 +45,66 @@ class IdentityDataIdentityAcquirer implements IdentityDataIdentityAcquirerInterf
    * @return \Drupal\identity\IdentityAcquisitionResult
    */
   public function acquireIdentity(IdentityDataGroup $data_group, array $options = []) {
-    $threshold = isset($options['confidence_threshold']) ? $options['confidence_threshold'] : static::ACQUISITION_CONFIDENCE_THRESHOLD;
-    $inclusion_threshold = isset($options['inclusion_threshold']) ? $options['inclusion_threshold'] : static::ACQUISITION_INCLUSION_THRESHOLD;
+    // Look for a matching source.
+    if (($source = $data_group->getSource()) && $source->reference->value) {
+      $source_storage = $this->entityTypeManager->getStorage('identity_data_source');
+
+      $ids = $source_storage
+        ->getQuery()
+        ->condition('reference', $source->reference->value)
+        ->range(0, 1)
+        ->execute();
+      $data_group->setSource($source_storage->load(reset($ids)));
+    }
+
+    // Look for matching references.
+    /** @var \Drupal\identity\Entity\IdentityData[] $refs */
+    $refs = [];
+    foreach ($data_group->getDatas() as $data) {
+      if (!$data->reference->isEmpty() && $data->reference->value) {
+        $refs[$data->reference->value] = $data;
+      }
+    }
+    if (!empty($refs)) {
+      $data_storage = $this->entityTypeManager->getStorage('identity_data');
+      $existing = $data_storage->getQuery()
+        ->condition('reference', array_keys($refs), 'IN')
+        ->execute();
+
+      if (!empty($existing)) {
+        $existing_id = NULL;
+        foreach ($data_storage->loadMultiple($existing) as $existing_data) {
+          // Set the id, vid and uuid of the submitted data so that it counts
+          // as an update.
+          if ($submitted_data = $refs[$existing_data->reference->value]) {
+            $submitted_data->id = $existing_data->id();
+            $submitted_data->uuid = $existing_data->uuid->value;
+            $submitted_data->enforceIsNew(FALSE);
+
+            if ($existing_data->getIdentityId()) {
+              if (is_null($existing_id) || $existing_id == $existing_data->getIdentityId()) {
+                $existing_id = $existing_data->getIdentityId();
+              }
+              else {
+                $existing_id = FALSE;
+                // @todo: This means that there are existing items that match
+                // multiple identities. I'm not sure what we would do in this
+                // maybe reaquire everything
+              }
+            }
+
+            unset($refs[$existing_data->reference->value]);
+          }
+        }
+
+        if ($existing_id && empty($options['force_reacquire'])) {
+          return new IdentityAcquisitionResult(
+            $this->entityTypeManager->getStorage('identity')->load($existing_id),
+            IdentityAcquisitionResult::METHOD_REFERENCE
+          );
+        }
+      }
+    }
 
     // Allow modules to massage data in the group
     $event = new PreAcquisitionEvent($data_group);

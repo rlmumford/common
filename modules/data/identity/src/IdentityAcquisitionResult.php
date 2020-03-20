@@ -6,6 +6,7 @@ use Drupal\identity\Entity\Identity;
 
 class IdentityAcquisitionResult {
 
+  const METHOD_REFERENCE = 2;
   const METHOD_FOUND = 1;
   const METHOD_CREATE = 0;
 

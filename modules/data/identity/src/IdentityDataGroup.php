@@ -80,5 +80,13 @@ class IdentityDataGroup {
     return $this->source;
   }
 
-
+  /**
+   * @param \Drupal\identity\Entity\IdentityDataSource $source
+   *
+   * return static
+   */
+  public function setSource(IdentityDataSource $source) {
+    $this->source = $source;
+    return $this;
+  }
 }
