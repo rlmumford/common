@@ -99,6 +99,19 @@ class Identity extends ContentEntityBase implements IdentityInterface {
   /**
    * {@inheritdoc}
    */
+  public function label() {
+    $label = parent::label();
+
+    if (empty($label)) {
+      $this->label = $label = \Drupal::service('identity.labeler')->label($this);
+    }
+
+    return $label;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getData($class, array $filters = []) {
     if (!isset($this->_data[$class])) {
       $data_storage = \Drupal::entityTypeManager()->getStorage('identity_data');

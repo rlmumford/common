@@ -84,6 +84,8 @@ class IdentityMergeForm extends FormBase {
       $form_state->set('identity2', $identity2);
     }
 
+    $form['#attributes']['class'][] = 'row';
+
     $view_builder = $this->entityTypeManager->getViewBuilder('identity');
     foreach (['identity1', 'identity2'] as $key) {
       $title = $key == 'identity1' ? new TranslatableMarkup('First Identity') : new TranslatableMarkup('Second Identity');
@@ -92,18 +94,27 @@ class IdentityMergeForm extends FormBase {
           '#type' => 'entity_autocomplete',
           '#title' => $title,
           '#target_type' => 'identity',
+          '#wrapper_attributes' => [
+            'class' => ['col-12', 'col-md-6'],
+          ]
         ];
       }
       else {
         $form[$key] = [
           '#type' => 'container',
           '#title' => $title,
+          '#attributes' => [
+            'class' => ['col-12', 'col-md-6'],
+          ]
         ] + $view_builder->view($form_state->get($key), 'full');
       }
     }
 
     $form['actions'] = [
       '#type' => 'actions',
+      '#attributes' => [
+        'class' => ['col-12'],
+      ],
     ];
 
     if ($form_state->get('identity1') && $form_state->get('identity2')) {
