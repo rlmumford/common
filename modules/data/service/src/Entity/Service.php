@@ -4,11 +4,9 @@ namespace Drupal\service\Entity;
 
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
-use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\service\ServiceInterface;
-use Drupal\service\Entity\ServiceType;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\user\EntityOwnerInterface;
@@ -48,7 +46,7 @@ use Drupal\user\EntityOwnerTrait;
  *     "bundle" = "type",
  *     "uuid" = "uuid",
  *     "label" = "label",
- *     "owner" = "manager",
+ *     "owner" = "manager"
  *   },
  *   has_notes = "true",
  *   bundle_entity_type = "service_type",
