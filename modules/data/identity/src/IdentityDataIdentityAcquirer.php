@@ -54,7 +54,9 @@ class IdentityDataIdentityAcquirer implements IdentityDataIdentityAcquirerInterf
         ->condition('reference', $source->reference->value)
         ->range(0, 1)
         ->execute();
-      $data_group->setSource($source_storage->load(reset($ids)));
+      if ($ids) {
+        $data_group->setSource($source_storage->load(reset($ids)));
+      }
     }
 
     // Look for matching references.
