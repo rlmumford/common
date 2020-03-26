@@ -1,8 +1,64 @@
 <?php
 
+use Drupal\Core\Database\Database;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\identity\Field\BundleFieldDefinition;
+
+function identity_schema() {
+  $schema['identity_acquisition'] = [
+    'description' => 'Identity Acquisition Storage',
+    'fields' => [
+      'acquisition_id' => [
+        'type' => 'varchar',
+        'not null' => TRUE,
+        'length' => 128,
+        'description' => 'The acquisition id',
+      ],
+      'user' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ],
+      'requested' => [
+        'description' => 'The date requested.',
+        'type' => 'varchar',
+        'length' => 20,
+      ],
+      'started' => [
+        'description' => 'The date started.',
+        'type' => 'varchar',
+        'length' => 20,
+      ],
+      'completed' => [
+        'description' => 'The date completed.',
+        'type' => 'varchar',
+        'length' => 20,
+      ],
+      'identity' => [
+        'description' => 'The resultant identity',
+        'type' => 'int',
+        'unsigned' => TRUE,
+      ],
+      'method' => [
+        'description' => 'The acquisition method',
+        'type' => 'int',
+        'unsigned' => TRUE,
+      ],
+      'data' => [
+        'type' => 'blob',
+        'size' => 'big',
+        'serialize' => TRUE,
+      ],
+    ],
+    'primary key' => ['acquisition_id'],
+    'indexes' => [
+      'user' => ['user'],
+      'identity' => ['identity'],
+    ],
+  ];
+
+  return $schema;
+}
 
 /**
  * Install works at relationship.
@@ -103,4 +159,61 @@ function identity_update_8006() {
       ->setDescription(new TranslatableMarkup('Which identity has this been merged into.'))
       ->setDisplayConfigurable('view', TRUE)
   );
+}
+
+/**
+ * Install the identity_acquisition table.
+ */
+function identity_update_8007() {
+  Database::getConnection()->schema()->createTable('identity_acquisition', [
+    'description' => 'Identity Acquisition Storage',
+    'fields' => [
+      'acquisition_id' => [
+        'type' => 'varchar',
+        'not null' => TRUE,
+        'length' => 128,
+        'description' => 'The acquisition id',
+      ],
+      'user' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ],
+      'requested' => [
+        'description' => 'The date requested.',
+        'type' => 'varchar',
+        'length' => 20,
+      ],
+      'started' => [
+        'description' => 'The date started.',
+        'type' => 'varchar',
+        'length' => 20,
+      ],
+      'completed' => [
+        'description' => 'The date completed.',
+        'type' => 'varchar',
+        'length' => 20,
+      ],
+      'identity' => [
+        'description' => 'The resultant identity',
+        'type' => 'int',
+        'unsigned' => TRUE,
+      ],
+      'method' => [
+        'description' => 'The acquisition method',
+        'type' => 'int',
+        'unsigned' => TRUE,
+      ],
+      'data' => [
+        'type' => 'blob',
+        'size' => 'big',
+        'serialize' => TRUE,
+      ],
+    ],
+    'primary key' => ['acquisition_id'],
+    'indexes' => [
+      'user' => ['user'],
+      'identity' => ['identity'],
+    ],
+  ]);
 }

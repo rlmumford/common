@@ -2,11 +2,16 @@
 
 namespace Drupal\identity;
 
+use Drupal\Core\Database\Connection;
+use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Queue\QueueFactory;
+use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
 use Drupal\identity\Entity\IdentityDataInterface;
 use Drupal\identity\Event\IdentityEvents;
 use Drupal\identity\Event\PreAcquisitionEvent;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\Serializer\Serializer;
 
 /**
  * Class IdentityDataIdentityAcquirer
@@ -26,13 +31,120 @@ class IdentityDataIdentityAcquirer implements IdentityDataIdentityAcquirerInterf
   protected $eventDispatcher;
 
   /**
+   * @var \Drupal\Core\Database\Connection
+   */
+  protected $connection;
+
+  /**
+   * @var \Symfony\Component\Serializer\Serializer
+   */
+  protected $serializer;
+
+  /**
    * IdentityDataIdentityAcquirer constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, EventDispatcherInterface $event_dispatcher) {
+  public function __construct(
+    EntityTypeManagerInterface $entity_type_manager,
+    EventDispatcherInterface $event_dispatcher,
+    Connection $connection,
+    Serializer $serializer,
+    QueueFactory $queue
+  ) {
     $this->entityTypeManager = $entity_type_manager;
     $this->eventDispatcher = $event_dispatcher;
+    $this->connection = $connection;
+    $this->serializer = $serializer;
+    $this->queue = $queue->get('identity_acquisition');
+  }
+
+  /**
+   * Log the start of an acquisition.
+   *
+   * @param $acquisition_id
+   *
+   * @throws \Exception
+   */
+  public function logStart($acquisition_id) {
+    $this->connection->merge('identity_acquisition')
+      ->key('acquisition_id', $acquisition_id)
+      ->insertFields([
+        'requested' => (new DrupalDateTime())->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT),
+        'user' => \Drupal::currentUser()->id(),
+      ])
+      ->fields([
+        'started' => (new DrupalDateTime())->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT),
+      ])
+      ->execute();
+  }
+
+  /**
+   * Log that an acquisition is completed.
+   *
+   * @param $acquisition_id
+   * @param \Drupal\identity\IdentityAcquisitionResult $result
+   *
+   * @throws \Exception
+   */
+  public function logCompleted($acquisition_id, IdentityAcquisitionResult $result) {
+    $this->connection->merge('identity_acquisition')
+      ->key('acquisition_id', $acquisition_id)
+      ->fields([
+        'completed' => (new DrupalDateTime())->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT),
+        'identity' => $result->getIdentity()->id(),
+        'method' => $result->getMethod(),
+        'data' => $this->serializer->normalize($result),
+      ])
+      ->execute();
+  }
+
+  /**
+   * Log that an acquisition is requested.
+   *
+   * @param $acquisition_id
+   *
+   * @throws \Exception
+   */
+  public function logRequested($acquisition_id) {
+    $this->connection->merge('identity_acquisition')
+      ->key('acquisition_id', $acquisition_id)
+      ->fields([
+        'requested' => (new DrupalDateTime())->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT),
+        'user' => \Drupal::currentUser()->id(),
+      ])
+      ->execute();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function acquireIdentity(IdentityDataGroup $data_group, array $options = []) {
+    if (!empty($options['force_now'])) {
+      $this->logStart($data_group->getId());
+      $result = $this->doAcquireIdentity($data_group, $options);
+      $this->logCompleted($data_group->getId(), $result);
+
+      return $result;
+    }
+
+    $this->logRequested($data_group->getId());
+    return $this->queueAcquireIdentity($data_group, $options);
+  }
+
+  /**
+   * Queue an identity data acquisition.
+   *
+   * @param \Drupal\identity\IdentityDataGroup $data_group
+   * @param array $options
+   */
+  protected function queueAcquireIdentity(IdentityDataGroup $data_group, array $options = []) {
+    $this->queue->createItem([
+      'group' => $data_group,
+      'options' => $options,
+    ]);
+
+    return new IdentityAcquisitionResult(NULL, IdentityAcquisitionResult::METHOD_QUEUED);
   }
 
   /**
@@ -44,7 +156,7 @@ class IdentityDataIdentityAcquirer implements IdentityDataIdentityAcquirerInterf
    *
    * @return \Drupal\identity\IdentityAcquisitionResult
    */
-  public function acquireIdentity(IdentityDataGroup $data_group, array $options = []) {
+  protected function doAcquireIdentity(IdentityDataGroup $data_group, array $options = []) {
     // Look for a matching source.
     if (($source = $data_group->getSource()) && $source->reference->value) {
       $source_storage = $this->entityTypeManager->getStorage('identity_data_source');
