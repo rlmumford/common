@@ -80,3 +80,4 @@ identity_service.identity.merge:
   methods: [ 'POST' ]
   requirements:
     _format: 'json|hal_json'
+    _access: 'TRUE'
