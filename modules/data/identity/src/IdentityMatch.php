@@ -4,6 +4,7 @@ namespace Drupal\identity;
 
 use Drupal\identity\Entity\IdentityDataInterface;
 use Drupal\identity\Exception\IllegalMatchDataException;
+use Drupal\identity\Plugin\IdentityDataClass\Role;
 
 class IdentityMatch {
 
@@ -240,44 +241,122 @@ class IdentityMatch {
         ->addComponent('third_party_id', 'ssn', ['last4']),
       AcquisitionThreshold::create()
         ->addComponent('personal_name', NULL, ['given', 'family', 'suffix'])
-        ->addComponent('address', NULL, ['postal_code', 'street']),
+        ->addComponent('address', NULL, ['postal_code', 'street'])
+        ->addComponent(
+          'role',
+          Role::TYPE_UNIVERSAL,
+          ['is_organization'],
+          AcquisitionThresholdComponent::SO_FORBID
+        ),
       AcquisitionThreshold::create()
         ->addComponent('personal_name', NULL, ['given', 'family', 'suffix'])
-        ->addComponent('telephone_number'),
+        ->addComponent('telephone_number')
+        ->addComponent(
+          'role',
+          Role::TYPE_UNIVERSAL,
+          ['is_organization'],
+          AcquisitionThresholdComponent::SO_FORBID
+        ),
       AcquisitionThreshold::create()
         ->addComponent('personal_name', NULL, ['given', 'family', 'suffix'])
-        ->addComponent('email_address'),
+        ->addComponent('email_address')
+        ->addComponent(
+          'role',
+          Role::TYPE_UNIVERSAL,
+          ['is_organization'],
+          AcquisitionThresholdComponent::SO_FORBID
+        ),
       AcquisitionThreshold::create()
         ->addComponent('personal_name', NULL, ['full'])
         ->addComponent('address', NULL, ['postal_code'])
-        ->addComponent('third_party_id', 'ssn', ['last4']),
+        ->addComponent('third_party_id', 'ssn', ['last4'])
+        ->addComponent(
+          'role',
+          Role::TYPE_UNIVERSAL,
+          ['is_organization'],
+          AcquisitionThresholdComponent::SO_FORBID
+        ),
       AcquisitionThreshold::create()
         ->addComponent('personal_name', NULL, ['full'])
-        ->addComponent('address', NULL, ['postal_code', 'street']),
+        ->addComponent('address', NULL, ['postal_code', 'street'])
+        ->addComponent(
+          'role',
+          Role::TYPE_UNIVERSAL,
+          ['is_organization'],
+          AcquisitionThresholdComponent::SO_FORBID
+        ),
       AcquisitionThreshold::create()
         ->addComponent('personal_name', NULL, ['full'])
-        ->addComponent('telephone_number'),
+        ->addComponent('telephone_number')
+        ->addComponent(
+          'role',
+          Role::TYPE_UNIVERSAL,
+          ['is_organization'],
+          AcquisitionThresholdComponent::SO_FORBID
+        ),
       AcquisitionThreshold::create()
         ->addComponent('personal_name', NULL, ['full'])
-        ->addComponent('email_address'),
+        ->addComponent('email_address')
+        ->addComponent(
+          'role',
+          Role::TYPE_UNIVERSAL,
+          ['is_organization'],
+          AcquisitionThresholdComponent::SO_FORBID
+        ),
       AcquisitionThreshold::create()
         ->addComponent('telephone_number')
-        ->addComponent('third_party_id', 'ssn', 'last4'),
+        ->addComponent('third_party_id', 'ssn', 'last4')
+        ->addComponent(
+          'role',
+          Role::TYPE_UNIVERSAL,
+          ['is_organization'],
+          AcquisitionThresholdComponent::SO_FORBID
+        ),
       AcquisitionThreshold::create()
         ->addComponent('email_address')
-        ->addComponent('third_party_id', 'ssn', 'last4'),
+        ->addComponent('third_party_id', 'ssn', 'last4')
+        ->addComponent(
+          'role',
+          Role::TYPE_UNIVERSAL,
+          ['is_organization'],
+          AcquisitionThresholdComponent::SO_FORBID
+        ),
       AcquisitionThreshold::create()
         ->addComponent('organization_name')
-        ->addComponent('address', NULL, ['postal_code', 'street']),
+        ->addComponent('address', NULL, ['postal_code', 'street'])
+        ->addComponent(
+          'role',
+          Role::TYPE_UNIVERSAL,
+          ['is_individual'],
+          AcquisitionThresholdComponent::SO_FORBID
+        ),
       AcquisitionThreshold::create()
         ->addComponent('organization_name')
-        ->addComponent('telephone_number'),
+        ->addComponent('telephone_number')
+        ->addComponent(
+          'role',
+          Role::TYPE_UNIVERSAL,
+          ['is_individual'],
+          AcquisitionThresholdComponent::SO_FORBID
+        ),
       AcquisitionThreshold::create()
         ->addComponent('organization_name')
-        ->addComponent('email_address'),
+        ->addComponent('email_address')
+        ->addComponent(
+          'role',
+          Role::TYPE_UNIVERSAL,
+          ['is_individual'],
+          AcquisitionThresholdComponent::SO_FORBID
+        ),
       AcquisitionThreshold::create()
         ->addComponent('organization_name')
-        ->addComponent('third_party_id', 'tax','full'),
+        ->addComponent('third_party_id', 'tax','full')
+        ->addComponent(
+          'role',
+          Role::TYPE_UNIVERSAL,
+          ['is_individual'],
+          AcquisitionThresholdComponent::SO_FORBID
+        ),
     ];
 
     // Handle the threshold components

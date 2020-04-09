@@ -74,7 +74,8 @@ class IdentityDataIdentityAcquirer implements IdentityDataIdentityAcquirerInterf
         ->execute();
 
       if (!empty($existing)) {
-        $existing_id = NULL;
+        $existing_ids = [];
+        /** @var \Drupal\identity\Entity\IdentityData $existing_data */
         foreach ($data_storage->loadMultiple($existing) as $existing_data) {
           // Set the id, vid and uuid of the submitted data so that it counts
           // as an update.
@@ -84,23 +85,15 @@ class IdentityDataIdentityAcquirer implements IdentityDataIdentityAcquirerInterf
             $submitted_data->uuid = $existing_data->uuid->value;
             $submitted_data->enforceIsNew(FALSE);
 
-            if ($existing_data->getIdentityId()) {
-              if (is_null($existing_id) || $existing_id == $existing_data->getIdentityId()) {
-                $existing_id = $existing_data->getIdentityId();
-              }
-              else {
-                $existing_id = FALSE;
-                // @todo: This means that there are existing items that match
-                // multiple identities. I'm not sure what we would do in this
-                // maybe reaquire everything
-              }
+            if ($existing_id = $existing_data->getIdentityId()) {
+              $existing_ids[$existing_id] = $existing_id;
             }
 
             unset($refs[$existing_data->reference->value]);
           }
         }
 
-        if ($existing_id && empty($options['force_reacquire'])) {
+        if ((count($existing_ids) === 1) && empty($options['force_reacquire'])) {
           return new IdentityAcquisitionResult(
             $this->entityTypeManager->getStorage('identity')->load($existing_id),
             IdentityAcquisitionResult::METHOD_REFERENCE

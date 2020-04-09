@@ -25,12 +25,12 @@ class AcquisitionThreshold {
    *
    * @return static
    */
-  public function addComponent($component, $type = NULL, $level = []) {
+  public function addComponent($component, $type = NULL, $level = [], $s_or_f = AcquisitionThresholdComponent::SO_SUPPORT) {
     if ($component instanceof AcquisitionThresholdComponent) {
       $this->components[] = $component;
     }
     else {
-      $this->components[] = new AcquisitionThresholdComponent($component, $type, $level);
+      $this->components[] = new AcquisitionThresholdComponent($component, $type, $level, $s_or_f);
     }
 
     return $this;
