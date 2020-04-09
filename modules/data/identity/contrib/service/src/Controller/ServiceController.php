@@ -373,8 +373,12 @@ class ServiceController extends ControllerBase {
    * @throws \Drupal\Core\Entity\EntityStorageException
    */
   public function postData(Request $request) {
+    $options = [
+      'force_reacquire' => $request->query->get('force_reacquire', FALSE),
+    ];
+
     $group = $this->deserializeDataGroup($request);
-    $result = $this->identityAcquirer->acquireIdentity($group);
+    $result = $this->identityAcquirer->acquireIdentity($group, $options);
 
     $identity = $result->getIdentity();
     foreach ($group->getDatas() as $data) {
