@@ -111,11 +111,13 @@ class Role extends IdentityDataClassBase {
       ->range(0, 1)
       ->execute();
 
-    $match->opposeMatch(
-      $search_data,
-      $this->identityDataStorage->load(reset($data_ids)),
-      -10,
-      ['is_'.$excluding_role]
-    );
+    if (!empty($data_ids)) {
+      $match->opposeMatch(
+        $search_data,
+        $this->identityDataStorage->load(reset($data_ids)),
+        -10,
+        ['is_' . $excluding_role]
+      );
+    }
   }
 }
