@@ -78,7 +78,8 @@ class IdentityDataIdentityAcquirer implements IdentityDataIdentityAcquirerInterf
         foreach ($data_storage->loadMultiple($existing) as $existing_data) {
           // Set the id, vid and uuid of the submitted data so that it counts
           // as an update.
-          if ($submitted_data = $refs[$existing_data->reference->value]) {
+          if (!empty($refs[$existing_data->reference->value])) {
+            $submitted_data = $refs[$existing_data->reference->value];
             $submitted_data->id = $existing_data->id();
             $submitted_data->uuid = $existing_data->uuid->value;
             $submitted_data->enforceIsNew(FALSE);
