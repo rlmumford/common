@@ -2,7 +2,9 @@
 
 namespace Drupal\identity_service\Controller;
 
+use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\Query\ConditionInterface;
 use Drupal\Core\Render\RendererInterface;
@@ -70,6 +72,16 @@ class ServiceController extends ControllerBase {
   protected $renderer;
 
   /**
+   * @var \Drupal\Core\Cache\CacheBackendInterface
+   */
+  protected $cache;
+
+  /**
+   * @var \Drupal\Core\Database\Connection
+   */
+  protected $database;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
@@ -80,7 +92,9 @@ class ServiceController extends ControllerBase {
       $container->get('identity.acquirer'),
       $container->get('identity.labeler'),
       $container->get('identity_service.identity_subscriber'),
-      $container->get('identity.merger')
+      $container->get('identity.merger'),
+      $container->get('cache.data'),
+      $container->get('database')
     );
   }
 
@@ -89,7 +103,13 @@ class ServiceController extends ControllerBase {
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    * @param \Symfony\Component\Serializer\SerializerInterface $serializer
+   * @param \Drupal\Core\Render\RendererInterface $renderer
    * @param \Drupal\identity\IdentityDataIdentityAcquirer $identity_acquirer
+   * @param \Drupal\identity\IdentityLabelerInterface $identity_labeler
+   * @param \Drupal\identity_service\IdentitySubscriberInterface $identity_subscriber
+   * @param \Drupal\identity\IdentityMergerInterface $identity_merger
+   * @param \Drupal\Core\Cache\CacheBackendInterface $cache
+   * @param \Drupal\Core\Database\Connection $database
    */
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
@@ -98,7 +118,9 @@ class ServiceController extends ControllerBase {
     IdentityDataIdentityAcquirer $identity_acquirer,
     IdentityLabelerInterface $identity_labeler,
     IdentitySubscriberInterface $identity_subscriber,
-    IdentityMergerInterface $identity_merger
+    IdentityMergerInterface $identity_merger,
+    CacheBackendInterface $cache,
+    Connection $database
   ) {
     $this->entityTypeManager = $entity_type_manager;
     $this->serializer = $serializer;
@@ -107,6 +129,8 @@ class ServiceController extends ControllerBase {
     $this->identityLabeler = $identity_labeler;
     $this->identitySubscriber = $identity_subscriber;
     $this->identityMerger = $identity_merger;
+    $this->cache = $cache;
+    $this->database = $database;
   }
 
   /**
@@ -448,6 +472,35 @@ class ServiceController extends ControllerBase {
     $label = $this->identityLabeler->label($identity, $context);
 
     return new JsonResponse(['label' => $label], 200);
+  }
+
+  /**
+   * Get the identity roles.
+   *
+   * @param \Drupal\identity\Entity\Identity $identity
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *
+   * @return \Symfony\Component\HttpFoundation\JsonResponse
+   */
+  public function getIdentityRoles(Identity $identity, Request $request) {
+    $roles = [];
+    $cid = 'identity:'.$identity->id().':roles';
+    if (($cache = $this->cache->get($cid)) && !empty($cache->data)) {
+      $roles = $cache->data;
+    }
+    else {
+      $query = $this->database->select('identity_data', 'id');
+      $query->innerJoin('identity_data__role', 'idr', 'idr.entity_id = id.id');
+      $query->condition('id.class', 'role');
+      $query->condition('id.identity', $identity->id());
+      $query->addField('idr', 'role_value');
+      $query->distinct();
+
+      $roles = $query->execute()->fetchCol();
+      $this->cache->set($cid, $roles);
+    }
+
+    return new JsonResponse($roles);
   }
 
   /**
