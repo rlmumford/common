@@ -1,0 +1,5 @@
+job-role.salary.widget:
+  version: VERSION
+  css:
+    theme:
+      css/salary.widget.css: {}
