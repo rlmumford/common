@@ -95,7 +95,7 @@ class SalaryDefault extends WidgetBase {
       '#title' => $this->t('Minimum'),
       '#title_display' => 'invisible',
       '#size' => 10,
-      '#default_value' => number_format($items->get($delta)->min, 2),
+      '#default_value' => number_format((float) $items->get($delta)->min, 2),
       '#wrapper_attributes' => [
         'class' => ['inline-item'],
       ]
@@ -105,7 +105,7 @@ class SalaryDefault extends WidgetBase {
       '#title' => $this->t('Maximum'),
       '#title_display' => 'invisible',
       '#size' => 10,
-      '#default_value' => number_format($items->get($delta)->max, 2),
+      '#default_value' => number_format((float) $items->get($delta)->max, 2),
       '#wrapper_attributes' => [
         'class' => ['inline-item'],
       ]
