@@ -169,6 +169,7 @@ class GeofieldAddress extends AddressDefaultWidget implements ContainerFactoryPl
       if (!empty($info['properties']['countryCode'])) {
         $value['country_code'] = $info['properties']['countryCode'];
 
+        // @todo: Better convert administrative areas into address parts.
         if ($info['properties']['countryCode'] === 'GB' && isset($info['properties']['adminLevels'][2])) {
           $value['administrative_area'] = $info['properties']['adminLevels'][2]['name'];
         }
@@ -183,6 +184,7 @@ class GeofieldAddress extends AddressDefaultWidget implements ContainerFactoryPl
         AddressField::GIVEN_NAME => FieldOverride::HIDDEN,
         AddressField::FAMILY_NAME => FieldOverride::HIDDEN,
         AddressField::ADDITIONAL_NAME => FieldOverride::HIDDEN,
+        AddressField::LOCALITY => FieldOverride::OPTIONAL,
       ],
     ];
     // Make sure no properties are required on the default value widget.
