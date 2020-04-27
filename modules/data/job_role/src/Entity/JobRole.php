@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Mumford
- * Date: 12/06/2018
- * Time: 21:38
- */
 
 namespace Drupal\job_role\Entity;
 
@@ -12,9 +6,9 @@ use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityChangedTrait;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
-use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\user\UserInterface;
+use Drupal\organization\Entity\EntityOrganizationTrait;
+use Drupal\user\EntityOwnerTrait;
 
 /**
  * Job Role Entity.
@@ -51,12 +45,14 @@ use Drupal\user\UserInterface;
  *     "id" = "id",
  *     "revision" = "vid",
  *     "uuid" = "uuid",
- *     "label" = "label"
+ *     "label" = "label",
+ *     "organization" = "organization",
  *   }
  * )
  */
 class JobRole extends ContentEntityBase implements JobRoleInterface {
-
+  use EntityOwnerTrait;
+  use EntityOrganizationTrait;
   use EntityChangedTrait;
   use StringTranslationTrait;
 
@@ -93,36 +89,10 @@ class JobRole extends ContentEntityBase implements JobRoleInterface {
   /**
    * {@inheritdoc}
    */
-  public function getOwner() {
-    return $this->get('owner')->entity;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getOwnerId() {
-    return $this->get('owner')->target_id;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setOwner(UserInterface $owner) {
-    $this->owner->entity = $owner;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setOwnerId($uid) {
-    $this->owner->target_id = $uid;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
+    $fields += static::ownerBaseFieldDefinitions($entity_type);
+    $fields += static::organizationBaseFieldDefinitions($entity_type);
 
     $fields['label'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Title'))
@@ -195,13 +165,6 @@ class JobRole extends ContentEntityBase implements JobRoleInterface {
         'label' => 'above',
       ])
       ->setDisplayConfigurable('view', TRUE);
-
-    $fields['owner'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('Owner'))
-      ->setDescription(t('The user that owns this role.'))
-      ->setRevisionable(TRUE)
-      ->setSetting('target_type', 'user')
-      ->setSetting('handler', 'default');
 
     $fields['organisation'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Organisation'))

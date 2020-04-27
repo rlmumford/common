@@ -3,6 +3,7 @@
 namespace Drupal\place\Plugin\PlaceHandler;
 
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Locale\CountryManager;
 use Drupal\entity\BundleFieldDefinition;
 use Drupal\place\Entity\Place;
 
@@ -44,6 +45,11 @@ class AddressPlaceHandlerBase extends PlaceHandlerBase {
     // Skip any action if:
     // geofield has value and remote field value has not changed.
     if (isset($original_address) && !$place->get('geo')->isEmpty() && $address->getValue() == $original_address->getValue()) {
+      return;
+    }
+
+    // If a value has been set on the initial save.
+    if (!$place->get('geo')->isEmpty() && $place->isNew()) {
       return;
     }
 

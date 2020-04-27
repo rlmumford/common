@@ -1,0 +1,22 @@
+<?php
+
+use Drupal\Core\Field\BaseFieldDefinition;
+
+/**
+ * Install new organization reference field.
+ */
+function job_role_update_8001() {
+  $module_handler = \Drupal::moduleHandler();
+  if (!$module_handler->moduleExists('organization')) {
+    \Drupal::service('module_installer')->install(['organization']);
+  }
+
+  \Drupal::entityDefinitionUpdateManager()->installFieldStorageDefinition(
+    'organization',
+    'job_role',
+    'job_role',
+    BaseFieldDefinition::create('entity_reference')
+      ->setSetting('target_type','organization')
+      ->setRequired(TRUE)
+  );
+}

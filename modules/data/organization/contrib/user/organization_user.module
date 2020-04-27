@@ -1,0 +1,60 @@
+<?php
+
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\organization\Entity\Organization;
+use Drupal\organization\Plugin\Field\FieldType\OrganizationMetadataReferenceItem;
+
+/**
+ * Implements hook_entity_base_field_info().
+ */
+function organization_user_entity_base_field_info(EntityTypeInterface $entity_type) {
+  $fields = [];
+
+  if ($entity_type->id() === 'user') {
+    $fields['organization'] = BaseFieldDefinition::create('organization_reference')
+      ->setLabel(new TranslatableMarkup('Organizations'))
+      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
+      ->setDisplayOptions('view', [
+        'type' => 'entity_reference_label',
+      ]);
+  }
+
+  return $fields;
+}
+
+/**
+ * Implements hook_organization_access().
+ */
+function organization_user_organization_access(Organization $entity, $operation, AccountInterface $account) {
+  $storage = \Drupal::entityTypeManager()->getStorage('user');
+  $query = $storage->getQuery();
+  $query->condition('uid', $account->id());
+  $query->condition('organization.target_id', $entity->id());
+  $query->condition('organization.status', OrganizationMetadataReferenceItem::STATUS_ACTIVE);
+
+  if ($ids = $query->execute()) {
+    $user = $storage->load(reset($ids));
+
+    /** @var OrganizationMetadataReferenceItem $membership */
+    $membership = $user->organization->getOrganizationItem($entity, FALSE);
+
+    if ($operation === 'view') {
+      return AccessResult::allowedIf($membership->status === OrganizationMetadataReferenceItem::STATUS_ACTIVE)
+        ->addCacheableDependency($user);
+    }
+    else {
+      return AccessResult::allowedIf(
+        $membership->status === OrganizationMetadataReferenceItem::STATUS_ACTIVE &&
+        in_array($membership->role, [OrganizationMetadataReferenceItem::ROLE_OWNER, OrganizationMetadataReferenceItem::ROLE_ADMIN])
+      )
+        ->addCacheableDependency($user);
+    }
+  }
+
+  return AccessResult::neutral();
+}

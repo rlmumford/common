@@ -1,0 +1,23 @@
+<?php
+
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+
+/**
+ * Implements hook_install().
+ */
+function organization_user_install() {
+  $updater = \Drupal::entityDefinitionUpdateManager();
+  $updater->installFieldStorageDefinition(
+    'organization',
+    'user',
+    'organization_user',
+    BaseFieldDefinition::create('organization_reference')
+      ->setLabel(new TranslatableMarkup('Organizations'))
+      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
+      ->setDisplayOptions('view', [
+        'type' => 'entity_reference_label',
+      ])
+  );
+}

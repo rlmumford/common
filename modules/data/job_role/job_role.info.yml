@@ -4,6 +4,7 @@ core: 8.x
 description: "Storage for Job Role"
 package: RLMumford
 dependencies:
-- range
-- file
-- text
+  - range:range
+  - drupal:file
+  - drupal:text
+  - rlmumford:organization

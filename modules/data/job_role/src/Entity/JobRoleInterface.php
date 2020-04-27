@@ -4,12 +4,13 @@ namespace Drupal\job_role\Entity;
 
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityChangedInterface;
+use Drupal\organization\Entity\EntityOrganizationInterface;
 use Drupal\user\EntityOwnerInterface;
 
 /**
  * Provides an interface for job_roles.
  */
-interface JobRoleInterface extends ContentEntityInterface, EntityChangedInterface, EntityOwnerInterface {
+interface JobRoleInterface extends ContentEntityInterface, EntityChangedInterface, EntityOwnerInterface, EntityOrganizationInterface {
 
   /**
    * Gets whether the job_role is active.
