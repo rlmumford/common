@@ -4,9 +4,14 @@ namespace Drupal\job_role\Entity;
 
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityChangedTrait;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Entity\Exception\UnsupportedEntityTypeDefinitionException;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\organization\Entity\EntityOrganizationInterface;
 use Drupal\organization\Entity\EntityOrganizationTrait;
 use Drupal\user\EntityOwnerTrait;
 
@@ -46,13 +51,13 @@ use Drupal\user\EntityOwnerTrait;
  *     "revision" = "vid",
  *     "uuid" = "uuid",
  *     "label" = "label",
+ *     "owner" = "owner",
  *     "organization" = "organization",
  *   }
  * )
  */
 class JobRole extends ContentEntityBase implements JobRoleInterface {
   use EntityOwnerTrait;
-  use EntityOrganizationTrait;
   use EntityChangedTrait;
   use StringTranslationTrait;
 
@@ -92,7 +97,6 @@ class JobRole extends ContentEntityBase implements JobRoleInterface {
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
     $fields += static::ownerBaseFieldDefinitions($entity_type);
-    $fields += static::organizationBaseFieldDefinitions($entity_type);
 
     $fields['label'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Title'))
@@ -173,6 +177,12 @@ class JobRole extends ContentEntityBase implements JobRoleInterface {
       ->setSetting('target_type', 'user')
       ->setSetting('handler', 'default');
 
+    $fields['organization'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('User ID'))
+      ->setSetting('target_type', 'organization')
+      ->setTranslatable($entity_type->isTranslatable())
+      ->setDefaultValueCallback(static::class . '::getDefaultEntityOrganization');
+
     $fields['created'] = BaseFieldDefinition::create('created')
       ->setLabel(t('Created'))
       ->setDescription(t('The time when the job_role was created.'))
@@ -184,6 +194,30 @@ class JobRole extends ContentEntityBase implements JobRoleInterface {
       ->setRevisionable(TRUE);
 
     return $fields;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getOrganization() {
+    $key = $this->getEntityType()->getKey('organization');
+    return $this->{$key}->entity;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setOrganization(EntityInterface $organization) {
+    $key = $this->getEntityType()->getKey('organization');
+    $this->{$key} = $organization;
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function getDefaultEntityOrganization(EntityInterface $entity, FieldDefinitionInterface $field_definition) {
+    return NULL;
   }
 
 }

@@ -15,7 +15,7 @@ use Drupal\user\EntityOwnerTrait;
  *
  * @ContentEntityType(
  *   id = "organization",
- *   label = @TranslatableMarkup("Organization"),
+ *   label = @Translation("Organization"),
  *   label_singular = @Translation("organization"),
  *   label_plural = @Translation("organizations"),
  *   label_count = @PluralTranslation(
@@ -30,7 +30,7 @@ use Drupal\user\EntityOwnerTrait;
  *     "route_provider" = {
  *       "html" = "Drupal\Core\Entity\Routing\DefaultHtmlRouteProvider",
  *     }
- *   },,
+ *   },
  *   base_table = "organization",
  *   revision_table = "organization_revision",
  *   admin_permission = "administer organizations",

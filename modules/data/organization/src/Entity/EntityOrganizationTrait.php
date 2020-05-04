@@ -29,7 +29,7 @@ trait EntityOrganizationTrait {
   /**
    * {@inheritdoc}
    */
-  public function setOrganization(Organization $organization) {
+  public function setOrganization(EntityInterface $organization) {
     $key = $this->getEntityType()->getKey('organization');
     $this->{$key} = $organization;
     return $this;

@@ -2,6 +2,7 @@
 
 namespace Drupal\organization\Entity;
 
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 
 interface EntityOrganizationInterface {
@@ -20,7 +21,7 @@ interface EntityOrganizationInterface {
    *
    * @return static
    */
-  public function setOrganization(Organization $organization);
+  public function setOrganization(EntityInterface $organization);
 
   /**
    * Get the field storage definition for organization references.
