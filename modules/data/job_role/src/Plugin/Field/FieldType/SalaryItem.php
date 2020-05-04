@@ -149,4 +149,11 @@ class SalaryItem extends FieldItemBase {
     return $properties;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public static function mainPropertyName() {
+    return NULL;
+  }
+
 }
