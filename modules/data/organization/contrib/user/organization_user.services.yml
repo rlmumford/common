@@ -1,0 +1,4 @@
+services:
+  organization_user.organization_resolver:
+    class: '\Drupal\organization_user\UserOrganizationResolver'
+    arguments: [ '@entity_type.manager', '@current_user', '@session' ]
