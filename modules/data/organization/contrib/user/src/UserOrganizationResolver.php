@@ -80,7 +80,7 @@ class UserOrganizationResolver {
         $delta = $this->session->get('current_organization');
       }
 
-      return $user->organization[$delta]->entity;
+      return $user->organization->get($delta) ? $user->organization->get($delta)->entity : NULL;
     }
   }
 
