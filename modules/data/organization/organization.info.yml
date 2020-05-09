@@ -7,4 +7,5 @@ dependencies:
   - drupal:link
   - drupal:image
   - drupal:telephone
+  - rlmumford:place
 
