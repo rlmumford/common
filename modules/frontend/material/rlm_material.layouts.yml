@@ -1,0 +1,51 @@
+rlm_material_9_3:
+  label: 'Two Column 9/3'
+  path: layouts/rlm_material_9_3
+  template: layout--rlm-material-9-3
+  category: 'Columns: 2'
+  default_region: content
+  icon_map:
+    - [top]
+    - [content, content, content, aside]
+    - [bottom]
+  regions:
+    top:
+      label: Top
+    content:
+      label: Content
+    aside:
+      label: Aside
+    bottom:
+      label: Bottom
+rlm_material_3_9:
+  label: 'Two Column 3/9'
+  path: layouts/rlm_material_3_9
+  template: layout--rlm-material-3-9
+  category: 'Columns: 2'
+  default_region: content
+  icon_map:
+    - [aside, content, content, content]
+  regions:
+    aside:
+      label: Aside
+    content:
+      label: Content
+rlm_material_6_6:
+  label: 'Two Column 6/6'
+  path: layouts/rlm_material_6_6
+  template: layout--rlm-material-6-6
+  category: 'Columns: 2'
+  default_region: content
+  icon_map:
+    - [top]
+    - [content, aside]
+    - [bottom]
+  regions:
+    top:
+      label: Top
+    content:
+      label: Content
+    aside:
+      label: Aside
+    bottom:
+      label: Bottom

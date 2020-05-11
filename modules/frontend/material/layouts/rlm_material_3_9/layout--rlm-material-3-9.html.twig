@@ -1,0 +1,33 @@
+{#
+/**
+ * @file
+ * Default theme implementation to display a two-column layout.
+ *
+ * Available variables:
+ * - content: The content for this layout.
+ * - attributes: HTML attributes for the layout <div>.
+ *
+ * @ingroup themeable
+ */
+#}
+{%
+  set classes = [
+    'layout',
+    'layout--fmcg-3-9',
+    'row',
+  ]
+%}
+{% if content %}
+  <div{{ attributes.addClass(classes) }}>
+    {% if content.aside %}
+      <div {{ region_attributes.aside.addClass('layout__region', 'layout__region--aside', 'col-xs-12', 'col-md-3', 'col-lg-4', 'first-xs') }}>
+        {{ content.aside }}
+      </div>
+    {% endif %}
+    {% if content.content %}
+      <div {{ region_attributes.content.addClass('layout__region', 'layout__region--content', 'col-xs-12', 'col-md-9', 'col-lg-8') }}>
+        {{ content.content }}
+      </div>
+    {% endif %}
+  </div>
+{% endif %}
