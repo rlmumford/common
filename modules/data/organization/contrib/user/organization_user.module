@@ -41,18 +41,20 @@ function organization_user_organization_access(Organization $entity, $operation,
     $user = $storage->load(reset($ids));
 
     /** @var OrganizationMetadataReferenceItem $membership */
-    $membership = $user->organization->getOrganizationItem($entity, FALSE);
-
-    if ($operation === 'view') {
-      return AccessResult::allowedIf($membership->status === OrganizationMetadataReferenceItem::STATUS_ACTIVE)
-        ->addCacheableDependency($user);
-    }
-    else {
-      return AccessResult::allowedIf(
-        $membership->status === OrganizationMetadataReferenceItem::STATUS_ACTIVE &&
-        in_array($membership->role, [OrganizationMetadataReferenceItem::ROLE_OWNER, OrganizationMetadataReferenceItem::ROLE_ADMIN])
-      )
-        ->addCacheableDependency($user);
+    if ($membership = $user->organization->getOrganizationItem($entity, FALSE)) {
+      if ($operation === 'view') {
+        return AccessResult::allowedIf(
+          $membership->status === OrganizationMetadataReferenceItem::STATUS_ACTIVE
+        )->addCacheableDependency($user);
+      }
+      else {
+        return AccessResult::allowedIf(
+          $membership->status === OrganizationMetadataReferenceItem::STATUS_ACTIVE &&
+          in_array($membership->role, [
+            OrganizationMetadataReferenceItem::ROLE_OWNER,
+            OrganizationMetadataReferenceItem::ROLE_ADMIN
+          ]))->addCacheableDependency($user);
+      }
     }
   }
 

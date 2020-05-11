@@ -15,7 +15,7 @@ class OrganizationMetadataReferenceItemList extends EntityReferenceFieldItemList
    */
   public function getOrganizationItem(Organization $organization, $create = TRUE) {
     foreach ($this as $item) {
-      if ($item === $organization->id()) {
+      if ($item->target_id === $organization->id()) {
         return $item;
       }
     }
