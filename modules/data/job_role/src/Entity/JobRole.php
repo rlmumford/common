@@ -127,21 +127,14 @@ class JobRole extends ContentEntityBase implements JobRoleInterface {
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
 
-    $fields['salary'] = BaseFieldDefinition::create('range_decimal')
-      ->setSetting('scale', 2)
-      ->setLabel(t('Salary'))
+    $fields['pay'] = BaseFieldDefinition::create('job_role_salary')
+      ->setLabel(new TranslatableMarkup('Salary'))
       ->setDisplayOptions('view', [
         'label' => 'inline',
-        'type' => 'range_decimal',
-      ])
-      ->setSetting('from', [
-        'prefix' => '£',
-      ])
-      ->setSetting('to', [
-        'prefix' => '£',
+        'type' => 'job_role_salary_default',
       ])
       ->setDisplayOptions('form', [
-        'type' => 'range',
+        'type' => 'job_role_salary_default',
         'settings' => [
           'label' => [
             'from' => t('Between'),

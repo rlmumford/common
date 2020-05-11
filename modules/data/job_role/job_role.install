@@ -1,6 +1,8 @@
 <?php
 
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\job_role\Plugin\Field\FieldType\SalaryItem;
 
 /**
  * Install new organization reference field.
@@ -19,4 +21,97 @@ function job_role_update_8001() {
       ->setSetting('target_type','organization')
       ->setRequired(TRUE)
   );
+}
+
+/**
+ * Install pay field based on new salary system.
+ */
+function job_role_update_8002(&$sandbox = []) {
+  $database = \Drupal::database();
+  $storage = \Drupal::entityTypeManager()->getStorage('job_role');
+  $query = $storage->getQuery();
+  $query->sort('id', 'ASC');
+
+  if (empty($sandbox['max'])) {
+    $definition = BaseFieldDefinition::create('job_role_salary')
+      ->setLabel(new TranslatableMarkup('Salary'))
+      ->setDisplayOptions('view', [
+        'label' => 'inline',
+        'type' => 'job_role_salary_default',
+      ])->setDisplayOptions('form', [
+        'type' => 'job_role_salary_default',
+        'settings' => [
+          'label' => [
+            'from' => t('Between'),
+            'to' => t('and'),
+          ]
+        ]
+      ])
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('form', TRUE);
+
+    \Drupal::entityDefinitionUpdateManager()->installFieldStorageDefinition(
+      'pay', 'job_role', 'job_role', $definition
+    );
+
+    $sandbox['progress'] = $sandbox['last_id'] = 0;
+    $sandbox['max'] = $storage->getQuery()->count()->execute();
+  }
+
+  $query->condition('id', $sandbox['last_id'], '>');
+  $query->range(0, 50);
+
+  $ids = $query->execute();
+
+  $salary_values = $database->select('job_role', 'j')
+    ->fields('j', ['id', 'salary__from', 'salary__to', 'compensation'])
+    ->condition('j.id', $ids, 'IN')
+    ->execute()
+    ->fetchAllAssoc('id');
+  foreach ($storage->loadMultiple($ids) as $job_role) {
+    if (!empty($salary_values[$job_role->id()])) {
+      switch ($salary_values['compensation']) {
+        case 'apprentice':
+        case 'per_hour':
+        case 'pro_rate':
+          $type = SalaryItem::TYPE_PH;
+          break;
+        case 'per_day':
+          $type = SalaryItem::TYPE_PD;
+          break;
+        case 'per_week':
+          $type = SalaryItem::TYPE_PW;
+          break;
+        case 'per_month':
+          $type = SalaryItem::TYPE_PM;
+          break;
+        default:
+          $type = SalaryItem::TYPE_PA;
+          break;
+      }
+
+      $job_role->pay = [
+        'currency_code' => 'GBP',
+        'type' => $type,
+        'min' => number_format($salary_values['salary__from'],2),
+        'max' => number_format($salary_values['salary__to'],2),
+      ];
+      $job_role->save();
+    }
+
+    $sandbox['last_id'] = $job_role->id();
+    $sandbox['progress']++;
+  }
+
+  $sandbox['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
+
+  if ($sandbox['#finished'] >= 1) {
+    \Drupal::entityDefinitionUpdateManager()->uninstallFieldStorageDefinition(
+      BaseFieldDefinition::create('range_decimal')
+        ->setSetting('scale', 2)
+        ->setLabel(t('Salary'))
+        ->setName('salary')
+        ->setTargetEntityTypeId('job_role')
+    );
+  }
 }
