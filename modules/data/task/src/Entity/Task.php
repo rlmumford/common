@@ -40,8 +40,6 @@ use Drupal\task\TaskInterface;
  *   has_notes = "true",
  *   base_table = "task",
  *   revision_table = "task_revision",
- *   data_table = "task_data",
- *   revision_data_table = "task_revision_data",
  *   admin_permission = "administer tasks",
  *   bundle_entity_type = "task_bundle",
  *   field_ui_base_route = "entity.task_bundle.edit_form",

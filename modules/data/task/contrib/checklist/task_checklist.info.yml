@@ -1,0 +1,8 @@
+name: Task Checklist
+description: Programmable checklists for tasks
+type: module
+core_version_requirement: ^8 || 9
+package: RLMumford
+dependencies:
+  - rlmumford:task
+  - entity:entity
