@@ -164,7 +164,7 @@ class JobRole extends ContentEntityBase implements JobRoleInterface {
       ->setDisplayConfigurable('view', TRUE);
 
     $fields['organization'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(new TranslatableMarkup('User ID'))
+      ->setLabel(new TranslatableMarkup('Organization'))
       ->setSetting('target_type', 'organization')
       ->setTranslatable($entity_type->isTranslatable())
       ->setDefaultValueCallback(static::class . '::getDefaultEntityOrganization');

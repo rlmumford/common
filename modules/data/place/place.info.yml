@@ -7,3 +7,5 @@ package: RLMumford
 dependencies:
   - entity:entity
   - geofield:geofield
+  - geocoder:geocoder
+  - geocoder:geocoder_field

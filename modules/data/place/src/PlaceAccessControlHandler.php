@@ -52,7 +52,7 @@ class PlaceAccessControlHandler extends EntityAccessControlHandler {
   public function checkCreateAccess(AccountInterface $account, array $context, $entity_bundle = NULL) {
     $result = parent::checkCreateAccess($account, $context, $entity_bundle);
 
-    $create_permission = "create new {$entity_bundle} places";
+    $create_permission = "create {$entity_bundle} places";
     $result = $result->orIf(
       AccessResult::allowedIfHasPermission($account, $create_permission)->cachePerPermissions()
     );

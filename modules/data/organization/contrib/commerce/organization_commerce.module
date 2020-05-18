@@ -1,0 +1,44 @@
+<?php
+
+use Drupal\commerce_order\Entity\Order;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+
+/**
+ * Implements hook_entity_base_field_info().
+ */
+function organization_commerce_entity_base_field_info(EntityTypeInterface $entity_type) {
+  if ($entity_type->id() == 'commerce_order') {
+    return [
+      'organization' => BaseFieldDefinition::create('entity_reference')
+        ->setLabel(new TranslatableMarkup('Organization'))
+        ->setDescription(new TranslatableMarkup('The organization that is the customer of this order.'))
+        ->setSetting('target_type', 'organization')
+        ->setDefaultValueCallback('_organization_commerce_commerce_order_default_organization')
+        ->setCardinality(1)
+        ->setDisplayConfigurable('view', TRUE)
+        ->setDisplayConfigurable('form', TRUE),
+    ];
+  }
+
+  return [];
+}
+
+/**
+ * @param \Drupal\commerce_order\Entity\Order $order
+ */
+function _organization_commerce_commerce_order_default_organization(Order $order) {
+  if (!\Drupal::moduleHandler()->moduleExists('organization_user')) {
+    return [];
+  }
+
+  /** @var \Drupal\organization_user\UserOrganizationResolver $resolver */
+  $resolver = \Drupal::service('organization_user.organization_resolver');
+
+  if ($customer = $order->getCustomer()) {
+    return $resolver->getOrganization($customer);
+  }
+
+  return [];
+}
