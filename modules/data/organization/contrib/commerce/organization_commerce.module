@@ -37,7 +37,9 @@ function _organization_commerce_commerce_order_default_organization(Order $order
   $resolver = \Drupal::service('organization_user.organization_resolver');
 
   if ($customer = $order->getCustomer()) {
-    return $resolver->getOrganization($customer);
+    return [
+      [ 'target_id' => $resolver->getOrganization($customer)->id() ]
+    ];
   }
 
   return [];
