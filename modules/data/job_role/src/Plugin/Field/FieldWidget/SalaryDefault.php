@@ -173,6 +173,7 @@ class SalaryDefault extends WidgetBase {
         SalaryItem::TYPE_PH => $this->t('per Hour'),
         SalaryItem::TYPE_PD => $this->t('per Day'),
         SalaryItem::TYPE_PW => $this->t('per Week'),
+        SalaryItem::TYPE_PM => $this->t('per Month'),
         SalaryItem::TYPE_PA => $this->t('per Annum'),
       ],
       '#default_value' => $items->get($delta)->type,

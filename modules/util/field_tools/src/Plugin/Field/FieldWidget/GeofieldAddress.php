@@ -208,7 +208,6 @@ class GeofieldAddress extends AddressDefaultWidget implements ContainerFactoryPl
     foreach ($values as $delta => $value) {
       $spoof_values[$delta] = $value['address'];
     }
-    dpm($spoof_values);
     $spoof_definition = BaseFieldDefinition::create('address');
     $spoof_items = FieldItemList::createInstance($spoof_definition, 'address');
     $spoof_items->setValue($spoof_values);

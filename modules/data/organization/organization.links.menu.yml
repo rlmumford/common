@@ -1,0 +1,6 @@
+organization.configuration:
+  title: 'Organizations'
+  parent: system.admin_structure
+  description: 'Configure organizations.'
+  weight: -10
+  route_name: organization.configuration

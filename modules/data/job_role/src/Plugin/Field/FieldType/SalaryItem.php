@@ -28,6 +28,7 @@ class SalaryItem extends FieldItemBase {
   const TYPE_PH = 'ph';
   const TYPE_PD = 'pd';
   const TYPE_PW = 'pw';
+  const TYPE_PM = 'pm';
   const TYPE_PA = 'pa';
 
   /**

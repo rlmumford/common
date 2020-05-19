@@ -1,3 +1,12 @@
 .salary-widget-default .inline-item {
   display: inline-block;
 }
+
+.salary-widget-default .form-item input[type=text] {
+  display: inline;
+  width: auto;
+}
+
+.salary-widget-default .form-item.form-type-select {
+  overflow: unset;
+}

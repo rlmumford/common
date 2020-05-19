@@ -4,6 +4,7 @@ namespace Drupal\place\Plugin\PlaceHandler;
 
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Locale\CountryManager;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity\BundleFieldDefinition;
 use Drupal\place\Entity\Place;
 
@@ -16,9 +17,13 @@ class AddressPlaceHandlerBase extends PlaceHandlerBase {
     $fields = parent::fieldDefinitions($base_field_definitions);
 
     $fields['address'] =  BundleFieldDefinition::create('address')
-      ->setLabel(t('Postal Address'))
+      ->setLabel(new TranslatableMarkup('Postal Address'))
       ->setRevisionable(TRUE)
       ->setProvider('place')
+      ->setSetting('field_overrides', [
+        'givenName' => ['override' => 'hidden'],
+        'familyName' => ['override' => 'hidden'],
+      ])
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayOptions('form', [
         'type' => 'address_default',

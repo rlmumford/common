@@ -1,0 +1,7 @@
+organization.configuration:
+  path: '/admin/structure/organizations'
+  defaults:
+    _form: '\Drupal\organization\Form\OrganizationConfigurationForm'
+    _title: 'Organizations'
+  requirements:
+    _permission: 'administer organizations'

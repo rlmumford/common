@@ -1,0 +1,29 @@
+<?php
+
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+
+/**
+ * Implements hook_install().
+ */
+function organization_commerce_install() {
+  /** @var \Drupal\Core\Field\FieldStorageDefinitionListenerInterface $storage_definition_listener */
+  $storage_definition_listener = \Drupal::service('field_storage_definition.listener');
+  /** @var \Drupal\Core\Field\FieldDefinitionListenerInterface $definition_listener */
+  $definition_listener = \Drupal::service('field_definition.listener');
+
+  $field_definition = BaseFieldDefinition::create('entity_reference')
+    ->setName('organization')
+    ->setProvider('organization_commerce')
+    ->setTargetEntityTypeId('commerce_order')
+    ->setLabel(new TranslatableMarkup('Organization'))
+    ->setDescription(new TranslatableMarkup('The organization that is the customer of this order.'))
+    ->setSetting('target_type', 'organization')
+    ->setDefaultValueCallback('_organization_commerce_commerce_order_default_organization')
+    ->setCardinality(1)
+    ->setDisplayConfigurable('view', TRUE)
+    ->setDisplayConfigurable('form', TRUE);
+
+  $storage_definition_listener->onFieldStorageDefinitionCreate($field_definition);
+  $definition_listener->onFieldDefinitionCreate($field_definition);
+}

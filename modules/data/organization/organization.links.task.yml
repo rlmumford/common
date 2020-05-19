@@ -1,0 +1,4 @@
+organization.configuration_tab:
+  route_name: organization.configuration
+  title: 'Settings'
+  base_route: organization.configuration

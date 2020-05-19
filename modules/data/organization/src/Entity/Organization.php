@@ -34,6 +34,7 @@ use Drupal\user\EntityOwnerTrait;
  *   base_table = "organization",
  *   revision_table = "organization_revision",
  *   admin_permission = "administer organizations",
+ *   field_ui_base_route = "organization.configuration",
  *   entity_keys = {
  *     "id" = "id",
  *     "revision" = "vid",
@@ -139,9 +140,14 @@ class Organization extends ContentEntityBase implements EntityOwnerInterface {
 
     $fields['places'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(new TranslatableMarkup('Places'))
+      ->setSetting('target_type', 'place')
+      ->setSetting('handler', 'default')
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
       ->setDisplayOptions('form', [
         'type' => 'inline_entity_form_complex',
+        'settings' => [
+          'allow_new' => TRUE,
+        ],
       ])
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
