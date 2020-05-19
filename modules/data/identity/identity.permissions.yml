@@ -1,3 +1,18 @@
 administer identities:
   title: 'Administer identities'
   restrict access: true
+administer identity data:
+  title: 'Administer identity data'
+  restrict access: true
+view any identity data:
+  title: 'View any identity data'
+update any identity data:
+  title: 'Update any identity data'
+delete any identity data:
+  title: 'Delete any identity data'
+view own identity data:
+  title: 'View own identity data'
+update own identity data:
+  title: 'Update own identity data'
+delete own identity data:
+  title: 'Delete own identity data'

@@ -55,6 +55,11 @@ class Identity extends ContentEntityBase implements IdentityInterface {
   protected $_data;
 
   /**
+   * @var \Drupal\identity\Entity\IdentityData[][]
+   */
+  protected $_accessible_data;
+
+  /**
    * {@inheritdoc}
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
@@ -112,28 +117,36 @@ class Identity extends ContentEntityBase implements IdentityInterface {
   /**
    * {@inheritdoc}
    */
-  public function getData($class, array $filters = []) {
-    if (!isset($this->_data[$class])) {
+  public function getData($class, array $filters = [], $bypass_access = FALSE) {
+    $list = $bypass_access ? '_data' : '_accessible_data';
+
+    if (!isset($this->{$list}[$class])) {
       $data_storage = \Drupal::entityTypeManager()->getStorage('identity_data');
       $query = $data_storage->getQuery();
       $query->condition('identity', $this->id());
       $query->condition('class', $class);
 
+      if (!$bypass_access) {
+        $query->addTag('identity_data_access');
+      }
+
       if ((clone $query)->count()->execute() > 40) {
-        $this->_data[$class] = new IdentityDataIterator($query->execute());
+        $this->{$list}[$class] = new IdentityDataIterator($query->execute());
       }
       else {
-        $this->_data[$class] = $data_storage->loadMultiple($query->execute());
+        $this->{$list}[$class] = $data_storage->loadMultiple($query->execute());
       }
     }
 
-    return $this->applyDataFilters($this->_data[$class], $filters);
+    return $this->applyDataFilters($this->{$list}[$class], $filters);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getAllData(array $filters = []) {
+  public function getAllData(array $filters = [], $bypass_access = FALSE) {
+    $list = $bypass_access ? '_data' : '_accessible_data';
+
     /** @var \Drupal\identity\Entity\IdentityDataStorage $data_storage */
     $data_storage = \Drupal::entityTypeManager()->getStorage('identity_data');
     /** @var \Drupal\identity\IdentityDataClassManager $data_type_manager */
@@ -143,8 +156,8 @@ class Identity extends ContentEntityBase implements IdentityInterface {
     $all_data = [];
     $unloaded_classes = [];
     foreach ($classes as $class => $definition) {
-      if (isset($this->_data[$class])) {
-        $all_data += $this->_data[$class];
+      if (isset($this->{$list}[$class])) {
+        $all_data += $this->{$list}[$class];
       }
       else {
         $unloaded_classes[] = $class;
@@ -156,11 +169,15 @@ class Identity extends ContentEntityBase implements IdentityInterface {
       $query->condition('class', $unloaded_classes, 'IN');
       $query->condition('identity', $this->id());
 
+      if (!$bypass_access) {
+        $query->addTag('identity_data_access');
+      }
+
       /** @var \Drupal\identity\Entity\IdentityData[] $loaded_data */
       $loaded_data = $data_storage->loadMultiple($query->execute());
       foreach ($loaded_data as $loaded_datum) {
         $all_data[$loaded_datum->id()] = $loaded_datum;
-        $this->_data[$loaded_datum->bundle()][$loaded_datum->id()] = $loaded_datum;
+        $this->{$list}[$loaded_datum->bundle()][$loaded_datum->id()] = $loaded_datum;
       }
     }
 

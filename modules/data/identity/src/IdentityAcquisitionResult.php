@@ -2,6 +2,7 @@
 
 namespace Drupal\identity;
 
+use Drupal\Core\Session\AccountInterface;
 use Drupal\identity\Entity\Identity;
 
 class IdentityAcquisitionResult {
