@@ -4,13 +4,14 @@ namespace Drupal\checklist\Plugin\ChecklistType;
 
 use Drupal\checklist\Checklist;
 use Drupal\checklist\ChecklistInterface;
+use Drupal\Component\Plugin\ConfigurableInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Plugin\PluginBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
-abstract class ChecklistTypeBase extends PluginBase implements ChecklistTypeInterface, ContainerFactoryPluginInterface {
+abstract class ChecklistTypeBase extends PluginBase implements ChecklistTypeInterface, ContainerFactoryPluginInterface, ConfigurableInterface {
 
   /**
    * @var \Drupal\Core\Entity\EntityStorageInterface
@@ -46,6 +47,27 @@ abstract class ChecklistTypeBase extends PluginBase implements ChecklistTypeInte
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
     $this->itemStorage = $item_storage;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function defaultConfiguration() {
+    return [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getConfiguration() {
+    return $this->configuration;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setConfiguration(array $configuration) {
+    $this->configuration = $configuration + $this->defaultConfiguration();
   }
 
   /**
