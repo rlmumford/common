@@ -1,0 +1,57 @@
+<?php
+
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+
+/**
+ * Implements hook_entity_base_field_info().
+ */
+function task_job_entity_base_field_info(EntityTypeInterface $entity_type) {
+  $fields = [];
+
+  if ($entity_type->id() == 'task') {
+    $fields['job'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('Job'))
+      ->setDescription(new TranslatableMarkup('The Job'))
+      ->setSetting('target_type', 'task_job')
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('form', TRUE);
+  }
+
+  return $fields;
+}
+
+/**
+ * Implements hook_entity_base_field_info_alter()
+ *
+ * @param \Drupal\Core\Field\BaseFieldDefinition[] $fields
+ * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
+ */
+function task_job_entity_base_field_info_alter(&$fields, EntityTypeInterface $entity_type) {
+  if ($entity_type->id() === 'task' && isset($fields['checklist'])) {
+    $fields['checklist']->setDefaultValueCallback('_task_job_task_checklist_default_value');
+  }
+}
+
+/**
+ * Default value callback to set the checklist value when a task job is set.
+ *
+ * @param \Drupal\task\Entity\Task $task
+ *   The task
+ */
+function _task_job_task_checklist_default_value(EntityInterface $task) {
+  if (!$task->job->isEmpty()) {
+    return [
+      [
+        'id' => 'job',
+        'configuration' => [
+          'job' => $task->job->target_id,
+        ]
+      ]
+    ];
+  }
+
+  return NULL;
+}

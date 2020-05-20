@@ -1,0 +1,7 @@
+name: Checklist
+description: Programmable checklists
+type: module
+core_version_requirement: ^8 || 9
+package: RLMumford
+dependencies:
+  - entity:entity

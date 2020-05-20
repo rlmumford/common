@@ -1,0 +1,7 @@
+services:
+  plugin.manager.checklist_type:
+    class: Drupal\checklist\ChecklistTypeManager
+    parent: default_plugin_manager
+  plugin.manager.checklist_item_handler:
+    class: Drupal\checklist\ChecklistItemHandlerManager
+    parent: default_plugin_manager

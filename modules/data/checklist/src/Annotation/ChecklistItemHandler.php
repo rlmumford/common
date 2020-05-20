@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\task_checklist\Annotation;
+namespace Drupal\checklist\Annotation;
 
 use Drupal\Component\Annotation\Plugin;
 

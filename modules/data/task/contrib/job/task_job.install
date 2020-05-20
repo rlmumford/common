@@ -1,0 +1,51 @@
+<?php
+
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+
+/**
+ * Implements hook_install().
+ */
+function task_job_install() {
+  /** @var \Drupal\Core\Field\FieldStorageDefinitionListenerInterface $storage_definition_listener */
+  $storage_definition_listener = \Drupal::service('field_storage_definition.listener');
+  /** @var \Drupal\Core\Field\FieldDefinitionListenerInterface $definition_listener */
+  $definition_listener = \Drupal::service('field_definition.listener');
+
+  $definition = BaseFieldDefinition::create('entity_reference')
+    ->setName('job')
+    ->setProvider('task_job')
+    ->setTargetEntityTypeId('task')
+    ->setLabel(new TranslatableMarkup('Job'))
+    ->setDescription(new TranslatableMarkup('The Job'))
+    ->setSetting('target_type', 'task_job')
+    ->setDisplayConfigurable('view', TRUE)
+    ->setDisplayConfigurable('form', TRUE);
+
+  $storage_definition_listener->onFieldStorageDefinitionCreate($definition);
+  $definition_listener->onFieldDefinitionCreate($definition);
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function task_job_uninstall() {
+  /** @var \Drupal\Core\Field\FieldStorageDefinitionListenerInterface $storage_definition_listener */
+  $storage_definition_listener = \Drupal::service('field_storage_definition.listener');
+  /** @var \Drupal\Core\Field\FieldDefinitionListenerInterface $definition_listener */
+  $definition_listener = \Drupal::service('field_definition.listener');
+
+  $definition = BaseFieldDefinition::create('entity_reference')
+    ->setName('job')
+    ->setProvider('task_job')
+    ->setTargetEntityTypeId('task')
+    ->setLabel(new TranslatableMarkup('Job'))
+    ->setDescription(new TranslatableMarkup('The Job'))
+    ->setSetting('target_type', 'task_job')
+    ->setDisplayConfigurable('view', TRUE)
+    ->setDisplayConfigurable('form', TRUE);
+
+  $storage_definition_listener->onFieldStorageDefinitionDelete($definition);
+  $definition_listener->onFieldDefinitionDelete($definition);
+
+}
