@@ -1,6 +1,7 @@
 name: Task Checklist
 description: Task checklists
-package: RLMumford
+type: module
+package: Tasks
 core_version_requirement: ^8 || ^9
 
 dependencies:

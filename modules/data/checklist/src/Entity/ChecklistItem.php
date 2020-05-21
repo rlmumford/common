@@ -21,7 +21,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  *     plural = "@count checklist items"
  *   ),
  *   handlers = {
- *     "storage" = "Drupal\Core\Entity\Sql\ContentEntityStorage",
+ *     "storage" = "Drupal\Core\Entity\Sql\SqlContentEntityStorage",
  *     "access" = "Drupal\checklist\Entity\ChecklistItemAccessControlHandler",
  *     "views_data" = "Drupal\views\EntityViewsData",
  *   },
