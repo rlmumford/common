@@ -22,9 +22,9 @@ interface ChecklistTypeInterface extends PluginInspectionInterface, BundlePlugin
   /**
    * Get the default items.
    *
-   * @return \Drupal\checklist\Entity\ChecklistItemInterface
+   * @return \Drupal\checklist\Entity\ChecklistItemInterface[]
    */
-  public function getDefaultItems();
+  public function getDefaultItems() : array;
 
   /**
    * @param \Drupal\Core\Entity\FieldableEntityInterface $entity

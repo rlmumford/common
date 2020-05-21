@@ -66,17 +66,37 @@ class Job extends ChecklistTypeBase {
     $this->jobStorage = $job_storage;
   }
 
+  /**
+   * We return a Job interface here, rather than a Job entity in anticipation
+   * of some complex system of Job overides.
+   *
+   * @return \Drupal\task_job\JobInterface
+   */
   protected function getJob() : JobInterface {
-    $this->jobStorage->load($this->getConfiguration()['job']);
+    return $this->jobStorage->load($this->getConfiguration()['job']);
   }
 
   /**
    * Get the default items.
    *
-   * @return \Drupal\checklist\Entity\ChecklistItemInterface
+   * @return \Drupal\checklist\Entity\ChecklistItemInterface[]
    */
-  public function getDefaultItems() {
-    // TODO: Implement getDefaultItems() method.
+  public function getDefaultItems() : array{
+    $items = [];
+
+    foreach ($this->getJob()->getChecklistItems() as $name => $config) {
+      $items[$name] = $this->itemStorage()->create([
+        'checklist_type' => $this->getPluginId(),
+        'name' => $name,
+        'label' => $config['label'],
+        'handler' => [
+          'id' => $config['handler'],
+          'configuration' => $config['handler_configuration'],
+        ],
+      ]);
+    }
+
+    return $items;
   }
 
 }

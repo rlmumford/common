@@ -1,0 +1,6 @@
+interactive_checklist:
+  js:
+    js/interactive-checklist.js: {}
+  dependencies:
+    - core/drupal.ajax
+

@@ -32,12 +32,17 @@ class ChecklistAdaptor extends TypedData {
       $key .= ':'.$item->getName();
     }
 
-    $this->checklist = $checklist_type->getChecklist(
+    $checklist = $checklist_type->getChecklist(
       $item->getEntity(),
       $key
     );
+    /** @var \Drupal\checklist\ChecklistTempstoreRepository $checklist_repo */
+    $checklist_repo = \Drupal::service('checklist.tempstore_repository');
+    if ($checklist_repo->has($checklist)) {
+      $checklist = $checklist_repo->get($checklist);
+    }
 
-    return $this->checklist;
+    return ($this->checklist = $checklist);
   }
 
   /**

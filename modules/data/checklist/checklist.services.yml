@@ -5,3 +5,6 @@ services:
   plugin.manager.checklist_item_handler:
     class: Drupal\checklist\ChecklistItemHandlerManager
     parent: default_plugin_manager
+  checklist.tempstore_repository:
+    class: Drupal\checklist\ChecklistTempstoreRepository
+    arguments: ['@tempstore.shared']

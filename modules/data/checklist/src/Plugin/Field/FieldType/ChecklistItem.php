@@ -3,6 +3,7 @@
 namespace Drupal\checklist\Plugin\Field\FieldType;
 
 use Drupal\checklist\ChecklistAdaptor;
+use Drupal\checklist\ChecklistInterface;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TypedData\DataDefinition;
@@ -41,6 +42,15 @@ class ChecklistItem extends PluginItem {
       ->setClass(ChecklistAdaptor::class);
 
     return $properties;
+  }
+
+  /**
+   * Get the actual checklist.
+   *
+   * @return \Drupal\checklist\ChecklistInterface|null
+   */
+  public function getChecklist() : ?ChecklistInterface {
+    return $this->checklist->getValue();
   }
 
 }

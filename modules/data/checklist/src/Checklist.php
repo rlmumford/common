@@ -96,6 +96,11 @@ class Checklist implements ChecklistInterface {
     // Fill in gaps.
     foreach ($this->getType()->getDefaultItems() as $name => $item) {
       if (!isset($this->items[$item->getName()])) {
+        $item->checklist = [
+          'target_id' => $this->getEntity()->id(),
+          'checklist_key' => $this->getKey(),
+        ];
+
         $this->items[$item->getName()] = $item;
       }
     }

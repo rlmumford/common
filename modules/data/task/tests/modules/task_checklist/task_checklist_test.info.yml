@@ -1,0 +1,8 @@
+name: Task Checklist Test
+description: Tests for simple task checklists
+type: module
+core_version_requirement: ^8 || ^9
+package: Tasks
+dependencies:
+  - rlmumford:task
+  - rlmumford:task_checklist

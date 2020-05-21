@@ -3,9 +3,11 @@
 namespace Drupal\checklist\Plugin\ChecklistItemHandler;
 
 use Drupal\checklist\Entity\ChecklistItemInterface;
+use Drupal\Component\Plugin\ConfigurableInterface;
 use Drupal\Component\Plugin\PluginInspectionInterface;
+use Drupal\Core\Plugin\PluginWithFormsInterface;
 
-interface ChecklistItemHandlerInterface extends PluginInspectionInterface {
+interface ChecklistItemHandlerInterface extends PluginInspectionInterface, PluginWithFormsInterface, ConfigurableInterface {
 
   /**
    * Set the checklist item on this handler.
