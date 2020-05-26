@@ -1,0 +1,4 @@
+services:
+  task_job.tempstore_repository:
+    class: Drupal\task_job\TaskJobTempstoreRepository
+    arguments: ['@tempstore.shared']

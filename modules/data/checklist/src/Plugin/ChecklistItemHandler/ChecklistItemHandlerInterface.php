@@ -76,4 +76,11 @@ interface ChecklistItemHandlerInterface extends PluginInspectionInterface, Plugi
    */
   public function action() : ChecklistItemHandlerInterface;
 
+  /**
+   * Build the configuration summary.
+   *
+   * @return array
+   */
+  public function buildConfigurationSummary() : array;
+
 }

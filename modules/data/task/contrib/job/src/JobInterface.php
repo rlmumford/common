@@ -2,7 +2,9 @@
 
 namespace Drupal\task_job;
 
-interface JobInterface {
+use Drupal\Core\Entity\EntityInterface;
+
+interface JobInterface extends EntityInterface {
 
   /**
    * Get the default checklist items for this job.
