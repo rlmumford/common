@@ -50,7 +50,7 @@ class ChecklistItem extends PluginItem {
    * @return \Drupal\checklist\ChecklistInterface|null
    */
   public function getChecklist() : ?ChecklistInterface {
-    return $this->checklist->getValue();
+    return $this->checklist;
   }
 
 }

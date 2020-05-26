@@ -25,7 +25,7 @@ class ChecklistAdaptor extends TypedData {
     $item = $this->getParent();
 
     /** @var \Drupal\checklist\Plugin\ChecklistType\ChecklistTypeInterface $checklist_type */
-    $checklist_type = $item->plugin->getValue();
+    $checklist_type = $item->plugin;
 
     $key = $item->getFieldDefinition()->getName();
     if ($item->getFieldDefinition()->getFieldStorageDefinition()->getCardinality() !== 1) {
@@ -36,13 +36,16 @@ class ChecklistAdaptor extends TypedData {
       $item->getEntity(),
       $key
     );
+
     /** @var \Drupal\checklist\ChecklistTempstoreRepository $checklist_repo */
     $checklist_repo = \Drupal::service('checklist.tempstore_repository');
     if ($checklist_repo->has($checklist)) {
       $checklist = $checklist_repo->get($checklist);
     }
 
-    return ($this->checklist = $checklist);
+    $this->checklist = $checklist;
+
+    return $this->checklist;
   }
 
   /**

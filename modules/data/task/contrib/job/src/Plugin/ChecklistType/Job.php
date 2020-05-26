@@ -88,7 +88,7 @@ class Job extends ChecklistTypeBase {
       $items[$name] = $this->itemStorage()->create([
         'checklist_type' => $this->getPluginId(),
         'name' => $name,
-        'label' => $config['label'],
+        'title' => $config['title'],
         'handler' => [
           'id' => $config['handler'],
           'configuration' => $config['handler_configuration'],

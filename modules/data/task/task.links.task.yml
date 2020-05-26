@@ -1,0 +1,4 @@
+task.task_bundle.settings_tab:
+  route_name: entity.task_bundle.edit_form
+  title: 'Settings'
+  base_route: entity.task_bundle.edit_form

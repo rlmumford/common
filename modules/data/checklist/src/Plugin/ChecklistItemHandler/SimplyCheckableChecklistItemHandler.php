@@ -7,10 +7,13 @@ use Drupal\checklist\Entity\ChecklistItemInterface;
 /**
  * Class SimplyCheckableChecklistItemHandler
  *
- * @ChecklistItemHandler{
+ * @ChecklistItemHandler(
  *   id = "simply_checkable",
  *   label = @Translation("Simple Checkbox"),
- * }
+ *   forms = {
+ *     "row" = "\Drupal\checklist\PluginForm\SimplyCheckableItemRowForm",
+ *   }
+ * )
  *
  * @package Drupal\checklist\Plugin\ChecklistItemHandler
  */

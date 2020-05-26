@@ -1,5 +1,5 @@
-name: Task Checklist Test
-description: Tests for simple task checklists
+name: Task Checklist Sample
+description: Sample for simple task checklists
 type: module
 core_version_requirement: ^8 || ^9
 package: Tasks

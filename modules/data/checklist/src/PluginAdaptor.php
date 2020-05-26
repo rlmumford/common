@@ -2,6 +2,8 @@
 
 namespace Drupal\checklist;
 
+use Drupal\checklist\Entity\ChecklistItemInterface;
+use Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerInterface;
 use Drupal\Core\TypedData\TypedData;
 
 class PluginAdaptor extends TypedData {
@@ -24,7 +26,7 @@ class PluginAdaptor extends TypedData {
     /** @var \Drupal\Core\Field\FieldItemInterface $item */
     $item = $this->getParent();
     $id = $item->id;
-    $configuration = $item->configuration->getValue();
+    $configuration = $item->configuration ? $item->configuration : [];
 
     try {
       $plugin_type = $item->getFieldDefinition()
@@ -34,6 +36,15 @@ class PluginAdaptor extends TypedData {
       /** @var \Drupal\Component\Plugin\PluginManagerInterface $plugin_manager */
       $plugin_manager = \Drupal::service('plugin.manager.' . $plugin_type);
       $this->plugin_instance = $plugin_manager->createInstance($id, $configuration);
+
+      // @todo: Find a way to put this that doesn't make his field type
+      // depend on checklist items.
+      if (
+        $this->plugin_instance instanceof ChecklistItemHandlerInterface &&
+        $item->getEntity() instanceof ChecklistItemInterface
+      ) {
+        $this->plugin_instance->setItem($item->getEntity());
+      }
     }
     catch (\Exception $e) {
       return NULL;

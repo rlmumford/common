@@ -25,7 +25,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  *     "access" = "Drupal\checklist\Entity\ChecklistItemAccessControlHandler",
  *     "views_data" = "Drupal\views\EntityViewsData",
  *   },
- *   base_table = "identity_data",
+ *   base_table = "checklist_item",
  *   admin_permission = "administer checklist items",
  *   entity_keys = {
  *     "id" = "id",
@@ -228,7 +228,7 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
    * @return \Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerInterface
    */
   public function getHandler(): ChecklistItemHandlerInterface {
-    return $this->handler->plugin->getValue();
+    return $this->handler->plugin;
   }
 
   /**

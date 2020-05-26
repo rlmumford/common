@@ -54,7 +54,8 @@ use Drupal\task\TaskInterface;
  *     "collection" = "/task",
  *     "canonical" = "/task/{task}",
  *     "edit-form" = "/task/{task}/edit",
- *     "add-form" = "/task/add"
+ *     "add-page" = "/task/add",
+ *     "add-form" = "/task/add/{task_bundle}"
  *   }
  * )
  */

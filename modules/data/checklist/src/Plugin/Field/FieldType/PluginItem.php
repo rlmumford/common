@@ -9,6 +9,7 @@ use Drupal\Core\Field\FieldItemBase;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TypedData\DataDefinition;
+use Drupal\Core\TypedData\MapDataDefinition;
 
 /**
  * Class ChecklistItem
@@ -35,6 +36,20 @@ class PluginItem extends FieldItemBase {
   /**
    * {@inheritdoc}
    */
+  public function isEmpty() {
+    return !$this->id;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function mainPropertyName() {
+    return NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public static function schema(FieldStorageDefinitionInterface $field_definition) {
     return [
       'columns' => [
@@ -45,6 +60,7 @@ class PluginItem extends FieldItemBase {
         'configuration' => [
           'type' => 'blob',
           'size' => 'big',
+          'serialize' => TRUE,
         ]
       ],
     ];
@@ -59,7 +75,7 @@ class PluginItem extends FieldItemBase {
     $properties['id'] = DataDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Plugin Id'))
       ->setRequired(TRUE);
-    $properties['configuration'] = DataDefinition::create('map')
+    $properties['configuration'] = MapDataDefinition::create('map')
       ->setLabel(new TranslatableMarkup('Configuration'));
     $properties['plugin'] = DataDefinition::create('any')
       ->setLabel(new TranslatableMarkup('Plugin'))
@@ -83,5 +99,16 @@ class PluginItem extends FieldItemBase {
     }
 
     parent::onChange($property_name, $notify);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setValue($values, $notify = TRUE) {
+    if (is_array($values) && isset($values['configuration']) && is_string($values['configuration'])) {
+      $values['configuration'] = @unserialize($values['configuration']) ?: [];
+    }
+
+    parent::setValue($values, $notify);
   }
 }
