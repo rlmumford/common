@@ -1,0 +1,116 @@
+<?php
+
+use Drupal\Core\Config\FileStorage;
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\project\Entity\Project;
+
+/**
+ * Implements hook_install().
+ */
+function project_install() {
+  /** @var \Drupal\Core\Field\FieldStorageDefinitionListenerInterface $storage_definition_listener */
+  $storage_definition_listener = \Drupal::service('field_storage_definition.listener');
+  /** @var \Drupal\Core\Field\FieldDefinitionListenerInterface $field_definition_listener */
+  $field_definition_listener = \Drupal::service('field_definition.listener');
+
+  $project_field = BaseFieldDefinition::create('project_reference')
+    ->setName('project')
+    ->setProvider('project')
+    ->setLabel(t('Project'))
+    ->setRevisionable(TRUE)
+    ->setSetting('target_type', 'project')
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'entity_reference_label',
+    ])
+    ->setDisplayOptions('form', [
+      'type' => 'entity_reference_autocomplete',
+    ])
+    ->setDisplayConfigurable('view', TRUE)
+    ->setDisplayConfigurable('form', TRUE);
+
+  if (\Drupal::moduleHandler()->moduleExists('task')) {
+    $project_field->setTargetEntityTypeId('task');
+    $storage_definition_listener->onFieldStorageDefinitionCreate($project_field);
+    $field_definition_listener->onFieldDefinitionCreate($project_field);
+  }
+
+  if (\Drupal::moduleHandler()->moduleExists('communication')) {
+    $project_field->setTargetEntityTypeId('communication');
+    $storage_definition_listener->onFieldStorageDefinitionCreate($project_field);
+    $field_definition_listener->onFieldDefinitionCreate($project_field);
+  }
+}
+
+/**
+ * Add label field.
+ */
+function project_update_8001() {
+  $fields['label'] = BaseFieldDefinition::create('string')
+    ->setLabel(t('Title'))
+    ->setRevisionable(TRUE)
+    ->setDefaultValueCallback('\Drupal\project\Entity\Project::createLabel')
+    ->setDisplayConfigurable('view', TRUE);
+
+  $manager = \Drupal::entityDefinitionUpdateManager();
+  foreach ($fields as $field_name => $definition) {
+    $manager->installFieldStorageDefinition($field_name, 'project', 'project', $definition);
+  }
+
+  // Install configuration.
+  $source = new FileStorage(drupal_get_path('module', 'project').'/config/install');
+  /** @var \Drupal\Core\Config\StorageInterface $config_storage */
+  $config_storage = \Drupal::project('config.storage');
+
+  $configs_to_install = [
+    'views.view.projects',
+  ];
+  foreach ($configs_to_install as $name) {
+    $config_storage->write($name, $source->read($name));
+  }
+}
+
+/**
+ * Update projects view for permissions.
+ */
+function project_update_8002() {
+  // Install configuration.
+  $source = new FileStorage(drupal_get_path('module', 'project').'/config/install');
+  /** @var \Drupal\Core\Config\StorageInterface $config_storage */
+  $config_storage = \Drupal::project('config.storage');
+
+  $configs_to_install = [
+    'views.view.projects',
+  ];
+  foreach ($configs_to_install as $name) {
+    $config_storage->write($name, $source->read($name));
+  }
+}
+
+/**
+ * Install project field on communication entity if module installed.
+ */
+function project_update_8003() {
+  $project_field = BaseFieldDefinition::create('project_reference')
+    ->setLabel(t('Project'))
+    ->setRevisionable(TRUE)
+    ->setSetting('target_type', 'project')
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'entity_reference_label',
+    ])
+    ->setDisplayOptions('form', [
+      'type' => 'entity_reference_autocomplete',
+    ])
+    ->setDisplayConfigurable('view', TRUE)
+    ->setDisplayConfigurable('form', TRUE);
+
+  if (\Drupal::moduleHandler()->moduleExists('communication')) {
+    \Drupal::entityDefinitionUpdateManager()->installFieldStorageDefinition(
+      'project',
+      'communication',
+      'project',
+      $project_field
+    );
+  }
+}

@@ -1,0 +1,20 @@
+administer project types:
+  title: 'Administer project types'
+  restrict access: true
+administer projects:
+  title: 'Administer projects'
+  restrict access: true
+manage projects:
+  title: 'Manage projects'
+view any project:
+  title: 'View any project'
+view managed project:
+  title: 'View any project managed by the user'
+update any project:
+  title: 'Update any project'
+update managed project:
+  title: 'Update any project managed by the user'
+delete any project:
+  title: 'Delete any project'
+delete managed project:
+  title: 'Delete any project managed by the user'

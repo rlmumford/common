@@ -1,0 +1,9 @@
+type: module
+name: Project
+description: 'Project Entity data storage.'
+package: RLMumford
+core: 8.x
+
+dependencies:
+  - entity:entity
+  - typed_data:typed_data

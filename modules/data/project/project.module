@@ -1,0 +1,102 @@
+<?php
+
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\BaseFieldDefinition;
+
+/**
+ * Implements hook_entity_base_field_info().
+ */
+function project_entity_base_field_info(EntityTypeInterface $entity_type) {
+  if (!in_array($entity_type->id(), ['task', 'communication'])) {
+    return [];
+  }
+
+  $fields = [];
+  $fields['project'] = BaseFieldDefinition::create('project_reference')
+    ->setLabel(t('Project'))
+    ->setRevisionable(TRUE)
+    ->setSetting('target_type', 'project')
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'entity_reference_label',
+    ])
+    ->setDisplayOptions('form', [
+      'type' => 'entity_reference_autocomplete',
+    ])
+    ->setDisplayConfigurable('view', TRUE)
+    ->setDisplayConfigurable('form', TRUE);
+
+  return $fields;
+}
+
+/**
+ * Implements hook_field_formatter_info_alter().
+ */
+function project_field_formatter_info_alter(array &$info) {
+  $info['entity_reference_label']['field_types'][] = 'project_reference';
+  $info['entity_reference_entity_id']['field_types'][] = 'project_reference';
+}
+
+/**
+ * Implements hook_field_widget_info_alter().
+ */
+function project_field_widget_info_alter(array &$info) {
+  $info['entity_reference_autocomplete']['field_types'][] = 'project_reference';
+}
+
+/**
+ * Implements hook_note_presave().
+ */
+function project_note_presave(EntityInterface $note) {
+  /** @var \Drupal\note\Entity\Note $note */
+  if (!\Drupal::moduleHandler()->moduleExists('task')) {
+    return;
+  }
+
+  if ($note->project->isEmpty() && (!$note->task->isEmpty() && !$note->task->entity->project->isEmpty())) {
+    $note->project = $note->task->entity->project->entity;
+  }
+}
+
+/**
+ * Implements hook_modules_installed().
+ */
+function project_modules_installed($modules) {
+  if (!array_intersect(['task', 'communication'], $modules)) {
+    return;
+  }
+
+  /** @var \Drupal\Core\Field\FieldStorageDefinitionListenerInterface $storage_definition_listener */
+  $storage_definition_listener = \Drupal::service('field_storage_definition.listener');
+  /** @var \Drupal\Core\Field\FieldDefinitionListenerInterface $field_definition_listener */
+  $field_definition_listener = \Drupal::service('field_definition.listener');
+
+  $project_field = BaseFieldDefinition::create('project_reference')
+    ->setName('project')
+    ->setProvider('project')
+    ->setLabel(t('Project'))
+    ->setRevisionable(TRUE)
+    ->setSetting('target_type', 'project')
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'entity_reference_label',
+    ])
+    ->setDisplayOptions('form', [
+      'type' => 'entity_reference_autocomplete',
+    ])
+    ->setDisplayConfigurable('view', TRUE)
+    ->setDisplayConfigurable('form', TRUE);
+
+  if (in_array('task', $modules)) {
+    $project_field->setTargetEntityTypeId('task');
+    $storage_definition_listener->onFieldStorageDefinitionCreate($project_field);
+    $field_definition_listener->onFieldDefinitionCreate($project_field);
+  }
+
+  if (in_array('communication', $modules)) {
+    $project_field->setTargetEntityTypeId('communication');
+    $storage_definition_listener->onFieldStorageDefinitionCreate($project_field);
+    $field_definition_listener->onFieldDefinitionCreate($project_field);
+  }
+}
