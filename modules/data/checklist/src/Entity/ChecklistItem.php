@@ -151,6 +151,15 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
   /**
    * {@inheritdoc}
    */
+  public function setIncomplete(): ChecklistItemInterface {
+    $this->status = static::STATUS_INCOMPLETE;
+    $this->completion_method = [];
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function isFailed(): bool {
     return $this->status->value === static::STATUS_FAILED;
   }

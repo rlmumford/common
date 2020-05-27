@@ -1,6 +1,12 @@
-entity.task_bundle.collection:
-  title: 'Task Bundles'
-  parent: system.admin_structure
-  description: 'Configure task bundles.'
+task.admin_config_task:
+  title: 'Task Management'
+  parent: system.admin_config
+  description: 'Configure tasks.'
   weight: -10
-  route_name: entity.task_bundle.collection
+  route_name: task.admin_config_task
+entity.task.configuration:
+  title: 'Task Structure'
+  parent: task.admin_config_task
+  description: 'Configure task fields & displays.'
+  weight: -10
+  route_name: entity.task.configuration

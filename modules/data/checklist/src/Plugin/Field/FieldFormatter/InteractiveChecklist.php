@@ -202,19 +202,6 @@ class InteractiveChecklist extends FormatterBase {
             'data-ciname' => $checklist_item->getName(),
           ],
           'checkbox' => $this->formBuilder->getForm($form_obj),
-          /**  [
-            '#theme' => 'input__checkbox',
-            '#attributes' => [
-              'class' => [
-                'checklist-checkbox',
-                $items->getEntity()->getEntityTypeId().'-checklist-checkbox',
-              ],
-              'type' => 'checkbox',
-              'checked' => $checklist_item->isComplete(),
-              'disabled' => $checklist_item->isComplete() || $checklist_item->isFailed(),
-              'value' => 1,
-            ],
-          ],**/
           'name' => [
             '#type' => 'html_tag',
             '#tag' => 'span',

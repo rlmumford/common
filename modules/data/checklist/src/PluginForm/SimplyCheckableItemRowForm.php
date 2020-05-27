@@ -40,6 +40,7 @@ class SimplyCheckableItemRowForm extends PluginFormBase {
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $item = $this->plugin->getItem();
+    $is_reversible = !empty($this->plugin->getConfiguration()['reversible']);
 
     // @todo: Move into ChecklistRowForm somehow?
     $wrapper_id = "checklist-row--".$item->checklist->checklist->getKey()."--".$item->getName();
@@ -51,7 +52,7 @@ class SimplyCheckableItemRowForm extends PluginFormBase {
       '#title' => new TranslatableMarkup('Complete?'),
       '#title_display' => 'invisible',
       '#default_value' => $item->isComplete(),
-      '#disabled' => $item->isComplete() || $item->isFailed() || !$item->isActionable(),
+      '#disabled' => (!$is_reversible && $item->isComplete()) || $item->isFailed() || !$item->isActionable(),
       '#ajax' => [
         'callback' => [ChecklistRowForm::class, 'onCompleteAjaxCallback'],
         'wrapper' => $wrapper_id,
@@ -74,6 +75,15 @@ class SimplyCheckableItemRowForm extends PluginFormBase {
       ]
     ];
 
+    // If the item is complete and it is reversible, we want to mutate the
+    // 'complete' button into a 'reverse' button. We do this by changing the
+    // value and callbacks.
+    if ($item->isComplete() && $is_reversible) {
+      $form['complete']['#value'] = new TranslatableMarkup('Reverse');
+      $form['complete']['#ajax']['callback'] = [ChecklistRowForm::class, 'onReverseAjaxCallback'];
+      $form['complete']['#is_reversing'] = TRUE;
+    }
+
     return $form;
   }
 
@@ -91,8 +101,12 @@ class SimplyCheckableItemRowForm extends PluginFormBase {
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
     /** @var \Drupal\checklist\Entity\ChecklistItemInterface $item */
     $item = $this->plugin->getItem();
-
-    $item->setComplete(ChecklistItemInterface::METHOD_MANUAL);
+    if (empty($form_state->getTriggeringElement()['#is_reversing'])) {
+      $item->setComplete(ChecklistItemInterface::METHOD_MANUAL);
+    }
+    else {
+      $item->setIncomplete();
+    }
     $item->save();
 
     $form_state->setRebuild();

@@ -44,11 +44,9 @@ function task_job_entity_base_field_info_alter(&$fields, EntityTypeInterface $en
 function _task_job_task_checklist_default_value(EntityInterface $task) {
   if (!$task->job->isEmpty()) {
     return [
-      [
-        'id' => 'job',
-        'configuration' => [
-          'job' => $task->job->target_id,
-        ]
+      'id' => 'job',
+      'configuration' => [
+        'job' => $task->job->target_id,
       ]
     ];
   }

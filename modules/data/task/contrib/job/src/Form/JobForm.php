@@ -43,4 +43,30 @@ class JobForm extends EntityForm {
     return $form;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function actions(array $form, FormStateInterface $form_state) {
+    $actions = parent::actions($form, $form_state);
+
+    if ($this->entity->isNew()) {
+      $actions['submit']['#value'] = $this->t('Create & Configure');
+      $actions['submit']['#submit'][] = '::submitRedirectEdit';
+    }
+
+    return $actions;
+  }
+
+  /**
+   * Redirect to the edit page.
+   *
+   * @param array $form
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   */
+  public function submitRedirectEdit(array $form, FormStateInterface $form_state) {
+    $form_state->setRedirect('entity.task_job.edit_form', [
+      'task_job' => $this->entity->id(),
+    ]);
+  }
+
 }

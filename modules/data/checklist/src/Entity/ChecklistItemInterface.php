@@ -73,6 +73,13 @@ interface ChecklistItemInterface extends EntityInterface {
   public function setComplete(string $type = self::METHOD_INTERACTIVE) : ChecklistItemInterface;
 
   /**
+   * Set Incomplete.
+   *
+   * @return \Drupal\checklist\Entity\ChecklistItemInterface
+   */
+  public function setIncomplete() : ChecklistItemInterface;
+
+  /**
    * Find out if the checklist item has failed.
    *
    * @return bool

@@ -121,19 +121,57 @@ class ChecklistRowForm extends FormBase implements BaseFormIdInterface {
    * @param array $form
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *
-   * @return array
+   * @return array|AjaxResponse
    */
   public static function onCompleteAjaxCallback(array &$form, FormStateInterface $form_state) {
     if (!$form_state->isExecuted()) {
       return $form;
     }
 
-    $wrapper_id = $form_state->getTriggeringElement()['#ajax']['wrapper'];
-    $response = new AjaxResponse();
-    $response->addCommand(new ReplaceCommand(
-      '#'.$wrapper_id,
-      \Drupal::service('renderer')->renderRoot($form)
-    ));
+    /** @var \Drupal\Core\Render\MainContent\MainContentRendererInterface $ajax_renderer */
+    $ajax_renderer = \Drupal::service('main_content_renderer.ajax');
+
+    // If the form is rebuilding then we need to still render it, but we have to
+    // do it directly so that we can add more to the commands list.
+    if ($form_state->isRebuilding()) {
+      $response = $ajax_renderer->renderResponse($form, \Drupal::request(), \Drupal::routeMatch());
+    }
+    else {
+      $response = new AjaxResponse();
+    }
+
+    /** @var \Drupal\Core\Ajax\AjaxResponse $response */
+
+    // @todo: Reload any dependent forms.
+    // @todo: Close any resource or form panes.
+
+    return $response;
+  }
+
+  /**
+   * @param array $form
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *
+   * @return array
+   */
+  public static function onReverseAjaxCallback(array &$form, FormStateInterface $form_state) {
+    if (!$form_state->isExecuted()) {
+      return $form;
+    }
+
+    /** @var \Drupal\Core\Render\MainContent\MainContentRendererInterface $ajax_renderer */
+    $ajax_renderer = \Drupal::service('main_content_renderer.ajax');
+
+    // If the form is rebuilding then we need to still render it, but we have to
+    // do it directly so that we can add more to the commands list.
+    if ($form_state->isRebuilding()) {
+      $response = $ajax_renderer->renderResponse($form, \Drupal::request(), \Drupal::routeMatch());
+    }
+    else {
+      $response = new AjaxResponse();
+    }
+
+    /** @var \Drupal\Core\Ajax\AjaxResponse $response */
 
     // @todo: Reload any dependent forms.
     // @todo: Close any resource or form panes.

@@ -1,5 +1,5 @@
-task_bundle_add:
-  route_name: entity.task_bundle.add_form
-  title: 'Add Task Bundle'
+task_add:
+  route_name: entity.task.add_form
+  title: 'Add Task'
   appears_on:
-    - entity.task_bundle.collection
+    - entity.task.collection

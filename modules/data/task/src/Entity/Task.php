@@ -32,7 +32,7 @@ use Drupal\task\TaskInterface;
  *     "form" = {
  *       "default" = "Drupal\task\TaskForm"
  *     },
- *     "views_data" = "Drupal\views\EntityViewsData",
+ *     "views_data" = "Drupal\entity\EntityViewsData",
  *     "route_provider" = {
  *       "html" = "Drupal\Core\Entity\Routing\DefaultHtmlRouteProvider",
  *     }
@@ -41,12 +41,10 @@ use Drupal\task\TaskInterface;
  *   base_table = "task",
  *   revision_table = "task_revision",
  *   admin_permission = "administer tasks",
- *   bundle_entity_type = "task_bundle",
- *   field_ui_base_route = "entity.task_bundle.edit_form",
+ *   field_ui_base_route = "entity.task.configuration",
  *   entity_keys = {
  *     "id" = "id",
  *     "revision" = "vid",
- *     "bundle" = "type",
  *     "uuid" = "uuid",
  *     "label" = "title"
  *   },
@@ -54,8 +52,7 @@ use Drupal\task\TaskInterface;
  *     "collection" = "/task",
  *     "canonical" = "/task/{task}",
  *     "edit-form" = "/task/{task}/edit",
- *     "add-page" = "/task/add",
- *     "add-form" = "/task/add/{task_bundle}"
+ *     "add-form" = "/task/add"
  *   }
  * )
  */
