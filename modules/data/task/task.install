@@ -1,0 +1,40 @@
+<?php
+
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+
+/**
+ * Implements hook_install().
+ */
+function task_install() {
+  if (\Drupal::moduleHandler()->moduleExists('message')) {
+    /** @var \Drupal\Core\Field\FieldStorageDefinitionListenerInterface $storage_definition_listener */
+    $storage_definition_listener = \Drupal::service('field_storage_definition.listener');
+    /** @var \Drupal\Core\Field\FieldDefinitionListenerInterface $field_definition_listener */
+    $field_definition_listener = \Drupal::service('field_definition.listener');
+
+    $fields['task'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('Task'))
+      ->setSetting('target_type', 'task')
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('form', TRUE);
+    $fields['root_task'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('Root Task'))
+      ->setSetting('target_type', 'task')
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('form', TRUE);
+
+    /**
+     * @var string $name
+     * @var \Drupal\Core\Field\BaseFieldDefinition $definition
+     */
+    foreach ($fields as $name => $definition) {
+      $definition->setTargetEntityTypeId('message');
+      $definition->setName($name);
+      $definition->setProvider('task');
+
+      $storage_definition_listener->onFieldStorageDefinitionCreate($definition);
+      $field_definition_listener->onFieldDefinitionCreate($definition);
+    }
+  }
+}

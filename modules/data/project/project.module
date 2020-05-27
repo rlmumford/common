@@ -60,10 +60,29 @@ function project_note_presave(EntityInterface $note) {
 }
 
 /**
+ * Implements hook_message_presave()
+ *
+ * Take the value of the project from the task where the task is set.
+ */
+function project_message_presave(EntityInterface $message) {
+  if (!\Drupal::moduleHandler()->moduleExists('task')) {
+    return;
+  }
+
+  if (
+    $message->project->isEmpty() &&
+    !$message->task->isEmpty() &&
+    !$message->task->entity->project->isEmpty()
+  ) {
+    $message->project = $message->task->entity->project->getValue();
+  }
+}
+
+/**
  * Implements hook_modules_installed().
  */
 function project_modules_installed($modules) {
-  if (!array_intersect(['task', 'communication'], $modules)) {
+  if (!array_intersect(['task', 'communication', 'message'], $modules)) {
     return;
   }
 
@@ -93,9 +112,13 @@ function project_modules_installed($modules) {
     $storage_definition_listener->onFieldStorageDefinitionCreate($project_field);
     $field_definition_listener->onFieldDefinitionCreate($project_field);
   }
-
   if (in_array('communication', $modules)) {
     $project_field->setTargetEntityTypeId('communication');
+    $storage_definition_listener->onFieldStorageDefinitionCreate($project_field);
+    $field_definition_listener->onFieldDefinitionCreate($project_field);
+  }
+  if (in_array('message', $modules)) {
+    $project_field->setTargetEntityTypeId('message');
     $storage_definition_listener->onFieldStorageDefinitionCreate($project_field);
     $field_definition_listener->onFieldDefinitionCreate($project_field);
   }

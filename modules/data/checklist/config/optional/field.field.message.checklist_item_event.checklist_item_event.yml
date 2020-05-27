@@ -1,0 +1,21 @@
+uuid: f843646f-33af-428c-bc55-add5b2af7620
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.message.checklist_item_event
+    - message.template.checklist_item_event
+  module:
+    - options
+id: message.checklist_item_event.checklist_item_event
+field_name: checklist_item_event
+entity_type: message
+bundle: checklist_item_event
+label: 'Checklist Item Event'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

@@ -1,0 +1,18 @@
+uuid: e27e954f-3b4b-4b11-b478-116a6a06f591
+langcode: en
+status: true
+dependencies: { }
+third_party_settings: { }
+template: checklist_item_event
+label: 'Checklist Item Event'
+description: 'When a checklist item event happens'
+text:
+  -
+    value: "<p>[message:checklist_item:entity:label] was [message:checklist_item_event]</p>"
+    format: basic_html
+settings:
+  'token options':
+    clear: false
+    'token replace': true
+  purge_override: false
+  purge_methods: {  }

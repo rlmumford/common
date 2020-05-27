@@ -1,0 +1,33 @@
+uuid: 844a485e-2cde-4acf-b129-26a79db8e139
+langcode: en
+status: true
+dependencies:
+  module:
+    - message
+    - options
+id: message.checklist_item_event
+field_name: checklist_item_event
+entity_type: message
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: completed
+      label: Completed
+    -
+      value: reversed
+      label: Reversed
+    -
+      value: failed
+      label: Failed
+    -
+      value: recovered
+      label: Recovered
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

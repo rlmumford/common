@@ -1,0 +1,27 @@
+uuid: b00cbdf8-40e6-4b8e-a8e2-7fc738222389
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.message.checklist_item
+    - message.template.checklist_item_event
+id: message.checklist_item_event.checklist_item
+field_name: checklist_item
+entity_type: message
+bundle: checklist_item_event
+label: 'Checklist Item'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:checklist_item'
+  handler_settings:
+    target_bundles:
+      job: job
+    sort:
+      field: _none
+    auto_create: false
+    auto_create_bundle: ''
+field_type: entity_reference

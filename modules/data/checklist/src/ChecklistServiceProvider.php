@@ -1,27 +1,25 @@
 <?php
 
-namespace Drupal\project;
+namespace Drupal\checklist;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\DependencyInjection\ServiceProviderBase;
 use Symfony\Component\DependencyInjection\Definition;
 
-class ProjectServiceProvider extends ServiceProviderBase {
+class ChecklistServiceProvider extends ServiceProviderBase {
 
-  /**
-   * {@inheritdoc}
-   */
   public function alter(ContainerBuilder $container) {
     $modules = $container->getParameter('container.modules');
-    if (isset($modules['task'])) {
+    if (isset($modules['message'])) {
       $definition = new Definition(
-        '\Drupal\project\EventSubscriber\TaskAssigneeSubscriber'
+        '\Drupal\checklist\EventSubscriber\ChecklistItemEventMessageSubscriber'
       );
       $definition->addTag('event_subscriber');
       $container->setDefinition(
-        'project.task_assignee_subscriber',
+        'checklist.checklist_item_event_message_subscriber',
         $definition
       );
     }
   }
+
 }

@@ -1,0 +1,76 @@
+<?php
+
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+
+/**
+ * Implements hook_entity_base_field_info().
+ */
+function task_entity_base_field_info(EntityTypeInterface $entity_type) {
+  $fields = [];
+
+  if ($entity_type->id() === 'message') {
+    $fields['task'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('Task'))
+      ->setSetting('target_type', 'task')
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('form', TRUE);
+    $fields['root_task'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('Root Task'))
+      ->setSetting('target_type', 'task')
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('form', TRUE);
+  }
+
+  return $fields;
+}
+
+/**
+ * Implements hook_message_presave().
+ */
+function task_message_presave(EntityInterface $message) {
+  /** @var \Drupal\message\MessageInterface $message */
+  if (!$message->task->isEmpty()) {
+    $message->root_task = $message->task->entity->root->getValue();
+  }
+}
+
+/**
+ * Implements hook_modules_install().
+ */
+function task_modules_installed($modules) {
+  if (!in_array('message', $modules)) {
+    return;
+  }
+
+  /** @var \Drupal\Core\Field\FieldStorageDefinitionListenerInterface $storage_definition_listener */
+  $storage_definition_listener = \Drupal::service('field_storage_definition.listener');
+  /** @var \Drupal\Core\Field\FieldDefinitionListenerInterface $field_definition_listener */
+  $field_definition_listener = \Drupal::service('field_definition.listener');
+
+  $fields['task'] = BaseFieldDefinition::create('entity_reference')
+    ->setLabel(new TranslatableMarkup('Task'))
+    ->setSetting('target_type', 'task')
+    ->setDisplayConfigurable('view', TRUE)
+    ->setDisplayConfigurable('form', TRUE);
+  $fields['root_task'] = BaseFieldDefinition::create('entity_reference')
+    ->setLabel(new TranslatableMarkup('Root Task'))
+    ->setSetting('target_type', 'task')
+    ->setDisplayConfigurable('view', TRUE)
+    ->setDisplayConfigurable('form', TRUE);
+
+  /**
+   * @var string $name
+   * @var \Drupal\Core\Field\BaseFieldDefinition $definition
+   */
+  foreach ($fields as $name => $definition) {
+    $definition->setTargetEntityTypeId('message');
+    $definition->setName($name);
+    $definition->setProvider('task');
+
+    $storage_definition_listener->onFieldStorageDefinitionCreate($definition);
+    $field_definition_listener->onFieldDefinitionCreate($definition);
+  }
+}

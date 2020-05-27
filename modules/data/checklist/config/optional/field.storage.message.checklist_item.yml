@@ -1,0 +1,20 @@
+uuid: 0da05edb-0d15-4c60-9860-6a64ac9b4d79
+langcode: en
+status: true
+dependencies:
+  module:
+    - checklist
+    - message
+id: message.checklist_item
+field_name: checklist_item
+entity_type: message
+type: entity_reference
+settings:
+  target_type: checklist_item
+module: core
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false
