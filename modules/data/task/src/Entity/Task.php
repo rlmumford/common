@@ -3,11 +3,11 @@
 namespace Drupal\task\Entity;
 
 use Drupal\Core\Entity\ContentEntityBase;
-use Drupal\Core\Entity\EntityChangedTrait;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\datetime\Plugin\Field\FieldType\DateTimeItem;
 use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
 use Drupal\task\TaskInterface;
@@ -192,12 +192,19 @@ class Task extends ContentEntityBase implements TaskInterface {
 
     // Task Dependencies.
     $fields['dependencies'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('Depencies'))
+      ->setLabel(t('Dependencies'))
       ->setSetting('target_type', 'task')
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
       ->setDisplayOptions('form', [
         'type' => 'entity_reference_autocomplete',
       ])
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('form', TRUE);
+
+    $fields['root'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('Root Task'))
+      ->setSetting('target_type', 'task')
+      ->setCardinality(1)
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
 

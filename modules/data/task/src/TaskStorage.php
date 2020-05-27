@@ -28,7 +28,20 @@ class TaskStorage extends SqlContentEntityStorage {
       }
     }
 
+    if ($id && $entity->root->isEmpty()) {
+      $entity->root = $id;
+    }
+
     return $id;
+  }
+
+  protected function doSaveFieldItems(ContentEntityInterface $entity, array $names = []) {
+    parent::doSaveFieldItems($entity, $names);
+
+    if ($entity->root->isEmpty()) {
+      $entity->root = $entity->id();
+      parent::doSaveFieldItems($entity, ['root']);
+    }
   }
 
   /**
