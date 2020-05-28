@@ -1,0 +1,9 @@
+uuid: 850a6fea-0329-49d5-a7b6-9944d06535c4
+langcode: en
+status: true
+dependencies: { }
+third_party_settings: { }
+id: general
+label: General
+default_uri: 'project/[project:id]'
+default_label: ''
