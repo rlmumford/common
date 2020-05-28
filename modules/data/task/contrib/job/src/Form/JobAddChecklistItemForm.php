@@ -7,6 +7,7 @@ use Drupal\Component\Utility\Html;
 use Drupal\Core\Ajax\AjaxFormHelperTrait;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\RedirectCommand;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformState;
@@ -36,7 +37,8 @@ class JobAddChecklistItemForm extends FormBase {
     return new static(
       $container->get('task_job.tempstore_repository'),
       $container->get('plugin_form.factory'),
-      $container->get('plugin.manager.checklist_item_handler')
+      $container->get('plugin.manager.checklist_item_handler'),
+      $container->get('config.factory')
     );
   }
 
@@ -48,11 +50,13 @@ class JobAddChecklistItemForm extends FormBase {
   public function __construct(
     TaskJobTempstoreRepository $tempstore_repository,
     PluginFormFactoryInterface $plugin_form_factory,
-    ChecklistItemHandlerManager $manager
+    ChecklistItemHandlerManager $manager,
+    ConfigFactoryInterface $config_factory
   ) {
     $this->tempstoreRepository = $tempstore_repository;
     $this->pluginFormFactory = $plugin_form_factory;
     $this->manager = $manager;
+    $this->configFactory = $config_factory;
   }
 
   /**
@@ -84,6 +88,14 @@ class JobAddChecklistItemForm extends FormBase {
       '#title' => $this->t('Name'),
       '#size' => 10,
     ];
+    if ($default_prefix = $this->config('task_checklist.defaults')->get('ci_name_prefix')) {
+      $form['name']['#default_value'] = $default_prefix.str_pad(
+          count($job->getChecklistItems())+1,
+          2,
+          '0',
+          STR_PAD_LEFT
+        );
+    }
 
     $form['label'] = [
       '#type' => 'textfield',

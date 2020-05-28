@@ -2,10 +2,17 @@
 
 namespace Drupal\task\Form;
 
-use Drupal\Core\Form\FormBase;
+use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 
-class TaskConfigurationForm extends FormBase {
+class TaskConfigurationForm extends ConfigFormBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function getEditableConfigNames() {
+    return [];
+  }
 
 /**
  * {@inheritdoc}
@@ -18,9 +25,20 @@ class TaskConfigurationForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    return [
+    $form['message'] = [
       '#markup' => 'This form is for Task Configuration',
     ];
+
+    $form['actions'] = ['#type' => 'actions'];
+    $form['actions']['submit'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Save Configuration'),
+      '#submit' => [
+        '::submitForm',
+      ],
+    ];
+
+    return $form;
   }
 
   /**

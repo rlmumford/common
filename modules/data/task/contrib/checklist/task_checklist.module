@@ -1,6 +1,7 @@
 <?php
 
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity\BundleFieldDefinition;
 
@@ -18,4 +19,36 @@ function task_checklist_entity_base_field_info(EntityTypeInterface $entity_type)
   }
 
   return $fields;
+}
+
+/**
+ * Implements hook_form_task_configuration_form_alter().
+ */
+function task_checklist_form_task_configuration_form_alter(array &$form, FormStateInterface $form_state) {
+  $form['task_checklist'] = [
+    '#type' => 'details',
+    '#title' => new TranslatableMarkup('Checklist Settings'),
+    '#open' => TRUE,
+    '#tree' => TRUE,
+  ];
+  $form['task_checklist']['ci_name_prefix'] = [
+    '#type' => 'textfield',
+    '#title' => new TranslatableMarkup('Default Name Prefix'),
+    '#description' => new TranslatableMarkup('All checklist items must have a name that is unique with the checklist. This field sets an automatic prefix on those names to ease configuration'),
+    '#default_value' => \Drupal::configFactory()->get('task_checklist.defaults')->get('ci_name_prefix'),
+  ];
+
+  $form['actions']['submit']['#submit'][] = 'task_checklist_form_task_configuration_form_submit';
+}
+
+/**
+ * Submit to save task checklist settings.
+ *
+ * @param array $form
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ */
+function task_checklist_form_task_configuration_form_submit(array $form, FormStateInterface $form_state) {
+  \Drupal::configFactory()->getEditable('task_checklist.defaults')
+    ->set('ci_name_prefix', $form_state->getValue(['task_checklist', 'ci_name_prefix']))
+    ->save();
 }
