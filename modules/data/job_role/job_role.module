@@ -1,0 +1,53 @@
+<?php
+
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\organization\Entity\Organization;
+use Drupal\organization\Plugin\Field\FieldType\OrganizationMetadataReferenceItem;
+
+/**
+ * Implements hook_organization_access_operations_alter().
+ */
+function job_role_organization_access_operations_alter(array &$operations) {
+  $operations['manage_job_roles'] = new TranslatableMarkup('Manage Job Roles');
+  $operations['administer_job_roles'] = new TranslatableMarkup('Administer Job Roles');
+}
+
+/**
+ * @param \Drupal\organization\Entity\Organization $organization
+ * @param $operation
+ * @param \Drupal\Core\Session\AccountInterface $account
+ *
+ * @return \Drupal\Core\Access\AccessResult
+ */
+function job_role_organization_access(Organization $organization, $operation, AccountInterface $account) {
+  if ($operation === 'manage_job_roles' || $operation === 'administer_job_roles') {
+    $edit_access = $organization->access('edit', $account, TRUE);
+
+    if (!\Drupal::moduleHandler()->moduleExists('organization_user') || !$account->isAuthenticated()) {
+      return $edit_access;
+    }
+
+    $user = \Drupal::entityTypeManager()->getStorage('user')->load($account->id());
+    /** @var \Drupal\organization\Plugin\Field\FieldType\OrganizationMetadataReferenceItem $organization_item */
+    $organization_item = $user->organization->getOrganizationItem($organization, FALSE);
+
+    $roles = [
+      OrganizationMetadataReferenceItem::ROLE_OWNER,
+      OrganizationMetadataReferenceItem::ROLE_ADMIN
+    ];
+    if ($operation === 'manage_job_roles') {
+      $roles[] = OrganizationMetadataReferenceItem::ROLE_MEMBER;
+    }
+
+    return $edit_access->orIf(
+      AccessResult::allowedIf(
+        $organization_item->status == OrganizationMetadataReferenceItem::STATUS_ACTIVE &&
+        in_array($organization_item->role, $roles)
+      )->addCacheableDependency($user)
+    );
+  }
+
+  return AccessResult::neutral();
+}

@@ -1,0 +1,8 @@
+<?php
+
+/**
+ * Implements hook_views_plugins_argument_validator_alter.
+ */
+function organization_views_plugins_argument_validator_alter(array &$plugins) {
+  $plugins['entity:organization']['class'] = \Drupal\organization\Plugin\views\argument_validator\Organization::class;
+}

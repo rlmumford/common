@@ -28,6 +28,13 @@ function organization_user_entity_base_field_info(EntityTypeInterface $entity_ty
 }
 
 /**
+ * Implements hook_organization_access_operations_alter().
+ */
+function organization_user_organization_access_operations_alter(array &$operations) {
+  $operations['manage_members'] = new TranslatableMarkup('Manage Members');
+}
+
+/**
  * Implements hook_organization_access().
  */
 function organization_user_organization_access(Organization $entity, $operation, AccountInterface $account) {
@@ -45,6 +52,15 @@ function organization_user_organization_access(Organization $entity, $operation,
       if ($operation === 'view') {
         return AccessResult::allowedIf(
           $membership->status === OrganizationMetadataReferenceItem::STATUS_ACTIVE
+        )->addCacheableDependency($user);
+      }
+      else if ($operation === 'manage_members') {
+        return AccessResult::allowedIf(
+          $membership === OrganizationMetadataReferenceItem::STATUS_ACTIVE &&
+          in_array($membership->role, [
+            OrganizationMetadataReferenceItem::ROLE_ADMIN,
+            OrganizationMetadataReferenceItem::ROLE_OWNER
+          ])
         )->addCacheableDependency($user);
       }
       else {
