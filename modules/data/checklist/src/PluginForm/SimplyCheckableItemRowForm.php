@@ -41,11 +41,7 @@ class SimplyCheckableItemRowForm extends PluginFormBase {
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $item = $this->plugin->getItem();
     $is_reversible = !empty($this->plugin->getConfiguration()['reversible']);
-
-    // @todo: Move into ChecklistRowForm somehow?
-    $wrapper_id = "checklist-row--".$item->checklist->checklist->getKey()."--".$item->getName();
-    $form['#prefix'] = '<div id="'.$wrapper_id.'" class="checklist-item-row-form-wrapper">';
-    $form['#suffix'] = '</div>';
+    $wrapper_id = $form['#wrapper_id'];
 
     $form['checkbox'] = [
       '#type' => 'checkbox',
@@ -63,6 +59,7 @@ class SimplyCheckableItemRowForm extends PluginFormBase {
     $form['complete'] = [
       '#type' => 'submit',
       '#value' => new TranslatableMarkup('Complete'),
+      '#name' => 'complete',
       '#access' => !$form['checkbox']['#disabled'],
       '#ajax' => [
         'callback' => [ChecklistRowForm::class, 'onCompleteAjaxCallback'],

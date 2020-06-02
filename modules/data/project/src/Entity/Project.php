@@ -196,5 +196,12 @@ class Project extends ContentEntityBase implements ProjectInterface, EntityOwner
   public function getManagerId() {
     return $this->manager->target_id;
   }
+
+  /**
+   * Default value callback for author.
+   */
+  public static function getCurrentUserId() {
+    return [\Drupal::currentUser()->id()];
+  }
 }
 

@@ -237,7 +237,16 @@ class InteractiveChecklist extends FormatterBase {
         // }
       }
 
-      $elements[$delta] = $element;
+      $elements[$delta] = [
+        'checklist' => $element,
+        'action_form' => [
+          '#type' => 'html_tag',
+          '#tag' => 'div',
+          '#attributes' => [
+            'id' => $id.'--action-form-container',
+          ],
+        ],
+      ];
     }
 
     return $elements;

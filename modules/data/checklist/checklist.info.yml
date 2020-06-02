@@ -5,3 +5,4 @@ core_version_requirement: ^8 || 9
 package: RLMumford
 dependencies:
   - entity:entity
+  - inline_entity_form:inline_entity_form

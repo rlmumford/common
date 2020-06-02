@@ -1,0 +1,11 @@
+checklist.item.action_form:
+  path: '/checklist/{entity_type}/{entity_id}/{checklist}/{item_name}/action'
+  defaults:
+    _controller: '\Drupal\checklist\Controller\ChecklistController::actionForm'
+    _title: 'Action'
+  requirements:
+    _access: 'TRUE'
+  options:
+    parameters:
+      checklist:
+        checklist_tempstore: TRUE

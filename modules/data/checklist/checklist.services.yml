@@ -8,3 +8,8 @@ services:
   checklist.tempstore_repository:
     class: Drupal\checklist\ChecklistTempstoreRepository
     arguments: ['@tempstore.shared']
+  checklist.tempstore_param_converter:
+    class: Drupal\checklist\ChecklistTempstoreParamConverter
+    arguments: ['@checklist.tempstore_repository', '@entity_type.manager']
+    tags:
+      - { name: paramconverter, priority: 10 }
