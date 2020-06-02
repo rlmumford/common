@@ -1,0 +1,41 @@
+<?php
+
+use Drupal\Core\Database\Query\AlterableInterface;
+use Drupal\Core\Database\Query\SelectInterface;
+
+/**
+ * Implements hook_query_identity_data_access_alter().
+ */
+function identity_query_identity_data_access_alter(AlterableInterface $query) {
+  if (!($query instanceof SelectInterface)) {
+    return;
+  }
+
+  // Read meta-data from query, if provided.
+  if (!$account = $query->getMetaData('account')) {
+    $account = \Drupal::currentUser();
+  }
+  if (!$op = $query->getMetaData('op')) {
+    $op = 'view';
+  }
+
+  if ($account->hasPermission("{$op} any identity data") || $account->hasPermission('administer identity data')) {
+    return;
+  }
+
+  if ($account->hasPermission("{$op} own identity data")) {
+    $access_group = $query->andConditionGroup();
+    foreach ($query->getTables() as $table) {
+      if ($table['table'] === 'identity_data') {
+        $alias = isset($table['alias']) ? $table['alias'] : $table['table'];
+
+        $access_group->condition("{$alias}.user", $account->id());
+      }
+    }
+    $query->condition($access_group);
+  }
+  else {
+    // In this instance, block access to the query.
+    $query->where('1 = 0');
+  }
+}

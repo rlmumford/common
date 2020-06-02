@@ -12,6 +12,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\identity\Entity\Identity;
 use Drupal\identity\Entity\IdentityData;
 use Drupal\identity\Entity\IdentityDataSource;
+use Drupal\identity\IdentityAcquisitionResult;
 use Drupal\identity\IdentityDataGroup;
 use Drupal\identity\IdentityDataIdentityAcquirer;
 use Drupal\identity\IdentityLabelContext;
@@ -331,11 +332,13 @@ class ServiceController extends ControllerBase {
       IdentityLabelContext::DATA_PREFERENCE_CLASS => $request->query->get('label_dpclass', NULL),
       IdentityLabelContext::DATA_PREFERENCE_TYPE => $request->query->get('label_dptype', NULL),
     ]));
-
     $query->range(
       $request->query->get('start', 0),
       $request->query->get('end', 10)
     );
+
+    $query->addTag('identity_data_access');
+    $query->addTag('identity_access');
 
     $ids = $query->execute();
     $result = [];

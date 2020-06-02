@@ -11,18 +11,22 @@ interface IdentityInterface extends ContentEntityInterface {
    *
    * @param $type
    * @param array $filters
+   * @param bool $bypass_access
    *
    * @return \Drupal\identity\Entity\IdentityData[]|\Drupal\identity\IdentityDataIterator
    *
    * @todo: Always return an iterator.
    */
-  public function getData($type, array $filters = []);
+  public function getData($type, array $filters = [], $bypass_access = FALSE);
 
   /**
    * Get all datas from the identity.
    *
+   * @param array $filters
+   * @param bool $bypass_access
+   *
    * @return \Drupal\identity\Entity\IdentityData[]|\Drupal\identity\IdentityDataIterator
    */
-  public function getAllData(array $filters = []);
+  public function getAllData(array $filters = [], $bypass_access = FALSE);
 
 }
