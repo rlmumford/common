@@ -50,7 +50,7 @@ class SimplyCheckableItemRowForm extends PluginFormBase {
       '#default_value' => $item->isComplete(),
       '#disabled' => (!$is_reversible && $item->isComplete()) || $item->isFailed() || !$item->isActionable(),
       '#ajax' => [
-        'callback' => [ChecklistRowForm::class, 'onCompleteAjaxCallback'],
+        'callback' => '::onCompleteAjaxCallback',
         'wrapper' => $wrapper_id,
         'trigger_as' => ['name' => 'complete'],
       ]
@@ -62,7 +62,7 @@ class SimplyCheckableItemRowForm extends PluginFormBase {
       '#name' => 'complete',
       '#access' => !$form['checkbox']['#disabled'],
       '#ajax' => [
-        'callback' => [ChecklistRowForm::class, 'onCompleteAjaxCallback'],
+        'callback' => '::onCompleteAjaxCallback',
         'wrapper' => $wrapper_id,
       ],
       '#attributes' => [

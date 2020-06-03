@@ -2,3 +2,14 @@ form.checklist-item-row-form, div.checklist-item-row-form-wrapper {
   display: inline-block;
 }
 
+.ci-inprogress .input[type="checkbox"]:not(:checked) + span:not(.lever):before {
+  display: none;
+}
+.ci-inprogress input[type="checkbox"]:not(:checked) + span:not(.lever):after {
+  background: url("/core/misc/throbber-active.gif");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  border-color: transparent;
+}
+

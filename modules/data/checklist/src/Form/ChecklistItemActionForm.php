@@ -2,6 +2,8 @@
 
 namespace Drupal\checklist\Form;
 
+use Drupal\checklist\Ajax\EnsureItemCompleteCommand;
+use Drupal\checklist\Ajax\StartNextItemCommand;
 use Drupal\checklist\ChecklistTempstoreRepository;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\InsertCommand;
@@ -11,6 +13,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\PluginFormFactoryInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class ChecklistItemActionForm extends ChecklistItemFormBase {
@@ -103,6 +106,7 @@ class ChecklistItemActionForm extends ChecklistItemFormBase {
         'wrapper' => $wrapper_id,
       ],
     ];
+    $this->prepareAjaxSettings($form['actions']['complete'], $form_state);
 
     return parent::buildForm($form, $form_state);
   }
@@ -123,16 +127,29 @@ class ChecklistItemActionForm extends ChecklistItemFormBase {
     $response->addCommand(new InsertCommand('#'.$form_container_id,'<div id="'.$form_container_id.'"></div>'));
 
     // Second, refresh the row form.
-    // @todo: We need to find a way of keeping the action of this form consistent.
     /** @var \Drupal\checklist\Form\ChecklistRowForm $form_obj */
-    $form_obj = $this->classResolver->getInstanceFromDefinition(ChecklistRowForm::class);
-    $form_obj->setChecklistItem($this->item);
-    $row_form = $this->formBuilder->getForm($form_obj);
+    $row_form_obj = $this->classResolver->getInstanceFromDefinition(ChecklistRowForm::class);
+    $row_form_obj->setChecklistItem($this->item);
+    $row_form_obj->setActionUrl(Url::fromRoute(
+      'checklist.item.row_form',
+      [
+        'entity_type' => $checklist->getEntity()->getEntityTypeId(),
+        'entity_id' => $checklist->getEntity()->id(),
+        'checklist' => $checklist->getKey(),
+        'item_name' => $this->item->getName(),
+      ]
+    ));
+    $row_form = $this->formBuilder->getForm($row_form_obj);
     $row_form_html = $this->renderer->renderRoot($row_form);
     $response->addAttachments($row_form['#attached']);
     $response->addCommand(new InsertCommand('#'.$row_form['#wrapper_id'], $row_form_html));
 
-    // @todo: Update other items.
+    if ($this->item->isComplete()) {
+      $response->addCommand(new EnsureItemCompleteCommand($this->item));
+      // @todo: Make actionable.
+
+      $response->addCommand(new StartNextItemCommand($this->item));
+    }
 
     return $response;
   }

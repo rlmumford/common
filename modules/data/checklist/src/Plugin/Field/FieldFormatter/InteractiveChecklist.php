@@ -138,28 +138,19 @@ class InteractiveChecklist extends FormatterBase {
         '#id' => $id,
         '#theme' => 'item_list',
         '#list_type' => 'ul',
-        '#attached' => [
-          'drupalSettings' => [
-            'interactiveChecklist' => [
-              $id => [
-                'formContainerSelector' => $this->getSetting('form_container_selector'),
-                'resourceContainerSelector' => $this->getSetting('resource_container_selector'),
-              ]
-            ]
-          ]
-        ],
         '#attributes' => [
           'class' => [
             'checklist',
             'interactive-checklist',
             $items->getEntity()->getEntityTypeId().'-checklist',
+            $items->getEntity()->getEntityTypeId().'-'.str_replace(':', '--', $checklist->getKey()).'-checklist',
           ],
         ],
         '#items' => [],
       ];
 
       foreach ($checklist->getOrderedItems() as $name => $checklist_item) {
-        $checklist_item_classes = [];
+        $checklist_item_classes = ['ci'];
         if ($checklist_item->isComplete()) {
           $checklist_item_classes[] = 'ci-complete';
         }
@@ -178,7 +169,7 @@ class InteractiveChecklist extends FormatterBase {
         else {
           $checklist_item_classes[] = 'ci-inapplicable';
         }
-        if ($checklist_item->isActionable()) {
+        if ($checklist_item->isActionable() && !$checklist_item->isComplete() && !$checklist_item->isFailed()) {
           $checklist_item_classes[] = 'ci-actionable';
         }
         else {

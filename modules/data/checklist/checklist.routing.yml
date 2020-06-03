@@ -4,7 +4,18 @@ checklist.item.action_form:
     _controller: '\Drupal\checklist\Controller\ChecklistController::actionForm'
     _title: 'Action'
   requirements:
-    _access: 'TRUE'
+    _custom_access: '\Drupal\checklist\Controller\ChecklistController::rowFormAccess'
+  options:
+    parameters:
+      checklist:
+        checklist_tempstore: TRUE
+checklist.item.row_form:
+  path: '/checklist/{entity_type}/{entity_id}/{checklist}/{item_name}/row'
+  defaults:
+    _controller: '\Drupal\checklist\Controller\ChecklistController::rowForm'
+    _title: 'Row'
+  requirements:
+    _custom_access: '\Drupal\checklist\Controller\ChecklistController::rowFormAccess'
   options:
     parameters:
       checklist:

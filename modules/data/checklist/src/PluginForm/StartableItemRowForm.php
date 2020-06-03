@@ -27,12 +27,6 @@ class StartableItemRowForm extends PluginFormBase {
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $item = $this->plugin->getItem();
 
-    /** @var \Drupal\checklist\ChecklistInterface $checklist */
-    $checklist = $item->checklist->checklist;
-    $wrapper_id = $checklist->getEntity()->getEntityTypeId()
-      .'--'.str_replace(':', '--', $checklist->getKey())
-      .'--action-form-container';
-
     $form['checkbox'] = [
       '#type' => 'checkbox',
       '#title' => new TranslatableMarkup('Complete?'),
@@ -40,18 +34,9 @@ class StartableItemRowForm extends PluginFormBase {
       '#default_value' => $item->isComplete(),
       '#disabled' => $item->isComplete() || $item->isFailed() || !$item->isActionable(),
       '#ajax' => [
-        'wrapper' => $wrapper_id,
-        'method' => 'html',
+        'callback' => '::onStartAjaxCallback',
+        'wrapper' => $form['#wrapper_id'],
         'trigger_as' => ['name' => 'start'],
-        'url' => Url::fromRoute(
-          'checklist.item.action_form',
-          [
-            'entity_type' => $checklist->getEntity()->getEntityTypeId(),
-            'entity_id' => $checklist->getEntity()->id(),
-            'checklist' => $checklist->getKey(),
-            'item_name' => $item->getName(),
-          ]
-        )
       ]
     ];
 
@@ -61,17 +46,8 @@ class StartableItemRowForm extends PluginFormBase {
       '#access' => !$form['checkbox']['#disabled'],
       '#name' => 'start',
       '#ajax' => [
-        'wrapper' => $wrapper_id,
-        'method' => 'html',
-        'url' => Url::fromRoute(
-          'checklist.item.action_form',
-          [
-            'entity_type' => $checklist->getEntity()->getEntityTypeId(),
-            'entity_id' => $checklist->getEntity()->id(),
-            'checklist' => $checklist->getKey(),
-            'item_name' => $item->getName(),
-          ]
-        )
+        'callback' => '::onStartAjaxCallback',
+        'wrapper' => $form['#wrapper_id'],
       ],
       '#attributes' => [
         'class' => [
