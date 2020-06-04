@@ -26,3 +26,17 @@ task_job.checklist_item.remove:
     _title: 'Remove Checklist Item'
   requirements:
     _entity_access: 'task_job.update'
+task_job.task.add_form.select_job:
+  path: '/task/add/job'
+  defaults:
+    _controller: '\Drupal\task_job\Controller\TaskAddController::selectJob'
+    _title: 'Select Job'
+  requirements:
+    _entity_create_access: 'task'
+task_job.task.add_form:
+  path: '/task/add/job/{task_job}'
+  defaults:
+    _controller: '\Drupal\task_job\Controller\TaskAddController::createTask'
+    _title: 'Add Task'
+  requirements:
+    _entity_create_access: 'task'
