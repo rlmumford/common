@@ -7,6 +7,7 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\link\LinkItemInterface;
 use Drupal\user\EntityOwnerInterface;
 use Drupal\user\EntityOwnerTrait;
 
@@ -94,6 +95,8 @@ class Organization extends ContentEntityBase implements EntityOwnerInterface {
 
     $fields['website'] = BaseFieldDefinition::create('link')
       ->setLabel(new TranslatableMarkup('Website'))
+      ->setSetting('title', DRUPAL_DISABLED)
+      ->setSetting('link_type', LinkItemInterface::LINK_EXTERNAL)
       ->setDisplayOptions('view', [
         'type' => 'link_default',
       ])
