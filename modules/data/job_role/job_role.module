@@ -33,6 +33,10 @@ function job_role_organization_access(Organization $organization, $operation, Ac
     /** @var \Drupal\organization\Plugin\Field\FieldType\OrganizationMetadataReferenceItem $organization_item */
     $organization_item = $user->organization->getOrganizationItem($organization, FALSE);
 
+    if (!$organization_item) {
+      return $edit_access;
+    }
+
     $roles = [
       OrganizationMetadataReferenceItem::ROLE_OWNER,
       OrganizationMetadataReferenceItem::ROLE_ADMIN
