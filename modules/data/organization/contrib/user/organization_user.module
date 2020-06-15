@@ -39,38 +39,31 @@ function organization_user_organization_access_operations_alter(array &$operatio
  */
 function organization_user_organization_access(Organization $entity, $operation, AccountInterface $account) {
   $storage = \Drupal::entityTypeManager()->getStorage('user');
-  $query = $storage->getQuery();
-  $query->condition('uid', $account->id());
-  $query->condition('organization.target_id', $entity->id());
-  $query->condition('organization.status', OrganizationMetadataReferenceItem::STATUS_ACTIVE);
+  $user = $storage->load($account->id());
 
-  if ($ids = $query->execute()) {
-    $user = $storage->load(reset($ids));
-
-    /** @var OrganizationMetadataReferenceItem $membership */
-    if ($membership = $user->organization->getOrganizationItem($entity, FALSE)) {
-      if ($operation === 'view') {
-        return AccessResult::allowedIf(
-          $membership->status === OrganizationMetadataReferenceItem::STATUS_ACTIVE
-        )->addCacheableDependency($user);
-      }
-      else if ($operation === 'manage_members') {
-        return AccessResult::allowedIf(
-          $membership === OrganizationMetadataReferenceItem::STATUS_ACTIVE &&
-          in_array($membership->role, [
-            OrganizationMetadataReferenceItem::ROLE_ADMIN,
-            OrganizationMetadataReferenceItem::ROLE_OWNER
-          ])
-        )->addCacheableDependency($user);
-      }
-      else {
-        return AccessResult::allowedIf(
-          $membership->status === OrganizationMetadataReferenceItem::STATUS_ACTIVE &&
-          in_array($membership->role, [
-            OrganizationMetadataReferenceItem::ROLE_OWNER,
-            OrganizationMetadataReferenceItem::ROLE_ADMIN
-          ]))->addCacheableDependency($user);
-      }
+  /** @var OrganizationMetadataReferenceItem $membership */
+  if ($membership = $user->organization->getOrganizationItem($entity, FALSE)) {
+    if ($operation === 'view') {
+      return AccessResult::allowedIf(
+        $membership->status === OrganizationMetadataReferenceItem::STATUS_ACTIVE
+      )->addCacheableDependency($user);
+    }
+    else if ($operation === 'manage_members') {
+      return AccessResult::allowedIf(
+        $membership->status === OrganizationMetadataReferenceItem::STATUS_ACTIVE &&
+        in_array($membership->role, [
+          OrganizationMetadataReferenceItem::ROLE_ADMIN,
+          OrganizationMetadataReferenceItem::ROLE_OWNER
+        ])
+      )->addCacheableDependency($user);
+    }
+    else {
+      return AccessResult::allowedIf(
+        $membership->status === OrganizationMetadataReferenceItem::STATUS_ACTIVE &&
+        in_array($membership->role, [
+          OrganizationMetadataReferenceItem::ROLE_OWNER,
+          OrganizationMetadataReferenceItem::ROLE_ADMIN
+        ]))->addCacheableDependency($user);
     }
   }
 
