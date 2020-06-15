@@ -1,0 +1,5 @@
+name: Configuration Tools
+description: Help functions for configuration
+package: RLMumford
+type: module
+core_version_requirement: ^8.7.7 || ^9
