@@ -3,8 +3,9 @@
 namespace Drupal\task_job;
 
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\entity_template\Entity\BlueprintEntityInterface;
 
-interface JobInterface extends EntityInterface {
+interface JobInterface extends EntityInterface, BlueprintEntityInterface {
 
   /**
    * Get the default checklist items for this job.

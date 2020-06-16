@@ -30,7 +30,8 @@ use Drupal\task\TaskInterface;
  *     "storage" = "Drupal\task\TaskStorage",
  *     "access" = "Drupal\task\TaskAccessControlHandler",
  *     "form" = {
- *       "default" = "Drupal\task\TaskForm"
+ *       "default" = "Drupal\task\TaskForm",
+ *       "add" = "Drupal\task\TaskForm"
  *     },
  *     "views_data" = "Drupal\entity\EntityViewsData",
  *     "route_provider" = {

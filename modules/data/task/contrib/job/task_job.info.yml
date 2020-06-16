@@ -9,3 +9,5 @@ dependencies:
   - rlmumford:task_checklist
   - rlmumford:checklist
   - entity:entity
+  - entity_template:entity_template
+  - entity_template:entity_template_ui

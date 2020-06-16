@@ -3,6 +3,9 @@
 namespace Drupal\task_job\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\entity_template\BlueprintInterface;
+use Drupal\entity_template\BlueprintEntityAdaptor;
+use Drupal\entity_template\Entity\BlueprintEntityInterface;
 use Drupal\task_job\JobInterface;
 
 /**
@@ -22,6 +25,7 @@ use Drupal\task_job\JobInterface;
  *     "label",
  *     "description",
  *     "default_checklist",
+ *     "template",
  *   },
  *   handlers = {
  *     "list_builder" = "Drupal\task_job\Controller\JobListBuilder", *
@@ -62,5 +66,45 @@ class Job extends ConfigEntityBase implements JobInterface {
    */
   public function getChecklistItems(): array {
     return $this->get('default_checklist') ?: [];
+  }
+
+  /**
+   * Update from BlueprintInterface object.
+   *
+   * @return static
+   */
+  public function updateFromBlueprint(BlueprintInterface $blueprint): BlueprintEntityInterface {
+    // TODO: Implement updateFromBlueprint() method.
+
+    return $this;
+  }
+
+  /**
+   * [@inheritdoc}
+   */
+  public function toBlueprint(): BlueprintInterface {
+    return new BlueprintEntityAdaptor($this);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getBuilder(): string {
+    return 'task_job:'.$this->id();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getTemplates(): array {
+    return [
+      'default' => $this->get('template') ?: [
+        'id' => 'default',
+        'uuid' => 'default',
+        'label' => 'Default Template',
+        'conditions' => [],
+        'components' => [],
+      ]
+    ];
   }
 }

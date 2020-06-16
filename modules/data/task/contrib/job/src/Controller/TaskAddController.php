@@ -6,10 +6,17 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityFormBuilderInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Url;
+use Drupal\entity_template\TemplateBuilderManager;
 use Drupal\task_job\JobInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class TaskAddController extends ControllerBase {
+
+  /**
+   * @var \Drupal\entity_template\TemplateBuilderManager
+   */
+  protected $builderManager;
 
   /**
    * {@inheritdoc}
@@ -17,7 +24,8 @@ class TaskAddController extends ControllerBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('entity_type.manager'),
-      $container->get('entity.form_builder')
+      $container->get('entity.form_builder'),
+      $container->get('plugin.manager.entity_template.builder')
     );
   }
 
@@ -29,10 +37,12 @@ class TaskAddController extends ControllerBase {
    */
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
-    EntityFormBuilderInterface $entity_form_builder
+    EntityFormBuilderInterface $entity_form_builder,
+    TemplateBuilderManager $template_builder_manager
   ) {
     $this->entityTypeManager = $entity_type_manager;
     $this->entityFormBuilder = $entity_form_builder;
+    $this->builderManager = $template_builder_manager;
   }
 
   /**
@@ -73,8 +83,14 @@ class TaskAddController extends ControllerBase {
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   public function createTask(JobInterface $task_job) {
-    $task = $this->entityTypeManager->getStorage('task')
-      ->create(['job' => $task_job]);
+    /** @var \Drupal\entity_template\Plugin\EntityTemplate\Builder\BuilderInterface $builder */
+    $builder = $this->builderManager->createInstance("task_job:{$task_job->id()}");
+    $task = reset($builder->execute()->getItems());
+    if (!$task) {
+      throw new NotFoundHttpException();
+    }
+    $task->job = $task_job;
+
     return $this->entityFormBuilder->getForm($task, 'add');
   }
 

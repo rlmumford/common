@@ -5,7 +5,13 @@ namespace Drupal\task_job\Form;
 use Drupal\checklist\ChecklistItemHandlerManager;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Form\SubformState;
+use Drupal\Core\Plugin\PluginFormFactoryInterface;
+use Drupal\Core\Plugin\PluginWithFormsInterface;
 use Drupal\Core\Url;
+use Drupal\entity_template\BlueprintEntityStorageAdaptor;
+use Drupal\entity_template\BlueprintTempstoreRepository;
+use Drupal\entity_template\TemplateBlueprintProviderManager;
 use Drupal\task_job\JobInterface;
 use Drupal\task_job\TaskJobTempstoreRepository;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -18,9 +24,34 @@ class JobEditForm extends JobForm {
   protected $entity;
 
   /**
+   * @var \Drupal\entity_template\Plugin\EntityTemplate\Template\TemplateInterface
+   */
+  protected $template;
+
+  /**
+   * @var \Drupal\entity_template\BlueprintStorageInterface
+   */
+  protected $blueprintStorage;
+
+  /**
+   * @var \Drupal\entity_template\TemplateBlueprintProviderManager
+   */
+  protected $blueprintProviderManager;
+
+  /**
+   * @var \Drupal\entity_template\BlueprintTempstoreRepository
+   */
+  protected $blueprintTempstoreRepository;
+
+  /**
    * @var \Drupal\task_job\TaskJobTempstoreRepository
    */
   protected $tempstoreRepository;
+
+  /**
+   * @var \Drupal\Core\Plugin\PluginFormFactoryInterface
+   */
+  protected $pluginFormFactory;
 
   /**
    * @var \Drupal\checklist\ChecklistItemHandlerManager
@@ -33,7 +64,10 @@ class JobEditForm extends JobForm {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('task_job.tempstore_repository'),
-      $container->get('plugin.manager.checklist_item_handler')
+      $container->get('plugin.manager.checklist_item_handler'),
+      $container->get('plugin.manager.entity_template.blueprint_provider'),
+      $container->get('entity_template.blueprint_tempstore_repository'),
+      $container->get('plugin_form.factory')
     );
   }
 
@@ -42,9 +76,18 @@ class JobEditForm extends JobForm {
    *
    * @param \Drupal\task_job\TaskJobTempstoreRepository $tempstore_repository
    */
-  public function __construct(TaskJobTempstoreRepository $tempstore_repository, ChecklistItemHandlerManager $manager) {
+  public function __construct(
+    TaskJobTempstoreRepository $tempstore_repository,
+    ChecklistItemHandlerManager $manager,
+    TemplateBlueprintProviderManager $blueprint_provider_manager,
+    BlueprintTempstoreRepository $blueprint_tempstore_repository,
+    PluginFormFactoryInterface $plugin_form_factory
+  ) {
     $this->tempstoreRepository = $tempstore_repository;
+    $this->blueprintTempstoreRepository = $blueprint_tempstore_repository;
     $this->manager = $manager;
+    $this->blueprintProviderManager = $blueprint_provider_manager;
+    $this->pluginFormFactory = $plugin_form_factory;
   }
 
   /**
@@ -70,6 +113,50 @@ class JobEditForm extends JobForm {
    */
   public function form(array $form, FormStateInterface $form_state) {
     $form = parent::form($form, $form_state);
+
+    $form['template'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Task Template'),
+      '#description' => $this->t('Configure how a task gets created with this job'),
+      '#open' => TRUE,
+      '#parents' => ['template'],
+    ];
+
+    $this->blueprintStorage = new BlueprintEntityStorageAdaptor(
+      $this->entity,
+      $this->blueprintProviderManager->createInstance('builder')
+    );
+    $this->blueprintStorage = $this->blueprintTempstoreRepository->get(
+      $this->blueprintStorage
+    );
+
+    if (!$this->template) {
+      $this->template = $this->blueprintStorage->getTemplate('default');
+    }
+
+    if (
+      ($this->template instanceof PluginWithFormsInterface) &&
+      $this->template->hasFormClass("configure")
+    ) {
+      $plugin_form = $this->pluginFormFactory->createInstance(
+        $this->template,
+        "configure"
+      );
+
+      $form['template'] = $plugin_form->buildConfigurationForm(
+        $form['template'],
+        SubformState::createForSubform(
+          $form['template'],
+          $form,
+          $form_state
+        )
+      );
+
+      // Hide the label and description fields as we don't need them.
+      $form['template']['label']['#access'] = FALSE;
+      $form['template']['description']['#access'] = FALSE;
+      $form['template']['conditions']['#access'] = FALSE;
+    }
 
     $form['checklist'] = [
       '#type' => 'details',
@@ -168,8 +255,37 @@ class JobEditForm extends JobForm {
   /**
    * {@inheritdoc}
    */
+  public function submitForm(array &$form, FormStateInterface $form_state) {
+    parent::submitForm($form, $form_state);
+
+    if (
+      ($this->template instanceof PluginWithFormsInterface) &&
+      $this->template->hasFormClass("configure")
+    ) {
+      $plugin_form = $this->pluginFormFactory->createInstance(
+        $this->template,
+        "configure"
+      );
+
+      $plugin_form->submitConfigurationForm(
+        $form['template'],
+        SubformState::createForSubform(
+          $form['template'],
+          $form,
+          $form_state
+        )
+      );
+    }
+
+    $this->entity->set('template', $this->template->getConfiguration());
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function save(array $form, FormStateInterface $form_state) {
     $return = parent::save($form, $form_state);
+    $this->blueprintTempstoreRepository->delete($this->blueprintStorage);
     $this->tempstoreRepository->delete($this->entity);
     return $return;
   }
