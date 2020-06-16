@@ -35,7 +35,10 @@ use Drupal\user\EntityOwnerTrait;
  *   base_table = "organization",
  *   revision_table = "organization_revision",
  *   admin_permission = "administer organizations",
- *   field_ui_base_route = "organization.configuration",
+ *   field_ui_base_route = "organization.configuration", *
+ *   links = {
+ *     "canonical" = "/admin/organization/{organization}",
+ *   },
  *   entity_keys = {
  *     "id" = "id",
  *     "revision" = "vid",
