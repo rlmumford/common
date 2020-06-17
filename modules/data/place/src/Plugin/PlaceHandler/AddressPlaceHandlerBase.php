@@ -24,6 +24,9 @@ class AddressPlaceHandlerBase extends PlaceHandlerBase {
         'givenName' => ['override' => 'hidden'],
         'familyName' => ['override' => 'hidden'],
       ])
+      ->setDisplayOptions('view', [
+        'type' => 'address_default',
+      ])
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayOptions('form', [
         'type' => 'address_default',
