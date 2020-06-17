@@ -25,7 +25,7 @@ use Drupal\task_job\JobInterface;
  *     "label",
  *     "description",
  *     "default_checklist",
- *     "template",
+ *     "triggers",
  *   },
  *   handlers = {
  *     "list_builder" = "Drupal\task_job\Controller\JobListBuilder", *
@@ -69,41 +69,14 @@ class Job extends ConfigEntityBase implements JobInterface {
   }
 
   /**
-   * Update from BlueprintInterface object.
-   *
-   * @return static
-   */
-  public function updateFromBlueprint(BlueprintInterface $blueprint): BlueprintEntityInterface {
-    // TODO: Implement updateFromBlueprint() method.
-
-    return $this;
-  }
-
-  /**
-   * [@inheritdoc}
-   */
-  public function toBlueprint(): BlueprintInterface {
-    return new BlueprintEntityAdaptor($this);
-  }
-
-  /**
    * {@inheritdoc}
    */
-  public function getBuilder(): string {
-    return 'task_job:'.$this->id();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getTemplates(): array {
-    return [
-      'default' => $this->get('template') ?: [
-        'id' => 'default',
-        'uuid' => 'default',
-        'label' => 'Default Template',
-        'conditions' => [],
-        'components' => [],
+  public function getTriggers(): array {
+    return $this->get('triggers') ?: [
+      'manual' => [
+        'id' => 'manual',
+        'key' => 'manual',
+        'template' => [],
       ]
     ];
   }

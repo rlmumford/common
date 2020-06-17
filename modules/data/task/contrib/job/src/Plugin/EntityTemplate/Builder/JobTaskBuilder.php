@@ -36,7 +36,7 @@ class JobTaskBuilder extends BuilderBase {
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  protected function getJob() : JobInterface {
+  public function getJob() : JobInterface {
     if (!$this->job) {
       $this->job = $this->entityTypeManager->getStorage('task_job')
         ->load($this->getPluginDefinition()['task_job']);

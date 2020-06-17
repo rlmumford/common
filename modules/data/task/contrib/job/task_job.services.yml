@@ -2,3 +2,6 @@ services:
   task_job.tempstore_repository:
     class: Drupal\task_job\TaskJobTempstoreRepository
     arguments: ['@tempstore.shared']
+  plugin.manager.task_job.trigger:
+    class: Drupal\task_job\Plugin\JobTrigger\JobTriggerManager
+    parent: default_plugin_manager

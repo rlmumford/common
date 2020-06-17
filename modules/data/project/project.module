@@ -46,6 +46,19 @@ function project_field_widget_info_alter(array &$info) {
 }
 
 /**
+ * Implements hook_entity_template_builder_alter().
+ */
+function project_entity_template_builder_alter(array &$info) {
+  foreach ($info as $plugin_id => $definition) {
+    if (
+      $definition['class'] === '\Drupal\task_job\Plugin\EntityTemplate\Builder\JobTaskBuilder'
+    ) {
+      $definition['context']['project'] = new \Drupal\Core\Plugin\Context\ContextDefinition();
+    }
+  }
+}
+
+/**
  * Implements hook_note_presave().
  */
 function project_note_presave(EntityInterface $note) {
