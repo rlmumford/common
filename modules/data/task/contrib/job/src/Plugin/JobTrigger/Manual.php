@@ -30,4 +30,10 @@ class Manual extends JobTriggerBase {
     return new TranslatableMarkup('This job can be manually created by a user.');
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  protected function getDefaultKey(): string {
+    return $this->getPluginId();
+  }
 }

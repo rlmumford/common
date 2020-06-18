@@ -61,8 +61,17 @@ abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTrigg
    * {@inheritdoc}
    */
   public function getKey(): string {
-    return $this->configuration['key'];
+    return isset($this->configuration['key']) ?
+      $this->configuration['key'] :
+      $this->getDefaultKey();
   }
+
+  /**
+   * Get the default key for this trigger.
+   *
+   * @return string
+   */
+  abstract protected function getDefaultKey(): string;
 
   public function setJob(JobInterface $job): JobTriggerInterface {
     $this->job = $job;

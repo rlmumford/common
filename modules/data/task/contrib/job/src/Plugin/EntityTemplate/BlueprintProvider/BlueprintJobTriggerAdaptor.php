@@ -95,8 +95,10 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
       return [
         'default' => !empty($conf['template']) ? $conf['template'] : [
           'id' => 'default',
+          'label' => new TranslatableMarkup('Template'),
           'uuid' => 'default',
           'components' => $this->getDefaultTemplateComponents(),
+          'conditions' => [],
         ],
       ];
     }

@@ -92,6 +92,7 @@ class Task extends ContentEntityBase implements TaskInterface {
 
     $fields['title'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Title'))
+      ->setRequired(TRUE)
       ->setSetting('max_length', 255)
       ->setDisplayOptions('view', [
         'label' => 'hidden',
@@ -106,6 +107,7 @@ class Task extends ContentEntityBase implements TaskInterface {
 
     $fields['description'] = BaseFieldDefinition::create('text_long')
       ->setLabel(t('Description'))
+      ->setRequired(TRUE)
       ->setDisplayOptions('view', [
         'label' => 'above',
         'type' => 'text_default',

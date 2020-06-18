@@ -120,62 +120,6 @@ class JobEditForm extends JobForm {
   public function form(array $form, FormStateInterface $form_state) {
     $form = parent::form($form, $form_state);
 
-    $form['triggers'] = [
-      '#type' => 'fieldset',
-      '#title' => $this->t('Triggers'),
-      '#description' => $this->t('What triggers tasks of this job?'),
-      '#tree' => TRUE,
-    ];
-
-    foreach ($this->entity->getTriggerCollection() as $key => $trigger) {
-      if (!$trigger) {
-        continue;
-      }
-      $element = [
-        '#type' => 'details',
-        '#title' => $trigger->getLabel(),
-        '#description' => $trigger->getDescription(),
-      ];
-      $element['template'] = [
-        '#type' => 'container',
-        '#title' => $this->t('Template'),
-        '#description' => $this->t('Configure how a task gets created with this job'),
-        '#open' => TRUE,
-        '#parents' => ['triggers', $key, 'template'],
-      ];
-
-      $storage = new BlueprintStorageJobTriggerAdaptor(
-        $this->entity,
-        $trigger,
-        $this->blueprintProviderManager->createInstance('job_trigger')
-      );
-      $this->blueprintStorages[$key] = $this->blueprintTempstoreRepository->get($storage);
-      $template = $this->blueprintStorages[$key]->getTemplate('default');
-
-      if (($template instanceof PluginWithFormsInterface) && $template->hasFormClass("configure")) {
-        $plugin_form = $this->pluginFormFactory->createInstance(
-          $template,
-          "configure"
-        );
-
-        $element['template'] = $plugin_form->buildConfigurationForm(
-          $element['template'],
-          SubformState::createForSubform(
-            $element['template'],
-            $form,
-            $form_state
-          )
-        );
-
-        // Hide the label and description fields as we don't need them.
-        $element['template']['label']['#access'] = FALSE;
-        $element['template']['description']['#access'] = FALSE;
-        $element['template']['conditions']['#access'] = FALSE;
-      }
-
-      $form['triggers'][$key] = $element;
-    }
-
     $form['checklist'] = [
       '#type' => 'details',
       '#title' => $this->t('Default Checklist'),
@@ -267,6 +211,75 @@ class JobEditForm extends JobForm {
       $form['checklist']['table'][$name] = $row;
     }
 
+    $form['triggers'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Triggers'),
+      '#description' => $this->t('What triggers tasks of this job?'),
+      '#tree' => TRUE,
+    ];
+    $form['triggers']['__add'] = [
+      '#type' => 'link',
+      '#title' => $this->t('Add Trigger'),
+      '#url' => Url::fromRoute(
+        'task_job.trigger.choose',
+        [
+          'task_job' => $this->entity->id(),
+        ],
+        $ajax_attributes
+      ),
+      '#attributes' => [
+        'class' => ['add-trigger-button', 'btn', 'button']
+      ],
+    ];
+
+    foreach ($this->entity->getTriggerCollection() as $key => $trigger) {
+      $element = [
+        '#type' => 'details',
+        '#title' => $trigger->getLabel(),
+        '#description' => $trigger->getDescription(),
+      ];
+      $element['template'] = [
+        '#type' => 'container',
+        '#title' => $this->t('Template'),
+        '#description' => $this->t('Configure how a task gets created with this job'),
+        '#open' => TRUE,
+        '#parents' => ['triggers', $key, 'template'],
+      ];
+
+      $storage = new BlueprintStorageJobTriggerAdaptor(
+        $this->entity,
+        $trigger,
+        $this->blueprintProviderManager->createInstance('job_trigger')
+      );
+      $storage = $this->blueprintTempstoreRepository->get($storage);
+      $this->blueprintTempstoreRepository->set($storage);
+      $this->blueprintStorages[$key] = $storage;
+      $template = $this->blueprintStorages[$key]->getTemplate('default');
+
+      if (($template instanceof PluginWithFormsInterface) && $template->hasFormClass("configure")) {
+        $plugin_form = $this->pluginFormFactory->createInstance(
+          $template,
+          "configure"
+        );
+
+        $element['template'] = $plugin_form->buildConfigurationForm(
+          $element['template'],
+          SubformState::createForSubform(
+            $element['template'],
+            $form,
+            $form_state
+          )
+        );
+
+        // Hide the label and description fields as we don't need them.
+        $element['template']['label']['#access'] = FALSE;
+        $element['template']['description']['#access'] = FALSE;
+        $element['template']['conditions']['#access'] = FALSE;
+      }
+
+      $form['triggers'][$key] = $element;
+    }
+
     return $form;
   }
 
@@ -277,6 +290,10 @@ class JobEditForm extends JobForm {
     parent::submitForm($form, $form_state);
 
     foreach (Element::children($form['triggers']) as $key) {
+      if ($key === '__add') {
+        continue;
+      }
+
       $storage = $this->blueprintStorages[$key];
       $template = $storage->getTemplate('default');
 

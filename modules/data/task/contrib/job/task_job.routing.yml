@@ -26,6 +26,20 @@ task_job.checklist_item.remove:
     _title: 'Remove Checklist Item'
   requirements:
     _entity_access: 'task_job.update'
+task_job.trigger.choose:
+  path: '/admin/config/task/job/{task_job}/trigger/choose'
+  defaults:
+    _controller: '\Drupal\task_job\Controller\ChooseTriggerController::build'
+    _title: 'Choose a Trigger'
+  requirements:
+    _entity_access: 'task_job.update'
+task_job.trigger.add:
+  path: '/admin/config/task/job/{task_job}/trigger/add/{plugin_id}'
+  defaults:
+    _form: '\Drupal\task_job\Form\JobAddTriggerForm'
+    _title: 'Add a Trigger'
+  requirements:
+    _entity_access: 'task_job.update'
 task_job.task.add_form.select_job:
   path: '/task/add/job'
   defaults:
