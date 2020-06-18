@@ -96,11 +96,39 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
         'default' => !empty($conf['template']) ? $conf['template'] : [
           'id' => 'default',
           'uuid' => 'default',
+          'components' => $this->getDefaultTemplateComponents(),
         ],
       ];
     }
 
     return $this->templatesCollection->getConfiguration();
+  }
+
+  /**
+   * Get the default template components.
+   *
+   * @return array.
+   */
+  protected function getDefaultTemplateComponents() : array {
+    $components = [];
+
+    /** @var \Drupal\Core\Entity\EntityFieldManagerInterface $field_manager */
+    $field_manager = \Drupal::service('entity_field.manager');
+    foreach ($field_manager->getFieldDefinitions('task', 'task') as $name => $definition) {
+      if (
+        !$definition->isRequired() || $definition->isReadOnly() ||
+        $definition->isComputed() || ($name === 'job')
+      ) {
+        continue;
+      }
+
+      $components[$name] = [
+        'id' => 'field.widget_input:task.'.$name,
+        'uuid' => $name,
+      ];
+    }
+
+    return $components;
   }
 
   /**

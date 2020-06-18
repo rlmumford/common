@@ -127,16 +127,10 @@ class JobEditForm extends JobForm {
       '#tree' => TRUE,
     ];
 
-    foreach ($this->entity->getTriggers() as $key => $configuration) {
-      /** @var \Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface $trigger */
-      $trigger = $this->jobTriggerManager->createInstance(
-        $configuration['id'],
-        $configuration + [
-          'key' => $key,
-        ]
-      );
-      $trigger->setJob($this->entity);
-
+    foreach ($this->entity->getTriggerCollection() as $key => $trigger) {
+      if (!$trigger) {
+        continue;
+      }
       $element = [
         '#type' => 'details',
         '#title' => $trigger->getLabel(),
@@ -323,7 +317,10 @@ class JobEditForm extends JobForm {
    */
   public function save(array $form, FormStateInterface $form_state) {
     $return = parent::save($form, $form_state);
-    $this->blueprintTempstoreRepository->delete($this->blueprintStorage);
+
+    foreach ($this->blueprintStorages as $key => $storage) {
+      $this->blueprintTempstoreRepository->delete($storage);
+    }
     $this->tempstoreRepository->delete($this->entity);
     return $return;
   }

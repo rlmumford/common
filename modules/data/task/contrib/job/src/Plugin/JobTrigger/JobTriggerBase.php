@@ -64,8 +64,9 @@ abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTrigg
     return $this->configuration['key'];
   }
 
-  public function setJob(JobInterface $job) {
+  public function setJob(JobInterface $job): JobTriggerInterface {
     $this->job = $job;
+    return $this;
   }
 
   public function getJob(): JobInterface {
@@ -90,6 +91,7 @@ abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTrigg
 
     $result = $builder->execute($parameters);
     $task = reset($result->getItems());
+    $task->job = $this->getJob();
 
     return $task;
   }

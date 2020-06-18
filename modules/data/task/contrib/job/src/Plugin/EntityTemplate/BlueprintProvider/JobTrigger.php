@@ -74,7 +74,7 @@ class JobTrigger extends PluginBase implements BlueprintProviderInterface, Conta
 
     $job = $builder->getJob();
     $bps = [];
-    foreach ($job->getTriggers() as $trigger => $configuration) {
+    foreach ($job->getTriggersConfiguration() as $trigger => $configuration) {
       $bps[$trigger] = new BlueprintJobTriggerAdaptor(
         $job,
         $this->jobTriggerManager->createInstance($configuration['id'], $configuration)
@@ -103,7 +103,7 @@ class JobTrigger extends PluginBase implements BlueprintProviderInterface, Conta
     }
 
     $job = $builder->getJob();
-    $triggers = $job->getTriggers();
+    $triggers = $job->getTriggersConfiguration();
     $trigger = $parameters['job_trigger'] instanceof ContextInterface ? $parameters['job_trigger']->getContextValue() : $parameters['job_trigger'];
 
     if (!isset($triggers[$trigger])) {
@@ -134,7 +134,7 @@ class JobTrigger extends PluginBase implements BlueprintProviderInterface, Conta
 
     /** @var \Drupal\task_job\JobInterface $job */
     $job = $this->entityTypeManager->getStorage('task_job')->load($job_id);
-    $triggers = $job->getTriggers();
+    $triggers = $job->getTriggersConfiguration();
 
     if (!isset($triggers[$trigger])) {
       return NULL;

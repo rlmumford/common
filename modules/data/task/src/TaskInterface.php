@@ -2,7 +2,9 @@
 
 namespace Drupal\task;
 
-interface TaskInterface {
+use Drupal\Core\Entity\EntityInterface;
+
+interface TaskInterface extends EntityInterface {
 
   /**
    * Status Pending

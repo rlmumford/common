@@ -2,11 +2,16 @@
 
 namespace Drupal\task_job\Entity;
 
+use Drupal\Component\Plugin\LazyPluginCollection;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\Core\Entity\EntityWithPluginCollectionInterface;
+use Drupal\Core\Plugin\DefaultLazyPluginCollection;
 use Drupal\entity_template\BlueprintInterface;
 use Drupal\entity_template\BlueprintEntityAdaptor;
 use Drupal\entity_template\Entity\BlueprintEntityInterface;
 use Drupal\task_job\JobInterface;
+use Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface;
+use Drupal\task_job\Plugin\JobTrigger\LazyJobTriggerCollection;
 
 /**
  * Class Job
@@ -54,6 +59,11 @@ use Drupal\task_job\JobInterface;
 class Job extends ConfigEntityBase implements JobInterface {
 
   /**
+   * @var \Drupal\Component\Plugin\LazyPluginCollection
+   */
+  protected $triggerCollection;
+
+  /**
    * Get the default checklist items for this job.
    *
    * @return array
@@ -71,13 +81,47 @@ class Job extends ConfigEntityBase implements JobInterface {
   /**
    * {@inheritdoc}
    */
-  public function getTriggers(): array {
-    return $this->get('triggers') ?: [
+  public function getTriggersConfiguration(): array {
+    return $this->get('triggers') ?: [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function defaultTriggersConfiguration(): array {
+    return [
       'manual' => [
         'id' => 'manual',
         'key' => 'manual',
         'template' => [],
       ]
     ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getTriggerCollection(): LazyPluginCollection {
+    if (!$this->triggerCollection) {
+      $this->triggerCollection = new LazyJobTriggerCollection(
+        $this,
+        \Drupal::service('plugin.manager.task_job.trigger'),
+        $this->getTriggersConfiguration() ?: $this->defaultTriggersConfiguration()
+      );
+    }
+
+    return $this->triggerCollection;
+  }
+
+  public function getTrigger(string $key): ?JobTriggerInterface {
+    return $this->getTriggerCollection()->get($key);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function hasTrigger(string $key): bool {
+    $triggers = $this->getTriggersConfiguration();
+    return isset($triggers[$key]);
   }
 }

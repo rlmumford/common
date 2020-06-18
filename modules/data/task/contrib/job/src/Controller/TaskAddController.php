@@ -59,15 +59,21 @@ class TaskAddController extends ControllerBase {
     ];
 
     $job_storage = $this->entityTypeManager->getStorage('task_job');
-    foreach ($job_storage->loadMultiple() as $id => $job) {
-      $build['#items'][] = [
-        '#type' => 'link',
-        '#url' => Url::fromRoute('task_job.task.add_form', ['task_job' => $id]),
-        '#title' => $job->label(),
-        '#attributes' => [
-          'class' => ['use-ajax'],
-        ]
-      ];
+    /** @var \Drupal\task_job\JobInterface $job */
+    foreach ($job_storage->loadMultiple() as $job) {
+      if ($job->hasTrigger('manual')) {
+        $build['#items'][] = [
+          '#type' => 'link',
+          '#url' => Url::fromRoute(
+            'task_job.task.add_form',
+            ['task_job' => $job->id()]
+          ),
+          '#title' => $job->label(),
+          '#attributes' => [
+            'class' => ['use-ajax'],
+          ],
+        ];
+      }
     }
 
     return $build;
@@ -83,13 +89,11 @@ class TaskAddController extends ControllerBase {
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   public function createTask(JobInterface $task_job) {
-    /** @var \Drupal\entity_template\Plugin\EntityTemplate\Builder\BuilderInterface $builder */
-    $builder = $this->builderManager->createInstance("task_job:{$task_job->id()}");
-    $task = reset($builder->execute()->getItems());
+    $task = $task_job->getTrigger('manual')->createTask();
+
     if (!$task) {
       throw new NotFoundHttpException();
     }
-    $task->job = $task_job;
 
     return $this->entityFormBuilder->getForm($task, 'add');
   }
