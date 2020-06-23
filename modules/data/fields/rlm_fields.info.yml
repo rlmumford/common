@@ -1,0 +1,9 @@
+name: RLMumford Fields
+description: 'Useful fields.'
+type: module
+package: RLMumford
+core_version_requirement: ^8 || ^9
+
+dependencies:
+- drupal:telephone
+- drupal:language
