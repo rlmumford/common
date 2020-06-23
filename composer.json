@@ -63,9 +63,8 @@
           },
           "drupal/core": {
               "Layout builder context hook": "https://www.drupal.org/files/issues/2019-05-10/3001188-5.patch",
-              "Layout builder visibility rules": "https://www.drupal.org/files/issues/2019-05-03/2916876-52.patch",
-              "Layout builder form blocks": "https://www.drupal.org/files/issues/2019-08-12/3045171-79.patch",
-              "Entity reference views autocomplete filters": "https://www.drupal.org/files/issues/2019-12-24/drupal-generalize-taxonomyindextid-filter-2429699-277.patch"
+              "Layout builder visibility rules": "https://www.drupal.org/files/issues/2019-05-03/2916876-83.patch",
+              "Entity reference views autocomplete filters": "https://www.drupal.org/files/issues/2020-03-18/drupal-generalize-taxonomyindextid-filter-2429699-311.patch"
           }
       }
     },
