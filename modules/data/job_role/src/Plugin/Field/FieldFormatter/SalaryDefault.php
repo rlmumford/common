@@ -43,15 +43,15 @@ class SalaryDefault extends FormatterBase {
       SalaryItem::TYPE_PH => $this->t('per Hour'),
     ];
     foreach ($items as $delta => $item) {
-      $period_formatted = $periods[$item->type];
+      $period_formatted = $periods[$item->type ?: SalaryItem::TYPE_PA];
       $min_formatted = $item->min.$item->currency_code;
       $max_formatted = $item->max.$item->currency_code;
 
       if (\Drupal::moduleHandler()->moduleExists('commerce_price')) {
         /** @var \CommerceGuys\Intl\Formatter\CurrencyFormatterInterface $currency_formatter */
         $currency_formatter = \Drupal::service('commerce_price.currency_formatter');
-        $min_formatted = $currency_formatter->format($item->min, $item->currency_code);
-        $max_formatted = $currency_formatter->format($item->max, $item->currency_code);
+        $min_formatted = $currency_formatter->format($item->min ?: '0', $item->currency_code);
+        $max_formatted = $currency_formatter->format($item->max ?: '0', $item->currency_code);
       }
 
       if (empty($item->min) || $item->min == '0') {
