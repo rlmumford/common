@@ -7,6 +7,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\Context\Context;
 use Drupal\Core\Plugin\Context\ContextDefinition;
 use Drupal\Core\Plugin\Context\EntityContext;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 use Drupal\ctools_block\Plugin\Block\EntityField;
 use Drupal\flexilayout_builder\Entity\FlexibleLayoutBuilderEntityViewDisplay;
@@ -23,16 +24,24 @@ function flexilayout_builder_entity_type_alter(array &$entity_types) {
 }
 
 /**
- * Implements hook_element_info_alter
- *
- * The pre_render callback added here adds a "Manage Context" link to the interface
- * that allows the addition of static contexts and relationships.
- *
- * @param array $info
+ * Implements hook_form_entity_view_display_layout_builder_form_alter().
  */
-function flexilayout_builder_element_info_alter(array &$info) {
-  $info['layout_builder']['#pre_render'][] = 'flexilayout_builder_layout_builder_context_control_pre_render';
+function flexilayout_builder_form_entity_view_display_layout_builder_form_alter(array &$form, FormStateInterface $form_state) {
+  $form['actions']['manage_context'] = [
+    '#type' => 'link',
+    '#title' => new TranslatableMarkup('Manage Context'),
+    '#url' => Url::fromRoute('flexilayout_builder.view_context', [
+      'section_storage_type' => $form_state->getFormObject()->getSectionStorage()->getStorageType(),
+      'section_storage' => $form_state->getFormObject()->getSectionStorage()->getStorageId(),
+    ]),
+    '#attributes' => [
+      'class' => ['use-ajax', 'btn'],
+      'data-dialog-type' => 'dialog',
+      'data-dialog-renderer' => 'off_canvas',
+    ],
+  ];
 }
+
 
 /**
  * Implements hook_layout_builder_section_storage().
@@ -55,42 +64,6 @@ function flexilayout_builder_module_implements_alter(&$implementations, $hook) {
     unset($implementations['flexilayout_builder']);
     $implementations['flexilayout_builder'] = $group;
   }
-}
-
-/**
- * Pre render the layout builder interface to add the context controls.
- */
-function flexilayout_builder_layout_builder_context_control_pre_render($element) {
-  /** @var \Drupal\layout_builder\SectionStorageInterface $section_storage */
-  $section_storage = $element['#section_storage'];
-  if (!($section_storage instanceof ThirdPartySettingsInterface)) {
-    return $element;
-  }
-
-  $element['layout_builder']['#weight'] = 100;
-  $element['context_controls'] = [
-    '#type' => 'container',
-    '#weight' => -100,
-    '#attributes' => [
-      'id' => 'layout-builder--context-controls',
-      'class' => ['layout-builder--context-controls'],
-    ],
-  ];
-  $element['context_controls']['manage_context'] = [
-    '#type' => 'link',
-    '#title' => t('Manage Context'),
-    '#url' => Url::fromRoute('flexilayout_builder.view_context', [
-      'section_storage_type' => $section_storage->getStorageType(),
-      'section_storage' => $section_storage->getStorageId(),
-    ]),
-    '#attributes' => [
-      'class' => ['use-ajax'],
-      'data-dialog-type' => 'dialog',
-      'data-dialog-renderer' => 'off_canvas',
-    ],
-  ];
-
-  return $element;
 }
 
 /**
@@ -174,6 +147,7 @@ function _flexilayout_builder_layout_builder_block_form_submit(array $form, Form
  * Implements hook_layout_builder_view_context().
  */
 function flexilayout_builder_layout_builder_view_context_alter(array &$contexts, SectionStorageInterface $storage = NULL, $allow_sample = FALSE) {
+  dpm("HERE");
   if (!($storage instanceof ThirdPartySettingsInterface)) {
     return;
   }
@@ -234,10 +208,13 @@ function flexilayout_builder_layout_builder_view_context_alter(array &$contexts,
       $contexts[$machine_name] = $context;
     }
     catch (MissingValueContextException $e) {
+      dpm($e->getMessage());
 
     }
     catch (ContextException $exception) {
+      dpm($exception->getMessage());
 
     }
+    dpm($contexts);
   }
 }
