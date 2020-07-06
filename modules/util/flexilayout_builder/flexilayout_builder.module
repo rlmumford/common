@@ -147,7 +147,6 @@ function _flexilayout_builder_layout_builder_block_form_submit(array $form, Form
  * Implements hook_layout_builder_view_context().
  */
 function flexilayout_builder_layout_builder_view_context_alter(array &$contexts, SectionStorageInterface $storage = NULL, $allow_sample = FALSE) {
-  dpm("HERE");
   if (!($storage instanceof ThirdPartySettingsInterface)) {
     return;
   }
@@ -208,13 +207,8 @@ function flexilayout_builder_layout_builder_view_context_alter(array &$contexts,
       $contexts[$machine_name] = $context;
     }
     catch (MissingValueContextException $e) {
-      dpm($e->getMessage());
-
     }
     catch (ContextException $exception) {
-      dpm($exception->getMessage());
-
     }
-    dpm($contexts);
   }
 }
