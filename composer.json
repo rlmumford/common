@@ -2,6 +2,7 @@
     "name": "rlmumford/common",
     "description": "Common RLMumford Tools & Modules",
     "type": "drupal-module",
+    "license": "GPL-2.0+",
     "authors": [
         {
             "name": "rlmumford",
