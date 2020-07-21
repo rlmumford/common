@@ -20,7 +20,7 @@
         "drupal/paragraphs": "^1.8",
         "drupal/communication": "1.x-dev",
         "drupal/decoupled_auth": "^1.0@alpha",
-        "drupal/name": "1.x-dev",
+        "drupal/name": "^1.0-rc2",
         "drupal/mini_layouts": "1.x-dev",
         "drupal/paragraphs": "^1.8",
         "drupal/block_class": "1.x-dev",
