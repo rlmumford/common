@@ -52,7 +52,7 @@
       "enable-patching": true,
       "patches": {
           "drupal/rules": {
-              "Configurable Component Variables": "https://www.drupal.org/files/issues/2916331-11.patch"
+              "Configurable Component Variables": "https://www.drupal.org/files/issues/2019-12-30/2916331-21.patch"
           },
           "drupal/ctools": {
               "Fix TypedData Relationship Deriver": "https://www.drupal.org/files/issues/2018-10-16/3007028-2.patch",
