@@ -10,7 +10,6 @@
         }
     ],
     "require": {
-        "drupal/rules": "^3.0@alpha",
         "cweagans/composer-patches": "dev-dev-relative-patches",
         "webflo/drupal-finder": "^1.0.0",
         "webmozart/path-util": "^2.3",
@@ -51,9 +50,6 @@
     "extra": {
       "enable-patching": true,
       "patches": {
-          "drupal/rules": {
-              "Configurable Component Variables": "https://www.drupal.org/files/issues/2019-12-30/2916331-21.patch"
-          },
           "drupal/ctools": {
               "Fix TypedData Relationship Deriver": "https://www.drupal.org/files/issues/2018-10-16/3007028-2.patch",
               "Fix Label for Context Definition in Relationship Deriver": "https://www.drupal.org/files/issues/2020-04-09/3079000-7.patch"
