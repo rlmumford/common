@@ -17,7 +17,6 @@
         "drupal/entity": "^1.0-rc2",
         "drupal/flexiform": "1.x-dev",
         "drupal/views_block_filter_block": "1.x-dev",
-        "drupal/paragraphs": "^1.8",
         "drupal/decoupled_auth": "^1.0@alpha",
         "drupal/name": "^1.0-rc2",
         "drupal/mini_layouts": "1.x-dev",
