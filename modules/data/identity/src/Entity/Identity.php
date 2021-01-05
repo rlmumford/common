@@ -144,6 +144,21 @@ class Identity extends ContentEntityBase implements IdentityInterface {
   /**
    * {@inheritdoc}
    */
+  public function resetCachedData($class = NULL) {
+    if ($class) {
+      unset($this->_data[$class]);
+      unset($this->_accessible_data[$class]);
+    }
+    else {
+      $this->_data = $this->_accessible_data = [];
+    }
+
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getAllData(array $filters = [], $bypass_access = FALSE) {
     $list = $bypass_access ? '_data' : '_accessible_data';
 
@@ -169,8 +184,8 @@ class Identity extends ContentEntityBase implements IdentityInterface {
       $query->condition('class', $unloaded_classes, 'IN');
       $query->condition('identity', $this->id());
 
-      if (!$bypass_access) {
-        $query->addTag('identity_data_access');
+      if ($bypass_access) {
+        $query->accessCheck(FALSE);
       }
 
       /** @var \Drupal\identity\Entity\IdentityData[] $loaded_data */

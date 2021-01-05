@@ -414,6 +414,7 @@ class ServiceController extends ControllerBase {
         ->skipIdentitySave()
         ->save();
     }
+    $identity->resetCachedData();
     $identity->save();
 
     if (

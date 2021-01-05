@@ -20,6 +20,16 @@ interface IdentityInterface extends ContentEntityInterface {
   public function getData($type, array $filters = [], $bypass_access = FALSE);
 
   /**
+   * Reset Cached Data.
+   *
+   * @param string|NULL $class
+   *   The class to clear. Leave blank to reset all classes.
+   *
+   * @return static
+   */
+  public function resetCachedData($class = NULL);
+
+  /**
    * Get all datas from the identity.
    *
    * @param array $filters
