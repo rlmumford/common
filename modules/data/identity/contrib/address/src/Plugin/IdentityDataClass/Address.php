@@ -95,6 +95,7 @@ class Address extends IdentityDataClassBase {
     $query->range(0 , 50);
 
     $has_personal_name = $has_org_name = $has_admin_local = $enough_data = FALSE;
+    $levels = [];
     if ($data->address->country_code) {
       $query->condition('address.country_code', $data->address->country_code);
     }
@@ -103,12 +104,27 @@ class Address extends IdentityDataClassBase {
       $query->condition('address.administrative_area', $data->address->administrative_area);
     }
     if ($data->address->locality) {
+      // If we have address AND locality count it as a 'postal_code' level
+      // match in the USA (because zip codes are big!).
+      if ($has_admin_local && ($data->address->country_code == 'US')) {
+        $levels[] = 'postal_code';
+      }
       $has_admin_local = TRUE;
       $query->condition('address.locality', $data->address->locality);
+    }
+    if ($data->address->postal_code) {
+      $has_admin_local = TRUE;
+      $query->condition('address.postal_code', $data->address->postal_code);
+
+      // Avoid adding the postal code level twice.
+      if (!in_array('postal_code', $levels)) {
+        $levels[] = 'postal_code';
+      }
     }
     if ($data->address->address_line1) {
       $enough_data = $has_admin_local;
       $query->condition('address.address_line1', $data->address->address_line1);
+      $levels[] = 'street';
       if ($data->address->address_line2) {
         $query->condition('address.address_line2', $data->address->address_line2);
       }
@@ -142,7 +158,8 @@ class Address extends IdentityDataClassBase {
         $matches[$match_data->getIdentityId()] = new IdentityMatch(
           $data,
           $match_data,
-          ($has_org_name || $has_personal_name) ? 100 : 50
+          ($has_org_name || $has_personal_name) ? 100 : 50,
+          $levels
         );
       }
     }
