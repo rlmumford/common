@@ -48,7 +48,7 @@
       "patches": {
           "drupal/ctools": {
               "#2866323 & #2865709: Fatal error on empty entity reference relationship": "https://www.drupal.org/files/issues/2020-04-24/2866323-10.patch",
-              "Fix Label for Context Definition in Relationship Deriver": "https://www.drupal.org/files/issues/2020-04-09/3079000-7.patch"
+              "#3079000: Fix Label for Context Definition in Relationship Deriver": "./patches/3079000-7-on-2866323-10.patch"
           },
           "drupal/decoupled_auth": {
               "Allow unsaved profiles": "https://www.drupal.org/files/issues/2019-09-12/3058223-5.patch"
