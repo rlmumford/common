@@ -10,8 +10,7 @@
         }
     ],
     "require": {
-        "cweagans/composer-patches": "dev-relative-patches-1.x",
-        "webflo/drupal-finder": "^1.0.0",
+        "cweagans/composer-patches": "dev-relative-patches-1.x as 1.x-dev",
         "webmozart/path-util": "^2.3",
         "drupal/range": "1.x-dev",
         "drupal/entity": "^1.0-rc2",
