@@ -47,7 +47,7 @@
       "enable-patching": true,
       "patches": {
           "drupal/ctools": {
-              "Fix TypedData Relationship Deriver": "https://www.drupal.org/files/issues/2020-04-24/2866323-10.patch",
+              "#2866323 & #2865709: Fatal error on empty entity reference relationship": "https://www.drupal.org/files/issues/2020-04-24/2866323-10.patch",
               "Fix Label for Context Definition in Relationship Deriver": "https://www.drupal.org/files/issues/2020-04-09/3079000-7.patch"
           },
           "drupal/decoupled_auth": {
