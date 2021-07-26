@@ -4,6 +4,7 @@ namespace Drupal\task_job\Plugin\JobTrigger;
 
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Plugin\ContextAwarePluginBase;
+use Drupal\entity_template\Exception\NoAvailableBlueprintException;
 use Drupal\entity_template\TemplateBuilderManager;
 use Drupal\task\TaskInterface;
 use Drupal\task_job\JobInterface;
@@ -83,12 +84,9 @@ abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTrigg
   }
 
   /**
-   * @param \Drupal\task_job\JobInterface $job
-   * @param array $parameters
-   *
-   * @throws \Drupal\Component\Plugin\Exception\PluginException
+   * {@inheritdoc}
    */
-  public function createTask(): TaskInterface {
+  public function createTask(): ?TaskInterface {
     /** @var \Drupal\task_job\Plugin\EntityTemplate\Builder\JobTaskBuilder $builder */
     $builder = $this->builderManager->createInstance(
       'task_job:'.$this->getJob()->id()
@@ -98,11 +96,17 @@ abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTrigg
     $parameters['job'] = $this->getJob();
     $parameters['trigger'] = $this->getKey();
 
-    $result = $builder->execute($parameters);
-    $task = reset($result->getItems());
-    $task->job = $this->getJob();
+    try {
+      $result = $builder->execute($parameters);
+      $tasks = $result->getItems();
+      $task = reset($tasks);
+      $task->job = $this->getJob();
 
-    return $task;
+      return $task;
+    }
+    catch (NoAvailableBlueprintException $e) {
+      return NULL;
+    }
   }
 
   /**

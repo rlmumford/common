@@ -13,9 +13,9 @@ interface JobTriggerInterface extends PluginInspectionInterface, ConfigurableInt
   /**
    * Get the task.
    *
-   * @return \Drupal\task\TaskInterface
+   * @return \Drupal\task\TaskInterface|null
    */
-  public function createTask() : TaskInterface;
+  public function createTask() : ?TaskInterface;
 
   /**
    * Get the key.

@@ -46,26 +46,17 @@ class JobTaskBuilder extends BuilderBase {
   }
 
   /**
-   * Get the default blueprint for this builder.
-   *
-   * @return \Drupal\entity_template\BlueprintInterface
+   * {@inheritdoc}
    */
   public function getDefaultBlueprint() {
-    return new BlueprintEntityAdaptor($this->getJob());
+    return NULL;
   }
 
   /**
-   * Get the default blueprint storage.
-   *
-   * @param \Drupal\entity_template\Plugin\EntityTemplate\BlueprintProvider\BlueprintProviderInterface $provider
-   *
-   * @return \Drupal\entity_template\BlueprintStorageInterface
+   * {@inheritdoc}
    */
   public function getDefaultBlueprintStorage(BlueprintProviderInterface $provider) {
-    return new BlueprintEntityStorageAdaptor(
-      $this->getJob(),
-      $provider
-    );
+    return NULL;
   }
 
   /**

@@ -69,9 +69,6 @@ class TaskAddController extends ControllerBase {
             ['task_job' => $job->id()]
           ),
           '#title' => $job->label(),
-          '#attributes' => [
-            'class' => ['use-ajax'],
-          ],
         ];
       }
     }

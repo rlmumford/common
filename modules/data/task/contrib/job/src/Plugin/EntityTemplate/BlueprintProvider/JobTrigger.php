@@ -98,13 +98,13 @@ class JobTrigger extends PluginBase implements BlueprintProviderInterface, Conta
     $parameters = [],
     AccountInterface $account = NULL
   ) {
-    if (!($builder instanceof JobTaskBuilder) || !isset($parameters['job_trigger'])) {
+    if (!($builder instanceof JobTaskBuilder) || !isset($parameters['trigger'])) {
       return $this->getAllBlueprints($builder);
     }
 
     $job = $builder->getJob();
     $triggers = $job->getTriggersConfiguration();
-    $trigger = $parameters['job_trigger'] instanceof ContextInterface ? $parameters['job_trigger']->getContextValue() : $parameters['job_trigger'];
+    $trigger = $parameters['trigger'] instanceof ContextInterface ? $parameters['trigger']->getContextValue() : $parameters['trigger'];
 
     if (!isset($triggers[$trigger])) {
       return [];
