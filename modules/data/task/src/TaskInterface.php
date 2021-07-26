@@ -2,9 +2,9 @@
 
 namespace Drupal\task;
 
-use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\FieldableEntityInterface;
 
-interface TaskInterface extends EntityInterface {
+interface TaskInterface extends FieldableEntityInterface {
 
   /**
    * Status Pending

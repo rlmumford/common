@@ -15,6 +15,9 @@ function task_checklist_entity_base_field_info(EntityTypeInterface $entity_type)
     // Use bundle field definition to avoid this going on the main task table.
     $fields['checklist'] = BundleFieldDefinition::create('checklist')
       ->setLabel(new TranslatableMarkup('Checklist'))
+      ->setDisplayOptions('view', [
+        'type' => 'checklist_interactive',
+      ])
       ->setDisplayConfigurable('view', TRUE);
   }
 

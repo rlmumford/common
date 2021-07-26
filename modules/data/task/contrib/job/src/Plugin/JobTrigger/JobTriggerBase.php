@@ -100,7 +100,17 @@ abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTrigg
       $result = $builder->execute($parameters);
       $tasks = $result->getItems();
       $task = reset($tasks);
+      // Find a way to set these in the initial values so that default values
+      // are respected.
       $task->job = $this->getJob();
+      if ($task->hasField('checklist') && $task->checklist->isEmpty()) {
+        $task->checklist = [
+          'id' => 'job',
+          'configuration' => [
+            'job' => $task->job->target_id,
+          ]
+        ];
+      }
 
       return $task;
     }
