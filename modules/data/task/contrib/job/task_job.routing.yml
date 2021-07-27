@@ -54,3 +54,18 @@ task_job.task.add_form:
     _title: 'Add Task'
   requirements:
     _entity_create_access: 'task'
+task_job.task_board.task.add_form.select_job:
+  path: '/board/add/job'
+  defaults:
+    _controller: '\Drupal\task_job\Controller\TaskAddController::selectJobForAssignee'
+    _title: 'Select Job'
+  requirements:
+    _entity_create_access: 'task'
+task_job.task_board.task.add_form:
+  path: '/board/add/job/{task_job}'
+  defaults:
+    _controller: '\Drupal\task_job\Controller\TaskAddController::createTaskForAssignee'
+    _title: 'Add Task'
+  requirements:
+    _entity_create_access: 'task'
+

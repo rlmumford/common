@@ -3,3 +3,8 @@ task_job_add:
   title: 'Add Job'
   appears_on:
     - entity.task_job.collection
+task_board_task_add:
+  route_name: task_job.task_board.task.add_form.select_job
+  title: 'Add Task'
+  appears_on:
+    - view.task__task_board.page
