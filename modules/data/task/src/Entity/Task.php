@@ -33,7 +33,7 @@ use Drupal\task\TaskInterface;
  *       "default" = "Drupal\task\TaskForm",
  *       "add" = "Drupal\task\TaskForm"
  *     },
- *     "views_data" = "Drupal\entity\EntityViewsData",
+ *     "views_data" = "Drupal\task\Entity\TaskViewsData",
  *     "route_provider" = {
  *       "html" = "Drupal\Core\Entity\Routing\DefaultHtmlRouteProvider",
  *     }
