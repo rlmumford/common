@@ -16,7 +16,6 @@
         "drupal/entity": "^1.0-rc2",
         "drupal/flexiform": "1.x-dev",
         "drupal/views_block_filter_block": "1.x-dev",
-        "drupal/decoupled_auth": "^1.0@alpha",
         "drupal/name": "^1.0",
         "drupal/mini_layouts": "1.x-dev",
         "drupal/block_class": "1.x-dev",
@@ -56,7 +55,7 @@
           "drupal/core": {
               "Layout builder context hook": "https://www.drupal.org/files/issues/2019-05-10/3001188-5.patch",
               "Layout builder visibility rules": "https://www.drupal.org/files/issues/2020-06-10/2916876-83.patch",
-              "Entity reference views autocomplete filters": "https://www.drupal.org/files/issues/2020-03-18/drupal-generalize-taxonomyindextid-filter-2429699-311.patch"
+              "Entity reference views autocomplete filters": "https://www.drupal.org/files/issues/2020-09-30/2429699-351--on-8_9_x.do-not-test.patch"
           }
       }
     },
