@@ -4,9 +4,11 @@ namespace Drupal\checklist\Plugin\Field\FieldType;
 
 use Drupal\checklist\ChecklistAdaptor;
 use Drupal\checklist\ChecklistInterface;
+use Drupal\checklist\ChecklistPluginAdaptor;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TypedData\DataDefinition;
+use Drupal\plugin_reference\Plugin\Field\FieldType\PluginReferenceItem;
 
 /**
  * Class ChecklistItem
@@ -19,7 +21,7 @@ use Drupal\Core\TypedData\DataDefinition;
  *
  * @package Drupal\checklist\Plugin\Field\FieldType
  */
-class ChecklistItem extends PluginItem {
+class ChecklistItem extends PluginReferenceItem {
 
   /**
    * {@inheritdoc}

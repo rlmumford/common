@@ -9,6 +9,7 @@ use Drupal\Core\Form\SubformState;
 use Drupal\Core\Plugin\PluginFormFactoryInterface;
 use Drupal\Core\Plugin\PluginWithFormsInterface;
 use Drupal\Core\Render\Element;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 use Drupal\entity_template\BlueprintEntityStorageAdaptor;
 use Drupal\entity_template\BlueprintTempstoreRepository;
@@ -17,6 +18,7 @@ use Drupal\task_job\JobInterface;
 use Drupal\task_job\Plugin\EntityTemplate\BlueprintProvider\BlueprintStorageJobTriggerAdaptor;
 use Drupal\task_job\Plugin\JobTrigger\JobTriggerManager;
 use Drupal\task_job\TaskJobTempstoreRepository;
+use Drupal\typed_data\Context\ContextDefinition;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class JobEditForm extends JobForm {
@@ -120,13 +122,6 @@ class JobEditForm extends JobForm {
   public function form(array $form, FormStateInterface $form_state) {
     $form = parent::form($form, $form_state);
 
-    $form['checklist'] = [
-      '#type' => 'details',
-      '#title' => $this->t('Default Checklist'),
-      '#description' => $this->t('Some help text about checklists'),
-      '#open' => TRUE,
-    ];
-
     $ajax_attributes = [
       'attributes' => [
         'class' => [
@@ -134,6 +129,167 @@ class JobEditForm extends JobForm {
         ],
         'data-dialog-type' => 'dialog',
       ],
+    ];
+
+    $form['context_wrapper'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Contexts'),
+      '#description' => $this->t('Configure the contexts for this job'),
+      '#open' => TRUE,
+    ];
+    if (!is_array($form_state->get('context'))) {
+      $form_state->set('context', $this->entity->getContextDefinitions());
+    }
+    /** @var \Drupal\typed_data\Context\ContextDefinitionInterface[] $context */
+    $context = $form_state->get('context');
+
+    $context_type_options = [];
+    $types = \Drupal::typedDataManager()->getDefinitions();
+    foreach ($types as $type => $definition) {
+      $category = new TranslatableMarkup('Data');
+      if (!empty($definition['deriver']) && !empty($types[$definition['id']])) {
+        $category = $types[$definition['id']]['label'];
+      }
+      $context_type_options[(string) $category][$type] = $definition['label'];
+    }
+
+    $form['context_wrapper']['context'] = [
+      '#prefix' => '<div id="context-table-wrapper">',
+      '#suffix' => '</div>',
+      '#parents' => ['context'],
+      '#type' => 'table',
+      '#header' => [
+        $this->t('Label'),
+        $this->t('Machine-name'),
+        $this->t('Type'),
+        $this->t('Required'),
+        $this->t('Multiple'),
+        $this->t('Operations'),
+      ]
+    ];
+    foreach ($context as $key => $context_definition) {
+      $row = [];
+      $row['label'] = [
+        '#type' => 'textfield',
+        '#title' => $this->t('Label'),
+        '#title_display' => 'invisible',
+        '#default_value' => $context_definition->getLabel(),
+      ];
+      $row['key'] = [
+        '#type' => 'machine_name',
+        '#title' => $this->t('Key'),
+        '#title_display' => 'invisible',
+        '#default_value' => $key,
+        '#machine_name' => [
+          'source' => [ 'context_wrapper', 'context', $key, 'label'],
+          'exists' => [ static::class, 'contextKeyExists' ],
+          'standalone' => TRUE,
+        ],
+        '#disabled' => TRUE,
+      ];
+      $row['type'] = [
+        '#type' => 'select',
+        '#title' => $this->t('Type'),
+        '#title_display' => 'invisible',
+        '#options' => $context_type_options,
+        '#default_value' => $context_definition->getDataType(),
+        '#disabled' => TRUE,
+      ];
+      $row['required'] = [
+        '#type' => 'checkbox',
+        '#title' => $this->t('Required'),
+        '#title_display' => 'invisible',
+        '#default_value' => $context_definition->isRequired(),
+      ];
+      $row['multiple'] = [
+        '#type' => 'checkbox',
+        '#title' => $this->t('Multiple'),
+        '#title_display' => 'invisible',
+        '#default_value' => $context_definition->isMultiple(),
+      ];
+      $row['operations'] = [
+        '#type' => 'container',
+        'remove' => [
+          '#type' => 'submit',
+          '#name' => 'remove_'.$key,
+          '#context_key' => $key,
+          '#value' => $this->t('Remove'),
+          '#limit_validation_errors' => [],
+          '#ajax' => [
+            'wrapper' => 'context-table-wrapper',
+            'callback' => [static::class, 'formAjaxReloadContext'],
+          ],
+          '#submit' => [
+            '::formSubmitRemoveContext',
+          ],
+        ],
+      ];
+
+      $form['context_wrapper']['context'][$key] = $row;
+    }
+
+    $row = [];
+    $row['label'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Label'),
+      '#title_display' => 'invisible',
+    ];
+    $row['key'] = [
+      '#type' => 'machine_name',
+      '#title' => $this->t('Key'),
+      '#title_display' => 'invisible',
+      '#required' => FALSE,
+      '#machine_name' => [
+        'source' => [ 'context_wrapper', 'context', '_add_new', 'label'],
+        'exists' => [ static::class, 'contextKeyExists' ],
+        'standalone' => TRUE,
+      ],
+    ];
+    $row['type'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Type'),
+      '#title_display' => 'invisible',
+      '#options' => $context_type_options,
+    ];
+    $row['required'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Required'),
+      '#title_display' => 'invisible',
+      '#default_value' => TRUE,
+    ];
+    $row['multiple'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Multiple'),
+      '#title_display' => 'invisible',
+      '#default_value' => FALSE,
+    ];
+    $row['operations'] = [
+      '#type' => 'container',
+      'add' => [
+        '#type' => 'submit',
+        '#value' => $this->t('Add'),
+        '#limit_validation_errors' => [
+          ['context', '_add_new'],
+        ],
+        '#ajax' => [
+          'wrapper' => 'context-table-wrapper',
+          'callback' => [static::class, 'formAjaxReloadContext'],
+        ],
+        '#validate' => [
+          '::formValidateAddContext',
+        ],
+        '#submit' => [
+          '::formSubmitAddContext',
+        ],
+      ],
+    ];
+    $form['context_wrapper']['context']['_add_new'] = $row;
+
+    $form['checklist'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Default Checklist'),
+      '#description' => $this->t('Some help text about checklists'),
+      '#open' => TRUE,
     ];
 
     $form['checklist']['add'] = [
@@ -283,6 +439,30 @@ class JobEditForm extends JobForm {
     return $form;
   }
 
+  protected function copyFormValuesToEntity(EntityInterface $entity, array $form, FormStateInterface $form_state) {
+    /** @var \Drupal\task_job\Entity\Job $entity */
+    $context_definitions = $entity->getContextDefinitions();
+
+    parent::copyFormValuesToEntity($entity, $form, $form_state);
+
+    // Remove the add new item added by copyFormValuesToEntity.
+    $context_values = $entity->get('context');
+    unset($context_values['_add_new']);
+    foreach ($context_values as $key => $context_value) {
+      if (isset($context_definitions[$key])) {
+        $context_definition = $context_definitions[$key];
+        $context_definition->setLabel($context_value['label']);
+        $context_definition->setMultiple(!empty($context_value['multiple']));
+        $context_definition->setRequired(!empty($context_value['required']));
+        $context_values[$key] = $context_definition->toArray();
+      }
+      else {
+        unset($context_values[$key]);
+      }
+    }
+    $entity->set('context', $context_values);
+  }
+
   /**
    * {@inheritdoc}
    */
@@ -340,5 +520,91 @@ class JobEditForm extends JobForm {
     }
     $this->tempstoreRepository->delete($this->entity);
     return $return;
+  }
+
+  /**
+   * Validate the information entered for the new context.
+   *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   */
+  public function formValidateAddContext($form, FormStateInterface $form_state) {
+    $values = $form_state->getValue(['context', '_add_new']);
+    $row = &$form['context_wrapper']['context']['_add_new'];
+    if (empty($values['key'])) {
+      $form_state->setError($row['key'], new TranslatableMarkup('Context requires a unique machine name.'));
+    }
+    if (empty($values['label'])) {
+      $form_state->setError($row['label'], new TranslatableMarkup('Context requires a label.'));
+    }
+  }
+
+  /**
+   * Submit to add a required context.
+   *
+   * @param $form
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   */
+  public function formSubmitAddContext($form, FormStateInterface $form_state) {
+    $context = $form_state->get('context');
+
+    $values = $form_state->getValue(['context', '_add_new']);
+
+    $new_context = ContextDefinition::createFromArray($values);
+    $context[$values['key']] = $new_context;
+    $this->entity->addContextDefinition($values['key'], $new_context);
+
+    $form_state->set('context', $context);
+    $form_state->setRebuild(TRUE);
+
+    $this->tempstoreRepository->set($this->entity);
+
+    $user_input = &$form_state->getUserInput();
+    unset($user_input['context']['_add_new']);
+  }
+
+  /**
+   * Submit to remove a required context.
+   *
+   * @param $form
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   */
+  public function formSubmitRemoveContext($form, FormStateInterface $form_state) {
+    $button = $form_state->getTriggeringElement();
+    $context = $form_state->get('context');
+    unset($context[$button['#context_key']]);
+    $form_state->set('context', $context);
+    $this->entity->removeContextDefinition($button['#context_key']);
+    $form_state->setRebuild(TRUE);
+
+    $this->tempstoreRepository->set($this->entity);
+  }
+
+  /**
+   * Ajax callback to reload the required context.
+   *
+   * @param $form
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *
+   * @return array
+   */
+  public static function formAjaxReloadContext($form, FormStateInterface $form_state) {
+    return $form['context_wrapper']['context'];
+  }
+
+  /**
+   * Check whether the machine name of a required context exists already.
+   *
+   * @param $value
+   * @param $element
+   * @param $form_state
+   *
+   * @return boolean
+   */
+  public static function contextKeyExists($value, $element, FormStateInterface $form_state) {
+    $context = $form_state->get('context');
+    return !empty($context[$value]) && !in_array($value, $element['#parents']);
   }
 }

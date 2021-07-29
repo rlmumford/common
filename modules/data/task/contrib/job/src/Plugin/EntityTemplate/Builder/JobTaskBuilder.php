@@ -5,6 +5,7 @@ namespace Drupal\task_job\Plugin\EntityTemplate\Builder;
 use Drupal\Core\Url;
 use Drupal\entity_template\BlueprintEntityStorageAdaptor;
 use Drupal\entity_template\BlueprintEntityAdaptor;
+use Drupal\entity_template\BlueprintInterface;
 use Drupal\entity_template\BlueprintStorageInterface;
 use Drupal\entity_template\Plugin\EntityTemplate\BlueprintProvider\BlueprintProviderInterface;
 use Drupal\entity_template\Plugin\EntityTemplate\Builder\BuilderBase;
@@ -81,5 +82,21 @@ class JobTaskBuilder extends BuilderBase {
   public function getReturnType() {
     // These always create tasks.
     return 'entity:task';
+  }
+
+  /**
+   * Massage the template initial values.
+   *
+   * @param array $values
+   *   The vinitial entity values.
+   * @param string $target_type_id
+   *   The target entity type id.
+   * @param \Drupal\entity_template\BlueprintInterface $blueprint
+   *   The blueprint.
+   */
+  public function massageInitialValues(array &$values, string $target_type_id, BlueprintInterface $blueprint) {
+    if ($target_type_id === 'task') {
+      $values['job'] = $this->getJob();
+    }
   }
 }

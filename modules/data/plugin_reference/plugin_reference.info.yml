@@ -1,0 +1,5 @@
+name: Plugin Reference
+description: Reference plugins in a field.
+type: module
+core_version_requirement: ^8 || 9
+package: RLMumford

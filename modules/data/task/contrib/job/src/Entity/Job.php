@@ -12,6 +12,7 @@ use Drupal\entity_template\Entity\BlueprintEntityInterface;
 use Drupal\task_job\JobInterface;
 use Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface;
 use Drupal\task_job\Plugin\JobTrigger\LazyJobTriggerCollection;
+use Drupal\typed_data\Context\ContextDefinition;
 
 /**
  * Class Job
@@ -28,6 +29,7 @@ use Drupal\task_job\Plugin\JobTrigger\LazyJobTriggerCollection;
  *   config_export = {
  *     "id",
  *     "label",
+ *     "context",
  *     "description",
  *     "default_checklist",
  *     "triggers",
@@ -62,6 +64,20 @@ class Job extends ConfigEntityBase implements JobInterface {
    * @var \Drupal\Component\Plugin\LazyPluginCollection
    */
   protected $triggerCollection;
+
+  /**
+   * The context required by this job.
+   *
+   * @var array
+   *   Array of context configuration, each item has the following keys:
+   *   - key: The name of the context.
+   *   - label: The human readable label of the context.
+   *   - type: The type of the context.
+   *   - description: The description of this context.
+   *   - multiple: True if the context accepts multiple of the value.
+   *   - required: True if the context is required, FALSE otherwise.
+   */
+  protected $context = [];
 
   /**
    * Get the default checklist items for this job.
@@ -113,6 +129,9 @@ class Job extends ConfigEntityBase implements JobInterface {
     return $this->triggerCollection;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function getTrigger(string $key): ?JobTriggerInterface {
     return $this->getTriggerCollection()->get($key);
   }
@@ -123,5 +142,39 @@ class Job extends ConfigEntityBase implements JobInterface {
   public function hasTrigger(string $key): bool {
     $triggers = $this->getTriggersConfiguration();
     return isset($triggers[$key]);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getContextDefinitions() {
+    $definitions = [];
+
+    foreach ($this->context as $key => $context) {
+      $definitions[$key] = ContextDefinition::createFromArray($context);
+    }
+
+    return $definitions;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getContextDefinition(string $key) {
+    return isset($this->context[$key]) ? ContextDefinition::createFromArray($this->context[$key]) : NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function addContextDefinition(string $key, ContextDefinition $context_definition) {
+    $this->context[$key] = $context_definition->toArray();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function removeContextDefinition(string $key) {
+    unset($this->context[$key]);
   }
 }

@@ -6,6 +6,7 @@ use Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerInterface;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
@@ -56,10 +57,11 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
       ->setLabel(new TranslatableMarkup('Checklist'))
       ->setDescription(new TranslatableMarkup('The checklist this is a part of.'));
 
-    $fields['handler'] = BaseFieldDefinition::create('plugin')
+    $fields['handler'] = BaseFieldDefinition::create('plugin_reference')
       ->setLabel(new TranslatableMarkup('Handler'))
       ->setDescription(new TranslatableMarkup('The checklist item handler'))
-      ->setSetting('plugin_type', 'checklist_item_handler');
+      ->setSetting('plugin_type', 'checklist_item_handler')
+      ->setSetting('plugin_creation_callback', static::class.'::createChecklistItemHandlerPluginInstance');
 
     $fields['status'] = BaseFieldDefinition::create('list_string')
       ->setSetting('allowed_values', [
@@ -256,5 +258,27 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
    */
   public function getMethod(): string {
     return $this->getHandler()->getMethod();
+  }
+
+  /**
+   * Create the plugin for checklist item handler.
+   *
+   * This method makes sure that the item entity gets set on the handler.
+   *
+   * @param string $id
+   *   The handler id.
+   * @param string $configuration
+   *   The configuration.
+   * @param \Drupal\Core\Field\FieldItemInterface $item
+   *   The field item.
+   *
+   * @return \Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerInterface
+   */
+  public static function createChecklistItemHandlerPluginInstance($id, $configuration, FieldItemInterface $item) {
+    /** @var \Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerInterface $plugin */
+    $plugin = \Drupal::service('plugin.manager.checklist_item_handler')
+      ->createInstance($id, $configuration);
+    $plugin->setItem($item->getEntity());
+    return $plugin;
   }
 }

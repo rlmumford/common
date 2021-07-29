@@ -6,3 +6,4 @@ package: RLMumford
 dependencies:
   - entity:entity
   - inline_entity_form:inline_entity_form
+  - plugin_reference

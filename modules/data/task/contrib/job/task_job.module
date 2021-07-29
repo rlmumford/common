@@ -3,8 +3,8 @@
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\task\TaskInterface;
 
 /**
  * Implements hook_entity_base_field_info().
@@ -25,10 +25,7 @@ function task_job_entity_base_field_info(EntityTypeInterface $entity_type) {
 }
 
 /**
- * Implements hook_entity_base_field_info_alter()
- *
- * @param \Drupal\Core\Field\BaseFieldDefinition[] $fields
- * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
+ * Implements hook_entity_base_field_info_alter().
  */
 function task_job_entity_base_field_info_alter(&$fields, EntityTypeInterface $entity_type) {
   if ($entity_type->id() === 'task' && isset($fields['checklist'])) {
@@ -53,4 +50,27 @@ function _task_job_task_checklist_default_value(EntityInterface $task) {
   }
 
   return NULL;
+}
+
+/**
+ * Implements hook_typed_data_reference_property_definitions().
+ */
+function task_job_typed_data_reference_property_definitions(FieldItemListInterface $item_list) {
+  $definitions = [];
+
+  $entity = $item_list->getEntity();
+  if (
+    $item_list->getFieldDefinition()->getName() === 'context' &&
+    $item_list->getFieldDefinition()->getTargetEntityTypeId() === 'task' &&
+    $entity->hasField('job') &&
+    !$entity->get('job')->isEmpty()
+  ) {
+    /** @var \Drupal\task_job\Entity\Job $job */
+    $job = $entity->job->entity;
+    foreach ($job->getContextDefinitions() as $key => $definition) {
+      $definitions[$key] = $definition->getDataDefinition();
+    }
+  }
+
+  return $definitions;
 }

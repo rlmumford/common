@@ -6,6 +6,7 @@ use Drupal\Component\Plugin\LazyPluginCollection;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\entity_template\Entity\BlueprintEntityInterface;
 use Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface;
+use Drupal\typed_data\Context\ContextDefinition;
 
 interface JobInterface extends EntityInterface {
 
@@ -50,5 +51,42 @@ interface JobInterface extends EntityInterface {
    * @return bool
    */
   public function hasTrigger(string $key) : bool;
+
+  /**
+   * Get the context definitions for this job.
+   *
+   * @return \Drupal\Core\Plugin\Context\ContextDefinitionInterface[]
+   *   The context definitions associated with this job.
+   */
+  public function getContextDefinitions();
+
+  /**
+   * Get the context definition.
+   *
+   * @param string $key
+   *   The context key to get.
+   *
+   * @return \Drupal\typed_data\Context\ContextDefinition|null
+   * @throws \Drupal\Component\Plugin\Exception\ContextException
+   */
+  public function getContextDefinition(string $key);
+
+  /**
+   * Add a context definition.
+   *
+   * @param string $key
+   *   The name of the context.
+   * @param \Drupal\typed_data\Context\ContextDefinition $context_definition
+   *   The definition of the context.
+   */
+  public function addContextDefinition(string $key, ContextDefinition $context_definition);
+
+  /**
+   * Remove a context definition.
+   *
+   * @param string $key
+   *   The key of the context to remove.
+   */
+  public function removeContextDefinition(string $key);
 
 }

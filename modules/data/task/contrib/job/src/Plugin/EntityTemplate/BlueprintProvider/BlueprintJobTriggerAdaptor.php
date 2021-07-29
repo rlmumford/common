@@ -130,6 +130,16 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
       ];
     }
 
+    if ($this->getJob() && ($definitions = $this->getJob()->getContextDefinitions())) {
+      foreach ($definitions as $key => $definition) {
+        $components["context.{$key}"] = [
+          'id' => 'task_context.data_select',
+          'task_context' => $key,
+          'uuid' => "context.{$key}",
+        ];
+      }
+    }
+
     return $components;
   }
 

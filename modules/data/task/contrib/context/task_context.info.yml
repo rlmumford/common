@@ -1,0 +1,9 @@
+name: Task Context
+description: Allow tasks to have contexts.
+type: module
+package: Tasks
+core_version_requirement: ^8 || ^9
+
+dependencies:
+  - rlmumford:task
+  - rlmumford:typed_data_reference
