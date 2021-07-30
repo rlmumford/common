@@ -3,6 +3,11 @@
 namespace Drupal\task_job\Form;
 
 use Drupal\checklist\ChecklistItemHandlerManager;
+use Drupal\Component\Utility\Html;
+use Drupal\Component\Utility\NestedArray;
+use Drupal\Core\Ajax\AjaxResponse;
+use Drupal\Core\Ajax\InsertCommand;
+use Drupal\Core\Ajax\RemoveCommand;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformState;
@@ -389,10 +394,30 @@ class JobEditForm extends JobForm {
     ];
 
     foreach ($this->entity->getTriggerCollection() as $key => $trigger) {
+      $wrapper_id = Html::cleanCssIdentifier("trigger-{$key}-wrapper");
       $element = [
         '#type' => 'details',
+        '#prefix' => '<div id="'.$wrapper_id.'">',
+        '#suffix' => '</div>',
         '#title' => $trigger->getLabel(),
         '#description' => $trigger->getDescription(),
+      ];
+      $element['remove'] = [
+        '#type' => 'submit',
+        '#value' => $this->t('Remove'),
+        '#name' => 'trigger_remove_'.$key,
+        '#trigger_key' => $key,
+        '#limit_validation_errors' => [],
+        '#attributes' => [
+          'class' => ['button--danger'],
+        ],
+        '#ajax' => [
+          'wrapper' => $wrapper_id,
+          'callback' => [static::class, 'formAjaxRemoveTrigger'],
+        ],
+        '#submit' => [
+          '::formSubmitRemoveTrigger',
+        ],
       ];
       $element['template'] = [
         '#type' => 'container',
@@ -430,7 +455,11 @@ class JobEditForm extends JobForm {
         // Hide the label and description fields as we don't need them.
         $element['template']['label']['#access'] = FALSE;
         $element['template']['description']['#access'] = FALSE;
-        $element['template']['conditions']['#access'] = FALSE;
+
+        // Change the empty content for the conditions table.
+        $element['template']['conditions']['table']['#empty'] = $this->t(
+          'The task will always be created on this trigger.',
+        );
       }
 
       $form['triggers'][$key] = $element;
@@ -606,5 +635,35 @@ class JobEditForm extends JobForm {
   public static function contextKeyExists($value, $element, FormStateInterface $form_state) {
     $context = $form_state->get('context');
     return !empty($context[$value]) && !in_array($value, $element['#parents']);
+  }
+
+  /**
+   * Submit to remove a trigger.
+   *
+   * @param $form
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   */
+  public function formSubmitRemoveTrigger($form, FormStateInterface $form_state) {
+    $button = $form_state->getTriggeringElement();
+    $this->entity->getTriggerCollection()->removeInstanceId($button['#trigger_key']);
+    $form_state->setRebuild(TRUE);
+
+    $this->tempstoreRepository->set($this->entity);
+  }
+
+  /**
+   * Ajax callback to reload the trigger section.
+   *
+   * @param $form
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *
+   * @return \Drupal\Core\Ajax\AjaxResponse
+   *   The ajax commands to execute.
+   */
+  public static function formAjaxRemoveTrigger($form, FormStateInterface $form_state) {
+    $triggering_element = $form_state->getTriggeringElement();
+    $response = new AjaxResponse();
+    $response->addCommand(new RemoveCommand('#'.$triggering_element['#ajax']['wrapper']));
+    return $response;
   }
 }

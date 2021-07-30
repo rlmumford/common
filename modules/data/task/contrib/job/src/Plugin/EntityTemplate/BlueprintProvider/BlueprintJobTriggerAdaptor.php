@@ -2,7 +2,11 @@
 
 namespace Drupal\task_job\Plugin\EntityTemplate\BlueprintProvider;
 
+use Drupal\Component\Plugin\Exception\ContextException;
+use Drupal\Component\Plugin\Exception\PluginException;
+use Drupal\Core\Plugin\Context\Context;
 use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\Core\Plugin\ContextAwarePluginInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity_template\Blueprint;
 use Drupal\task_job\JobInterface;
@@ -29,6 +33,21 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
   public function __construct(JobInterface $job, JobTriggerInterface $trigger) {
     $this->job = $job;
     $this->trigger = $trigger;
+
+    foreach ($this->getContextDefinitions() as $name => $definition) {
+      if ($name === 'job') {
+        $this->setContext($name, new Context($definition, $job));
+      }
+      else if ($name == 'trigger') {
+        $this->setContext($name, new Context($definition, $trigger->getKey()));
+      }
+      else if ($trigger instanceof ContextAwarePluginInterface) {
+        try {
+          $this->setContext($name, $trigger->getContext($name));
+        }
+        catch (ContextException $e) {}
+      }
+    }
   }
 
   /**
@@ -111,7 +130,7 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
    *
    * @return array.
    */
-  protected function getDefaultTemplateComponents() : array {
+  public function getDefaultTemplateComponents() : array {
     $components = [];
 
     /** @var \Drupal\Core\Entity\EntityFieldManagerInterface $field_manager */
@@ -132,10 +151,10 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
 
     if ($this->getJob() && ($definitions = $this->getJob()->getContextDefinitions())) {
       foreach ($definitions as $key => $definition) {
-        $components["context.{$key}"] = [
+        $components["context:{$key}"] = [
           'id' => 'task_context.data_select',
           'task_context' => $key,
-          'uuid' => "context.{$key}",
+          'uuid' => "context:{$key}",
         ];
       }
     }

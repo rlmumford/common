@@ -2,6 +2,7 @@
 
 namespace Drupal\task_job\Controller;
 
+use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityFormBuilderInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -73,6 +74,7 @@ class TaskAddController extends ControllerBase {
       '#items' => [],
     ];
 
+    $cache = new CacheableMetadata();
     $job_storage = $this->entityTypeManager->getStorage('task_job');
     /** @var \Drupal\task_job\JobInterface $job */
     foreach ($job_storage->loadMultiple() as $job) {
@@ -92,13 +94,16 @@ class TaskAddController extends ControllerBase {
           }
         }
 
-        $build['#items'][] = [
-          '#type' => 'link',
-          '#url' => Url::fromRoute($route_name, $params),
-          '#title' => $job->label(),
-        ];
+        if ($job->getTrigger('manual')->access($cache)) {
+          $build['#items'][] = [
+            '#type' => 'link',
+            '#url' => Url::fromRoute($route_name, $params),
+            '#title' => $job->label(),
+          ];
+        }
       }
     }
+    $cache->applyTo($build);
 
     return $build;
   }
@@ -136,7 +141,7 @@ class TaskAddController extends ControllerBase {
    */
   public function createTask(JobInterface $task_job, AccountInterface $assignee = NULL) {
     $task = $task_job->getTrigger('manual')->createTask();
-    if ($assignee) {
+    if ($task && $assignee) {
       $task->assignee = $assignee->id();
     }
 

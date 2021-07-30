@@ -2,12 +2,15 @@
 
 namespace Drupal\task_job\Plugin\JobTrigger;
 
+use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Plugin\ContextAwarePluginBase;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity_template\Exception\NoAvailableBlueprintException;
 use Drupal\entity_template\TemplateBuilderManager;
 use Drupal\task\TaskInterface;
 use Drupal\task_job\JobInterface;
+use Drupal\task_job\Plugin\EntityTemplate\BlueprintProvider\BlueprintJobTriggerAdaptor;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTriggerInterface, ContainerFactoryPluginInterface {
@@ -16,6 +19,11 @@ abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTrigg
    * @var \Drupal\entity_template\TemplateBuilderManager
    */
   protected $builderManager;
+
+  /**
+   * @var \Drupal\task_job\JobInterface
+   */
+  protected $job;
 
   /**
    * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
@@ -74,11 +82,17 @@ abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTrigg
    */
   abstract protected function getDefaultKey(): string;
 
+  /**
+   * {@inheritdoc}
+   */
   public function setJob(JobInterface $job): JobTriggerInterface {
     $this->job = $job;
     return $this;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function getJob(): JobInterface {
     return $this->job;
   }
@@ -98,8 +112,10 @@ abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTrigg
 
     try {
       $result = $builder->execute($parameters);
+
+      /** @var \Drupal\task\Entity\Task[] $tasks */
       $tasks = $result->getItems();
-      return reset($tasks);
+      return !empty($tasks) ? reset($tasks) : NULL;
     }
     catch (NoAvailableBlueprintException $e) {
       return NULL;
@@ -134,10 +150,21 @@ abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTrigg
       'template' => [
         'id' => 'default',
         'uuid' => 'default',
-        'label' => 'Default Template',
+        'label' =>  new TranslatableMarkup('Template'),
         'conditions' => [],
-        'components' => [],
+        'components' => (new BlueprintJobTriggerAdaptor($this->getJob(), $this))
+          ->getDefaultTemplateComponents(),
       ]
     ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function access(CacheableMetadata $cache_metadata = NULL) {
+    $storage = new BlueprintJobTriggerAdaptor($this->getJob(), $this);
+    $template = $storage->getTemplate('default');
+
+    return $template->applies($cache_metadata);
   }
 }

@@ -103,8 +103,17 @@ class TaskContextWidgetInput extends TaskContextBase {
    * {@inheritdoc}
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
-    $target_data_definition = $this->getTaskContextDefinitions()[$this->configuration['task_context']];
+    $definitions = $this->getTaskContextDefinitions();
 
+    if (empty($definitions[$this->configuration['task_context']])) {
+      $form['message']['#markup'] = new TranslatableMarkup(
+        'The @context context is not defined.',
+        ['@context' => $this->configuration['task_context']]
+      );
+      return parent::buildConfigurationForm($form, $form_state);
+    }
+
+    $target_data_definition = $definitions[$this->configuration['task_context']];
     if ($widget = $this->widgetManager->getFormWidget($target_data_definition)) {
       $target_data = $this->typedDataManager->createInstance(
         $target_data_definition->getDataType(),

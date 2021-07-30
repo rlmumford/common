@@ -70,11 +70,12 @@ abstract class TaskContextBase extends ComponentBase implements TemplateContextA
    * {@inheritdoc}
    */
   public function label() {
-    return !empty($this->configuration['task_context']) ?
+    $definitions = $this->getTaskContextDefinitions();
+    return !empty($this->configuration['task_context']) && !empty($definitions[$this->configuration['task_context']]) ?
       new TranslatableMarkup(
         '@context_name Context',
         [
-          '@context_name' => $this->getTaskContextDefinitions()[$this->configuration['task_context']]->getLabel(),
+          '@context_name' => $definitions[$this->configuration['task_context']]->getLabel(),
         ]
       ) :
       parent::label();

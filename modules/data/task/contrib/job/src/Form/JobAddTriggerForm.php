@@ -69,6 +69,7 @@ class JobAddTriggerForm extends JobPluginFormBase {
 
     /** @var \Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface $plugin */
     $plugin = $form_state->get('plugin');
+    /** @var \Drupal\task_job\JobInterface $job */
     $job = $form_state->get('job');
     $triggers = $job->get('triggers');
     $triggers[$plugin->getKey()] = [
@@ -77,6 +78,7 @@ class JobAddTriggerForm extends JobPluginFormBase {
       'key' => $plugin->getKey(),
     ] + $plugin->getConfiguration();
     $job->set('triggers', $triggers);
+    $job->getTriggerCollection()->setConfiguration($job->getTriggersConfiguration());
 
     $this->tempstoreRepository->set($job);
 
