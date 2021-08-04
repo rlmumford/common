@@ -4,6 +4,7 @@ namespace Drupal\task_job\Entity;
 
 use Drupal\Component\Plugin\LazyPluginCollection;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityWithPluginCollectionInterface;
 use Drupal\Core\Plugin\DefaultLazyPluginCollection;
 use Drupal\entity_template\BlueprintInterface;
@@ -176,5 +177,16 @@ class Job extends ConfigEntityBase implements JobInterface {
    */
   public function removeContextDefinition(string $key) {
     unset($this->context[$key]);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function postSave(EntityStorageInterface $storage, $update = TRUE) {
+    parent::postSave($storage, $update);
+
+    /** @var \Drupal\task_job\Plugin\JobTrigger\JobTriggerManagerInterface $trigger_manager */
+    $trigger_manager = \Drupal::service('plugin.manager.task_job.trigger');
+    $trigger_manager->updateTriggerIndex($this);
   }
 }

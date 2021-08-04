@@ -3,14 +3,14 @@
 namespace Drupal\task_job\Plugin\EntityTemplate\BlueprintProvider;
 
 use Drupal\Component\Plugin\Exception\ContextException;
-use Drupal\Component\Plugin\Exception\PluginException;
 use Drupal\Core\Plugin\Context\Context;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\Core\Plugin\Context\EntityContextDefinition;
 use Drupal\Core\Plugin\ContextAwarePluginInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity_template\Blueprint;
 use Drupal\task_job\JobInterface;
 use Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface;
+use Drupal\typed_data\Context\ContextDefinition;
 
 class BlueprintJobTriggerAdaptor extends Blueprint {
 
@@ -76,7 +76,7 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
     // trigger
 
     return [
-      'job' => new ContextDefinition(
+      'job' => new EntityContextDefinition(
           'entity:task_job',
           new TranslatableMarkup('Job'),
           FALSE,

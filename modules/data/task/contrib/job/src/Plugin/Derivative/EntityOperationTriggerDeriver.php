@@ -5,7 +5,7 @@ namespace Drupal\task_job\Plugin\Derivative;
 use Drupal\Component\Plugin\Derivative\DeriverBase;
 use Drupal\Core\Entity\ContentEntityType;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\Core\Plugin\Context\EntityContextDefinition;
 use Drupal\Core\Plugin\Discovery\ContainerDeriverInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -62,7 +62,7 @@ class EntityOperationTriggerDeriver extends DeriverBase implements ContainerDeri
       }
 
       $context_definitions = [];
-      $context_definitions[$entity_type->id()] = new ContextDefinition(
+      $context_definitions[$entity_type->id()] = new EntityContextDefinition(
         'entity:'.$entity_type->id(),
         $entity_type->getLabel()
       );
@@ -88,7 +88,7 @@ class EntityOperationTriggerDeriver extends DeriverBase implements ContainerDeri
           'context_definitions' => $context_definitions,
         ] + $base_plugin_definition;
 
-      $context_definitions["original_{$entity_type->id()}"] = new ContextDefinition(
+      $context_definitions["original_{$entity_type->id()}"] = new EntityContextDefinition(
         'entity:'.$entity_type->id(),
         new TranslatableMarkup(
           'Original @entity_type',

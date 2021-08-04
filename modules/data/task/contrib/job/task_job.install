@@ -4,6 +4,48 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
+ * Implements hook_schema().
+ */
+function task_job_schema() {
+  $schema = [];
+
+  $schema['task_job_trigger_index'] = [
+    'description' => 'Track which triggers are used by which jobs.',
+    'fields' => [
+      'job' => [
+        'description' => 'Job ID.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'trigger' => [
+        'description' => 'The trigger plugin id.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'trigger_key' => [
+        'description' => 'The key of the trigger',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+    ],
+    'primary key' => ['job', 'trigger', 'trigger_key'],
+    'indexes' => [
+      'trigger' => ['trigger'],
+      'job' => ['job'],
+      'trigger_key' => ['trigger_key'],
+    ],
+  ];
+
+  return $schema;
+}
+
+/**
  * Implements hook_install().
  */
 function task_job_install() {
@@ -47,5 +89,46 @@ function task_job_uninstall() {
 
   $storage_definition_listener->onFieldStorageDefinitionDelete($definition);
   $definition_listener->onFieldDefinitionDelete($definition);
+}
 
+/**
+ * Install the job trigger table.
+ */
+function task_job_update_8001() {
+  $schema = [
+    'description' => 'Track which triggers are used by which jobs.',
+    'fields' => [
+      'job' => [
+        'description' => 'Job ID.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'trigger' => [
+        'description' => 'The trigger plugin id.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'trigger_key' => [
+        'description' => 'The key of the trigger',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+    ],
+    'primary key' => ['job', 'trigger', 'trigger_key'],
+    'indexes' => [
+      'trigger' => ['trigger'],
+      'job' => ['job'],
+      'trigger_key' => ['trigger_key'],
+    ],
+  ];
+  \Drupal::database()->schema()->createTable(
+    'task_job_trigger_index',
+    $schema
+  );
 }

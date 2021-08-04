@@ -74,3 +74,55 @@ function task_job_typed_data_reference_property_definitions(FieldItemListInterfa
 
   return $definitions;
 }
+
+/**
+ * Implements hook_entity_insert().
+ */
+function task_job_entity_insert(EntityInterface $entity) {
+  _task_job_trigger_entity_operation('insert', $entity);
+}
+
+/**
+ * Implements hook_entity_update().
+ */
+function task_job_entity_update(EntityInterface $entity) {
+  _task_job_trigger_entity_operation('update', $entity);
+}
+
+/**
+ * Implements hook_entity_delete().
+ */
+function task_job_entity_delete(EntityInterface $entity) {
+  _task_job_trigger_entity_operation('delete', $entity);
+}
+
+/**
+ * Trigger the entity operation triggers.
+ *
+ * @param string $op
+ *   The operation.
+ * @param \Drupal\Core\Entity\EntityInterface $entity
+ *   The entity.
+ */
+function _task_job_trigger_entity_operation(string $op, EntityInterface $entity) {
+  try {
+    $plugin_id = "entity_op:{$entity->getEntityTypeId()}.{$op}";
+    /** @var \Drupal\task_job\Plugin\JobTrigger\JobTriggerManagerInterface $manager */
+    $manager = \Drupal::service('plugin.manager.task_job.trigger');
+
+    foreach ($manager->getTriggers($plugin_id) as $trigger) {
+      $trigger->setContextValue($entity->getEntityTypeId(), $entity);
+
+      if ($op === 'update' && isset($entity->original)) {
+        $trigger->setContextValue("original_{$entity->getEntityTypeId()}", $entity);
+      }
+
+      if ($task = $trigger->createTask()) {
+        $task->save();
+      }
+    }
+  }
+  catch (Exception $e) {
+    \Drupal::logger('task_job')->error($e->getMessage());
+  }
+}
