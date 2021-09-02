@@ -74,11 +74,13 @@ class JobTriggerManager extends DefaultPluginManager implements JobTriggerManage
       ->execute();
 
     $insert = $this->database->insert('task_job_trigger_index')
-      ->fields(['job', 'trigger', 'trigger_key']);
+      ->fields(['job', 'trigger', 'trigger_base', 'trigger_key']);
     foreach ($job->getTriggersConfiguration() as $key => $config) {
+      $trigger_def = $this->getDefinition($config['id']);
       $insert->values([
         'job' => $job->id(),
         'trigger' => $config['id'],
+        'trigger_base' => $trigger_def['id'],
         'trigger_key' => $key,
       ]);
     }
@@ -88,11 +90,18 @@ class JobTriggerManager extends DefaultPluginManager implements JobTriggerManage
   /**
    * {@inheritdoc}
    */
-  public function getTriggers(string $plugin_id) : array {
-    $result = $this->database->select('task_job_trigger_index', 'i')
-      ->condition('trigger', $plugin_id)
-      ->fields('i', ['job', 'trigger_key'])
-      ->execute();
+  public function getTriggers(string $plugin_id = NULL, string $base_plugin_id = NULL) : array {
+    $query = $this->database->select('task_job_trigger_index', 'i')
+      ->fields('i', ['job', 'trigger_key']);
+
+    if (!empty($plugin_id)) {
+      $query->condition('trigger', $plugin_id);
+    }
+    else if (!empty($base_plugin_id)) {
+      $query->condition('trigger_base', $base_plugin_id);
+    }
+
+    $result = $query->execute();
 
     /** @var \Drupal\task_job\JobInterface[] $jobs */
     $jobs = [];

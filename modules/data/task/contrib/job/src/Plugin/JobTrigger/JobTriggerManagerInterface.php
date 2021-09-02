@@ -20,12 +20,14 @@ interface JobTriggerManagerInterface {
   /**
    * Get the trigger plugin instances for this plugin id.
    *
-   * @param string $plugin_id
+   * @param string|null $plugin_id
    *   The trigger plugin id.
+   * @param string|null $base_plugin_id
+   *   The base plugin id.
    *
    * @return \Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface[]
    *   A list of triggers.
    */
-  public function getTriggers(string $plugin_id) : array;
+  public function getTriggers(string $plugin_id = NULL, string $base_plugin_id = NULL) : array;
 
 }
