@@ -1,0 +1,12 @@
+services:
+  plugin.manager.exec_environment_component:
+    class: Drupal\exec_environment\EnvironmentComponentManager
+    parent: default_plugin_manager
+  plugin.manager.exec_environment_impact_applicator:
+    class: Drupal\exec_environment\EnvironmentImpactApplicatorManager
+    parent: default_plugin_manager
+  environment_stack:
+    class: Drupal\exec_environment\EnvironmentStack
+    arguments: ['@plugin.manager.exec_environment_impact_applicator', '@plugin.manager.exec_environment_component']
+    tags:
+      - { name: persist }
