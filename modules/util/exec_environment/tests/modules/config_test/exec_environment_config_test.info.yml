@@ -1,0 +1,7 @@
+type: module
+name: Execution Environment Config Test
+description: Test helpers for the config environment system.
+core_version_requirement: ^8 || ^9
+dependencies:
+  - exec_environment
+
