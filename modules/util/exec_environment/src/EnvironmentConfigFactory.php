@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Drupal\exec_environment;
 
 use Drupal\Core\Config\Config;
@@ -264,10 +263,10 @@ class EnvironmentConfigFactory extends ConfigFactory {
    */
   protected function createConfigObject($name, $immutable, StorageInterface $storage = NULL) {
     if ($immutable) {
-      return new ImmutableConfig($name, $storage ?? $this->storage, $this->eventDispatcher, $this->typedConfigManager);
+      return new ImmutableConfig($name, $storage ?? $this->getBestEnvironmentStorageForConfig($name), $this->eventDispatcher, $this->typedConfigManager);
     }
 
-    return new Config($name, $storage ?? $this->storage, $this->eventDispatcher, $this->typedConfigManager);
+    return new Config($name, $storage ?? $this->getBestEnvironmentStorageForConfig($name), $this->eventDispatcher, $this->typedConfigManager);
   }
 
   /**
@@ -296,6 +295,31 @@ class EnvironmentConfigFactory extends ConfigFactory {
     }
 
     return $this->environmentStorages[$collection];
+  }
+
+  /**
+   * Get the best storage to use for new config objects.
+   *
+   * When using doGet to create a new config object that could not be loaded
+   * from any of the storages, we need to select which of the environment
+   * storages to assign the configuration object to. This method detects the
+   * best environment storage to use.
+   *
+   * Currently this just takes the component with the highest priority, but we
+   * may want a method on the plugin that says whether or not it's available.
+   *
+   * @param string $name
+   *   The config name.
+   *
+   * @return \Drupal\Core\Config\StorageInterface
+   *   The best storage to use.
+   */
+  protected function getBestEnvironmentStorageForConfig(string $name) {
+    foreach ($this->getEnvironmentConfigComponents() as $component) {
+      return $this->getEnvironmentStorage($component);
+    }
+
+    return $this->storage;
   }
 
 }

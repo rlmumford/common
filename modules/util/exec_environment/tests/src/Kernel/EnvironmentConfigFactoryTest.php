@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\exec_environment\Kernel;
 
+use Drupal\Core\Datetime\Entity\DateFormat;
 use Drupal\exec_environment\Environment;
 use Drupal\exec_environment\EnvironmentConfigFactory;
 use Drupal\KernelTests\KernelTestBase;
@@ -109,6 +110,45 @@ class EnvironmentConfigFactoryTest extends KernelTestBase {
     $this->assertCount(12, $config_factory->listAll('core.date_format'));
     $environment_stack->resetEnvironment();
     $this->assertCount(11, $config_factory->listAll('core.date_format'));
+  }
+
+  /**
+   * Tests that config entities inserted in an environment are loaded correctly.
+   */
+  public function testConfigEntityInsertedInEnvironment() {
+    /** @var \Drupal\Core\Entity\EntityStorageInterface $format_storage */
+    $format_storage = $this->container->get('entity_type.manager')->getStorage('date_format');
+
+    $all = $format_storage->loadMultiple();
+    $this->assertCount(11, $all);
+
+    $environment = (new Environment())
+      ->addComponent(
+        $this->container->get('plugin.manager.exec_environment_component')
+          ->createInstance('test_named_config_collection', ['collection' => 'test_1'])
+      );
+    /** @var \Drupal\exec_environment\EnvironmentStackInterface $environment_stack */
+    $environment_stack = $this->container->get('environment_stack');
+    $environment_stack->applyEnvironment($environment);
+
+    $this->assertCount(11, $format_storage->loadMultiple());
+    $format_storage->create([
+      'status' => TRUE,
+      'id' => 'iso_8601',
+      'label' => 'Iso 8601',
+      'pattern' => 'c',
+    ])->save();
+    $this->assertCount(12, $format_storage->loadMultiple());
+
+    $environment_stack->resetEnvironment();
+
+    $this->assertCount(11, $format_storage->loadMultiple());
+    $this->assertNull($format_storage->load('iso_8601'));
+
+    $environment_stack->applyEnvironment($environment);
+    $this->assertInstanceOf(DateFormat::class, $format_storage->load('iso_8601'));
+    $environment_stack->resetEnvironment();
+    $this->assertNull($format_storage->load('iso_8601'));
   }
 
 }
