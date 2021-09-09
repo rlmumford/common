@@ -151,4 +151,80 @@ class EnvironmentConfigFactoryTest extends KernelTestBase {
     $this->assertNull($format_storage->load('iso_8601'));
   }
 
+  /**
+   * Test that config entities updated in an environment are stored and loaded
+   * correctly.
+   */
+  public function testConfigEntityUpdatedInEnvironment() {
+    /** @var \Drupal\Core\Entity\EntityStorageInterface $format_storage */
+    $format_storage = $this->container->get('entity_type.manager')->getStorage('date_format');
+
+    /** @var \Drupal\Core\Datetime\Entity\DateFormat $format */
+    $format = $format_storage->load('html_date');
+    $this->assertEquals($format->get('pattern'), 'Y-m-d');
+
+    $environment = (new Environment())
+      ->addComponent(
+        $this->container->get('plugin.manager.exec_environment_component')
+          ->createInstance('test_named_config_collection', ['collection' => 'test_1'])
+      );
+    /** @var \Drupal\exec_environment\EnvironmentStackInterface $environment_stack */
+    $environment_stack = $this->container->get('environment_stack');
+    $environment_stack->applyEnvironment($environment);
+
+    $format->set('pattern', 'm/d/Y')->save();
+    $format = $format_storage->load($format->id());
+    $this->assertEquals('m/d/Y', $this->container->get('config.factory')->get('core.date_format.html_date')->get('pattern'));
+    $this->assertEquals('m/d/Y', $format->get('pattern'));
+    $environment_stack->resetEnvironment();
+
+    // The saved change should only have applied in the environment.
+    $this->assertEquals('Y-m-d', $format_storage->load($format->id())->get('pattern'));
+
+    $format_storage->load($format->id())->set('pattern', 'd/m/Y')->save();
+    $this->assertEquals('d/m/Y', $format_storage->load($format->id())->get('pattern'));
+
+    $environment_stack->applyEnvironment($environment);
+    $this->assertEquals('m/d/Y', $format_storage->load($format->id())->get('pattern'));
+    $environment_stack->resetEnvironment();
+    $this->assertEquals('d/m/Y', $format_storage->load($format->id())->get('pattern'));
+  }
+
+  /**
+   * Test deleting config entities in an environment.
+   */
+  public function testConfigEntityDeletedInEnvironment() {
+    /** @var \Drupal\Core\Entity\EntityStorageInterface $format_storage */
+    $format_storage = $this->container->get('entity_type.manager')->getStorage('date_format');
+
+    /** @var \Drupal\Core\Datetime\Entity\DateFormat $format */
+    $format = $format_storage->load('html_date');
+    $this->assertEquals($format->get('pattern'), 'Y-m-d');
+
+    $environment = (new Environment())
+      ->addComponent(
+        $this->container->get('plugin.manager.exec_environment_component')
+          ->createInstance('test_named_config_collection', ['collection' => 'test_1'])
+      );
+    /** @var \Drupal\exec_environment\EnvironmentStackInterface $environment_stack */
+    $environment_stack = $this->container->get('environment_stack');
+    $environment_stack->applyEnvironment($environment);
+
+    $format->set('pattern', 'm/d/Y')->save();
+    $format = $format_storage->load($format->id());
+    $this->assertEquals('m/d/Y', $format->get('pattern'));
+    $environment_stack->resetEnvironment();
+
+    $this->assertEquals('Y-m-d', $format_storage->load($format->id())->get('pattern'));
+    $environment_stack->applyEnvironment($environment);
+
+    // Delete acts like revert.
+    $this->assertEquals('m/d/Y', $format_storage->load('html_date')->get('pattern'));
+    $format_storage->load('html_date')->delete();
+    $this->assertEquals('Y-m-d', $format_storage->load('html_date')->get('pattern'));
+
+    $environment_stack->resetEnvironment();
+    $this->assertEquals('Y-m-d', $format_storage->load('html_date')->get('pattern'));
+  }
+
 }
