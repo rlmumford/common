@@ -9,16 +9,28 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Drupal\entity_template\TemplateBuilderManager;
+use Drupal\task_job\Event\SelectJobEnvironmentDetectionEvent;
+use Drupal\task_job\Event\TaskJobEvents;
 use Drupal\task_job\JobInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class TaskAddController extends ControllerBase {
 
   /**
+   * The builder manager.
+   *
    * @var \Drupal\entity_template\TemplateBuilderManager
    */
   protected $builderManager;
+
+  /**
+   * The event dispatcher.
+   *
+   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+   */
+  protected $eventDispatcher;
 
   /**
    * {@inheritdoc}
@@ -28,6 +40,7 @@ class TaskAddController extends ControllerBase {
       $container->get('entity_type.manager'),
       $container->get('entity.form_builder'),
       $container->get('plugin.manager.entity_template.builder'),
+      $container->get('event_dispatcher'),
       $container->get('current_user')
     );
   }
@@ -48,11 +61,13 @@ class TaskAddController extends ControllerBase {
     EntityTypeManagerInterface $entity_type_manager,
     EntityFormBuilderInterface $entity_form_builder,
     TemplateBuilderManager $template_builder_manager,
+    EventDispatcherInterface $event_dispatcher,
     AccountInterface $current_user
   ) {
     $this->entityTypeManager = $entity_type_manager;
     $this->entityFormBuilder = $entity_form_builder;
     $this->builderManager = $template_builder_manager;
+    $this->eventDispatcher = $event_dispatcher;
     $this->currentUser = $current_user;
   }
 
@@ -73,6 +88,12 @@ class TaskAddController extends ControllerBase {
       '#theme' => 'item_list',
       '#items' => [],
     ];
+
+    if ($this->moduleHandler()->moduleExists('exec_environment')) {
+      $event = new SelectJobEnvironmentDetectionEvent($assignee);
+      $this->eventDispatcher->dispatch(TaskJobEvents::SELECT_JOB_DETECT_ENVIRONMENT, $event);
+      $event->applyEnvironment();
+    }
 
     $cache = new CacheableMetadata();
     $job_storage = $this->entityTypeManager->getStorage('task_job');
@@ -104,6 +125,10 @@ class TaskAddController extends ControllerBase {
       }
     }
     $cache->applyTo($build);
+
+    if (isset($event)) {
+      $event->resetEnvironment();
+    }
 
     return $build;
   }

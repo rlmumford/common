@@ -279,7 +279,12 @@ class EnvironmentConfigFactory extends ConfigFactory {
    *   The environment components.
    */
   protected function getEnvironmentConfigComponents() : array {
-    return $this->environmentStack->getActiveEnvironment()->getComponents(ConfigFactoryCollectionComponentInterface::class);
+    return array_filter(
+      $this->environmentStack->getActiveEnvironment()->getComponents(ConfigFactoryCollectionComponentInterface::class),
+      function ($component) {
+        return !empty($component->getConfigCollectionName());
+      }
+    );
   }
 
   /**

@@ -40,6 +40,13 @@ function task_job_schema() {
         'not null' => TRUE,
         'default' => '',
       ],
+      'collection' => [
+        'description' => 'The config collection of the job',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
     ],
     'primary key' => ['job', 'trigger', 'trigger_key'],
     'indexes' => [
@@ -47,6 +54,7 @@ function task_job_schema() {
       'trigger_base' => ['trigger_base'],
       'job' => ['job'],
       'trigger_key' => ['trigger_key'],
+      'collection' => ['collection'],
     ],
   ];
 
@@ -164,6 +172,39 @@ function task_job_update_8002() {
       'fields' => [
         'trigger_base' => [
           'description' => 'The trigger base plugin id.',
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+          'default' => '',
+        ],
+      ],
+    ]
+  );
+}
+
+/**
+ * Add base plugin id to the triggers index table.
+ */
+function task_job_update_8003() {
+  \Drupal::database()->schema()->addField(
+    'task_job_trigger_index',
+    'collection',
+    [
+      'description' => 'The config collection of the job.',
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+    ]
+  );
+  \Drupal::database()->schema()->addIndex(
+    'task_job_trigger_index',
+    'collection',
+    ['collection'],
+    [
+      'fields' => [
+        'collection' =>  [
+          'description' => 'The config collection of the job.',
           'type' => 'varchar',
           'length' => 255,
           'not null' => TRUE,

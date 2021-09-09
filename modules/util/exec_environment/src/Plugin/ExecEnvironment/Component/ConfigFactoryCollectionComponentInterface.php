@@ -7,10 +7,11 @@ interface ConfigFactoryCollectionComponentInterface extends ComponentInterface {
   /**
    * Get the config factory collection name.
    *
-   * @return string
-   *   The collection name.
+   * @return string|null
+   *   The collection name or null if this component does not provide a
+   *   collection.
    */
-  public function getConfigCollectionName() : string;
+  public function getConfigCollectionName() : ?string;
 
   /**
    * Get the config cache keys.

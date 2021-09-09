@@ -7,6 +7,11 @@ services:
     parent: default_plugin_manager
   environment_stack:
     class: Drupal\exec_environment\EnvironmentStack
-    arguments: ['@plugin.manager.exec_environment_impact_applicator', '@plugin.manager.exec_environment_component']
+    arguments: ['@plugin.manager.exec_environment_impact_applicator', '@plugin.manager.exec_environment_component', '@event_dispatcher']
     tags:
       - { name: persist }
+  exec_environment.detect_default_environment_subscriber:
+    class: Drupal\exec_environment\EventSubscriber\DetectDefaultEnvironmentSubscriber
+    arguments: [ '@plugin.manager.exec_environment_component', '@current_user' ]
+    tags:
+      - { name: event_subscriber }

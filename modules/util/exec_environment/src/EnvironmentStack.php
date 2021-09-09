@@ -2,6 +2,10 @@
 
 namespace Drupal\exec_environment;
 
+use Drupal\exec_environment\Event\EnvironmentDetectionEvent;
+use Drupal\exec_environment\Event\ExecEnvironmentEvents;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+
 /**
  * The environment stack service.
  *
@@ -31,19 +35,30 @@ class EnvironmentStack implements EnvironmentStackInterface {
   protected $componentManager;
 
   /**
+   * The event dispatcher.
+   *
+   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+   */
+  protected $eventDispatcher;
+
+  /**
    * EnvironmentStack constructor.
    *
    * @param \Drupal\exec_environment\EnvironmentImpactApplicatorManager $impact_applicator_manager
    *   The impact applicator manager.
    * @param \Drupal\exec_environment\EnvironmentComponentManager $component_manager
-   *   The
+   *   The component manager.
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
+   *   The event dispatcher.
    */
   public function __construct(
     EnvironmentImpactApplicatorManager $impact_applicator_manager,
-    EnvironmentComponentManager $component_manager
+    EnvironmentComponentManager $component_manager,
+    EventDispatcherInterface $event_dispatcher
   ) {
     $this->impactApplicatorManager = $impact_applicator_manager;
     $this->componentManager = $component_manager;
+    $this->eventDispatcher = $event_dispatcher;
   }
 
   /**
@@ -85,14 +100,10 @@ class EnvironmentStack implements EnvironmentStackInterface {
    *
    * @return \Drupal\exec_environment\EnvironmentInterface
    *   The default environment.
-   *
-   * @todo Make this extenable through impact applicators?
    */
   protected function defaultEnvironment() : EnvironmentInterface {
-    return (new Environment())
-      ->addComponent($this->componentManager->createInstance(
-        'configured_current_user',
-        ['user' => \Drupal::currentUser()->getAccount()]
-      ));
+    $event = new EnvironmentDetectionEvent();
+    $this->eventDispatcher->dispatch(ExecEnvironmentEvents::DETECT_DEFAULT_ENVIRONMENT, $event);
+    return $event->getEnvironment();
   }
 }
