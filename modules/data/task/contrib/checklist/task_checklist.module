@@ -1,9 +1,12 @@
 <?php
 
+use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
 use Drupal\entity\BundleFieldDefinition;
+use Drupal\task\Entity\Task;
 
 /**
  * Implements hook_entity_base_field_info().
@@ -54,4 +57,18 @@ function task_checklist_form_task_configuration_form_submit(array $form, FormSta
   \Drupal::configFactory()->getEditable('task_checklist.defaults')
     ->set('ci_name_prefix', $form_state->getValue(['task_checklist', 'ci_name_prefix']))
     ->save();
+}
+
+/**
+ * Implements hook_task_update().
+ */
+function task_checklist_task_update(Task $task) {
+  \Drupal::service('task_checklist.task_processor')->processTask($task);
+}
+
+/**
+ * Implements hook_task_insert().
+ */
+function task_checklist_task_insert(Task $task) {
+  \Drupal::service('task_checklist.task_processor')->processTask($task);
 }

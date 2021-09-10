@@ -54,6 +54,8 @@ class TaskAddController extends ControllerBase {
    *   The entity form builder service.
    * @param \Drupal\entity_template\TemplateBuilderManager $template_builder_manager
    *   The template builder manager.
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
+   *   The event dispatcher service.
    * @param \Drupal\Core\Session\AccountInterface $current_user
    *   The current user.
    */
