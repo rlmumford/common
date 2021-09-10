@@ -82,6 +82,8 @@ class Checklist implements ChecklistInterface {
       return $this->items;
     }
 
+    $this->items = [];
+
     // Load first.
     $ids_to_load = $this->getType()->itemStorage()
       ->getQuery()

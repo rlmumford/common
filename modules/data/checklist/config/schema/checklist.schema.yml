@@ -1,0 +1,27 @@
+checklist_item_handler:
+  type: mapping
+  label: 'Checklist Item Handler Configuration'
+  mapping:
+checklist_item_handler.*:
+  type: checklist_item_handler
+checklist_item_handler.simply_checkable:
+  type: checklist_item_handler
+  label: 'Simple Checklist Item'
+  mapping:
+    reversible:
+      type: 'boolean'
+      label: 'Reversible?'
+checklist_item_hander.create_entity:
+  type: checklist_item_handler
+  label: 'Create entity checklist item'
+  mapping:
+    bundle:
+      type: 'string'
+      label: 'Bundle to Create'
+    show_form:
+      type: 'boolean'
+      label: 'Show the entity form?'
+    form_mode:
+      type: 'string'
+      label: 'Form Mode to show'
+
