@@ -14,9 +14,12 @@ interface CurrentUserComponentInterface extends ComponentInterface {
   /**
    * Get the current user this component wants to set.
    *
+   * This method is responsible for checking the current users access to switch
+   * user.
+   *
    * @return \Drupal\Core\Session\AccountInterface
    *   The current user to set.
    */
-  public function getCurrentUser() :? AccountInterface;
+  public function getTargetCurrentUser() :? AccountInterface;
 
 }

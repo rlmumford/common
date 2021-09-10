@@ -21,6 +21,13 @@ class EnvironmentStack implements EnvironmentStackInterface {
   protected $stack = [];
 
   /**
+   * The default environment.
+   *
+   * @var \Drupal\exec_environment\Environment
+   */
+  protected $defaultEnvironment;
+
+  /**
    * The impact applicator manager.
    *
    * @var \Drupal\exec_environment\EnvironmentImpactApplicatorManager
@@ -102,8 +109,21 @@ class EnvironmentStack implements EnvironmentStackInterface {
    *   The default environment.
    */
   protected function defaultEnvironment() : EnvironmentInterface {
-    $event = new EnvironmentDetectionEvent();
-    $this->eventDispatcher->dispatch(ExecEnvironmentEvents::DETECT_DEFAULT_ENVIRONMENT, $event);
-    return $event->getEnvironment();
+    if (!$this->defaultEnvironment) {
+      $event = new EnvironmentDetectionEvent();
+      $this->eventDispatcher->dispatch(ExecEnvironmentEvents::DETECT_DEFAULT_ENVIRONMENT, $event);
+      $this->defaultEnvironment = $event->getEnvironment();
+    }
+    return $this->defaultEnvironment;
+  }
+
+  /**
+   * Reset the default environment.
+   *
+   * @todo Consider working out when to do this on the SET_USER event?
+   */
+  public function resetDefaultEnvironment() {
+    $this->defaultEnvironment = NULL;
+    return $this;
   }
 }

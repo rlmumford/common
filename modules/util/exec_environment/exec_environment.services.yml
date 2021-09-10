@@ -15,3 +15,6 @@ services:
     arguments: [ '@plugin.manager.exec_environment_component', '@current_user' ]
     tags:
       - { name: event_subscriber }
+  exec_environment.set_current_user_permissions:
+    class: Drupal\exec_environment\ExecEnvironmentSetCurrentUserPermissions
+    arguments: [ '@entity_type.manager' ]

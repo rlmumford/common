@@ -56,6 +56,8 @@ class EnvironmentStackTest extends KernelTestBase {
       );
     $this->assertCount(1, $new_environment->getComponents(CurrentUserComponentInterface::class));
 
+    $this->assertEquals($user_1->id(), $this->container->get('current_user')->id());
+
     $environment_stack->applyEnvironment($new_environment);
     $this->assertEquals($user_2->id(), $this->container->get('current_user')->id());
 

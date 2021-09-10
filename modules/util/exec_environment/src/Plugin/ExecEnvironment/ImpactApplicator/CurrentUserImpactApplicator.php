@@ -24,7 +24,7 @@ class CurrentUserImpactApplicator extends PluginBase implements ImpactApplicator
     /** @var \Drupal\exec_environment\Plugin\ExecEnvironment\Component\CurrentUserComponentInterface[] $components */
     $components = $environment->getComponents(CurrentUserComponentInterface::class);
     foreach ($components as $component) {
-      if ($account = $component->getCurrentUser()) {
+      if ($account = $component->getTargetCurrentUser()) {
         \Drupal::currentUser()->setAccount($account);
         return;
       }
@@ -36,15 +36,16 @@ class CurrentUserImpactApplicator extends PluginBase implements ImpactApplicator
    */
   public function reset(EnvironmentInterface $environment) {
     // Apply the previous environment's current user.
-    foreach ($environment->previousEnvironment()->getComponents(CurrentUserComponentInterface::class) as $component) {
-      if ($account = $component->getCurrentUser()) {
-        \Drupal::currentUser()->setAccount($account);
-        return;
-      }
-    }
-
-    // If we haven't reset the account, call reset on the previous environment.
     if ($environment->previousEnvironment()) {
+      /** @var \Drupal\exec_environment\Plugin\ExecEnvironment\Component\CurrentUserComponentInterface $component */
+      foreach ($environment->previousEnvironment()->getComponents(CurrentUserComponentInterface::class) as $component) {
+        if ($account = $component->getTargetCurrentUser()) {
+          \Drupal::currentUser()->setAccount($account);
+          return;
+        }
+      }
+
+      // If we haven't reset the account, call reset on the previous environment.
       $this->reset($environment->previousEnvironment());
     }
   }
