@@ -1,0 +1,58 @@
+name: runtests
+on:
+  push:
+    branches:
+      - '[0-9]+.[0-9x]+.x'
+  pull_request:
+    branches:
+      - '[0-9]+.[0-9x]+.x'
+jobs:
+  run_drupal_tests:
+    name: Run Drupal Tests
+    runs-on: ubuntu-latest
+    env:
+      SIMPLETEST_DB: "mysql://root:HappyLand@127.0.0.1/drupal"
+      SYMFONY_DEPRECATIONS_HELPER: weak
+    steps:
+      - name: "Install PHP"
+        uses: "shivammathur/setup-php@v2"
+        with:
+          coverage: "none"
+          php-version: "7.3"
+          tools: composer:v2
+          extensions: dom, curl, libxml, mbstring, zip, pdo, mysql, pdo_mysql, gd
+      - name: "Build Drupal"
+        run: "composer create-project drupal/recommended-project:^8.9 ."
+      - name: "Add PR Repo to Composer"
+        run: "composer config repositories.github vcs $GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git"
+        if: ${{ github.event_name == 'pull_request' }}
+      - name: "Add Repo to Composer"
+        run: composer config repositories.github vcs $GITHUB_SERVER_URL/${{ github.repository }}.git
+        if: ${{ github.event_name == 'push' }}
+      - name: "Add other Repos to Composer"
+        run: |
+          composer config repositories.patches_fork vcs git@github.com:rlmumford/composer-patches.git
+          composer config repositories.assets composer https://asset-packagist.org
+      - name: "Set GitHub Token"
+        run: composer config --global github-oauth.github.com ${{ secrets.GH_ACCESS_TOKEN }}
+      - name: "Install CounselKit (PR)"
+        run: composer require rlmumford/common:dev-$GITHUB_HEAD_REF
+        if: ${{ github.event_name == 'pull_request' }}
+      - name: "Install CounselKit (Push)"
+        run: composer require rlmumford/common:${GITHUB_REF#refs/heads/}-dev#${{ github.sha }}
+        if: ${{ github.event_name == 'push' }}
+      - name: "Install Other Dependencies"
+        run: composer require drupal/coder drupal/core-dev:^8.9 dealerdirect/phpcodesniffer-composer-installer
+      - name: "Code Style"
+        run: "vendor/bin/phpcs --standard=Drupal --ignore='*.min.*'  ./web/modules/contrib/common"
+      - name: "Set up Mysql"
+        uses: shogo82148/actions-setup-mysql@v1
+        with:
+          distribution: mariadb
+          mysql-version: 10.3
+          root-password: HappyLand
+          auto-start: true
+      - name: "Create Database"
+        run: mysql -uroot -pHappyLand -h127.0.0.1 -e 'CREATE DATABASE drupal;'
+      - name: "PHPUnit"
+        run: "vendor/bin/phpunit -c ./web/core --debug ./web/modules/contrib/common"
