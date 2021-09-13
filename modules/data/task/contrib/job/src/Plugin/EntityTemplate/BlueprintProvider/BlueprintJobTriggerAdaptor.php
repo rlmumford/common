@@ -12,14 +12,21 @@ use Drupal\task_job\JobInterface;
 use Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface;
 use Drupal\typed_data\Context\ContextDefinition;
 
+/**
+ * Blueprint adapter for job triggers.
+ */
 class BlueprintJobTriggerAdaptor extends Blueprint {
 
   /**
+   * The job.
+   *
    * @var \Drupal\task_job\JobInterface
    */
   protected $job;
 
   /**
+   * The job trigger.
+   *
    * @var \Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface
    */
   protected $trigger;
@@ -28,7 +35,9 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
    * BlueprintJobTriggerAdaptor constructor.
    *
    * @param \Drupal\task_job\JobInterface $job
+   *   The job entity.
    * @param \Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface $trigger
+   *   The job trigger.
    */
   public function __construct(JobInterface $job, JobTriggerInterface $trigger) {
     $this->job = $job;
@@ -38,22 +47,24 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
       if ($name === 'job') {
         $this->setContext($name, new Context($definition, $job));
       }
-      else if ($name == 'trigger') {
+      elseif ($name == 'trigger') {
         $this->setContext($name, new Context($definition, $trigger->getKey()));
       }
-      else if ($trigger instanceof ContextAwarePluginInterface) {
+      elseif ($trigger instanceof ContextAwarePluginInterface) {
         try {
           $this->setContext($name, $trigger->getContext($name));
         }
-        catch (ContextException $e) {}
+        catch (ContextException $e) {
+        }
       }
     }
   }
 
   /**
-   * Get the job
+   * Get the job.
    *
    * @return \Drupal\task_job\JobInterface
+   *   The job.
    */
   public function getJob(): JobInterface {
     return $this->job;
@@ -63,6 +74,7 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
    * Get job trigger.
    *
    * @return \Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface
+   *   The trigger plugin.
    */
   public function getTrigger(): JobTriggerInterface {
     return $this->trigger;
@@ -73,8 +85,7 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
    */
   protected function getExtraContextDefinitions() {
     // Add the job and the trigger as contexts, and any contexts from the
-    // trigger
-
+    // trigger.
     return [
       'job' => new EntityContextDefinition(
           'entity:task_job',
@@ -83,7 +94,7 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
           FALSE,
           new TranslatableMarkup('The job'),
           $this->getJob()
-        ),
+      ),
       'trigger' => new ContextDefinition(
           'string',
           new TranslatableMarkup('Trigger'),
@@ -91,8 +102,8 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
           FALSE,
           new TranslatableMarkup('The trigger being fired'),
           $this->getTrigger()->getKey()
-        ),
-      ] + $this->getTrigger()->getContextDefinitions()
+      ),
+    ] + $this->getTrigger()->getContextDefinitions()
         + parent::getExtraContextDefinitions();
   }
 
@@ -101,7 +112,7 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
    */
   public function getBuilder() {
     return $this->builderManager()->createInstance(
-      'task_job:'.$this->getJob()->id()
+      'task_job:' . $this->getJob()->id()
     );
   }
 
@@ -128,7 +139,8 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
   /**
    * Get the default template components.
    *
-   * @return array.
+   * @return array
+   *   The default template components.
    */
   public function getDefaultTemplateComponents() : array {
     $components = [];
@@ -144,7 +156,7 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
       }
 
       $components[$name] = [
-        'id' => 'field.widget_input:task.'.$name,
+        'id' => 'field.widget_input:task.' . $name,
         'uuid' => $name,
       ];
     }
@@ -166,6 +178,7 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
    * Get the template builder manager.
    *
    * @return \Drupal\entity_template\TemplateBuilderManager
+   *   The template builder manager.
    */
   protected function builderManager() {
     return \Drupal::service('plugin.manager.entity_template.builder');

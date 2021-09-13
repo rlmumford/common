@@ -5,6 +5,9 @@ namespace Drupal\task\Form;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 
+/**
+ * Configuration from for task config.
+ */
 class TaskConfigurationForm extends ConfigFormBase {
 
   /**
@@ -14,9 +17,9 @@ class TaskConfigurationForm extends ConfigFormBase {
     return [];
   }
 
-/**
- * {@inheritdoc}
- */
+  /**
+   * {@inheritdoc}
+   */
   public function getFormId() {
     return 'task_configuration_form';
   }
@@ -50,6 +53,6 @@ class TaskConfigurationForm extends ConfigFormBase {
    *   The current state of the form.
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    return;
   }
+
 }

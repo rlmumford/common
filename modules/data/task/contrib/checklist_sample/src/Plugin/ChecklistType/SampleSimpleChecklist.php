@@ -5,7 +5,7 @@ namespace Drupal\task_checklist_sample\Plugin\ChecklistType;
 use Drupal\checklist\Plugin\ChecklistType\ChecklistTypeBase;
 
 /**
- * Class TestSimpleChecklist
+ * Class TestSimpleChecklist.
  *
  * @ChecklistType(
  *   id = "sample_simple_task",
@@ -21,6 +21,7 @@ class SampleSimpleChecklist extends ChecklistTypeBase {
    * Get the default items.
    *
    * @return \Drupal\checklist\Entity\ChecklistItemInterface[]
+   *   The checklist.
    */
   public function getDefaultItems(): array {
     $items = [

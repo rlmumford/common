@@ -16,7 +16,7 @@ use Drupal\task_job\Plugin\JobTrigger\JobTriggerManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Class JobTrigger
+ * Blueprint provider for job triggers.
  *
  * @EntityTemplateBlueprintProvider(
  *   id = "job_trigger",
@@ -28,15 +28,22 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class JobTrigger extends PluginBase implements BlueprintProviderInterface, ContainerFactoryPluginInterface {
 
   /**
+   * The job trigger manager.
+   *
    * @var \Drupal\task_job\Plugin\JobTrigger\JobTriggerManager
    */
   protected $jobTriggerManager;
 
   /**
+   * The entity type manager.
+   *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
       $configuration,
@@ -47,6 +54,20 @@ class JobTrigger extends PluginBase implements BlueprintProviderInterface, Conta
     );
   }
 
+  /**
+   * JobTrigger constructor.
+   *
+   * @param array $configuration
+   *   A configuration array containing information about the plugin instance.
+   * @param string $plugin_id
+   *   The plugin_id for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
+   * @param \Drupal\task_job\Plugin\JobTrigger\JobTriggerManager $job_trigger_manager
+   *   The job trigger manager.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
+   */
   public function __construct(
     array $configuration,
     string $plugin_id,
@@ -61,11 +82,7 @@ class JobTrigger extends PluginBase implements BlueprintProviderInterface, Conta
   }
 
   /**
-   * Get all the available blueprints for a given builder
-   *
-   * @param \Drupal\entity_template\Plugin\EntityTemplate\Builder\BuilderInterface $builder
-   *
-   * @return \Drupal\entity_template\BlueprintInterface[]
+   * {@inheritdoc}
    */
   public function getAllBlueprints(BuilderInterface $builder) {
     if (!$builder instanceof JobTaskBuilder) {
@@ -85,13 +102,7 @@ class JobTrigger extends PluginBase implements BlueprintProviderInterface, Conta
   }
 
   /**
-   * Get the available blueprints for a given builder, limiting based on
-   *
-   * @param \Drupal\entity_template\Plugin\EntityTemplate\Builder\BuilderInterface $builder
-   * @param array $parameters
-   * @param \Drupal\Core\Session\AccountInterface|NULL $account
-   *
-   * @return \Drupal\entity_template\BlueprintInterface[]
+   * {@inheritdoc}
    */
   public function getAvailableBlueprints(
     BuilderInterface $builder,
@@ -123,11 +134,7 @@ class JobTrigger extends PluginBase implements BlueprintProviderInterface, Conta
   }
 
   /**
-   * Get a blueprint storage.
-   *
-   * @param $id
-   *
-   * @return \Drupal\entity_template\BlueprintStorageInterface
+   * {@inheritdoc}
    */
   public function getBlueprintStorage($id) {
     list($job_id, $trigger) = explode('.', $id, 2);
@@ -151,11 +158,7 @@ class JobTrigger extends PluginBase implements BlueprintProviderInterface, Conta
   }
 
   /**
-   * Get the key of a given blueprint to identify it in the provider.
-   *
-   * @param \Drupal\entity_template\BlueprintStorageInterface $blueprintStorage
-   *
-   * @return string
+   * {@inheritdoc}
    */
   public function getBlueprintKey(BlueprintStorageInterface $blueprint_storage) {
     if (!($blueprint_storage instanceof BlueprintStorageJobTriggerAdaptor)) {
@@ -169,9 +172,7 @@ class JobTrigger extends PluginBase implements BlueprintProviderInterface, Conta
   }
 
   /**
-   * @param \Drupal\entity_template\BlueprintStorageInterface $blueprint_storage
-   *
-   * @return \Drupal\Core\Url
+   * {@inheritdoc}
    */
   public function getBlueprintEditUrl(BlueprintStorageInterface $blueprint_storage) {
     if (!($blueprint_storage instanceof BlueprintStorageJobTriggerAdaptor)) {
@@ -187,16 +188,9 @@ class JobTrigger extends PluginBase implements BlueprintProviderInterface, Conta
   }
 
   /**
-   * Get the edit template url for the blueprint.
-   *
-   * @param \Drupal\entity_template\BlueprintStorageInterface $blueprint_storage
-   * @param string $key
-   *
-   * @return \Drupal\Core\Url
-   *
-   * @todo: Remove in favour of TemplateUI classes
+   * {@inheritdoc}
    */
-  public function getBlueprintEditTemplateUrl(BlueprintStorageInterface $blueprint_storage, string $key): Url {#
+  public function getBlueprintEditTemplateUrl(BlueprintStorageInterface $blueprint_storage, string $key): Url {
     if (!($blueprint_storage instanceof BlueprintStorageJobTriggerAdaptor)) {
       throw new \Exception('Invalid blueprint storage provided.');
     }
@@ -208,4 +202,5 @@ class JobTrigger extends PluginBase implements BlueprintProviderInterface, Conta
       ]
     );
   }
+
 }

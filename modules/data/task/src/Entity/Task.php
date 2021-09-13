@@ -2,6 +2,7 @@
 
 namespace Drupal\task\Entity;
 
+use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
@@ -13,7 +14,7 @@ use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
 use Drupal\task\TaskInterface;
 
 /**
- * Task Entity.
+ * The task entity is used to store tasks.
  *
  * @ContentEntityType(
  *   id = "task",
@@ -249,7 +250,7 @@ class Task extends ContentEntityBase implements TaskInterface {
       $this->status->value = $open_dependencies ? 'waiting' : $this->status->value;
     }
 
-    // @todo: Lock tokens if this is resolved.
+    // @todo Lock tokens if this is resolved.
   }
 
   /**
@@ -265,14 +266,31 @@ class Task extends ContentEntityBase implements TaskInterface {
         }
       }
     }
-
-    // @todo: Process accept criteria.
   }
 
-   /**
+  /**
    * Default value callback for author.
    */
   public static function getCurrentUserId() {
     return [\Drupal::currentUser()->id()];
   }
+
+  /**
+   * Resolve the task.
+   *
+   * @param string $resolution
+   *   What sort of resolution this is.
+   * @param \DateTimeInterface|null $time
+   *   The time it was resolved, if NULL then the current time will be used.
+   *
+   * @return $this
+   */
+  public function resolve(string $resolution = Task::RESOLUTION_COMPLETE, \DateTimeInterface $time = NULL) {
+    $this->status = static::STATUS_RESOLVED;
+    $this->resolution = $resolution;
+    $this->resolved = ($time ?? new DrupalDateTime())->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT);
+
+    return $this;
+  }
+
 }

@@ -1,0 +1,5 @@
+enter any user environment:
+  title: 'Enter any users environment'
+  restrict access: TRUE
+permission_callbacks:
+  - exec_environment.set_current_user_permissions:getPermissions

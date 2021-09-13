@@ -4,9 +4,7 @@ namespace Drupal\task_job\Form;
 
 use Drupal\checklist\ChecklistItemHandlerManager;
 use Drupal\Component\Utility\Html;
-use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Ajax\AjaxResponse;
-use Drupal\Core\Ajax\InsertCommand;
 use Drupal\Core\Ajax\RemoveCommand;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -16,7 +14,6 @@ use Drupal\Core\Plugin\PluginWithFormsInterface;
 use Drupal\Core\Render\Element;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
-use Drupal\entity_template\BlueprintEntityStorageAdaptor;
 use Drupal\entity_template\BlueprintTempstoreRepository;
 use Drupal\entity_template\TemplateBlueprintProviderManager;
 use Drupal\task_job\JobInterface;
@@ -26,44 +23,63 @@ use Drupal\task_job\TaskJobTempstoreRepository;
 use Drupal\typed_data\Context\ContextDefinition;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
+/**
+ * Form to edit a job.
+ */
 class JobEditForm extends JobForm {
 
   /**
+   * The job entity.
+   *
    * @var \Drupal\task_job\Entity\Job
    */
   protected $entity;
 
   /**
+   * A list of the blueprint storages for the different triggers.
+   *
    * @var \Drupal\task_job\Plugin\EntityTemplate\BlueprintProvider\BlueprintStorageJobTriggerAdaptor[]
    */
   protected $blueprintStorages;
 
   /**
+   * The blueprint provider manager service.
+   *
    * @var \Drupal\entity_template\TemplateBlueprintProviderManager
    */
   protected $blueprintProviderManager;
 
   /**
+   * The blueprint tempstore repository.
+   *
    * @var \Drupal\entity_template\BlueprintTempstoreRepository
    */
   protected $blueprintTempstoreRepository;
 
   /**
+   * The job tempstore repository.
+   *
    * @var \Drupal\task_job\TaskJobTempstoreRepository
    */
   protected $tempstoreRepository;
 
   /**
+   * The plugin form factory.
+   *
    * @var \Drupal\Core\Plugin\PluginFormFactoryInterface
    */
   protected $pluginFormFactory;
 
   /**
+   * The checklist item manager.
+   *
    * @var \Drupal\checklist\ChecklistItemHandlerManager
    */
   protected $manager;
 
   /**
+   * The job trigger manager.
+   *
    * @var \Drupal\task_job\Plugin\JobTrigger\JobTriggerManager
    */
   protected $jobTriggerManager;
@@ -86,6 +102,17 @@ class JobEditForm extends JobForm {
    * JobEditForm constructor.
    *
    * @param \Drupal\task_job\TaskJobTempstoreRepository $tempstore_repository
+   *   The job tempstore repository.
+   * @param \Drupal\checklist\ChecklistItemHandlerManager $manager
+   *   The checklist item handler manager.
+   * @param \Drupal\entity_template\TemplateBlueprintProviderManager $blueprint_provider_manager
+   *   The blueprint provider manager service.
+   * @param \Drupal\entity_template\BlueprintTempstoreRepository $blueprint_tempstore_repository
+   *   The blueprint tempstore repository.
+   * @param \Drupal\Core\Plugin\PluginFormFactoryInterface $plugin_form_factory
+   *   The plugin form factory service.
+   * @param \Drupal\task_job\Plugin\JobTrigger\JobTriggerManager $job_trigger_manager
+   *   The job trigger manager service.
    */
   public function __construct(
     TaskJobTempstoreRepository $tempstore_repository,
@@ -170,7 +197,7 @@ class JobEditForm extends JobForm {
         $this->t('Required'),
         $this->t('Multiple'),
         $this->t('Operations'),
-      ]
+      ],
     ];
     foreach ($context as $key => $context_definition) {
       $row = [];
@@ -186,8 +213,8 @@ class JobEditForm extends JobForm {
         '#title_display' => 'invisible',
         '#default_value' => $key,
         '#machine_name' => [
-          'source' => [ 'context_wrapper', 'context', $key, 'label'],
-          'exists' => [ static::class, 'contextKeyExists' ],
+          'source' => ['context_wrapper', 'context', $key, 'label'],
+          'exists' => [static::class, 'contextKeyExists'],
           'standalone' => TRUE,
         ],
         '#disabled' => TRUE,
@@ -216,7 +243,7 @@ class JobEditForm extends JobForm {
         '#type' => 'container',
         'remove' => [
           '#type' => 'submit',
-          '#name' => 'remove_'.$key,
+          '#name' => 'remove_' . $key,
           '#context_key' => $key,
           '#value' => $this->t('Remove'),
           '#limit_validation_errors' => [],
@@ -245,8 +272,8 @@ class JobEditForm extends JobForm {
       '#title_display' => 'invisible',
       '#required' => FALSE,
       '#machine_name' => [
-        'source' => [ 'context_wrapper', 'context', '_add_new', 'label'],
-        'exists' => [ static::class, 'contextKeyExists' ],
+        'source' => ['context_wrapper', 'context', '_add_new', 'label'],
+        'exists' => [static::class, 'contextKeyExists'],
         'standalone' => TRUE,
       ],
     ];
@@ -308,7 +335,7 @@ class JobEditForm extends JobForm {
         $ajax_attributes
       ),
       '#attributes' => [
-        'class' => ['add-checklist-item-button', 'btn', 'button']
+        'class' => ['add-checklist-item-button', 'btn', 'button'],
       ],
     ];
 
@@ -364,8 +391,8 @@ class JobEditForm extends JobForm {
               [
                 'query' => $this->getDestinationArray(),
               ] + $ajax_attributes
-            )
-          ]
+            ),
+          ],
         ],
       ];
 
@@ -389,7 +416,7 @@ class JobEditForm extends JobForm {
         $ajax_attributes
       ),
       '#attributes' => [
-        'class' => ['add-trigger-button', 'btn', 'button']
+        'class' => ['add-trigger-button', 'btn', 'button'],
       ],
     ];
 
@@ -397,7 +424,7 @@ class JobEditForm extends JobForm {
       $wrapper_id = Html::cleanCssIdentifier("trigger-{$key}-wrapper");
       $element = [
         '#type' => 'details',
-        '#prefix' => '<div id="'.$wrapper_id.'">',
+        '#prefix' => '<div id="' . $wrapper_id . '">',
         '#suffix' => '</div>',
         '#title' => $trigger->getLabel(),
         '#description' => $trigger->getDescription(),
@@ -405,7 +432,7 @@ class JobEditForm extends JobForm {
       $element['remove'] = [
         '#type' => 'submit',
         '#value' => $this->t('Remove'),
-        '#name' => 'trigger_remove_'.$key,
+        '#name' => 'trigger_remove_' . $key,
         '#trigger_key' => $key,
         '#limit_validation_errors' => [],
         '#attributes' => [
@@ -468,6 +495,9 @@ class JobEditForm extends JobForm {
     return $form;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function copyFormValuesToEntity(EntityInterface $entity, array $form, FormStateInterface $form_state) {
     /** @var \Drupal\task_job\Entity\Job $entity */
     $context_definitions = $entity->getContextDefinitions();
@@ -559,7 +589,7 @@ class JobEditForm extends JobForm {
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The form state.
    */
-  public function formValidateAddContext($form, FormStateInterface $form_state) {
+  public function formValidateAddContext(array $form, FormStateInterface $form_state) {
     $values = $form_state->getValue(['context', '_add_new']);
     $row = &$form['context_wrapper']['context']['_add_new'];
     if (empty($values['key'])) {
@@ -573,10 +603,12 @@ class JobEditForm extends JobForm {
   /**
    * Submit to add a required context.
    *
-   * @param $form
+   * @param array $form
+   *   The form array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
    */
-  public function formSubmitAddContext($form, FormStateInterface $form_state) {
+  public function formSubmitAddContext(array $form, FormStateInterface $form_state) {
     $context = $form_state->get('context');
 
     $values = $form_state->getValue(['context', '_add_new']);
@@ -597,10 +629,12 @@ class JobEditForm extends JobForm {
   /**
    * Submit to remove a required context.
    *
-   * @param $form
+   * @param array $form
+   *   The form array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
    */
-  public function formSubmitRemoveContext($form, FormStateInterface $form_state) {
+  public function formSubmitRemoveContext(array $form, FormStateInterface $form_state) {
     $button = $form_state->getTriggeringElement();
     $context = $form_state->get('context');
     unset($context[$button['#context_key']]);
@@ -614,25 +648,32 @@ class JobEditForm extends JobForm {
   /**
    * Ajax callback to reload the required context.
    *
-   * @param $form
+   * @param array $form
+   *   The form array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
    *
    * @return array
+   *   The context table portion of the form array.
    */
-  public static function formAjaxReloadContext($form, FormStateInterface $form_state) {
+  public static function formAjaxReloadContext(array $form, FormStateInterface $form_state) {
     return $form['context_wrapper']['context'];
   }
 
   /**
    * Check whether the machine name of a required context exists already.
    *
-   * @param $value
-   * @param $element
-   * @param $form_state
+   * @param mixed $value
+   *   The value provided.
+   * @param array $element
+   *   The element being tested.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
    *
-   * @return boolean
+   * @return bool
+   *   True if it exists, false otherwise.
    */
-  public static function contextKeyExists($value, $element, FormStateInterface $form_state) {
+  public static function contextKeyExists($value, array $element, FormStateInterface $form_state) {
     $context = $form_state->get('context');
     return !empty($context[$value]) && !in_array($value, $element['#parents']);
   }
@@ -640,10 +681,12 @@ class JobEditForm extends JobForm {
   /**
    * Submit to remove a trigger.
    *
-   * @param $form
+   * @param array $form
+   *   The form array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
    */
-  public function formSubmitRemoveTrigger($form, FormStateInterface $form_state) {
+  public function formSubmitRemoveTrigger(array $form, FormStateInterface $form_state) {
     $button = $form_state->getTriggeringElement();
     $this->entity->getTriggerCollection()->removeInstanceId($button['#trigger_key']);
     $form_state->setRebuild(TRUE);
@@ -654,16 +697,19 @@ class JobEditForm extends JobForm {
   /**
    * Ajax callback to reload the trigger section.
    *
-   * @param $form
+   * @param array $form
+   *   The form array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
    *
    * @return \Drupal\Core\Ajax\AjaxResponse
    *   The ajax commands to execute.
    */
-  public static function formAjaxRemoveTrigger($form, FormStateInterface $form_state) {
+  public static function formAjaxRemoveTrigger(array $form, FormStateInterface $form_state) {
     $triggering_element = $form_state->getTriggeringElement();
     $response = new AjaxResponse();
-    $response->addCommand(new RemoveCommand('#'.$triggering_element['#ajax']['wrapper']));
+    $response->addCommand(new RemoveCommand('#' . $triggering_element['#ajax']['wrapper']));
     return $response;
   }
+
 }

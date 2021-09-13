@@ -53,4 +53,5 @@ class TaskListBuilder extends EntityListBuilder {
     $build['table']['#empty'] = $this->t('There are no tasks.');
     return $build;
   }
+
 }

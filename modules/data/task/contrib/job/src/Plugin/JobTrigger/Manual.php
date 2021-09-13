@@ -1,10 +1,11 @@
 <?php
 
 namespace Drupal\task_job\Plugin\JobTrigger;
+
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
- * Class Manual
+ * Jobs that can be manually created.
  *
  * @JobTrigger(
  *   id = "manual",
@@ -36,4 +37,5 @@ class Manual extends JobTriggerBase {
   protected function getDefaultKey(): string {
     return $this->getPluginId();
   }
+
 }

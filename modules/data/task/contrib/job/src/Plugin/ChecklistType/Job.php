@@ -2,15 +2,13 @@
 
 namespace Drupal\task_job\Plugin\ChecklistType;
 
-use Drupal\checklist\ChecklistInterface;
 use Drupal\checklist\Plugin\ChecklistType\ChecklistTypeBase;
 use Drupal\Core\Entity\EntityStorageInterface;
-use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\task_job\JobInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Class Job
+ * Job checklist types.
  *
  * @ChecklistType(
  *   id = "job",
@@ -23,17 +21,14 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class Job extends ChecklistTypeBase {
 
   /**
+   * The job storage.
+   *
    * @var \Drupal\Core\Entity\EntityStorageInterface
    */
   protected $jobStorage;
 
   /**
-   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
-   * @param array $configuration
-   * @param string $plugin_id
-   * @param mixed $plugin_definition
-   *
-   * @return \Drupal\checklist\Plugin\ChecklistType\ChecklistTypeBase|\Drupal\task_job\Plugin\ChecklistType\Job
+   * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static(
@@ -49,10 +44,15 @@ class Job extends ChecklistTypeBase {
    * Job constructor.
    *
    * @param array $configuration
+   *   A configuration array containing information about the plugin instance.
    * @param string $plugin_id
-   * @param $plugin_definition
+   *   The plugin_id for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
    * @param \Drupal\Core\Entity\EntityStorageInterface $item_storage
+   *   The checklist item entity storage.
    * @param \Drupal\Core\Entity\EntityStorageInterface $job_storage
+   *   The job storage.
    */
   public function __construct(
     array $configuration,
@@ -67,10 +67,13 @@ class Job extends ChecklistTypeBase {
   }
 
   /**
+   * Get the job.
+   *
    * We return a Job interface here, rather than a Job entity in anticipation
    * of some complex system of Job overides.
    *
    * @return \Drupal\task_job\JobInterface
+   *   The job.
    */
   protected function getJob() : JobInterface {
     return $this->jobStorage->load($this->getConfiguration()['job']);
@@ -80,8 +83,9 @@ class Job extends ChecklistTypeBase {
    * Get the default items.
    *
    * @return \Drupal\checklist\Entity\ChecklistItemInterface[]
+   *   The default checklist items.
    */
-  public function getDefaultItems() : array{
+  public function getDefaultItems() : array {
     $items = [];
 
     foreach ($this->getJob()->getChecklistItems() as $name => $config) {

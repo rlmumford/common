@@ -7,9 +7,16 @@ use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\Core\Plugin\DefaultLazyPluginCollection;
 use Drupal\task_job\JobInterface;
 
+/**
+ * Lazy collection of job triggers.
+ *
+ * @method \Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface get($instance_id)
+ */
 class LazyJobTriggerCollection extends DefaultLazyPluginCollection {
 
   /**
+   * The job.
+   *
    * @var \Drupal\task_job\JobInterface
    */
   protected $job;
@@ -18,8 +25,11 @@ class LazyJobTriggerCollection extends DefaultLazyPluginCollection {
    * LazyJobTriggerCollection constructor.
    *
    * @param \Drupal\task_job\JobInterface $job
+   *   The job.
    * @param \Drupal\Component\Plugin\PluginManagerInterface $manager
+   *   The plugin manager.
    * @param array $configurations
+   *   The configurations.
    */
   public function __construct(
     JobInterface $job,
@@ -46,17 +56,6 @@ class LazyJobTriggerCollection extends DefaultLazyPluginCollection {
         ->createInstance($configuration[$this->pluginKey], $configuration)
         ->setJob($this->job)
     );
-  }
-
-  /**
-   * Get a job trigger.
-   *
-   * @param string $instance_id
-   *
-   * @return \Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface
-   */
-  public function &get($instance_id) {
-    return parent::get($instance_id);
   }
 
 }

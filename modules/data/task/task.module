@@ -6,6 +6,18 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
+ * Implements hook_entity_type_build().
+ *
+ * @param \Drupal\Core\Entity\EntityTypeInterface[] $entity_types
+ *   The entity types to be built.
+ */
+function task_entity_type_build(&$entity_types) {
+  if (\Drupal::moduleHandler()->moduleExists('exec_environment')) {
+    $entity_types['task']->setViewBuilderClass(\Drupal\exec_environment\EnvironmentAwareViewBuilder::class);
+  }
+}
+
+/**
  * Implements hook_entity_base_field_info().
  */
 function task_entity_base_field_info(EntityTypeInterface $entity_type) {

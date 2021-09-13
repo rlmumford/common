@@ -5,7 +5,7 @@ namespace Drupal\task_job\Annotation;
 use Drupal\Component\Annotation\Plugin;
 
 /**
- * Class JobTrigger
+ * Annotation for job triggers.
  *
  * @Annotation
  *

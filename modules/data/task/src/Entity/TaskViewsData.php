@@ -45,4 +45,5 @@ class TaskViewsData extends EntityViewsData {
 
     return $data;
   }
+
 }

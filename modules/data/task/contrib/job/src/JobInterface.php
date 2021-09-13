@@ -4,10 +4,12 @@ namespace Drupal\task_job;
 
 use Drupal\Component\Plugin\LazyPluginCollection;
 use Drupal\Core\Entity\EntityInterface;
-use Drupal\entity_template\Entity\BlueprintEntityInterface;
 use Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface;
 use Drupal\typed_data\Context\ContextDefinition;
 
+/**
+ * Interface for Jobs.
+ */
 interface JobInterface extends EntityInterface {
 
   /**
@@ -26,13 +28,15 @@ interface JobInterface extends EntityInterface {
    * Get the triggers associated with this job.
    *
    * @return array
+   *   An array of triggers configuration.
    */
   public function getTriggersConfiguration() : array;
 
   /**
-   * Get the trigger collection
+   * Get the trigger collection.
    *
    * @return \Drupal\Component\Plugin\LazyPluginCollection
+   *   The trigger collection.
    */
   public function getTriggerCollection(): LazyPluginCollection;
 
@@ -40,15 +44,21 @@ interface JobInterface extends EntityInterface {
    * Get a specific trigger.
    *
    * @param string $key
+   *   The trigger key.
    *
    * @return \Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface|null
+   *   The job trigger plugin if it exists.
    */
   public function getTrigger(string $key): ?JobTriggerInterface;
 
   /**
    * Check whether we have a trigger.
    *
+   * @param string $key
+   *   The trigger key.
+   *
    * @return bool
+   *   True if the trigger exists, FALSE otherwise.
    */
   public function hasTrigger(string $key) : bool;
 
@@ -67,6 +77,8 @@ interface JobInterface extends EntityInterface {
    *   The context key to get.
    *
    * @return \Drupal\typed_data\Context\ContextDefinition|null
+   *   Get the context definition.
+   *
    * @throws \Drupal\Component\Plugin\Exception\ContextException
    */
   public function getContextDefinition(string $key);

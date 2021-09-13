@@ -11,9 +11,14 @@ use Drupal\task_job\Plugin\EntityTemplate\BlueprintProvider\BlueprintStorageJobT
 use Drupal\task_job\TaskJobTempstoreRepository;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
+/**
+ * Form to add a job trigger.
+ */
 class JobAddTriggerForm extends JobPluginFormBase {
 
   /**
+   * The blueprint tempstore repository.
+   *
    * @var \Drupal\entity_template\BlueprintTempstoreRepository
    */
   protected $blueprintTempstoreRepository;
@@ -35,10 +40,15 @@ class JobAddTriggerForm extends JobPluginFormBase {
    * JobAddTriggerForm constructor.
    *
    * @param \Drupal\task_job\TaskJobTempstoreRepository $tempstore_repository
+   *   The tempstore repository.
    * @param \Drupal\Core\Plugin\PluginFormFactoryInterface $plugin_form_factory
+   *   The plugin form factory.
    * @param \Drupal\Component\Plugin\PluginManagerInterface $manager
+   *   The plugin manager.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory.
    * @param \Drupal\entity_template\BlueprintTempstoreRepository $blueprint_tempstore_repository
+   *   The blueprint tempstore repository.
    */
   public function __construct(
     TaskJobTempstoreRepository $tempstore_repository,
@@ -91,4 +101,5 @@ class JobAddTriggerForm extends JobPluginFormBase {
     );
     $this->blueprintTempstoreRepository->delete($blueprint_storage);
   }
+
 }

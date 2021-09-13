@@ -12,21 +12,28 @@ use Drupal\task_job\Plugin\JobTrigger\JobTriggerManager;
 use Drupal\task_job\TaskJobTempstoreRepository;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
+/**
+ * Controller for selecting a new job trigger.
+ */
 class ChooseTriggerController extends ControllerBase {
   use AjaxHelperTrait;
 
   /**
+   * The job trigger manager.
+   *
    * @var \Drupal\task_job\Plugin\JobTrigger\JobTriggerManager
    */
   protected $manager;
 
   /**
+   * The job tempstore repo.
+   *
    * @var \Drupal\task_job\TaskJobTempstoreRepository
    */
   protected $tempstoreRepository;
 
   /**
-   * [@inheritdoc}
+   * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
     return new static(
@@ -39,7 +46,12 @@ class ChooseTriggerController extends ControllerBase {
   /**
    * ChooseHandlerController constructor.
    *
-   * @param \Drupal\checklist\ChecklistItemHandlerManager $manager
+   * @param \Drupal\task_job\TaskJobTempstoreRepository $tempstore_repository
+   *   The tempstore repository.
+   * @param \Drupal\task_job\Plugin\JobTrigger\JobTriggerManager $manager
+   *   The trigger manager.
+   * @param \Drupal\Core\Form\FormBuilderInterface $form_builder
+   *   The form builder.
    */
   public function __construct(
     TaskJobTempstoreRepository $tempstore_repository,
@@ -51,6 +63,15 @@ class ChooseTriggerController extends ControllerBase {
     $this->tempstoreRepository = $tempstore_repository;
   }
 
+  /**
+   * Build the list of triggers to add.
+   *
+   * @param \Drupal\task_job\JobInterface $task_job
+   *   The job the trigger is being added to.
+   *
+   * @return array
+   *   The build array or the form add a trigger if only one plugin available.
+   */
   public function build(JobInterface $task_job) {
     $definitions = $this->manager->getDefinitions();
 
@@ -93,9 +114,10 @@ class ChooseTriggerController extends ControllerBase {
   }
 
   /**
-   * Get the ajax attributes
+   * Get the ajax attributes.
    *
    * @return array
+   *   The ajax button attributes.
    */
   protected function getAjaxAttributes() {
     if ($this->isAjax()) {

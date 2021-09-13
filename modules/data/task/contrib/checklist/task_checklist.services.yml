@@ -1,0 +1,4 @@
+services:
+  task_checklist.task_processor:
+    class: Drupal\task_checklist\TaskChecklistProcessor
+    arguments: [ '@module_handler', '@event_dispatcher', '@logger.factory' ]
