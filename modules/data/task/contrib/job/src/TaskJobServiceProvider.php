@@ -21,8 +21,8 @@ class TaskJobServiceProvider extends ServiceProviderBase {
     if (array_key_exists('exec_environment', $container->getParameter('container.modules'))) {
       $definition = $container->getDefinition('plugin.manager.task_job.trigger');
       $definition->setClass(EnvironmentAwareJobTriggerManager::class);
-      $definition->addMethodCall('setEnvironmentStack', [ new Reference('environment_stack') ]);
-      $definition->addMethodCall('setConfigFactory', [ new Reference('config.factory') ]);
+      $definition->addMethodCall('setEnvironmentStack', [new Reference('environment_stack')]);
+      $definition->addMethodCall('setConfigFactory', [new Reference('config.factory')]);
     }
   }
 

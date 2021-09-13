@@ -6,16 +6,19 @@ use Drupal\Component\Plugin\ConfigurableInterface;
 use Drupal\Component\Plugin\PluginInspectionInterface;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Plugin\ContextAwarePluginInterface;
-use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\task\TaskInterface;
 use Drupal\task_job\JobInterface;
 
+/**
+ * Interface for job trigger plugins.
+ */
 interface JobTriggerInterface extends PluginInspectionInterface, ConfigurableInterface, ContextAwarePluginInterface {
 
   /**
    * Get the task.
    *
    * @return \Drupal\task\TaskInterface|null
+   *   The created task.
    */
   public function createTask() : ?TaskInterface;
 
@@ -34,6 +37,7 @@ interface JobTriggerInterface extends PluginInspectionInterface, ConfigurableInt
    * Get the key.
    *
    * @return string
+   *   The trigger key.
    */
   public function getKey(): string;
 
@@ -43,7 +47,7 @@ interface JobTriggerInterface extends PluginInspectionInterface, ConfigurableInt
    * @param \Drupal\task_job\JobInterface $job
    *   The job.
    *
-   * @return \Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface
+   * @return $this
    */
   public function setJob(JobInterface $job): JobTriggerInterface;
 
@@ -55,8 +59,20 @@ interface JobTriggerInterface extends PluginInspectionInterface, ConfigurableInt
    */
   public function getJob(): JobInterface;
 
+  /**
+   * Get the trigger label.
+   *
+   * @return string
+   *   The trigger label.
+   */
   public function getLabel();
 
+  /**
+   * Get the trigger description.
+   *
+   * @return string
+   *   The description.
+   */
   public function getDescription();
 
 }

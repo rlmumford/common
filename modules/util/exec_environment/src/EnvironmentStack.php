@@ -126,4 +126,5 @@ class EnvironmentStack implements EnvironmentStackInterface {
     $this->defaultEnvironment = NULL;
     return $this;
   }
+
 }

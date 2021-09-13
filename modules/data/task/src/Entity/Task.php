@@ -14,7 +14,7 @@ use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
 use Drupal\task\TaskInterface;
 
 /**
- * Task Entity.
+ * The task entity is used to store tasks.
  *
  * @ContentEntityType(
  *   id = "task",
@@ -250,7 +250,7 @@ class Task extends ContentEntityBase implements TaskInterface {
       $this->status->value = $open_dependencies ? 'waiting' : $this->status->value;
     }
 
-    // @todo: Lock tokens if this is resolved.
+    // @todo Lock tokens if this is resolved.
   }
 
   /**
@@ -292,4 +292,5 @@ class Task extends ContentEntityBase implements TaskInterface {
 
     return $this;
   }
+
 }

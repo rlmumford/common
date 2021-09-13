@@ -43,10 +43,16 @@ class JobTriggerManager extends DefaultPluginManager implements JobTriggerManage
    * JobTriggerManager constructor.
    *
    * @param \Traversable $namespaces
+   *   An object that implements \Traversable which contains the root paths
+   *   keyed by the corresponding namespace to look for plugin implementations.
    * @param \Drupal\Core\Cache\CacheBackendInterface $cache_backend
+   *   The cache backend.
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
+   *   The module handler.
    * @param \Drupal\Core\Database\Connection $database
+   *   The database connection.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
    *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
@@ -121,7 +127,7 @@ class JobTriggerManager extends DefaultPluginManager implements JobTriggerManage
     if (!empty($plugin_id)) {
       $query->condition('trigger', $plugin_id);
     }
-    else if (!empty($base_plugin_id)) {
+    elseif (!empty($base_plugin_id)) {
       $query->condition('trigger_base', $base_plugin_id);
     }
 
@@ -140,4 +146,5 @@ class JobTriggerManager extends DefaultPluginManager implements JobTriggerManage
 
     return $triggers;
   }
+
 }

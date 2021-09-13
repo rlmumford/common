@@ -152,6 +152,8 @@ class EnvironmentConfigFactoryTest extends KernelTestBase {
   }
 
   /**
+   * Test loading and saving config entities.
+   *
    * Test that config entities updated in an environment are stored and loaded
    * correctly.
    */

@@ -16,6 +16,9 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
+/**
+ * Controller for adding tasks.
+ */
 class TaskAddController extends ControllerBase {
 
   /**
@@ -110,8 +113,8 @@ class TaskAddController extends ControllerBase {
             $route_name = 'task_job.task_board.task.add_form';
           }
           else {
-            // @todo: This needs to be replaced once we've built user sepecfic
-            //        task boards.
+            // @todo This needs to be replaced once we've built user sepecfic
+            //   task boards.
             $route_name = 'task_job.task.add_form';
             $params += ['assignee' => $assignee->id()];
           }

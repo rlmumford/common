@@ -25,7 +25,7 @@ class NamedConfigCollectionComponent extends ComponentBase implements ConfigFact
    * {@inheritdoc}
    */
   public function getConfigCacheKeys(): array {
-    return ['env__'.$this->getConfigCollectionName()];
+    return ['env__' . $this->getConfigCollectionName()];
   }
 
 }

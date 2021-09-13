@@ -17,20 +17,29 @@ use Drupal\Core\Url;
 use Drupal\task_job\JobInterface;
 use Drupal\task_job\TaskJobTempstoreRepository;
 
+/**
+ * Base form for configuring job plugins.
+ */
 abstract class JobPluginFormBase extends FormBase {
   use AjaxFormHelperTrait;
 
   /**
+   * The tempstore repo.
+   *
    * @var \Drupal\task_job\TaskJobTempstoreRepository
    */
   protected $tempstoreRepository;
 
   /**
+   * The plugin form factory.
+   *
    * @var \Drupal\Core\Plugin\PluginFormFactoryInterface
    */
   protected $pluginFormFactory;
 
   /**
+   * The plugin manager.
+   *
    * @var \Drupal\Component\Plugin\PluginManagerInterface
    */
   protected $manager;
@@ -39,6 +48,13 @@ abstract class JobPluginFormBase extends FormBase {
    * JobEditForm constructor.
    *
    * @param \Drupal\task_job\TaskJobTempstoreRepository $tempstore_repository
+   *   The tempstore repository.
+   * @param \Drupal\Core\Plugin\PluginFormFactoryInterface $plugin_form_factory
+   *   The plugin form factory.
+   * @param \Drupal\Component\Plugin\PluginManagerInterface $manager
+   *   The plugin manager.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory.
    */
   public function __construct(
     TaskJobTempstoreRepository $tempstore_repository,
@@ -68,7 +84,6 @@ abstract class JobPluginFormBase extends FormBase {
       $job = $this->tempstoreRepository->get($job);
     }
     $form_state->set('job', $job);
-
 
     $form['plugin_id'] = [
       '#type' => 'value',

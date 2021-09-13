@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Drupal\exec_environment;
 
 use Drupal\exec_environment\Plugin\ExecEnvironment\Component\ComponentInterface;
@@ -63,7 +62,6 @@ class Environment implements EnvironmentInterface {
     usort($result, function ($a, $b) {
       $a_priority = $a->getPriority() ?: 0;
       $b_priority = $b->getPriority() ?: 0;
-
 
       if ($a_priority === $b_priority) {
         return 0;

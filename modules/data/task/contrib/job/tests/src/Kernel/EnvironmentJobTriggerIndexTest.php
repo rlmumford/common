@@ -74,7 +74,7 @@ class EnvironmentJobTriggerIndexTest extends KernelTestBase {
     $collection_name = $this->randomMachineName();
     $environment = (new Environment())->addComponent(
       $this->container->get('plugin.manager.exec_environment_component')
-          ->createInstance('test_named_config_collection', ['collection' => $collection_name])
+        ->createInstance('test_named_config_collection', ['collection' => $collection_name])
     );
     $environment_stack->applyEnvironment($environment);
 
@@ -96,7 +96,7 @@ class EnvironmentJobTriggerIndexTest extends KernelTestBase {
   }
 
   /**
-   * Test that the triggers detection works when an environment adds a a trigger.
+   * Test that the triggers detection works when an environment adds a trigger.
    */
   public function testAdditionalEnvironmentTrigger() {
     $job_storage = $this->container->get('entity_type.manager')->getStorage('task_job');

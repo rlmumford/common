@@ -8,6 +8,9 @@ use Drupal\Core\Entity\Sql\SqlContentEntityStorage;
 use Drupal\task\Event\SelectAssigneeEvent;
 use Drupal\task\Event\TaskEvents;
 
+/**
+ * Task storage handler.
+ */
 class TaskStorage extends SqlContentEntityStorage {
 
   /**
@@ -35,6 +38,9 @@ class TaskStorage extends SqlContentEntityStorage {
     return $id;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function doSaveFieldItems(ContentEntityInterface $entity, array $names = []) {
     parent::doSaveFieldItems($entity, $names);
 
@@ -47,8 +53,9 @@ class TaskStorage extends SqlContentEntityStorage {
   /**
    * {@inheritdoc}
    *
-   * We override this so that we handle set values first THEN handle default values,
-   * this allows default values to depend on the existence of other values.
+   * We override this so that we handle set values first THEN handle default
+   * values, this allows default values to depend on the existence of other
+   * values.
    */
   protected function initFieldValues(ContentEntityInterface $entity, array $values = [], array $field_names = []) {
     // First set any supplied values.
@@ -72,4 +79,5 @@ class TaskStorage extends SqlContentEntityStorage {
     // Make sure modules can alter field initial values.
     $this->invokeHook('field_values_init', $entity);
   }
+
 }

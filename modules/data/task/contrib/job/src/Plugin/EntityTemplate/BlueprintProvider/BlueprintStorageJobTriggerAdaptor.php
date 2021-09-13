@@ -9,6 +9,9 @@ use Drupal\entity_template\Plugin\EntityTemplate\BlueprintProvider\BlueprintProv
 use Drupal\task_job\JobInterface;
 use Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface;
 
+/**
+ * Blueprint storage adaptor for job triggers.
+ */
 class BlueprintStorageJobTriggerAdaptor extends BlueprintJobTriggerAdaptor implements BlueprintStorageInterface {
   use BlueprintStorageTrait;
 
@@ -16,8 +19,11 @@ class BlueprintStorageJobTriggerAdaptor extends BlueprintJobTriggerAdaptor imple
    * BlueprintStorageJobTriggerAdaptor constructor.
    *
    * @param \Drupal\task_job\JobInterface $job
+   *   The job.
    * @param \Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface $trigger
+   *   The job trigger.
    * @param \Drupal\entity_template\Plugin\EntityTemplate\BlueprintProvider\BlueprintProviderInterface $provider
+   *   The blueprint provider.
    */
   public function __construct(
     JobInterface $job,
@@ -35,4 +41,5 @@ class BlueprintStorageJobTriggerAdaptor extends BlueprintJobTriggerAdaptor imple
   public function access($operation, AccountInterface $account, $return_as_object = TRUE) {
     return $this->getJob()->access($operation, $account, $return_as_object);
   }
+
 }

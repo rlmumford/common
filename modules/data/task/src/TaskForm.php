@@ -18,10 +18,11 @@ class TaskForm extends ContentEntityForm {
 
     if (is_null($form_state->getRedirect())) {
       $form_state->setRedirect('entity.task.canonical', [
-        'task' => $this->entity->id()
+        'task' => $this->entity->id(),
       ]);
     }
 
     return $ret;
   }
+
 }

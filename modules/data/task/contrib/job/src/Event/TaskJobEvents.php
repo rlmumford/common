@@ -10,6 +10,8 @@ namespace Drupal\task_job\Event;
 final class TaskJobEvents {
 
   /**
+   * Select job detect environment.
+   *
    * This event is fired on the select job page to make sure the right jobs
    * are loaded based on the environment.
    */

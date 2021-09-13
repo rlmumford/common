@@ -8,6 +8,8 @@ namespace Drupal\task_checklist\Event;
 class TaskChecklistEvents {
 
   /**
+   * Detect checklist environment.
+   *
    * This event is fired right before the checklist is processed to make sure
    * processing happens in the right environment.
    */

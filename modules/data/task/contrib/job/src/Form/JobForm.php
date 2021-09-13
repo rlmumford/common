@@ -6,6 +6,9 @@ use Drupal\Core\Entity\EntityForm;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\task_job\Entity\Job;
 
+/**
+ * Base form for editing jobs.
+ */
 class JobForm extends EntityForm {
 
   /**
@@ -28,7 +31,7 @@ class JobForm extends EntityForm {
       '#default_value' => $this->entity->id(),
       '#maxlength' => 128,
       '#machine_name' => [
-        'exists' => Job::class.'::load',
+        'exists' => Job::class . '::load',
         'source' => ['label'],
       ],
     ];
@@ -61,7 +64,9 @@ class JobForm extends EntityForm {
    * Redirect to the edit page.
    *
    * @param array $form
+   *   The form array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
    */
   public function submitRedirectEdit(array $form, FormStateInterface $form_state) {
     $form_state->setRedirect('entity.task_job.edit_form', [

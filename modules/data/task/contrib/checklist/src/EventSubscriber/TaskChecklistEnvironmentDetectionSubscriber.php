@@ -35,4 +35,5 @@ class TaskChecklistEnvironmentDetectionSubscriber extends DetectEnvironmentSubsc
       ));
     }
   }
+
 }

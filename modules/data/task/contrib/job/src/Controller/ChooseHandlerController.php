@@ -11,16 +11,21 @@ use Drupal\task_job\Form\JobAddChecklistItemForm;
 use Drupal\task_job\JobInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
+/**
+ * Controller for adding new checklist items to a job.
+ */
 class ChooseHandlerController extends ControllerBase {
   use AjaxHelperTrait;
 
   /**
+   * The handler plugin manager.
+   *
    * @var \Drupal\checklist\ChecklistItemHandlerManager
    */
   protected $manager;
 
   /**
-   * [@inheritdoc}
+   * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
     return new static(
@@ -33,6 +38,9 @@ class ChooseHandlerController extends ControllerBase {
    * ChooseHandlerController constructor.
    *
    * @param \Drupal\checklist\ChecklistItemHandlerManager $manager
+   *   The checklist item handler manager.
+   * @param \Drupal\Core\Form\FormBuilderInterface $form_builder
+   *   The form builder service.
    */
   public function __construct(
     ChecklistItemHandlerManager $manager,
@@ -42,6 +50,15 @@ class ChooseHandlerController extends ControllerBase {
     $this->formBuilder = $form_builder;
   }
 
+  /**
+   * Build the list of checklist item handlers to select from.
+   *
+   * @param \Drupal\task_job\JobInterface $task_job
+   *   The job.
+   *
+   * @return array
+   *   A build array for the page.
+   */
   public function build(JobInterface $task_job) {
     $definitions = $this->manager->getDefinitions();
 
@@ -79,9 +96,10 @@ class ChooseHandlerController extends ControllerBase {
   }
 
   /**
-   * Get the ajax attributes
+   * Get the ajax attributes.
    *
    * @return array
+   *   The ajax attributes for the buttons.
    */
   protected function getAjaxAttributes() {
     if ($this->isAjax()) {

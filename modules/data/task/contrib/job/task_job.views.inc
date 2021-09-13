@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * Views integration for task jobs.
+ */
+
+/**
  * Implements hook_views_data_alter().
  */
 function task_job_views_data_alter(&$data) {

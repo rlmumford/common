@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Drupal\task_job\Plugin\JobTrigger;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -126,7 +125,7 @@ class EnvironmentAwareJobTriggerManager extends JobTriggerManager {
       if (!empty($plugin_id)) {
         $query->condition('trigger', $plugin_id);
       }
-      else if (!empty($base_plugin_id)) {
+      elseif (!empty($base_plugin_id)) {
         $query->condition('trigger_base', $base_plugin_id);
       }
 

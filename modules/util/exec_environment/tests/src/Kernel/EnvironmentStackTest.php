@@ -7,6 +7,9 @@ use Drupal\exec_environment\Plugin\ExecEnvironment\Component\CurrentUserComponen
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 
+/**
+ * Tests for the environment stack.
+ */
 class EnvironmentStackTest extends KernelTestBase {
   use UserCreationTrait;
 
@@ -14,7 +17,7 @@ class EnvironmentStackTest extends KernelTestBase {
    * {@inheritdoc}
    */
   protected static $modules = [
-    'serialization', 'system', 'datetime', 'user', 'exec_environment'
+    'serialization', 'system', 'datetime', 'user', 'exec_environment',
   ];
 
   /**

@@ -39,7 +39,7 @@ class TaskContextAddForm extends PluginFormBase {
     }
     else {
       $form['message'] = [
-        '#markup' => new TranslatableMarkup('Cannot detect any contexts on this task.')
+        '#markup' => new TranslatableMarkup('Cannot detect any contexts on this task.'),
       ];
     }
 
@@ -54,4 +54,5 @@ class TaskContextAddForm extends PluginFormBase {
     $configuration['task_context'] = $form_state->getValue('task_context');
     $this->plugin->setConfiguration($configuration);
   }
+
 }

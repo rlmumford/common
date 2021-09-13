@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * Post Updates for the task_job module.
+ */
+
+/**
  * Index the job triggers on jobs.
  */
 function task_job_post_update_index_job_triggers() {

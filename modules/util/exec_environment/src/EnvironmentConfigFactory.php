@@ -37,9 +37,13 @@ class EnvironmentConfigFactory extends ConfigFactory {
    * EnvironmentConfigFactory constructor.
    *
    * @param \Drupal\Core\Config\StorageInterface $storage
+   *   The configuration storage engine.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
+   *   An event dispatcher instance to use for configuration events.
    * @param \Drupal\Core\Config\TypedConfigManagerInterface $typed_config
+   *   The typed configuration manager.
    * @param \Drupal\exec_environment\EnvironmentStackInterface $environment_stack
+   *   The environment stack.
    */
   public function __construct(
     StorageInterface $storage,
@@ -144,7 +148,7 @@ class EnvironmentConfigFactory extends ConfigFactory {
     foreach ($this->getEnvironmentConfigComponents() as $component) {
       $environment_keys = array_merge($environment_keys, $component->getConfigCacheKeys());
     }
-    return !empty($environment_keys) ?  ':' . implode(':', $environment_keys) : '';
+    return !empty($environment_keys) ? ':' . implode(':', $environment_keys) : '';
   }
 
   /**

@@ -41,4 +41,5 @@ class DetectDefaultEnvironmentSubscriber extends DetectEnvironmentSubscriberBase
 
     $event->getEnvironment()->addComponent($component);
   }
+
 }

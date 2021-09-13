@@ -6,6 +6,9 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\task_job\JobInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
+/**
+ * Form to configure a checklist item.
+ */
 class JobConfigureChecklistItemForm extends JobAddChecklistItemForm {
 
   /**

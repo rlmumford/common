@@ -147,7 +147,7 @@ class SetConfiguredCurrentUserComponent extends ComponentBase implements Current
       if ($this->configuration['user'] instanceof AccountInterface) {
         $user = $this->configuration['user'];
       }
-      else if (is_numeric($this->configuration['user'])) {
+      elseif (is_numeric($this->configuration['user'])) {
         $user = $this->userStorage->load($this->configuration['user']);
       }
 
@@ -158,4 +158,5 @@ class SetConfiguredCurrentUserComponent extends ComponentBase implements Current
 
     return $this->setUser ?: NULL;
   }
+
 }

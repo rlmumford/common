@@ -50,7 +50,7 @@ class EnvironmentAwareViewBuilder extends EntityViewBuilder {
   public function buildMultiple(array $build_list) {
     $entities = [];
     foreach ($build_list as $build) {
-      $entities[] = $build['#'.$this->entityTypeId];
+      $entities[] = $build['#' . $this->entityTypeId];
     }
     $event = new EntityBuildEnvironmentDetectionEvent($this->entityType, $entities);
     $this->eventDispatcher->dispatch(ExecEnvironmentEvents::DETECT_ENTITY_BUILD_ENVIRONMENT . $this->entityTypeId, $event);

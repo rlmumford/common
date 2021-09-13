@@ -20,7 +20,7 @@ abstract class ComponentBase extends PluginBase implements ComponentInterface {
   }
 
   /**
-   * @inheritDoc
+   * {@inheritdoc}
    */
   public function getConfiguration() {
     return $this->configuration;
@@ -42,4 +42,5 @@ abstract class ComponentBase extends PluginBase implements ComponentInterface {
   public function defaultConfiguration() {
     return [];
   }
+
 }

@@ -45,8 +45,9 @@ class CurrentUserImpactApplicator extends PluginBase implements ImpactApplicator
         }
       }
 
-      // If we haven't reset the account, call reset on the previous environment.
+      // If we haven't reset the account call reset on the previous environment.
       $this->reset($environment->previousEnvironment());
     }
   }
+
 }

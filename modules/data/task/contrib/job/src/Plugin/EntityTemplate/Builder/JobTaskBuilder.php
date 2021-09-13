@@ -3,8 +3,6 @@
 namespace Drupal\task_job\Plugin\EntityTemplate\Builder;
 
 use Drupal\Core\Url;
-use Drupal\entity_template\BlueprintEntityStorageAdaptor;
-use Drupal\entity_template\BlueprintEntityAdaptor;
 use Drupal\entity_template\BlueprintInterface;
 use Drupal\entity_template\BlueprintStorageInterface;
 use Drupal\entity_template\Plugin\EntityTemplate\BlueprintProvider\BlueprintProviderInterface;
@@ -12,7 +10,7 @@ use Drupal\entity_template\Plugin\EntityTemplate\Builder\BuilderBase;
 use Drupal\task_job\JobInterface;
 
 /**
- * Class JobTaskBuilder
+ * Builder for job tasks.
  *
  * @EntityTemplateBuilder(
  *   id = "task_job",
@@ -25,6 +23,8 @@ use Drupal\task_job\JobInterface;
 class JobTaskBuilder extends BuilderBase {
 
   /**
+   * The job.
+   *
    * @var \Drupal\task_job\JobInterface
    */
   protected $job;
@@ -33,6 +33,7 @@ class JobTaskBuilder extends BuilderBase {
    * Get the job.
    *
    * @return \Drupal\task_job\JobInterface
+   *   The job entity.
    *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
@@ -67,7 +68,7 @@ class JobTaskBuilder extends BuilderBase {
     BlueprintStorageInterface $blueprint_storage,
     string $key
   ): Url {
-    /** @var BlueprintEntityStorageAdaptor $blueprint_storage */
+    /** @var \Drupal\entity_template\BlueprintEntityStorageAdaptor $blueprint_storage */
     return Url::fromRoute(
       'entity.task_job.edit_form',
       [
@@ -99,4 +100,5 @@ class JobTaskBuilder extends BuilderBase {
       $values['job'] = $this->getJob();
     }
   }
+
 }

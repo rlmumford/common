@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Drupal\task_job\Plugin\JobTrigger;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -93,7 +92,7 @@ class EntityOperation extends JobTriggerBase implements ContainerFactoryPluginIn
   protected function getOperationPastLabel() {
     return isset($this->pluginDefinition['operation_past_label']) ?
       $this->pluginDefinition['operation_past_label'] :
-      $this->pluginDefinition['operation'].'d';
+      $this->pluginDefinition['operation'] . 'd';
   }
 
   /**

@@ -2,6 +2,9 @@
 
 namespace Drupal\task\Event;
 
+/**
+ * Define task event names.
+ */
 final class TaskEvents {
 
   /**

@@ -13,25 +13,27 @@ use Drupal\task_job\JobInterface;
 use Drupal\task_job\Plugin\EntityTemplate\BlueprintProvider\BlueprintJobTriggerAdaptor;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
+/**
+ * The job trigger base plugin class.
+ */
 abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTriggerInterface, ContainerFactoryPluginInterface {
 
   /**
+   * The builder manager service.
+   *
    * @var \Drupal\entity_template\TemplateBuilderManager
    */
   protected $builderManager;
 
   /**
+   * The job.
+   *
    * @var \Drupal\task_job\JobInterface
    */
   protected $job;
 
   /**
-   * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
-   * @param array $configuration
-   * @param string $plugin_id
-   * @param mixed $plugin_definition
-   *
-   * @return \Drupal\Core\Plugin\ContainerFactoryPluginInterface|\Drupal\task_job\Plugin\JobTrigger\JobTriggerBase
+   * {@inheritdoc}
    */
   public static function create(
     ContainerInterface $container,
@@ -51,9 +53,13 @@ abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTrigg
    * JobTriggerBase constructor.
    *
    * @param array $configuration
+   *   A configuration array containing information about the plugin instance.
    * @param string $plugin_id
-   * @param $plugin_definition
+   *   The plugin_id for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
    * @param \Drupal\entity_template\TemplateBuilderManager $builder_manager
+   *   The builder manager.
    */
   public function __construct(
     array $configuration,
@@ -79,6 +85,7 @@ abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTrigg
    * Get the default key for this trigger.
    *
    * @return string
+   *   Get the default key for this trigger.
    */
   abstract protected function getDefaultKey(): string;
 
@@ -103,7 +110,7 @@ abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTrigg
   public function createTask(): ?TaskInterface {
     /** @var \Drupal\task_job\Plugin\EntityTemplate\Builder\JobTaskBuilder $builder */
     $builder = $this->builderManager->createInstance(
-      'task_job:'.$this->getJob()->id()
+      'task_job:' . $this->getJob()->id()
     );
 
     $parameters = $this->getContextValues();
@@ -150,11 +157,11 @@ abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTrigg
       'template' => [
         'id' => 'default',
         'uuid' => 'default',
-        'label' =>  new TranslatableMarkup('Template'),
+        'label' => new TranslatableMarkup('Template'),
         'conditions' => [],
         'components' => (new BlueprintJobTriggerAdaptor($this->getJob(), $this))
           ->getDefaultTemplateComponents(),
-      ]
+      ],
     ];
   }
 
@@ -167,4 +174,5 @@ abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTrigg
 
     return $template->applies($cache_metadata);
   }
+
 }

@@ -2,6 +2,9 @@
 
 namespace Drupal\exec_environment\Plugin\ExecEnvironment\Component;
 
+/**
+ * Interface for components that can set the config environment.
+ */
 interface ConfigFactoryCollectionComponentInterface extends ComponentInterface {
 
   /**

@@ -4,11 +4,17 @@ namespace Drupal\Tests\task_job\Kernel;
 
 use Drupal\KernelTests\Core\Entity\EntityKernelTestBase;
 
+/**
+ * Test entity operations.
+ */
 class EntityOperationJobTriggerTest extends EntityKernelTestBase {
 
+  /**
+   * {@inheritdoc}
+   */
   public static $modules = [
     'task', 'task_job', 'entity_template', 'entity_template_ui', 'entity',
-    'typed_data', 'options', 'datetime'
+    'typed_data', 'options', 'datetime',
   ];
 
   /**
@@ -47,8 +53,8 @@ class EntityOperationJobTriggerTest extends EntityKernelTestBase {
                 'uuid' => 'title',
                 'value' => [
                   ['value' => 'Make a cup of tea for {{ user.name }}'],
-                ]
-              ]
+                ],
+              ],
             ],
             'conditions' => [],
           ],

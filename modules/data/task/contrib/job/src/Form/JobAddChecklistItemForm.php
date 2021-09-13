@@ -2,21 +2,13 @@
 
 namespace Drupal\task_job\Form;
 
-use Drupal\checklist\ChecklistItemHandlerManager;
-use Drupal\Component\Utility\Html;
-use Drupal\Core\Ajax\AjaxFormHelperTrait;
-use Drupal\Core\Ajax\AjaxResponse;
-use Drupal\Core\Ajax\RedirectCommand;
-use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Form\SubformState;
-use Drupal\Core\Plugin\PluginFormFactoryInterface;
-use Drupal\Core\Url;
 use Drupal\task_job\JobInterface;
-use Drupal\task_job\TaskJobTempstoreRepository;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
+/**
+ * Form to add a checklist item.
+ */
 class JobAddChecklistItemForm extends JobPluginFormBase {
 
   /**
@@ -63,8 +55,8 @@ class JobAddChecklistItemForm extends JobPluginFormBase {
       '#weight' => -10,
     ];
     if ($default_prefix = $this->config('task_checklist.defaults')->get('ci_name_prefix')) {
-      $form['name']['#default_value'] = $default_prefix.str_pad(
-          count($form_state->get('job')->getChecklistItems())+1,
+      $form['name']['#default_value'] = $default_prefix . str_pad(
+          count($form_state->get('job')->getChecklistItems()) + 1,
           2,
           '0',
           STR_PAD_LEFT
@@ -100,6 +92,5 @@ class JobAddChecklistItemForm extends JobPluginFormBase {
 
     $this->tempstoreRepository->set($job);
   }
-
 
 }

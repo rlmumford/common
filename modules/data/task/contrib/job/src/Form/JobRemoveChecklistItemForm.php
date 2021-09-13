@@ -14,6 +14,9 @@ use Drupal\task_job\TaskJobTempstoreRepository;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
+/**
+ * Form to remove a checklist item.
+ */
 class JobRemoveChecklistItemForm extends FormBase {
   use AjaxFormHelperTrait;
 
@@ -30,6 +33,7 @@ class JobRemoveChecklistItemForm extends FormBase {
    * JobEditForm constructor.
    *
    * @param \Drupal\task_job\TaskJobTempstoreRepository $tempstore_repository
+   *   The tempstore repository.
    */
   public function __construct(
     TaskJobTempstoreRepository $tempstore_repository
@@ -71,7 +75,7 @@ class JobRemoveChecklistItemForm extends FormBase {
       '#markup' => $this->t(
         'Are you sure you want to remove @item?',
         [
-          '@item' => $item['name'].' '.$item['label'],
+          '@item' => $item['name'] . ' ' . $item['label'],
         ]
       ),
     ];
@@ -127,4 +131,5 @@ class JobRemoveChecklistItemForm extends FormBase {
 
     return $response;
   }
+
 }

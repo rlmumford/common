@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Drupal\exec_environment\EventSubscriber;
 
 use Drupal\Core\Session\AccountInterface;
@@ -9,7 +8,7 @@ use Drupal\exec_environment\Plugin\ExecEnvironment\Component\ComponentInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Base class for services that want to subscribe to environment detection events.
+ * Base class for services that subscribe to environment detection events.
  */
 abstract class DetectEnvironmentSubscriberBase implements EventSubscriberInterface {
 
@@ -49,6 +48,8 @@ abstract class DetectEnvironmentSubscriberBase implements EventSubscriberInterfa
    *   The configuration.
    *
    * @return \Drupal\exec_environment\Plugin\ExecEnvironment\Component\ComponentInterface
+   *   The created component.
+   *
    * @throws \Drupal\Component\Plugin\Exception\PluginException
    */
   protected function createComponent(string $plugin_id, array $config = []) : ComponentInterface {
