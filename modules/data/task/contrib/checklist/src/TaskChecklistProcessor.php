@@ -11,6 +11,9 @@ use Drupal\task_checklist\Event\TaskChecklistEnvironmentDetectionEvent;
 use Drupal\task_checklist\Event\TaskChecklistEvents;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
+/**
+ * Process task checklists.
+ */
 class TaskChecklistProcessor implements TaskChecklistProcessorInterface {
 
   /**
