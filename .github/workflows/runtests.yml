@@ -35,8 +35,6 @@ jobs:
         run: |
           composer config repositories.patches_fork vcs git@github.com:rlmumford/composer-patches.git
           composer config repositories.assets composer https://asset-packagist.org
- #     - name: "Set GitHub Token"
- #       run: composer config --global github-oauth.github.com ${{ secrets.GH_ACCESS_TOKEN }}
       - name: "Install CounselKit (PR)"
         run: composer require rlmumford/common:dev-$GITHUB_HEAD_REF
         if: ${{ github.event_name == 'pull_request' }}
