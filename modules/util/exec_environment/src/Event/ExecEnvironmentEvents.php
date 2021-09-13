@@ -12,4 +12,11 @@ final class ExecEnvironmentEvents {
    */
   const DETECT_DEFAULT_ENVIRONMENT = 'exec_environment.detect_default_environment';
 
+  /**
+   * Detect an entity build environment.
+   *
+   * Should be suffixed with the entity type.
+   */
+  const DETECT_ENTITY_BUILD_ENVIRONMENT = 'exec_environment.detect_entity_build_environment.';
+
 }
