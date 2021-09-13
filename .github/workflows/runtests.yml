@@ -46,7 +46,7 @@ jobs:
       - name: "Install Other Dependencies"
         run: composer require drupal/coder drupal/core-dev:^8.9 dealerdirect/phpcodesniffer-composer-installer
       - name: "Code Style"
-        run: "vendor/bin/phpcs --standard=Drupal --ignore='*.min.*'  ./web/modules/contrib/common"
+        run: "#vendor/bin/phpcs --standard=Drupal --ignore='*.min.*'  ./web/modules/contrib/common"
       - name: "Set up Mysql"
         uses: shogo82148/actions-setup-mysql@v1
         with:
