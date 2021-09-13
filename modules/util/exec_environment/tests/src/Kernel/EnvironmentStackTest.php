@@ -37,10 +37,12 @@ class EnvironmentStackTest extends KernelTestBase {
     $user_1 = $this->createUser();
     $user_2 = $this->createUser();
 
-    $this->setCurrentUser($user_1);
-
     /** @var \Drupal\exec_environment\EnvironmentStackInterface $environment_stack */
     $environment_stack = $this->container->get('environment_stack');
+
+    $this->setCurrentUser($user_1);
+    $environment_stack->resetDefaultEnvironment();
+
     $environment = $environment_stack->getActiveEnvironment();
 
     $this->assertNotNull($environment);
@@ -50,7 +52,7 @@ class EnvironmentStackTest extends KernelTestBase {
     $this->assertCount(1, $components);
     $config = reset($components)->getConfiguration();
     $this->assertArrayHasKey('user', $config);
-    $this->assertEquals($config['user']->id(), $user_1->id());
+    $this->assertEquals( $user_1->id(), $config['user']->id());
 
     $new_environment = (new Environment())
       ->addComponent(
