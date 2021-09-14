@@ -105,7 +105,8 @@ class EnvironmentAwareJobTriggerManager extends JobTriggerManager {
     $triggers = [];
 
     $collection_names = array_filter(array_map(function (ConfigFactoryCollectionComponentInterface $component) {
-      $name = $component->getConfigCollectionName();
+      $prefixes = ['task_job.task_job'];
+      $name = $component->getConfigCollectionName($prefixes);
       return $name ? "environment:{$name}" : NULL;
     }, $environment->getComponents(ConfigFactoryCollectionComponentInterface::class)));
     $collection_names[] = '';
