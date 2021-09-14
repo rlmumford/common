@@ -106,7 +106,7 @@ class EnvironmentConfigFactory extends ConfigFactory {
    * {@inheritdoc}
    */
   protected function getConfigCacheKey($name, $immutable) {
-    $suffix = $this->getEnvironmentCacheKeySuffix();
+    $suffix = $this->getEnvironmentCacheKeySuffix($name);
     if ($immutable) {
       $suffix .= ':' . implode(':', $this->getCacheKeys());
     }
@@ -140,13 +140,16 @@ class EnvironmentConfigFactory extends ConfigFactory {
   /**
    * Get the part of the cache key related to the suffix.
    *
+   * @param string $name
+   *   The name of the config.
+   *
    * @return string
    *   The cache key suffix.
    */
-  protected function getEnvironmentCacheKeySuffix() : string {
+  protected function getEnvironmentCacheKeySuffix(string $name) : string {
     $environment_keys = [];
     foreach ($this->getEnvironmentConfigComponents() as $component) {
-      $environment_keys = array_merge($environment_keys, $component->getConfigCacheKeys());
+      $environment_keys = array_merge($environment_keys, $component->getConfigCacheKeys($name));
     }
     return !empty($environment_keys) ? ':' . implode(':', $environment_keys) : '';
   }
@@ -157,7 +160,10 @@ class EnvironmentConfigFactory extends ConfigFactory {
   public function listAll($prefix = '') {
     $result = $this->storage->listAll($prefix);
     foreach ($this->getEnvironmentConfigComponents() as $component) {
-      $result = array_merge($result, $this->getEnvironmentStorage($component)->listAll($prefix));
+      $prefixes = [$prefix];
+      if (($storage = $this->getEnvironmentStorage($component, $prefixes)) && !empty($prefixes)) {
+        $result = array_unique(array_merge($result, $storage->listAll($prefix)));
+      }
     }
     return $result;
   }
@@ -182,7 +188,10 @@ class EnvironmentConfigFactory extends ConfigFactory {
    */
   public function rename($old_name, $new_name) {
     foreach ($this->getEnvironmentConfigComponents() as $component) {
-      $this->getEnvironmentStorage($component)->rename($old_name, $new_name);
+      $names = [$old_name, $new_name];
+      if (($storage = $this->getEnvironmentStorage($component, $names)) && count($names) === 2) {
+        $this->storage->rename($old_name, $new_name);
+      }
     }
 
     return parent::rename($old_name, $new_name);
@@ -211,10 +220,12 @@ class EnvironmentConfigFactory extends ConfigFactory {
       $loading_names = array_combine($names, $names);
       foreach ($this->getEnvironmentConfigComponents() as $component) {
         if (!empty($loading_names)) {
-          $env_storage = $this->getEnvironmentStorage($component);
-          foreach ($env_storage->readMultiple(array_values($loading_names)) as $name => $data) {
-            unset($loading_names[$name]);
-            $storage_data[$name] = [$env_storage, $data];
+          $component_names = $loading_names;
+          if ($env_storage = $this->getEnvironmentStorage($component, $component_names)) {
+            foreach ($env_storage->readMultiple(array_values($component_names)) as $name => $data) {
+              unset($loading_names[$name]);
+              $storage_data[$name] = [$env_storage, $data];
+            }
           }
         }
       }
@@ -283,12 +294,8 @@ class EnvironmentConfigFactory extends ConfigFactory {
    *   The environment components.
    */
   protected function getEnvironmentConfigComponents() : array {
-    return array_filter(
-      $this->environmentStack->getActiveEnvironment()->getComponents(ConfigFactoryCollectionComponentInterface::class),
-      function ($component) {
-        return !empty($component->getConfigCollectionName());
-      }
-    );
+    return $this->environmentStack->getActiveEnvironment()
+      ->getComponents(ConfigFactoryCollectionComponentInterface::class);
   }
 
   /**
@@ -296,17 +303,22 @@ class EnvironmentConfigFactory extends ConfigFactory {
    *
    * @param \Drupal\exec_environment\Plugin\ExecEnvironment\Component\ConfigFactoryCollectionComponentInterface $component
    *   The environment component.
+   * @param array $names_or_prefixes
+   *   The names or prefixes.
    *
    * @return \Drupal\Core\Config\StorageInterface
    *   The storage.
    */
-  protected function getEnvironmentStorage(ConfigFactoryCollectionComponentInterface $component) : StorageInterface {
-    $collection = 'environment:' . $component->getConfigCollectionName();
-    if (!isset($this->environmentStorages[$collection])) {
-      $this->environmentStorages[$collection] = $this->storage->createCollection($collection);
+  protected function getEnvironmentStorage(ConfigFactoryCollectionComponentInterface $component, array &$names_or_prefixes) : ?StorageInterface {
+    if ($collection_name = $component->getConfigCollectionName($names_or_prefixes)) {
+      $collection = 'environment:' . $collection_name;
+      if (!isset($this->environmentStorages[$collection])) {
+        $this->environmentStorages[$collection] = $this->storage->createCollection($collection);
+      }
+      return $this->environmentStorages[$collection];
     }
 
-    return $this->environmentStorages[$collection];
+    return NULL;
   }
 
   /**
@@ -328,7 +340,10 @@ class EnvironmentConfigFactory extends ConfigFactory {
    */
   protected function getBestEnvironmentStorageForConfig(string $name) {
     foreach ($this->getEnvironmentConfigComponents() as $component) {
-      return $this->getEnvironmentStorage($component);
+      $names = [$name];
+      if (($storage = $this->getEnvironmentStorage($component, $names)) && !empty($names)) {
+        return $storage;
+      }
     }
 
     return $this->storage;
