@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SIMPLETEST_DB: "mysql://root:HappyLand@127.0.0.1/drupal"
+      SIMPLETEST_BASE_URL: "http://127.0.0.1:8888"
       SYMFONY_DEPRECATIONS_HELPER: weak
     steps:
       - name: "Install PHP"
