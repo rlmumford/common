@@ -161,7 +161,9 @@ class JobEditForm extends JobForm {
     ) {
       $form['changed'] = [
         '#type' => 'container',
-        '#attributes' => ['class' => ['task-job-changed', 'messages', 'messages--warning']],
+        '#attributes' => [
+          'class' => ['task-job-changed', 'messages', 'messages--warning'],
+        ],
         '#children' => $this->t('You have unsaved changes.'),
         '#weight' => -10,
       ];

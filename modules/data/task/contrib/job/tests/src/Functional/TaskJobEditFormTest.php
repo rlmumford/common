@@ -70,4 +70,5 @@ class TaskJobEditFormTest extends BrowserTestBase {
     $this->assertSession()->pageTextNotContains($ci_name);
     $this->assertSession()->buttonNotExists('Cancel');
   }
+
 }
