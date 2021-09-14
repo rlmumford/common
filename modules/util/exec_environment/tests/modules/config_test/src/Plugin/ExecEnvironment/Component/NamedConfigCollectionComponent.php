@@ -2,7 +2,6 @@
 
 namespace Drupal\exec_environment_config_test\Plugin\ExecEnvironment\Component;
 
-use Drupal\exec_environment\Plugin\ExecEnvironment\Component\ComponentBase;
 use Drupal\exec_environment\Plugin\ExecEnvironment\Component\ConfigFactoryCollectionComponentBase;
 use Drupal\exec_environment\Plugin\ExecEnvironment\Component\ConfigFactoryCollectionComponentInterface;
 
@@ -19,7 +18,10 @@ class NamedConfigCollectionComponent extends ConfigFactoryCollectionComponentBas
    * {@inheritdoc}
    */
   public function getConfigCollectionName(array &$names_or_prefixes): ?string {
-    $names_or_prefixes = array_filter($names_or_prefixes, [$this, 'appliesToNameOrPrefix']);
+    $names_or_prefixes = array_filter(
+      $names_or_prefixes,
+      [$this, 'appliesToNameOrPrefix']
+    );
     return !empty($names_or_prefixes) ? ($this->configuration['collection'] ?? 'test') : NULL;
   }
 

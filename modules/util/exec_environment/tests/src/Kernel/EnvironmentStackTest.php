@@ -52,7 +52,7 @@ class EnvironmentStackTest extends KernelTestBase {
     $this->assertCount(1, $components);
     $config = reset($components)->getConfiguration();
     $this->assertArrayHasKey('user', $config);
-    $this->assertEquals( $user_1->id(), $config['user']->id());
+    $this->assertEquals($user_1->id(), $config['user']->id());
 
     $new_environment = (new Environment())
       ->addComponent(
