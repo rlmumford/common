@@ -45,7 +45,7 @@ jobs:
         run: composer require rlmumford/common:${GITHUB_REF#refs/heads/}-dev#${{ github.sha }}
         if: ${{ github.event_name == 'push' }}
       - name: "Install Other Dependencies"
-        run: composer require drupal/coder drupal/core-dev:^8.9 dealerdirect/phpcodesniffer-composer-installer drupal/entity_template
+        run: composer require drupal/coder drupal/core-dev:^8.9 dealerdirect/phpcodesniffer-composer-installer drupal/entity_template drupal/inline_entity_form
       - name: "Code Style"
         run: "vendor/bin/phpcs --standard=Drupal --ignore='*.min.*'  ./web/modules/contrib/common/modules/data/task ./web/modules/contrib/common/modules/util/exec_environment"
       - name: "Set up Mysql"
