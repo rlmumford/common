@@ -55,11 +55,28 @@ use Drupal\typed_data\Context\ContextDefinition;
 class Job extends ConfigEntityBase implements JobInterface {
 
   /**
+   * The triggers configuration.
+   *
+   * @var array
+   */
+  protected $triggers = [];
+
+  /**
    * The trigger collection.
    *
    * @var \Drupal\Component\Plugin\LazyPluginCollection
    */
   protected $triggerCollection;
+
+  /**
+   * The default checklist configuration.
+   *
+   * @var array
+   *
+   * @codingStandardsIgnoreStart
+   */
+  protected $default_checklist = [];
+  // @codingStandardsIgnoreEnd
 
   /**
    * The context required by this job.

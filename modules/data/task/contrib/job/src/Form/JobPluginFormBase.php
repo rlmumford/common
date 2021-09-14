@@ -199,6 +199,13 @@ abstract class JobPluginFormBase extends FormBase {
     }
 
     $form_state->set('plugin', $plugin);
+
+    $form_state->setRedirect(
+      'entity.task_job.edit_form',
+      [
+        'task_job' => $form_state->get('job')->id(),
+      ]
+    );
   }
 
   /**

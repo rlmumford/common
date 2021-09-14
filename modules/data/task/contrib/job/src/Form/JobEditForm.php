@@ -154,6 +154,21 @@ class JobEditForm extends JobForm {
   public function form(array $form, FormStateInterface $form_state) {
     $form = parent::form($form, $form_state);
 
+    if (
+      $this->entity->toArray() !==
+      $this->entityTypeManager->getStorage($this->entity->getEntityTypeId())
+        ->loadUnchanged($this->entity->id())->toArray()
+    ) {
+      $form['changed'] = [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['task-job-changed', 'messages', 'messages--warning'],
+        ],
+        '#children' => $this->t('You have unsaved changes.'),
+        '#weight' => -10,
+      ];
+    }
+
     $ajax_attributes = [
       'attributes' => [
         'class' => [
@@ -498,6 +513,28 @@ class JobEditForm extends JobForm {
   /**
    * {@inheritdoc}
    */
+  public function actions(array $form, FormStateInterface $form_state) {
+    $actions = parent::actions($form, $form_state);
+
+    if (
+      $this->entity->toArray() !==
+      $this->entityTypeManager->getStorage($this->entity->getEntityTypeId())
+        ->loadUnchanged($this->entity->id())->toArray()
+    ) {
+      $actions['cancel'] = [
+        '#type' => 'submit',
+        '#value' => $this->t('Cancel'),
+        '#submit' => ['::submitFormCancel'],
+        '#limit_validation_errors' => [],
+      ];
+    }
+
+    return $actions;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   protected function copyFormValuesToEntity(EntityInterface $entity, array $form, FormStateInterface $form_state) {
     /** @var \Drupal\task_job\Entity\Job $entity */
     $context_definitions = $entity->getContextDefinitions();
@@ -579,6 +616,21 @@ class JobEditForm extends JobForm {
     }
     $this->tempstoreRepository->delete($this->entity);
     return $return;
+  }
+
+  /**
+   * Submit the cancel button.
+   *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   */
+  public function submitFormCancel(array $form, FormStateInterface $form_state) {
+    foreach ($this->blueprintStorages as $key => $storage) {
+      $this->blueprintTempstoreRepository->delete($storage);
+    }
+    $this->tempstoreRepository->delete($this->entity);
   }
 
   /**
