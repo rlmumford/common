@@ -46,7 +46,7 @@ jobs:
       - name: "Install Other Dependencies"
         run: composer require drupal/coder drupal/core-dev:^8.9 dealerdirect/phpcodesniffer-composer-installer drupal/entity_template
       - name: "Code Style"
-        run: "#vendor/bin/phpcs --standard=Drupal --ignore='*.min.*'  ./web/modules/contrib/common"
+        run: "vendor/bin/phpcs --standard=Drupal --ignore='*.min.*'  ./web/modules/contrib/common/modules/data/task ./web/modules/contrib/common/modules/util/exec_environment"
       - name: "Set up Mysql"
         uses: shogo82148/actions-setup-mysql@v1
         with:
@@ -56,5 +56,7 @@ jobs:
           auto-start: true
       - name: "Create Database"
         run: mysql -uroot -pHappyLand -h127.0.0.1 -e 'CREATE DATABASE drupal;'
+      - name: "Start Server"
+        run: cd web; php -S 127.0.0.1:8888 > /dev/null 2>1 &
       - name: "PHPUnit"
         run: "vendor/bin/phpunit -c ./web/core --debug ./web/modules/contrib/common"
