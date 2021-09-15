@@ -72,6 +72,7 @@ class EntityOperationJobTriggerTest extends EntityKernelTestBase {
     $task_storage = $this->entityTypeManager->getStorage('task');
     $ids = $task_storage->getQuery()
       ->condition('job', $job->id())
+      ->accessCheck(FALSE)
       ->execute();
     $this->assertEquals(1, count($ids), 'A single task has been created.');
     $task = $task_storage->load(reset($ids));
