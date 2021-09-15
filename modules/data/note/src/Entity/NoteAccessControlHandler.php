@@ -2,7 +2,7 @@
 
 namespace Drupal\note\Entity;
 
-use Drupal\entity\EntityAccessControlHandler;
+use Drupal\Core\Entity\EntityAccessControlHandler;
 
 /**
  * The note entity access control handler.

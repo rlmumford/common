@@ -126,9 +126,10 @@ class AttachedNoteForm extends BlockBase implements ContextAwarePluginInterface,
       'note',
       'default'
     );
-    $form_object->setEntity($entity);
+    $form_object->setEntity($note);
 
-    return $this->formBuilder->buildForm($form_object, new FormState());
+    $form_State = new FormState();
+    return $this->formBuilder->buildForm($form_object, $form_State);
   }
 
 }
