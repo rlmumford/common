@@ -4,6 +4,9 @@ namespace Drupal\note\Form;
 
 use Drupal\Core\Routing\RouteMatchInterface;
 
+/**
+ * Form to reply to a note.
+ */
 class NoteReplyForm extends NoteForm {
 
   /**

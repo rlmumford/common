@@ -8,10 +8,15 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\note\Entity\Note;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
+/**
+ * Subscribe to events when entity definitions change.
+ */
 class EntityTypeUpdateSubscriber implements EventSubscriberInterface {
   use EntityTypeEventSubscriberTrait;
 
   /**
+   * The update manager.
+   *
    * @var \Drupal\Core\Entity\EntityDefinitionUpdateManagerInterface
    */
   protected $updateManager;
@@ -20,6 +25,7 @@ class EntityTypeUpdateSubscriber implements EventSubscriberInterface {
    * EntityTypeUpdateSubscriber constructor.
    *
    * @param \Drupal\Core\Entity\EntityDefinitionUpdateManagerInterface $update_manager
+   *   The update manager.
    */
   public function __construct(EntityDefinitionUpdateManagerInterface $update_manager) {
     $this->updateManager = $update_manager;
@@ -39,7 +45,7 @@ class EntityTypeUpdateSubscriber implements EventSubscriberInterface {
     if ($entity_type->get('has_notes') && !$original->get('has_notes')) {
       $this->addNoteAttachmentField($entity_type);
     }
-    else if ($original->get('has_notes') && !$entity_type->get('has_notes')) {
+    elseif ($original->get('has_notes') && !$entity_type->get('has_notes')) {
       $this->removeNoteAttachmentField($original);
     }
   }
@@ -63,7 +69,10 @@ class EntityTypeUpdateSubscriber implements EventSubscriberInterface {
   }
 
   /**
+   * Add the note attachment field.
+   *
    * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
+   *   The entity type the note can be attached to.
    */
   protected function addNoteAttachmentField(EntityTypeInterface $entity_type) {
     $fields = Note::attachmentBaseFieldDefinitions($entity_type);
@@ -83,7 +92,10 @@ class EntityTypeUpdateSubscriber implements EventSubscriberInterface {
   }
 
   /**
+   * Remove the note attachment field.
+   *
    * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
+   *   The entity type that notes can no longer be attached to.
    */
   protected function removeNoteAttachmentField(EntityTypeInterface $entity_type) {
     $fields = Note::attachmentBaseFieldDefinitions($entity_type);
@@ -98,4 +110,5 @@ class EntityTypeUpdateSubscriber implements EventSubscriberInterface {
       }
     }
   }
+
 }
