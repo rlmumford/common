@@ -3,3 +3,6 @@ description: "Task Storage"
 core_version_requirement: ^8 || 9
 type: module
 package: Tasks
+
+dependencies:
+  - entity:entity

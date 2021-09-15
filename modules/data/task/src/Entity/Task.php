@@ -30,6 +30,7 @@ use Drupal\task\TaskInterface;
  *     "list_builder" = "Drupal\task\TaskListBuilder",
  *     "storage" = "Drupal\task\TaskStorage",
  *     "access" = "Drupal\task\TaskAccessControlHandler",
+ *     "query_access" = "Drupal\task\TaskQueryAccessHandler",
  *     "form" = {
  *       "default" = "Drupal\task\TaskForm",
  *       "add" = "Drupal\task\TaskForm"
