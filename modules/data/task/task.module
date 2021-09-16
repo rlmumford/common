@@ -36,6 +36,15 @@ function task_entity_base_field_info(EntityTypeInterface $entity_type) {
       ->setDisplayConfigurable('form', TRUE);
   }
 
+  if ($entity_type->id() === 'note') {
+    $fields['root_task'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(new TranslatableMarkup('Root Task'))
+      ->setSetting('target_type', 'task')
+      ->setSetting('note_attachment_field', TRUE)
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('form', TRUE);
+  }
+
   return $fields;
 }
 
@@ -50,9 +59,32 @@ function task_message_presave(EntityInterface $message) {
 }
 
 /**
- * Implements hook_modules_install().
+ * Implements hook_note_presave().
+ */
+function task_note_presave(EntityInterface $note) {
+  if (!$note->task->isEmpty()) {
+    $note->root_task = $note->task->entity->root->getValue();
+  }
+}
+
+/**
+ * Implements hook_modules_installed().
  */
 function task_modules_installed($modules) {
+  if (in_array('note', $modules)) {
+    \Drupal::entityDefinitionUpdateManager()->installFieldStorageDefinition(
+      'root_task',
+      'note',
+      'task',
+      BaseFieldDefinition::create('entity_reference')
+        ->setLabel(new TranslatableMarkup('Root Task'))
+        ->setSetting('target_type', 'task')
+        ->setSetting('note_attachment_field', TRUE)
+        ->setDisplayConfigurable('view', TRUE)
+        ->setDisplayConfigurable('form', TRUE)
+    );
+  }
+
   if (!in_array('message', $modules)) {
     return;
   }
