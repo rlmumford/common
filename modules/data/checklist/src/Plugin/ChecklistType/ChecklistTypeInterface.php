@@ -27,11 +27,26 @@ interface ChecklistTypeInterface extends PluginInspectionInterface, BundlePlugin
   public function getDefaultItems() : array;
 
   /**
+   * Get the checklist.
+   *
    * @param \Drupal\Core\Entity\FieldableEntityInterface $entity
+   *   The entity.
    * @param string $key
+   *   The key.
    *
    * @return \Drupal\checklist\ChecklistInterface
+   *   The checklist object.
    */
   public function getChecklist(FieldableEntityInterface $entity, string $key) : ChecklistInterface;
+
+  /**
+   * Complete the checklist.
+   *
+   * @param \Drupal\Core\Entity\FieldableEntityInterface $entity
+   *   The entity.
+   * @param string $key
+   *   The key.
+   */
+  public function completeChecklist(FieldableEntityInterface $entity, string $key);
 
 }

@@ -5,6 +5,7 @@ namespace Drupal\checklist;
 use Drupal\checklist\Entity\ChecklistItemInterface;
 use Drupal\checklist\Plugin\ChecklistType\ChecklistTypeInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
+use Drupal\Core\Form\FormStateInterface;
 
 interface ChecklistInterface {
 
@@ -68,8 +69,13 @@ interface ChecklistInterface {
    * Process the checklist
    *
    * @return bool
-   *   Wheterh the checklist is complete or not.
+   *   Whether the checklist is complete or not.
    */
   public function process() : ?bool;
+
+  /**
+   * Complete the checklist.
+   */
+  public function complete();
 
 }

@@ -3,6 +3,7 @@
 namespace Drupal\checklist\Plugin\Field\FieldFormatter;
 
 use Drupal\checklist\ChecklistTempstoreRepository;
+use Drupal\checklist\Form\ChecklistCompleteForm;
 use Drupal\checklist\Form\ChecklistRowForm;
 use Drupal\checklist\Plugin\ChecklistItemHandler\SimplyCheckableChecklistItemHandler;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
@@ -227,6 +228,38 @@ class InteractiveChecklist extends FormatterBase {
         //   $element['#items'][$name]['#wrapper_attributes']['class'][] = 'checklist-item-has-resource';
         // }
       }
+
+      $element['#items']['__checklist_complete'] = [
+        '#wrapper_attributes' => [
+          'class' => ['ci', 'ci-checklist-complete-form'],
+          'data-has-resource' => FALSE, // @todo: Add resources
+        ],
+        'name' => [
+          '#type' => 'html_tag',
+          '#tag' => 'span',
+          '#value' => '',
+          '#attributes' => [
+            'class' => [
+              'ci-name',
+            ],
+          ],
+        ],
+        'label' => [
+          '#type' => 'html_tag',
+          '#tag' => 'span',
+          '#value' => $this->t('Complete'),
+          '#attributes' => [
+            'class' => [
+              'ci-label',
+            ]
+          ]
+        ],
+        'form' => $this->formBuilder->getForm(
+          $this->classResolver
+            ->getInstanceFromDefinition(ChecklistCompleteForm::class)
+            ->setChecklist($checklist)
+        )
+      ];
 
       $elements[$delta] = [
         'checklist' => $element,

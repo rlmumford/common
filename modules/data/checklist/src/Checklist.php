@@ -5,6 +5,9 @@ namespace Drupal\checklist;
 use Drupal\checklist\Entity\ChecklistItemInterface;
 use Drupal\checklist\Plugin\ChecklistType\ChecklistTypeInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Plugin\PluginFormFactoryInterface;
+use Drupal\Core\Plugin\PluginWithFormsInterface;
 
 class Checklist implements ChecklistInterface {
 
@@ -49,6 +52,16 @@ class Checklist implements ChecklistInterface {
     $this->type = $type;
     $this->entity = $entity;
     $this->key = $key;
+  }
+
+  /**
+   * Get the plugin form factory.
+   *
+   * @return \Drupal\Core\Plugin\PluginFormFactoryInterface
+   *   The plugin form factory.
+   */
+  protected function pluginFormFactory() : PluginFormFactoryInterface {
+    return \Drupal::service('plugin_form.factory');
   }
 
   /**
@@ -214,4 +227,12 @@ class Checklist implements ChecklistInterface {
 
     return $resolvable;
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function complete() {
+    $this->getType()->completeChecklist($this->entity, $this->key);
+  }
+
 }

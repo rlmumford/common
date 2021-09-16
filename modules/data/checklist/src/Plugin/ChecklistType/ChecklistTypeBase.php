@@ -92,4 +92,10 @@ abstract class ChecklistTypeBase extends PluginBase implements ChecklistTypeInte
   public function getChecklist(FieldableEntityInterface $entity, string $key): ChecklistInterface {
     return new Checklist($this, $entity, $key);
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function completeChecklist(FieldableEntityInterface $entity, string $key) {}
+
 }
