@@ -55,16 +55,6 @@ class Checklist implements ChecklistInterface {
   }
 
   /**
-   * Get the plugin form factory.
-   *
-   * @return \Drupal\Core\Plugin\PluginFormFactoryInterface
-   *   The plugin form factory.
-   */
-  protected function pluginFormFactory() : PluginFormFactoryInterface {
-    return \Drupal::service('plugin_form.factory');
-  }
-
-  /**
    * {@inheritdoc}
    */
   public function getType(): ChecklistTypeInterface {
