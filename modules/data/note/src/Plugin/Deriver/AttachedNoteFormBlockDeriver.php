@@ -2,19 +2,16 @@
 
 namespace Drupal\note\Plugin\Deriver;
 
-use Consolidation\OutputFormatters\Transformations\StringTransformationInterface;
 use Drupal\Component\Plugin\Derivative\DeriverBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Plugin\Context\ContextDefinition;
 use Drupal\Core\Plugin\Discovery\ContainerDeriverInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Core\StringTranslation\TranslationManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Class AttachedNoteFormBlockDeriver
+ * Deriver for attached not form blocks.
  *
  * @package Drupal\note\Plugin\Deriver
  */
@@ -42,7 +39,9 @@ class AttachedNoteFormBlockDeriver extends DeriverBase implements ContainerDeriv
    * AttachedNoteFormBlockDeriver constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
    * @param \Drupal\Core\StringTranslation\TranslationManager $string_translation
+   *   The string translation service.
    */
   public function __construct(
     EntityTypeManagerInterface $entity_type_manager,
@@ -87,4 +86,5 @@ class AttachedNoteFormBlockDeriver extends DeriverBase implements ContainerDeriv
 
     return $this->derivatives;
   }
+
 }

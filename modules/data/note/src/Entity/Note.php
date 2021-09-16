@@ -10,7 +10,7 @@ use Drupal\user\EntityOwnerInterface;
 use Drupal\user\EntityOwnerTrait;
 
 /**
- * Class Note
+ * Defines the note entity type.
  *
  * @package Drupal\note\Entity
  *
@@ -60,8 +60,10 @@ class Note extends ContentEntityBase implements EntityOwnerInterface, NoteInterf
    * Get the definition of a note attachment field.
    *
    * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
+   *   The entity type that can be attached.
    *
    * @return \Drupal\Core\Field\BaseFieldDefinition
+   *   The attachment entity reference field.
    */
   public static function attachmentBaseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields[$entity_type->id()] = BaseFieldDefinition::create('entity_reference')
@@ -137,9 +139,7 @@ class Note extends ContentEntityBase implements EntityOwnerInterface, NoteInterf
   }
 
   /**
-   * Create a reply to a given note.
-   *
-   * @return \Drupal\note\Entity\NoteInterface
+   * {@inheritdoc}
    */
   public function createReply() {
     /** @var \Drupal\note\Entity\Note $reply */
@@ -155,4 +155,5 @@ class Note extends ContentEntityBase implements EntityOwnerInterface, NoteInterf
 
     return $reply;
   }
+
 }

@@ -14,7 +14,7 @@ use Drupal\Core\StringTranslation\TranslationInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Provides a block to show an attached note form
+ * Provides a block to show an attached note form.
  *
  * @Block(
  *   id = "attached_note_form",
@@ -116,7 +116,7 @@ class AttachedNoteForm extends BlockBase implements ContextAwarePluginInterface,
    * {@inheritdoc}
    */
   public function build() {
-    /** @var $entity \Drupal\Core\Entity\EntityInterface $entity */
+    /** @var \Drupal\Core\Entity\EntityInterface $entity $entity */
     $entity = $this->getContextValue('entity');
 
     $note = $this->entityTypeManager->getStorage('note')->create();
@@ -126,8 +126,10 @@ class AttachedNoteForm extends BlockBase implements ContextAwarePluginInterface,
       'note',
       'default'
     );
-    $form_object->setEntity($entity);
+    $form_object->setEntity($note);
 
-    return $this->formBuilder->buildForm($form_object, new FormState());
+    $form_State = new FormState();
+    return $this->formBuilder->buildForm($form_object, $form_State);
   }
+
 }
