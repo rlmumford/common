@@ -111,7 +111,7 @@ class Job extends ChecklistTypeBase {
   }
 
   /**
-   *{@inheritdoc}
+   * {@inheritdoc}
    */
   public function isChecklistComplete(ChecklistInterface $checklist): bool {
     /** @var \Drupal\task\Entity\Task $task */
