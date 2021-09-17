@@ -71,10 +71,7 @@ class TaskChecklistProcessor implements TaskChecklistProcessorInterface {
       if (!$task->checklist->isEmpty() && $checklist = $task->checklist->checklist) {
         /** @var \Drupal\checklist\ChecklistInterface $checklist */
         try {
-          if ($checklist->process()) {
-            $task->resolve()->save();
-            // @todo Implement time logging and other things.
-          }
+          $checklist->process();
         }
         catch (\Exception $e) {
           $this->logger->error(

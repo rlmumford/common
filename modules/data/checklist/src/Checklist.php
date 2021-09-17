@@ -214,7 +214,9 @@ class Checklist implements ChecklistInterface {
 
     // @todo: Configurable completion dependencies.
     $resolvable = $default_resolvable;
-
+    if ($resolvable) {
+      $this->complete();
+    }
     return $resolvable;
   }
 
@@ -222,7 +224,7 @@ class Checklist implements ChecklistInterface {
    * {@inheritdoc}
    */
   public function complete() {
-    $this->getType()->completeChecklist($this->entity, $this->key);
+    $this->getType()->completeChecklist($this);
   }
 
 }

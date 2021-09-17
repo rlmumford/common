@@ -42,11 +42,9 @@ interface ChecklistTypeInterface extends PluginInspectionInterface, BundlePlugin
   /**
    * Complete the checklist.
    *
-   * @param \Drupal\Core\Entity\FieldableEntityInterface $entity
-   *   The entity.
-   * @param string $key
-   *   The key.
+   * @param \Drupal\checklist\ChecklistInterface $checklist
+   *   The checklist to complete.
    */
-  public function completeChecklist(FieldableEntityInterface $entity, string $key);
+  public function completeChecklist(ChecklistInterface $checklist);
 
 }
