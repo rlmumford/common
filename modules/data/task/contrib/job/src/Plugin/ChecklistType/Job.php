@@ -6,6 +6,7 @@ use Drupal\checklist\Plugin\ChecklistType\ChecklistTypeBase;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\task_job\JobInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Job checklist types.
@@ -36,6 +37,7 @@ class Job extends ChecklistTypeBase {
       $plugin_id,
       $plugin_definition,
       $container->get('entity_type.manager')->getStorage('checklist_item'),
+      $container->get('event_dispatcher'),
       $container->get('entity_type.manager')->getStorage('task_job')
     );
   }
@@ -51,6 +53,8 @@ class Job extends ChecklistTypeBase {
    *   The plugin implementation definition.
    * @param \Drupal\Core\Entity\EntityStorageInterface $item_storage
    *   The checklist item entity storage.
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
+   *   The event dispatcher service.
    * @param \Drupal\Core\Entity\EntityStorageInterface $job_storage
    *   The job storage.
    */
@@ -59,9 +63,10 @@ class Job extends ChecklistTypeBase {
     string $plugin_id,
     $plugin_definition,
     EntityStorageInterface $item_storage,
+    EventDispatcherInterface $event_dispatcher,
     EntityStorageInterface $job_storage
   ) {
-    parent::__construct($configuration, $plugin_id, $plugin_definition, $item_storage);
+    parent::__construct($configuration, $plugin_id, $plugin_definition, $item_storage, $event_dispatcher);
 
     $this->jobStorage = $job_storage;
   }
