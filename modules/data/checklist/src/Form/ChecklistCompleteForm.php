@@ -66,7 +66,7 @@ class ChecklistCompleteForm extends FormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'checklist_'.$this->checklist->getType()->getPluginId().'_completion_form';
+    return 'checklist_' . $this->checklist->getType()->getPluginId() . '_completion_form';
   }
 
   /**

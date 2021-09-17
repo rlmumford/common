@@ -1,4 +1,5 @@
-form.checklist-item-row-form, div.checklist-item-row-form-wrapper {
+form.checklist-item-row-form,
+div.checklist-item-row-form-wrapper {
   display: inline-block;
 }
 
@@ -12,4 +13,3 @@ form.checklist-item-row-form, div.checklist-item-row-form-wrapper {
   background-size: cover;
   border-color: transparent;
 }
-

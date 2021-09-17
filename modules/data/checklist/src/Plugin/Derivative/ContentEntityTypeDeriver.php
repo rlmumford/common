@@ -9,13 +9,25 @@ use Drupal\Core\Plugin\Discovery\ContainerDeriverInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
+/**
+ * Deriver that makes a version of a plugin for each content entity type.
+ */
 class ContentEntityTypeDeriver extends DeriverBase implements ContainerDeriverInterface {
   use StringTranslationTrait;
 
   /**
+   * The entity type manager.
+   *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
+
+  /**
+   * The base plugin id.
+   *
+   * @var string
+   */
+  protected $basePluginId;
 
   /**
    * {@inheritdoc}
@@ -31,13 +43,18 @@ class ContentEntityTypeDeriver extends DeriverBase implements ContainerDeriverIn
    * ContentEntityTypeDeriver constructor.
    *
    * @param string $base_plugin_id
+   *   The base plugin id.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
    */
   public function __construct(string $base_plugin_id, EntityTypeManagerInterface $entity_type_manager) {
     $this->basePluginId = $base_plugin_id;
     $this->entityTypeManager = $entity_type_manager;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function getDerivativeDefinitions($base_plugin_definition) {
     if (empty($this->derivatives)) {
       foreach ($this->entityTypeManager->getDefinitions() as $id => $entity_type) {
@@ -52,4 +69,5 @@ class ContentEntityTypeDeriver extends DeriverBase implements ContainerDeriverIn
 
     return $this->derivatives;
   }
+
 }

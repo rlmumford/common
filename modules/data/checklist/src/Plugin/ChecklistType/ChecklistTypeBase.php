@@ -104,6 +104,7 @@ abstract class ChecklistTypeBase extends PluginBase implements ChecklistTypeInte
    * Get the storage handler for items.
    *
    * @return \Drupal\Core\Entity\EntityStorageInterface
+   *   The checklist item storage.
    */
   public function itemStorage() {
     return $this->itemStorage;

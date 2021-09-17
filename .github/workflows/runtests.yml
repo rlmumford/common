@@ -47,7 +47,7 @@ jobs:
       - name: "Install Other Dependencies"
         run: composer require drupal/coder drupal/core-dev:^8.9 dealerdirect/phpcodesniffer-composer-installer drupal/entity_template drupal/inline_entity_form
       - name: "Code Style"
-        run: "vendor/bin/phpcs --standard=Drupal --ignore='*.min.*'  ./web/modules/contrib/common/modules/data/task ./web/modules/contrib/common/modules/data/note ./web/modules/contrib/common/modules/util/exec_environment"
+        run: "vendor/bin/phpcs --standard=Drupal --ignore='*.min.*'  ./web/modules/contrib/common/modules/data/checklist ./web/modules/contrib/common/modules/data/task ./web/modules/contrib/common/modules/data/note ./web/modules/contrib/common/modules/util/exec_environment"
       - name: "Set up Mysql"
         uses: shogo82148/actions-setup-mysql@v1
         with:

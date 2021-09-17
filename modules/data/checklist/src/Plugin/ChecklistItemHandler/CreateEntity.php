@@ -1,6 +1,7 @@
 <?php
 
 namespace Drupal\checklist\Plugin\ChecklistItemHandler;
+
 use Drupal\checklist\Entity\ChecklistItemInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
@@ -10,7 +11,7 @@ use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Class CreateEntity
+ * Create entity checklist item handler.
  *
  * @ChecklistItemHandler(
  *   id = "create_entity",
@@ -28,16 +29,22 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class CreateEntity extends ChecklistItemHandlerBase implements ContainerFactoryPluginInterface {
 
   /**
+   * The entity type.
+   *
    * @var \Drupal\Core\Entity\EntityTypeInterface
    */
   protected $entityType;
 
   /**
+   * The entity storage.
+   *
    * @var \Drupal\Core\Entity\EntityStorageInterface
    */
   protected $entityStorage;
 
   /**
+   * The entity type bundle service.
+   *
    * @var \Drupal\Core\Entity\EntityTypeBundleInfoInterface
    */
   protected $entityTypeBundleInfo;
@@ -61,6 +68,22 @@ class CreateEntity extends ChecklistItemHandlerBase implements ContainerFactoryP
     );
   }
 
+  /**
+   * CreateEntity constructor.
+   *
+   * @param array $configuration
+   *   A configuration array containing information about the plugin instance.
+   * @param string $plugin_id
+   *   The plugin_id for the plugin instance.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
+   * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
+   *   The entity type being created.
+   * @param \Drupal\Core\Entity\EntityStorageInterface $entity_storage
+   *   The entity type storage.
+   * @param \Drupal\Core\Entity\EntityTypeBundleInfoInterface $entity_type_bundle_info
+   *   The entity type bundle info service.
+   */
   public function __construct(
     array $configuration,
     string $plugin_id,
@@ -81,10 +104,10 @@ class CreateEntity extends ChecklistItemHandlerBase implements ContainerFactoryP
    */
   public function defaultConfiguration() {
     return [
-        'bundle' => $this->entityType->hasKey('bundle') ? '__select' : $this->entityType->id(),
-        'show_form' => TRUE,
-        'form_mode' => 'add',
-      ] + parent::defaultConfiguration();
+      'bundle' => $this->entityType->hasKey('bundle') ? '__select' : $this->entityType->id(),
+      'show_form' => TRUE,
+      'form_mode' => 'add',
+    ] + parent::defaultConfiguration();
   }
 
   /**
@@ -101,17 +124,14 @@ class CreateEntity extends ChecklistItemHandlerBase implements ContainerFactoryP
   }
 
   /**
-   * Action the checklist item.
-   *
-   * @return \Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerInterface
+   * {@inheritdoc}
    */
   public function action(): ChecklistItemHandlerInterface {
     if ($this->getMethod() == ChecklistItemInterface::METHOD_AUTO) {
       $entity = $this->doCreateEntity();
       $entity->save();
 
-      // @todo: Some approximation of outcomes.
-
+      // @todo Some approximation of outcomes.
       $this->getItem()->setComplete(ChecklistItemInterface::METHOD_AUTO);
       $this->getItem()->save();
     }
@@ -120,9 +140,7 @@ class CreateEntity extends ChecklistItemHandlerBase implements ContainerFactoryP
   }
 
   /**
-   * Build the configuration summary.
-   *
-   * @return array
+   * {@inheritdoc}
    */
   public function buildConfigurationSummary(): array {
     $build = [
@@ -138,10 +156,10 @@ class CreateEntity extends ChecklistItemHandlerBase implements ContainerFactoryP
         '#type' => 'item',
         '#title' => ucfirst($this->entityType->getKey('bundle')),
         '#markup' => $configuration['bundle'] === '__select' ?
-          $this->t('Selected by User') :
-          $this->entityTypeBundleInfo->getBundleInfo(
+        $this->t('Selected by User') :
+        $this->entityTypeBundleInfo->getBundleInfo(
             $this->entityType->id()
-          )[$configuration['bundle']]['label'],
+        )[$configuration['bundle']]['label'],
       ];
     }
 
@@ -152,8 +170,10 @@ class CreateEntity extends ChecklistItemHandlerBase implements ContainerFactoryP
    * Get the entity.
    *
    * @param string|null $bundle
+   *   The bundle to create.
    *
    * @return \Drupal\Core\Entity\EntityInterface
+   *   The created entity.
    */
   public function doCreateEntity($bundle = NULL) : EntityInterface {
     $values = [];
@@ -164,11 +184,13 @@ class CreateEntity extends ChecklistItemHandlerBase implements ContainerFactoryP
   }
 
   /**
-   * Get the entity type interface
+   * Get the entity type interface.
    *
    * @return \Drupal\Core\Entity\EntityTypeInterface
+   *   The entity type being created.
    */
   public function getEntityType() : EntityTypeInterface {
     return $this->entityType;
   }
+
 }

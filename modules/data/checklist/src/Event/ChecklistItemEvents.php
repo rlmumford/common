@@ -1,13 +1,10 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Rob
- * Date: 27/05/2020
- * Time: 16:24
- */
 
 namespace Drupal\checklist\Event;
 
+/**
+ * Checklist item event names.
+ */
 final class ChecklistItemEvents {
 
   const ITEM_COMPLETED = 'checklist_item.completed';

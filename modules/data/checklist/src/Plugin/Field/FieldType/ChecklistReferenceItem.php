@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Rob
- * Date: 20/05/2020
- * Time: 11:37
- */
 
 namespace Drupal\checklist\Plugin\Field\FieldType;
 
@@ -15,7 +9,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TypedData\DataDefinition;
 
 /**
- * Class ChecklistReferenceItem
+ * Reference a checklist on another entity.
  *
  * @FieldType(
  *   id = "checklist_reference",

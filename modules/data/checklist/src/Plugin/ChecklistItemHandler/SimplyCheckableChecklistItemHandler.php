@@ -5,7 +5,7 @@ namespace Drupal\checklist\Plugin\ChecklistItemHandler;
 use Drupal\checklist\Entity\ChecklistItemInterface;
 
 /**
- * Class SimplyCheckableChecklistItemHandler
+ * Checklist item handler that shows a simple checkbox.
  *
  * @ChecklistItemHandler(
  *   id = "simply_checkable",
@@ -31,7 +31,7 @@ class SimplyCheckableChecklistItemHandler extends ChecklistItemHandlerBase {
    * {@inheritdoc}
    */
   public function action(): ChecklistItemHandlerInterface {
-    // This is a completely manual process. Nothing happens her.
+    // This is a completely manual process. Nothing happens here.
     return $this;
   }
 
@@ -40,8 +40,8 @@ class SimplyCheckableChecklistItemHandler extends ChecklistItemHandlerBase {
    */
   public function defaultConfiguration() {
     return [
-        'reversible' => FALSE,
-      ] + parent::defaultConfiguration();
+      'reversible' => FALSE,
+    ] + parent::defaultConfiguration();
   }
 
   /**
@@ -52,4 +52,5 @@ class SimplyCheckableChecklistItemHandler extends ChecklistItemHandlerBase {
       '#markup' => $this->getPluginDefinition()['label'],
     ];
   }
+
 }

@@ -10,7 +10,7 @@ use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
- * Class ChecklistItem
+ * Definition of the checklist item entity.
  *
  * @ContentEntityType(
  *   id = "checklist_item",
@@ -61,7 +61,7 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
       ->setLabel(new TranslatableMarkup('Handler'))
       ->setDescription(new TranslatableMarkup('The checklist item handler'))
       ->setSetting('plugin_type', 'checklist_item_handler')
-      ->setSetting('plugin_creation_callback', static::class.'::createChecklistItemHandlerPluginInstance');
+      ->setSetting('plugin_creation_callback', static::class . '::createChecklistItemHandlerPluginInstance');
 
     $fields['status'] = BaseFieldDefinition::create('list_string')
       ->setSetting('allowed_values', [
@@ -176,18 +176,14 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
   }
 
   /**
-   * Find out whether it has been attempted
-   *
-   * @return bool
+   * {@inheritdoc}
    */
   public function isAttempted(): bool {
     return !$this->attempted->isEmpty();
   }
 
   /**
-   * Set the checklist item as attempted.
-   *
-   * @return \Drupal\checklist\Entity\ChecklistItemInterface
+   * {@inheritdoc}
    */
   public function setAttempted(): ChecklistItemInterface {
     $this->attempted = TRUE;
@@ -195,38 +191,28 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
   }
 
   /**
-   * Check whether the checklist item is required.
-   *
-   * @return bool
+   * {@inheritdoc}
    */
   public function isRequired(): bool {
     return $this->getHandler()->isRequired();
   }
 
   /**
-   * Check whether the checklist item is optional.
-   *
-   * @return bool
+   * {@inheritdoc}
    */
   public function isOptional(): bool {
     return !$this->isRequired();
   }
 
   /**
-   * Check whether this item can be actioned yet.
-   *
-   * @return bool
+   * {@inheritdoc}
    */
   public function isActionable(): bool {
     return $this->getHandler()->isActionable();
   }
 
   /**
-   * Do the item.
-   *
-   * This is usually only called with the auto method.
-   *
-   * @return \Drupal\checklist\Entity\ChecklistItemInterface
+   * {@inheritdoc}
    */
   public function action(): ChecklistItemInterface {
     $this->getHandler()->action();
@@ -234,27 +220,21 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
   }
 
   /**
-   * Get the checklist item handler.
-   *
-   * @return \Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerInterface
+   * {@inheritdoc}
    */
   public function getHandler(): ChecklistItemHandlerInterface {
     return $this->handler->plugin;
   }
 
   /**
-   * Get the name of this item
-   *
-   * @return string
+   * {@inheritdoc}
    */
   public function getName(): string {
     return $this->name->value;
   }
 
   /**
-   * Get the method of the method.
-   *
-   * @return string
+   * {@inheritdoc}
    */
   public function getMethod(): string {
     return $this->getHandler()->getMethod();
@@ -267,18 +247,20 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
    *
    * @param string $id
    *   The handler id.
-   * @param string $configuration
+   * @param array $configuration
    *   The configuration.
    * @param \Drupal\Core\Field\FieldItemInterface $item
    *   The field item.
    *
    * @return \Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerInterface
+   *   The checklist item handler.
    */
-  public static function createChecklistItemHandlerPluginInstance($id, $configuration, FieldItemInterface $item) {
+  public static function createChecklistItemHandlerPluginInstance(string $id, array $configuration, FieldItemInterface $item) {
     /** @var \Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerInterface $plugin */
     $plugin = \Drupal::service('plugin.manager.checklist_item_handler')
       ->createInstance($id, $configuration);
     $plugin->setItem($item->getEntity());
     return $plugin;
   }
+
 }

@@ -16,6 +16,7 @@ interface ChecklistTypeInterface extends PluginInspectionInterface, BundlePlugin
    * Get the storage handler for items.
    *
    * @return \Drupal\Core\Entity\EntityStorageInterface
+   *   The item storage.
    */
   public function itemStorage();
 
@@ -23,6 +24,7 @@ interface ChecklistTypeInterface extends PluginInspectionInterface, BundlePlugin
    * Get the default items.
    *
    * @return \Drupal\checklist\Entity\ChecklistItemInterface[]
+   *   The default items.
    */
   public function getDefaultItems() : array;
 

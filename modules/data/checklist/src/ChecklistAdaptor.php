@@ -4,10 +4,13 @@ namespace Drupal\checklist;
 
 use Drupal\Core\TypedData\TypedData;
 
+/**
+ * Typed data adaptor for checklists.
+ */
 class ChecklistAdaptor extends TypedData {
 
   /**
-   * The checklist instance
+   * The checklist instance.
    *
    * @var \Drupal\checklist\ChecklistInterface
    */
@@ -29,7 +32,7 @@ class ChecklistAdaptor extends TypedData {
 
     $key = $item->getFieldDefinition()->getName();
     if ($item->getFieldDefinition()->getFieldStorageDefinition()->getCardinality() !== 1) {
-      $key .= ':'.$item->getName();
+      $key .= ':' . $item->getName();
     }
 
     $checklist = $checklist_type->getChecklist(
@@ -72,7 +75,8 @@ class ChecklistAdaptor extends TypedData {
     }
 
     throw new \BadMethodCallException(
-      "Method {$name} not found on ".get_class($this->getValue())
+      "Method {$name} not found on " . get_class($this->getValue())
     );
   }
+
 }

@@ -5,33 +5,43 @@ namespace Drupal\checklist;
 use Drupal\checklist\Entity\ChecklistItemInterface;
 use Drupal\checklist\Plugin\ChecklistType\ChecklistTypeInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
-use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Plugin\PluginFormFactoryInterface;
-use Drupal\Core\Plugin\PluginWithFormsInterface;
 
+/**
+ * Handles checklists.
+ */
 class Checklist implements ChecklistInterface {
 
   /**
+   * The checklist type plugin.
+   *
    * @var \Drupal\checklist\Plugin\ChecklistType\ChecklistTypeInterface
    */
   protected $type;
 
   /**
+   * The checklist entity.
+   *
    * @var \Drupal\Core\Entity\FieldableEntityInterface
    */
   protected $entity;
 
   /**
+   * The checklist key.
+   *
    * @var string
    */
   protected $key;
 
   /**
+   * Items in the checklist.
+   *
    * @var \Drupal\checklist\Entity\ChecklistItemInterface[]
    */
   protected $items = NULL;
 
   /**
+   * Items removed from the checklist.
+   *
    * @var \Drupal\checklist\Entity\ChecklistItemInterface[]
    */
   protected $removedItems = [];
@@ -40,15 +50,18 @@ class Checklist implements ChecklistInterface {
    * Checklist constructor.
    *
    * @param \Drupal\checklist\Plugin\ChecklistType\ChecklistTypeInterface $type
+   *   The checklist type plugin.
    * @param \Drupal\Core\Entity\FieldableEntityInterface $entity
+   *   The entity the checklist is attached to.
    * @param string $key
+   *   The key of the checklist.
    */
   public function __construct(
     ChecklistTypeInterface $type,
     FieldableEntityInterface $entity,
     string $key
   ) {
-    // @todo: Add validation that this trio is valid.
+    // @todo Add validation that this trio is valid.
     $this->type = $type;
     $this->entity = $entity;
     $this->key = $key;
@@ -76,9 +89,7 @@ class Checklist implements ChecklistInterface {
   }
 
   /**
-   * Get the items.
-   *
-   * @return \Drupal\checklist\Entity\ChecklistItemInterface[]
+   * {@inheritdoc}
    */
   public function getItems(): array {
     if ($this->items !== NULL) {
@@ -119,21 +130,15 @@ class Checklist implements ChecklistInterface {
   }
 
   /**
-   * Get the ordered items.
-   *
-   * @return \Drupal\checklist\Entity\ChecklistItemInterface[]
+   * {@inheritdoc}
    */
   public function getOrderedItems(): array {
-    // @todo: Implement sorting
+    // @todo Implement sorting
     return $this->getItems();
   }
 
   /**
-   * Check whether the checklist has an item with the given name.
-   *
-   * @param string $name
-   *
-   * @return bool
+   * {@inheritdoc}
    */
   public function hasItem(string $name): bool {
     $this->getItems();
@@ -141,9 +146,7 @@ class Checklist implements ChecklistInterface {
   }
 
   /**
-   * Get the item with a given name
-   *
-   * @return \Drupal\checklist\Entity\ChecklistItemInterface
+   * {@inheritdoc}
    */
   public function getItem(string $name): ?ChecklistItemInterface {
     $this->getItems();
@@ -151,7 +154,7 @@ class Checklist implements ChecklistInterface {
   }
 
   /**
-   * @param string $name
+   * {@inheritdoc}
    */
   public function removeItem(string $name) {
     $this->removedItems[$name] = $this->getItem($name);
@@ -159,10 +162,7 @@ class Checklist implements ChecklistInterface {
   }
 
   /**
-   * Process the checklist
-   *
-   * @return bool
-   *   Wheterh the checklist is complete or not.
+   * {@inheritdoc}
    */
   public function process(): ?bool {
     $items = $this->getOrderedItems();
@@ -182,7 +182,7 @@ class Checklist implements ChecklistInterface {
         continue;
       }
 
-      // @todo: Bring in dependencies.
+      // @todo Bring in dependencies.
       if ($item->isActionable()) {
         try {
           $item->action();
@@ -212,7 +212,7 @@ class Checklist implements ChecklistInterface {
       $item->save();
     }
 
-    // @todo: Configurable completion dependencies.
+    // @todo Configurable completion dependencies.
     $resolvable = $default_resolvable;
     if ($resolvable) {
       $this->complete();

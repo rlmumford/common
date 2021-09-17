@@ -8,7 +8,6 @@ use Drupal\checklist\Ajax\StartNextItemCommand;
 use Drupal\checklist\ChecklistTempstoreRepository;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\HtmlCommand;
-use Drupal\Core\Ajax\InsertCommand;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
 use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -17,24 +16,36 @@ use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
+/**
+ * The row form for checklist items.
+ *
+ * The row form shows the tick box or a button to start progress on the
+ * checklist item, the action forms are handled seperately.
+ */
 class ChecklistRowForm extends ChecklistItemFormBase {
 
   /**
-   * @var string
+   * {@inheritdoc}
    */
   protected $formClass = 'row';
 
   /**
+   * The form builder service.
+   *
    * @var \Drupal\Core\Form\FormBuilderInterface
    */
   protected $formBuilder;
 
   /**
+   * The class resolver service.
+   *
    * @var \Drupal\Core\DependencyInjection\ClassResolverInterface
    */
   protected $classResolver;
 
   /**
+   * The renderer.
+   *
    * @var \Drupal\Core\Render\RendererInterface
    */
   protected $renderer;
@@ -53,10 +64,18 @@ class ChecklistRowForm extends ChecklistItemFormBase {
   }
 
   /**
-   * ChecklistItemFormBase constructor.
+   * ChecklistRowForm constructor.
    *
    * @param \Drupal\Core\Plugin\PluginFormFactoryInterface $plugin_form_factory
+   *   The plugin form factory.
    * @param \Drupal\checklist\ChecklistTempstoreRepository $checklist_tempstore_repository
+   *   The tempstore repository.
+   * @param \Drupal\Core\Form\FormBuilderInterface $form_builder
+   *   The form builder.
+   * @param \Drupal\Core\DependencyInjection\ClassResolverInterface $class_resolver
+   *   The class resolver.
+   * @param \Drupal\Core\Render\RendererInterface $renderer
+   *   The renderer.
    */
   public function __construct(
     PluginFormFactoryInterface $plugin_form_factory,
@@ -65,8 +84,7 @@ class ChecklistRowForm extends ChecklistItemFormBase {
     ClassResolverInterface $class_resolver,
     RendererInterface $renderer
   ) {
-    $this->pluginFormFactory = $plugin_form_factory;
-    $this->checklistTempstoreRepo = $checklist_tempstore_repository;
+    parent::__construct($plugin_form_factory, $checklist_tempstore_repository);
     $this->formBuilder = $form_builder;
     $this->classResolver = $class_resolver;
     $this->renderer = $renderer;
@@ -76,7 +94,7 @@ class ChecklistRowForm extends ChecklistItemFormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'ci_'.$this->item->checklist->checklist->getKey().'__'.$this->item->getName().'_row_form';
+    return 'ci_' . $this->item->checklist->checklist->getKey() . '__' . $this->item->getName() . '_row_form';
   }
 
   /**
@@ -86,9 +104,12 @@ class ChecklistRowForm extends ChecklistItemFormBase {
     return 'ci_row_form';
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $wrapper_id = "checklist-row--".$this->item->checklist->checklist->getKey()."--".$this->item->getName();
-    $form['#prefix'] = '<div id="'.$wrapper_id.'" class="checklist-item-row-form-wrapper">';
+    $wrapper_id = "checklist-row--" . $this->item->checklist->checklist->getKey() . "--" . $this->item->getName();
+    $form['#prefix'] = '<div id="' . $wrapper_id . '" class="checklist-item-row-form-wrapper">';
     $form['#suffix'] = '</div>';
     $form['#wrapper_id'] = $wrapper_id;
 
@@ -99,7 +120,7 @@ class ChecklistRowForm extends ChecklistItemFormBase {
       $url->mergeOptions([
         'query' => [
           FormBuilderInterface::AJAX_FORM_REQUEST,
-        ]
+        ],
       ]);
       $this->prepareAllAjaxSettings($form, $url);
     }
@@ -108,10 +129,15 @@ class ChecklistRowForm extends ChecklistItemFormBase {
   }
 
   /**
+   * Ajax command for when the row is completed.
+   *
    * @param array $form
+   *   The form.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
    *
    * @return array|\Drupal\Core\Ajax\AjaxResponse
+   *   The form array or the ajax response.
    */
   public function onCompleteAjaxCallback(array &$form, FormStateInterface $form_state) {
     if (!$form_state->isExecuted()) {
@@ -120,8 +146,8 @@ class ChecklistRowForm extends ChecklistItemFormBase {
 
     $response = static::prepareAjaxResponse($form, $form_state);
 
-    // @todo: Reload any dependent forms.
-    // @todo: Close any resource or form panes.
+    // @todo Reload any dependent forms.
+    // @todo Close any resource or form panes.
     $response->addCommand(new EnsureItemCompleteCommand($this->item));
     $response->addCommand(new StartNextItemCommand($this->item));
 
@@ -129,10 +155,15 @@ class ChecklistRowForm extends ChecklistItemFormBase {
   }
 
   /**
+   * Ajax callback when the item is reversed.
+   *
    * @param array $form
+   *   The form.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
    *
    * @return array|\Drupal\Core\Ajax\AjaxResponse
+   *   The form array or the ajax response.
    */
   public static function onReverseAjaxCallback(array &$form, FormStateInterface $form_state) {
     if (!$form_state->isExecuted()) {
@@ -141,12 +172,22 @@ class ChecklistRowForm extends ChecklistItemFormBase {
 
     $response = static::prepareAjaxResponse($form, $form_state);
 
-    // @todo: Reload any dependent forms.
-    // @todo: Close any resource or form panes.
-
+    // @todo Reload any dependent forms.
+    // @todo Close any resource or form panes.
     return $response;
   }
 
+  /**
+   * Ajax callback when the start button is pressed.
+   *
+   * @param array $form
+   *   The form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return \Drupal\Core\Ajax\AjaxResponse|array
+   *   Either the form array or the ajax commands.
+   */
   public function onStartAjaxCallback(array &$form, FormStateInterface $form_state) {
     if (!$form_state->isExecuted()) {
       return $form;
@@ -159,13 +200,21 @@ class ChecklistRowForm extends ChecklistItemFormBase {
     return $response;
   }
 
-  protected function insertActionForm(AjaxResponse $response, $selector = NULL) {
+  /**
+   * Add commands to insert the action form to the response.
+   *
+   * @param \Drupal\Core\Ajax\AjaxResponse $response
+   *   The ajax response.
+   * @param string|null $selector
+   *   The selector to insert the form at.
+   */
+  protected function insertActionForm(AjaxResponse $response, string $selector = NULL) {
     /** @var \Drupal\checklist\ChecklistInterface $checklist */
     $checklist = $this->item->checklist->checklist;
 
-    $selector = $selector ?: '#'.$checklist->getEntity()->getEntityTypeId()
-      .'--'.str_replace(':', '--', $checklist->getKey())
-      .'--action-form-container';
+    $selector = $selector ?: '#' . $checklist->getEntity()->getEntityTypeId()
+      . '--' . str_replace(':', '--', $checklist->getKey())
+      . '--action-form-container';
 
     /** @var \Drupal\checklist\Form\ChecklistItemActionForm $form_object */
     $form_object = $this->classResolver->getInstanceFromDefinition(ChecklistItemActionForm::class);
@@ -186,6 +235,17 @@ class ChecklistRowForm extends ChecklistItemFormBase {
     $response->addCommand(new HtmlCommand($selector, $form_html));
   }
 
+  /**
+   * Prepare the ajax response.
+   *
+   * @param array $form
+   *   The form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return \Drupal\Core\Ajax\AjaxResponse
+   *   The ajax commands.
+   */
   protected static function prepareAjaxResponse(array &$form, FormStateInterface $form_state) : AjaxResponse {
     /** @var \Drupal\Core\Render\MainContent\MainContentRendererInterface $ajax_renderer */
     $ajax_renderer = \Drupal::service('main_content_renderer.ajax');
@@ -201,6 +261,5 @@ class ChecklistRowForm extends ChecklistItemFormBase {
 
     return $response;
   }
-
 
 }
