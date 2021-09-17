@@ -30,4 +30,5 @@ class TaskChecklistSubscriber implements EventSubscriberInterface {
     $task = $event->getChecklist()->getEntity();
     $task->resolve(Task::RESOLUTION_COMPLETE)->save();
   }
+
 }
