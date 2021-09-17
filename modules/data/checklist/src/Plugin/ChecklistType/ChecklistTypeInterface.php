@@ -49,4 +49,15 @@ interface ChecklistTypeInterface extends PluginInspectionInterface, BundlePlugin
    */
   public function completeChecklist(ChecklistInterface $checklist);
 
+  /**
+   * Test whether a checklist is already marked as complete.
+   *
+   * @param \Drupal\checklist\ChecklistInterface $checklist
+   *   The checklist to test.
+   *
+   * @return bool
+   *   TRUE if the checklist is already complete, FALSE otherwise.
+   */
+  public function isChecklistComplete(ChecklistInterface $checklist) : bool;
+
 }

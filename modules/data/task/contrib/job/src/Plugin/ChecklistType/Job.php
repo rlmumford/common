@@ -2,8 +2,10 @@
 
 namespace Drupal\task_job\Plugin\ChecklistType;
 
+use Drupal\checklist\ChecklistInterface;
 use Drupal\checklist\Plugin\ChecklistType\ChecklistTypeBase;
 use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\task\Entity\Task;
 use Drupal\task_job\JobInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -106,6 +108,15 @@ class Job extends ChecklistTypeBase {
     }
 
     return $items;
+  }
+
+  /**
+   *{@inheritdoc}
+   */
+  public function isChecklistComplete(ChecklistInterface $checklist): bool {
+    /** @var \Drupal\task\Entity\Task $task */
+    $task = $checklist->getEntity();
+    return $task->status->value == Task::STATUS_RESOLVED || $task->status->value == Task::STATUS_CLOSED;
   }
 
 }

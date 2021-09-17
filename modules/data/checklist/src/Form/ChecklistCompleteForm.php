@@ -3,6 +3,7 @@
 namespace Drupal\checklist\Form;
 
 use Drupal\checklist\ChecklistInterface;
+use Drupal\checklist\ChecklistTempstoreRepository;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\PluginFormFactoryInterface;
@@ -31,11 +32,19 @@ class ChecklistCompleteForm extends FormBase {
   protected $checklist;
 
   /**
+   * Checklist tempstore repo.
+   *
+   * @var \Drupal\checklist\ChecklistTempstoreRepository
+   */
+  protected $checklistTempstoreRepository;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('plugin_form.factory')
+      $container->get('plugin_form.factory'),
+      $container->get('checklist.tempstore_repository')
     );
   }
 
@@ -44,9 +53,12 @@ class ChecklistCompleteForm extends FormBase {
    *
    * @param \Drupal\Core\Plugin\PluginFormFactoryInterface $plugin_form_factory
    *   The plugin form factory service.
+   * @param \Drupal\checklist\ChecklistTempstoreRepository $checklist_tempstore_repository
+   *   The tempstore repository.
    */
-  public function __construct(PluginFormFactoryInterface $plugin_form_factory) {
+  public function __construct(PluginFormFactoryInterface $plugin_form_factory, ChecklistTempstoreRepository $checklist_tempstore_repository) {
     $this->pluginFormFactory = $plugin_form_factory;
+    $this->checklistTempstoreRepository = $checklist_tempstore_repository;
   }
 
   /**
@@ -75,6 +87,10 @@ class ChecklistCompleteForm extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form_state->set('checklist', $this->checklist);
 
+    if ($this->checklist->isComplete()) {
+      return $form;
+    }
+
     $form['actions'] = [
       '#type' => 'actions',
       'complete' => [
@@ -102,6 +118,10 @@ class ChecklistCompleteForm extends FormBase {
   public function validateForm(array &$form, FormStateInterface $form_state) {
     parent::validateForm($form, $form_state);
 
+    if (!$this->checklist->isCompletable()) {
+      $form_state->setError($form_state->getTriggeringElement(), 'The checklist cannot be completed yet.');
+    }
+
     $type = $this->checklist->getType();
     if (
       $type instanceof PluginWithFormsInterface &&
@@ -127,6 +147,7 @@ class ChecklistCompleteForm extends FormBase {
     }
 
     $this->checklist->complete();
+    $this->checklistTempstoreRepository->set($this->checklist);
   }
 
 }

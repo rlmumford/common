@@ -135,4 +135,13 @@ abstract class ChecklistTypeBase extends PluginBase implements ChecklistTypeInte
     );
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function isChecklistComplete(ChecklistInterface $checklist): bool {
+    // The default behavior is to treat a checklist as complete as soon as it is
+    // completable.
+    return $checklist->isCompletable();
+  }
+
 }

@@ -94,4 +94,20 @@ interface ChecklistInterface {
    */
   public function complete();
 
+  /**
+   * Is the checklist complete?
+   *
+   * @return bool
+   *   TRUE if the checklist is complete, FALSE otherwise.
+   */
+  public function isComplete() : bool;
+
+  /**
+   * Can the checklist be completed?
+   *
+   * @return bool
+   *   TRUE if the checklist can be completed, FALSE otherwise.
+   */
+  public function isCompletable() : bool;
+
 }

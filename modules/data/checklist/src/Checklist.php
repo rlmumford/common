@@ -47,6 +47,13 @@ class Checklist implements ChecklistInterface {
   protected $removedItems = [];
 
   /**
+   * TRUE if the checklist is complete, FALSE otherwise.
+   *
+   * @var bool
+   */
+  protected $isComplete;
+
+  /**
    * Checklist constructor.
    *
    * @param \Drupal\checklist\Plugin\ChecklistType\ChecklistTypeInterface $type
@@ -225,6 +232,38 @@ class Checklist implements ChecklistInterface {
    */
   public function complete() {
     $this->getType()->completeChecklist($this);
+    $this->isComplete = TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function isComplete() : bool {
+    if (is_null($this->isComplete)) {
+      $this->isComplete = $this->getType()->isChecklistComplete($this);
+    }
+
+    return $this->isComplete;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function isCompletable() : bool {
+    $completable = TRUE;
+    foreach ($this->getItems() as $item) {
+      if (!$item->isApplicable() || !$item->isIncomplete()) {
+        continue;
+      }
+
+      if ($item->isRequired()) {
+        $completable = FALSE;
+        break;
+      }
+    }
+
+    // @todo Configurable completion dependencies.
+    return $completable;
   }
 
 }
