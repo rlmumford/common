@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\task_checklist;
+namespace Drupal\task_checklist\EventSubscriber;
 
 use Drupal\checklist\Event\ChecklistEvent;
 use Drupal\task\Entity\Task;
