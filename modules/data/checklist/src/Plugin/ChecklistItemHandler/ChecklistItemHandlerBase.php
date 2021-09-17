@@ -6,6 +6,9 @@ use Drupal\checklist\Entity\ChecklistItemInterface;
 use Drupal\Core\Plugin\PluginBase;
 use Drupal\Core\Plugin\PluginWithFormsTrait;
 
+/**
+ * Base class for checklist item handlers.
+ */
 abstract class ChecklistItemHandlerBase extends PluginBase implements ChecklistItemHandlerInterface {
   use PluginWithFormsTrait;
 
@@ -21,7 +24,7 @@ abstract class ChecklistItemHandlerBase extends PluginBase implements ChecklistI
    *
    * @var \Drupal\checklist\Entity\ChecklistItemInterface
    *
-   * @todo: See if we can remove this from this class.
+   * @todo See if we can remove this from this class.
    */
   protected $item;
 
@@ -81,7 +84,7 @@ abstract class ChecklistItemHandlerBase extends PluginBase implements ChecklistI
    * {@inheritdoc}
    */
   public function isApplicable(): ?bool {
-    // @todo: Implement sensible default behaviour based on condition plugins presumably.
+    // @todo Implement sensible default behaviour based on condition plugins presumably.
     return TRUE;
   }
 
@@ -89,7 +92,7 @@ abstract class ChecklistItemHandlerBase extends PluginBase implements ChecklistI
    * {@inheritdoc}
    */
   public function isRequired(): bool {
-    // @todo: Implement sensible default behaviour based on condition plugins presumably.
+    // @todo Implement sensible default behaviour based on condition plugins presumably.
     return TRUE;
   }
 
@@ -97,8 +100,8 @@ abstract class ChecklistItemHandlerBase extends PluginBase implements ChecklistI
    * {@inheritdoc}
    */
   public function isActionable(): bool {
-    // @todo: Implement dependencies
-    // @todo: Implement condition plugins.
+    // @todo Implement dependencies
+    // @todo Implement condition plugins.
     return TRUE;
   }
 

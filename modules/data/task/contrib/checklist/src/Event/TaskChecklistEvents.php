@@ -5,7 +5,7 @@ namespace Drupal\task_checklist\Event;
 /**
  * Events dispatched by the task checklist module.
  */
-class TaskChecklistEvents {
+final class TaskChecklistEvents {
 
   /**
    * Detect checklist environment.

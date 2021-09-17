@@ -16,24 +16,33 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
+/**
+ * Action form for checklist items.
+ */
 class ChecklistItemActionForm extends ChecklistItemFormBase {
 
   /**
-   * @var string
+   * {@inheritdoc}
    */
   protected $formClass = 'action';
 
   /**
+   * The class resolver.
+   *
    * @var \Drupal\Core\DependencyInjection\ClassResolverInterface
    */
   protected $classResolver;
 
   /**
+   * The form builder.
+   *
    * @var \Drupal\Core\Form\FormBuilderInterface
    */
   protected $formBuilder;
 
   /**
+   * The renderer.
+   *
    * @var \Drupal\Core\Render\RendererInterface
    */
   protected $renderer;
@@ -52,10 +61,18 @@ class ChecklistItemActionForm extends ChecklistItemFormBase {
   }
 
   /**
-   * ChecklistItemFormBase constructor.
+   * ChecklistItemActionForm constructor.
    *
    * @param \Drupal\Core\Plugin\PluginFormFactoryInterface $plugin_form_factory
+   *   The plugin form factory.
    * @param \Drupal\checklist\ChecklistTempstoreRepository $checklist_tempstore_repository
+   *   The tempstore repository.
+   * @param \Drupal\Core\DependencyInjection\ClassResolverInterface $class_resolver
+   *   The class resolver.
+   * @param \Drupal\Core\Form\FormBuilderInterface $form_builder
+   *   The form builder.
+   * @param \Drupal\Core\Render\RendererInterface $renderer
+   *   The renderer.
    */
   public function __construct(
     PluginFormFactoryInterface $plugin_form_factory,
@@ -64,8 +81,7 @@ class ChecklistItemActionForm extends ChecklistItemFormBase {
     FormBuilderInterface $form_builder,
     RendererInterface $renderer
   ) {
-    $this->pluginFormFactory = $plugin_form_factory;
-    $this->checklistTempstoreRepo = $checklist_tempstore_repository;
+    parent::__construct($plugin_form_factory, $checklist_tempstore_repository);
     $this->classResolver = $class_resolver;
     $this->formBuilder = $form_builder;
     $this->renderer = $renderer;
@@ -75,7 +91,7 @@ class ChecklistItemActionForm extends ChecklistItemFormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'ci_'.$this->item->checklist->checklist->getKey().'__'.$this->item->getName().'_action_form';
+    return 'ci_' . $this->item->checklist->checklist->getKey() . '__' . $this->item->getName() . '_action_form';
   }
 
   /**
@@ -99,7 +115,7 @@ class ChecklistItemActionForm extends ChecklistItemFormBase {
       '#value' => new TranslatableMarkup('Complete'),
       '#name' => 'action_form_complete',
       '#submit' => [
-        '::submitForm'
+        '::submitForm',
       ],
       '#ajax' => [
         'callback' => '::onCompleteAjaxCallback',
@@ -111,7 +127,18 @@ class ChecklistItemActionForm extends ChecklistItemFormBase {
     return parent::buildForm($form, $form_state);
   }
 
-  public function onCompleteAjaxCallback($form, FormStateInterface $form_state) {
+  /**
+   * Ajax callback on completion.
+   *
+   * @param array $form
+   *   The form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return \Drupal\Core\Ajax\AjaxResponse|array
+   *   The form array or an ajax response.
+   */
+  public function onCompleteAjaxCallback(array $form, FormStateInterface $form_state) {
     if (!$form_state->isExecuted() || $form_state->isRebuilding()) {
       return $form;
     }
@@ -122,9 +149,9 @@ class ChecklistItemActionForm extends ChecklistItemFormBase {
     /** @var \Drupal\checklist\ChecklistInterface $checklist */
     $checklist = $this->item->checklist->checklist;
     $form_container_id = $checklist->getEntity()->getEntityTypeId()
-      .'--'.str_replace(':', '--', $checklist->getKey())
-      .'--action-form-container';
-    $response->addCommand(new InsertCommand('#'.$form_container_id,'<div id="'.$form_container_id.'"></div>'));
+      . '--' . str_replace(':', '--', $checklist->getKey())
+      . '--action-form-container';
+    $response->addCommand(new InsertCommand('#' . $form_container_id, '<div id="' . $form_container_id . '"></div>'));
 
     // Second, refresh the row form.
     /** @var \Drupal\checklist\Form\ChecklistRowForm $form_obj */
@@ -142,15 +169,15 @@ class ChecklistItemActionForm extends ChecklistItemFormBase {
     $row_form = $this->formBuilder->getForm($row_form_obj);
     $row_form_html = $this->renderer->renderRoot($row_form);
     $response->addAttachments($row_form['#attached']);
-    $response->addCommand(new InsertCommand('#'.$row_form['#wrapper_id'], $row_form_html));
+    $response->addCommand(new InsertCommand('#' . $row_form['#wrapper_id'], $row_form_html));
 
     if ($this->item->isComplete()) {
       $response->addCommand(new EnsureItemCompleteCommand($this->item));
-      // @todo: Make actionable.
-
+      // @todo Make actionable.
       $response->addCommand(new StartNextItemCommand($this->item));
     }
 
     return $response;
   }
+
 }

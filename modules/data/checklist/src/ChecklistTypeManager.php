@@ -9,7 +9,7 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
 
 /**
- * Class ChecklistTypeManager
+ * Class ChecklistTypeManager.
  *
  * The checklist type determines the bundle of the checklist item. This means
  * that you end up with at least one bundle per entity type that can have a

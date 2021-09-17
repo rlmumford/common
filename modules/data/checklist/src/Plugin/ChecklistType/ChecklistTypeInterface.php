@@ -16,6 +16,7 @@ interface ChecklistTypeInterface extends PluginInspectionInterface, BundlePlugin
    * Get the storage handler for items.
    *
    * @return \Drupal\Core\Entity\EntityStorageInterface
+   *   The item storage.
    */
   public function itemStorage();
 
@@ -23,15 +24,40 @@ interface ChecklistTypeInterface extends PluginInspectionInterface, BundlePlugin
    * Get the default items.
    *
    * @return \Drupal\checklist\Entity\ChecklistItemInterface[]
+   *   The default items.
    */
   public function getDefaultItems() : array;
 
   /**
+   * Get the checklist.
+   *
    * @param \Drupal\Core\Entity\FieldableEntityInterface $entity
+   *   The entity.
    * @param string $key
+   *   The key.
    *
    * @return \Drupal\checklist\ChecklistInterface
+   *   The checklist object.
    */
   public function getChecklist(FieldableEntityInterface $entity, string $key) : ChecklistInterface;
+
+  /**
+   * Complete the checklist.
+   *
+   * @param \Drupal\checklist\ChecklistInterface $checklist
+   *   The checklist to complete.
+   */
+  public function completeChecklist(ChecklistInterface $checklist);
+
+  /**
+   * Test whether a checklist is already marked as complete.
+   *
+   * @param \Drupal\checklist\ChecklistInterface $checklist
+   *   The checklist to test.
+   *
+   * @return bool
+   *   TRUE if the checklist is already complete, FALSE otherwise.
+   */
+  public function isChecklistComplete(ChecklistInterface $checklist) : bool;
 
 }

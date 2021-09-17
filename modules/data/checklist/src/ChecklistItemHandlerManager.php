@@ -8,6 +8,9 @@ use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
 
+/**
+ * Plugin manager for checklist item handlers.
+ */
 class ChecklistItemHandlerManager extends DefaultPluginManager {
 
   /**
@@ -33,4 +36,5 @@ class ChecklistItemHandlerManager extends DefaultPluginManager {
     $this->alterInfo('checklist_item_handler_info');
     $this->setCacheBackend($cache_backend, 'checklist_item_handler_info');
   }
+
 }

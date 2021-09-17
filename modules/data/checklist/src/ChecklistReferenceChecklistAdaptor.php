@@ -4,9 +4,14 @@ namespace Drupal\checklist;
 
 use Drupal\Core\TypedData\TypedData;
 
+/**
+ * Typed data adaptor for checklist references.
+ */
 class ChecklistReferenceChecklistAdaptor extends TypedData {
 
   /**
+   * The checklist.
+   *
    * @var \Drupal\checklist\ChecklistInterface
    */
   protected $checklist;
@@ -23,19 +28,12 @@ class ChecklistReferenceChecklistAdaptor extends TypedData {
     if (strpos($key, ':')) {
       list($field_name, $delta) = explode(':', $key, 2);
 
-      // @todo: Load from tempstore?
+      // @todo Load from tempstore?
       return $entity->{$field_name}[$delta]->checklist;
     }
     else {
       return $entity->{$key}->checklist;
     }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setValue($value, $notify = TRUE) {
-    return parent::setValue($value, $notify);
   }
 
 }

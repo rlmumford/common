@@ -7,23 +7,32 @@ use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\ParamConverter\ParamConverterInterface;
 use Symfony\Component\Routing\Route;
 
+/**
+ * Param converter to get the checklist on some routes.
+ */
 class ChecklistTempstoreParamConverter implements ParamConverterInterface {
 
   /**
+   * The checklist tempstore repository.
+   *
    * @var \Drupal\checklist\ChecklistTempstoreRepository
    */
   protected $checklistTempstoreRepository;
 
   /**
+   * The entity type manager.
+   *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
 
   /**
-   * BlueprintTempstoreParamConverter constructor.
+   * ChecklistTempstoreParamConverter constructor.
    *
-   * @param \Drupal\entity_template\BlueprintTempstoreRepository $blueprint_tempstore_repository
-   * @param \Drupal\entity_template\TemplateBlueprintProviderManager $blueprint_provider_manager
+   * @param \Drupal\checklist\ChecklistTempstoreRepository $checklist_tempstore_repository
+   *   The checklist tempstore repository.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
    */
   public function __construct(
     ChecklistTempstoreRepository $checklist_tempstore_repository,
@@ -34,7 +43,7 @@ class ChecklistTempstoreParamConverter implements ParamConverterInterface {
   }
 
   /**
-   * [@inheritdoc}
+   * {@inheritdoc}
    */
   public function convert($value, $definition, $name, array $defaults) {
     $entity_type = $defaults['entity_type'];

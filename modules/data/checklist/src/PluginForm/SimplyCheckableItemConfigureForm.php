@@ -2,15 +2,18 @@
 
 namespace Drupal\checklist\PluginForm;
 
-use Drupal\checklist\Entity\ChecklistItemInterface;
-use Drupal\checklist\Form\ChecklistRowForm;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\PluginFormBase;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 
+/**
+ * Config for for simply checkable handlers.
+ */
 class SimplyCheckableItemConfigureForm extends PluginFormBase {
 
   /**
+   * The checklist item handler.
+   *
    * @var \Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerInterface
    */
   protected $plugin;
@@ -37,4 +40,5 @@ class SimplyCheckableItemConfigureForm extends PluginFormBase {
     $config['reversible'] = !empty($form_state->getValue('reversible'));
     $this->plugin->setConfiguration($config);
   }
+
 }

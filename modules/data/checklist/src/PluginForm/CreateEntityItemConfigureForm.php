@@ -9,15 +9,22 @@ use Drupal\Core\Plugin\PluginFormBase;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
+/**
+ * Configuration form for create entity plugins.
+ */
 class CreateEntityItemConfigureForm extends PluginFormBase implements ContainerInjectionInterface {
   use StringTranslationTrait;
 
   /**
+   * The checklist item handler.
+   *
    * @var \Drupal\checklist\Plugin\ChecklistItemHandler\CreateEntity
    */
   protected $plugin;
 
   /**
+   * The entity type bundle info service.
+   *
    * @var \Drupal\Core\Entity\EntityTypeBundleInfo
    */
   protected $entityTypeBundleInfo;
@@ -31,6 +38,12 @@ class CreateEntityItemConfigureForm extends PluginFormBase implements ContainerI
     );
   }
 
+  /**
+   * CreateEntityItemConfigureForm constructor.
+   *
+   * @param \Drupal\Core\Entity\EntityTypeBundleInfo $entity_type_bundle_info
+   *   The entity type bundle info service.
+   */
   public function __construct(EntityTypeBundleInfo $entity_type_bundle_info) {
     $this->entityTypeBundleInfo = $entity_type_bundle_info;
   }
@@ -50,7 +63,8 @@ class CreateEntityItemConfigureForm extends PluginFormBase implements ContainerI
 
     $form['bundle'] = [
       '#type' => 'select',
-      '#title' => $this->t('Bundle'), // @todo: Change the title bundle to be entity type specific.
+    // @todo Change the title bundle to be entity type specific.
+      '#title' => $this->t('Bundle'),
       '#options' => $bundle_options,
       '#default_value' => $configuration['bundle'],
     ];
@@ -83,4 +97,5 @@ class CreateEntityItemConfigureForm extends PluginFormBase implements ContainerI
     $configuration['form_mode'] = $form_state->getValue('form_mode');
     $this->plugin->setConfiguration($configuration);
   }
+
 }

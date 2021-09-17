@@ -5,6 +5,9 @@ namespace Drupal\checklist;
 use Drupal\Core\TempStore\SharedTempStore;
 use Drupal\Core\TempStore\SharedTempStoreFactory;
 
+/**
+ * Tempstore repository for checklists.
+ */
 class ChecklistTempstoreRepository {
 
   /**
@@ -28,8 +31,10 @@ class ChecklistTempstoreRepository {
    * Get the checklist from the tempstore if available.
    *
    * @param \Drupal\checklist\ChecklistInterface $checklist
+   *   The checklist to get from the tempstore.
    *
    * @return \Drupal\checklist\ChecklistInterface
+   *   The checklist from the tempstore, or the checklist provided.
    */
   public function get(ChecklistInterface $checklist): ChecklistInterface {
     $key = $this->getKey($checklist);
@@ -44,8 +49,10 @@ class ChecklistTempstoreRepository {
    * Check whether the tempstore has a checklist.
    *
    * @param \Drupal\checklist\ChecklistInterface $checklist
+   *   The checklist.
    *
    * @return bool
+   *   True if the checklists exists in the tempstore, false otherwise.
    */
   public function has(ChecklistInterface $checklist): bool {
     $tempstore = $this->getTempstore($checklist)->get($this->getKey($checklist));
@@ -56,6 +63,7 @@ class ChecklistTempstoreRepository {
    * Set the checklist in the tempstore.
    *
    * @param \Drupal\checklist\ChecklistInterface $checklist
+   *   The checklist.
    *
    * @throws \Drupal\Core\TempStore\TempStoreException
    */
@@ -70,6 +78,7 @@ class ChecklistTempstoreRepository {
    * Delete the checklist from the tempstore.
    *
    * @param \Drupal\checklist\ChecklistInterface $checklist
+   *   The checklist.
    *
    * @throws \Drupal\Core\TempStore\TempStoreException
    */
@@ -78,25 +87,29 @@ class ChecklistTempstoreRepository {
   }
 
   /**
-   * Get the key
+   * Get the key.
    *
    * @param \Drupal\checklist\ChecklistInterface $checklist
+   *   The checklist.
    *
    * @return string
+   *   The key of the checklist in the tempstore.
    */
   protected function getKey(ChecklistInterface $checklist): string {
     return "{$checklist->getEntity()->uuid()}:{$checklist->getKey()}";
   }
 
   /**
-   * Get the tempstore
+   * Get the tempstore.
    *
    * @param \Drupal\checklist\ChecklistInterface $checklist
+   *   The checklist.
    *
    * @return \Drupal\Core\TempStore\SharedTempStore
+   *   The temstore containing the checklist.
    */
   protected function getTempstore(ChecklistInterface $checklist): SharedTempStore {
-    $collection = 'entity_template.blueprint_storage.'.$checklist->getEntity()->getEntityTypeId();
+    $collection = 'checklist.checklist.' . $checklist->getEntity()->getEntityTypeId();
     return $this->tempStoreFactory->get($collection);
   }
 

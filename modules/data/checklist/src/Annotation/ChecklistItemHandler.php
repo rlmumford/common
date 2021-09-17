@@ -5,7 +5,7 @@ namespace Drupal\checklist\Annotation;
 use Drupal\Component\Annotation\Plugin;
 
 /**
- * Class ChecklistItemHandler
+ * Annotation class for checklist item handlers.
  *
  * @Annotation
  *

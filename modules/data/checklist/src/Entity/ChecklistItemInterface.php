@@ -5,6 +5,9 @@ namespace Drupal\checklist\Entity;
 use Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerInterface;
 use Drupal\Core\Entity\EntityInterface;
 
+/**
+ *
+ */
 interface ChecklistItemInterface extends EntityInterface {
 
   /**
@@ -28,7 +31,7 @@ interface ChecklistItemInterface extends EntityInterface {
   const METHOD_RECOVERED = 'recovered';
 
   /**
-   * Get the name of this item
+   * Get the name of this item.
    *
    * @return string
    */
@@ -44,7 +47,7 @@ interface ChecklistItemInterface extends EntityInterface {
   /**
    * Find out if this checklist item is applicable.
    *
-   * @return bool|NULL
+   * @return bool|null
    *   TRUE if it is definitely applicable
    *   FALSE if it definitely is NOT applicable
    *   NULL if we don't know yet.
@@ -66,7 +69,7 @@ interface ChecklistItemInterface extends EntityInterface {
   public function isIncomplete() : bool;
 
   /**
-   * Set complete
+   * Set complete.
    *
    * @return \Drupal\checklist\Entity\ChecklistItemInterface
    */
@@ -96,7 +99,7 @@ interface ChecklistItemInterface extends EntityInterface {
   public function setFailed(string $type = self::METHOD_INTERACTIVE) : ChecklistItemInterface;
 
   /**
-   * Find out whether it has been attempted
+   * Find out whether it has been attempted.
    *
    * @return bool
    */

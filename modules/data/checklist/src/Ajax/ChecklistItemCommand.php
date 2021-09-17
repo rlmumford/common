@@ -5,28 +5,41 @@ namespace Drupal\checklist\Ajax;
 use Drupal\checklist\Entity\ChecklistItemInterface;
 use Drupal\Core\Ajax\CommandInterface;
 
+/**
+ * Base class for checklist item ajax commands.
+ */
 class ChecklistItemCommand implements CommandInterface {
 
   /**
+   * The command.
+   *
    * @var string
    */
-  protected $command = NULL;
+  protected $command;
 
   /**
+   * The selector.
+   *
    * @var string
    */
   protected $selector;
 
   /**
+   * The checklist item name.
+   *
    * @var string
    */
   protected $ciname;
 
   /**
-   * StartNextItemCommand constructor.
+   * ChecklistItemCommand constructor.
    *
-   * @param $checklist_item
-   * @param null $selector
+   * @param \Drupal\checklist\Entity\ChecklistItemInterface|string $checklist_item
+   *   The checklist item or name.
+   * @param string|null $selector
+   *   The selector.
+   * @param string|null $command
+   *   The command.
    */
   public function __construct($checklist_item, $selector = NULL, $command = NULL) {
     if ($command) {
@@ -38,11 +51,11 @@ class ChecklistItemCommand implements CommandInterface {
       $checklist = $checklist_item->checklist->checklist;
 
       $this->ciname = $checklist_item->getName();
-      $this->selector = "ul.{$checklist->getEntity()->getEntityTypeId()}-".
-        str_replace(':', '--', $checklist->getKey()).
+      $this->selector = "ul.{$checklist->getEntity()->getEntityTypeId()}-" .
+        str_replace(':', '--', $checklist->getKey()) .
         "-checklist";
     }
-    else if (is_string($checklist_item)) {
+    elseif (is_string($checklist_item)) {
       $this->ciname = $checklist_item;
       $this->selector = $selector;
     }
@@ -60,9 +73,10 @@ class ChecklistItemCommand implements CommandInterface {
   }
 
   /**
-   * Get the command
+   * Get the command.
    *
    * @return string
+   *   The js command.
    */
   protected function getCommand() {
     return $this->command;
