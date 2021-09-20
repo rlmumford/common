@@ -4,13 +4,14 @@ namespace Drupal\checklist\Plugin\Field\FieldFormatter;
 
 use Drupal\checklist\ChecklistTempstoreRepository;
 use Drupal\checklist\Form\ChecklistCompleteForm;
-use Drupal\checklist\Form\ChecklistRowForm;
+use Drupal\checklist\Form\ChecklistItemRowForm;
 use Drupal\checklist\Plugin\ChecklistItemHandler\SimplyCheckableChecklistItemHandler;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Form\FormBuilderInterface;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -153,8 +154,7 @@ class InteractiveChecklist extends FormatterBase {
 
       $element = [
         '#id' => $id,
-        '#theme' => 'item_list',
-        '#list_type' => 'ul',
+        '#type' => 'table',
         '#attributes' => [
           'class' => [
             'checklist',
@@ -163,7 +163,6 @@ class InteractiveChecklist extends FormatterBase {
             $items->getEntity()->getEntityTypeId() . '-' . str_replace(':', '--', $checklist->getKey()) . '-checklist',
           ],
         ],
-        '#items' => [],
       ];
 
       foreach ($checklist->getOrderedItems() as $name => $checklist_item) {
@@ -193,14 +192,23 @@ class InteractiveChecklist extends FormatterBase {
           $checklist_item_classes[] = 'ci-inactionable';
         }
 
-        /** @var \Drupal\checklist\Form\ChecklistRowForm $form_obj */
-        $form_obj = $this->classResolver->getInstanceFromDefinition(ChecklistRowForm::class);
+        /** @var \Drupal\checklist\Form\ChecklistItemRowForm $form_obj */
+        $form_obj = $this->classResolver->getInstanceFromDefinition(ChecklistItemRowForm::class);
         $form_obj->setChecklistItem($checklist_item);
+        $form_obj->setActionUrl(Url::fromRoute(
+          'checklist.item.row_form',
+          [
+            'entity_type' => $checklist->getEntity()->getEntityTypeId(),
+            'entity_id' => $checklist->getEntity()->id(),
+            'checklist' => $checklist->getKey(),
+            'item_name' => $checklist_item->getName(),
+          ]
+        ));
 
         // @todo Estimates
         // @todo Icons
-        $element['#items'][$name] = [
-          '#wrapper_attributes' => [
+        $element[$name] = [
+          '#attributes' => [
             'class' => $checklist_item_classes,
         // @todo Add resources
             'data-has-resource' => FALSE,
@@ -234,11 +242,11 @@ class InteractiveChecklist extends FormatterBase {
         ];
 
         if ($checklist_item->getHandler() instanceof SimplyCheckableChecklistItemHandler) {
-          $element['#items'][$name]['checkbox']['#attributes']['class'][] = 'checklist-checkbox-checkable';
-          $element['#items'][$name]['#wrapper_attributes']['class'][] = 'checklist-item-checkable';
+          $element[$name]['checkbox']['#attributes']['class'][] = 'checklist-checkbox-checkable';
+          $element[$name]['#attributes']['class'][] = 'checklist-item-checkable';
         }
         if ($checklist_item->getHandler()->hasFormClass('action')) {
-          $element['#items'][$name]['#wrapper_attributes']['class'][] = 'checklist-item-has-form';
+          $element[$name]['#attributes']['class'][] = 'checklist-item-has-form';
         }
         // @todo When resources are introduce, uncomment the below
         // if ($checklist_item->getHandler()->hasResource()) {
@@ -246,39 +254,6 @@ class InteractiveChecklist extends FormatterBase {
         // 'checklist-item-has-resource';
         // }
       }
-
-      $element['#items']['__checklist_complete'] = [
-        '#wrapper_attributes' => [
-          'class' => ['ci', 'ci-checklist-complete-form'],
-      // @todo Add resources
-          'data-has-resource' => FALSE,
-        ],
-        'name' => [
-          '#type' => 'html_tag',
-          '#tag' => 'span',
-          '#value' => '',
-          '#attributes' => [
-            'class' => [
-              'ci-name',
-            ],
-          ],
-        ],
-        'label' => [
-          '#type' => 'html_tag',
-          '#tag' => 'span',
-          '#value' => $this->t('Complete'),
-          '#attributes' => [
-            'class' => [
-              'ci-label',
-            ],
-          ],
-        ],
-        'form' => $this->formBuilder->getForm(
-          $this->classResolver
-            ->getInstanceFromDefinition(ChecklistCompleteForm::class)
-            ->setChecklist($checklist)
-        ),
-      ];
 
       $elements[$delta] = [
         'checklist' => $element,
@@ -288,6 +263,26 @@ class InteractiveChecklist extends FormatterBase {
           '#attributes' => [
             'id' => $id . '--action-form-container',
           ],
+        ],
+        'completion_form' => [
+          '#wrapper_attributes' => [
+            'class' => ['ci', 'ci-checklist-complete-form'],
+          ],
+          'label' => [
+            '#type' => 'html_tag',
+            '#tag' => 'span',
+            '#value' => $this->t('Complete Checklist'),
+            '#attributes' => [
+              'class' => [
+                'ci-label',
+              ],
+            ],
+          ],
+          'form' => $this->formBuilder->getForm(
+            $this->classResolver
+              ->getInstanceFromDefinition(ChecklistCompleteForm::class)
+              ->setChecklist($checklist)
+          ),
         ],
       ];
     }

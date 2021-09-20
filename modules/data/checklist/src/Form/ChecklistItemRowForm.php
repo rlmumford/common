@@ -22,7 +22,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * The row form shows the tick box or a button to start progress on the
  * checklist item, the action forms are handled seperately.
  */
-class ChecklistRowForm extends ChecklistItemFormBase {
+class ChecklistItemRowForm extends ChecklistItemFormBase {
 
   /**
    * {@inheritdoc}

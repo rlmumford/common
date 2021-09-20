@@ -154,8 +154,8 @@ class ChecklistItemActionForm extends ChecklistItemFormBase {
     $response->addCommand(new InsertCommand('#' . $form_container_id, '<div id="' . $form_container_id . '"></div>'));
 
     // Second, refresh the row form.
-    /** @var \Drupal\checklist\Form\ChecklistRowForm $form_obj */
-    $row_form_obj = $this->classResolver->getInstanceFromDefinition(ChecklistRowForm::class);
+    /** @var \Drupal\checklist\Form\ChecklistItemRowForm $form_obj */
+    $row_form_obj = $this->classResolver->getInstanceFromDefinition(ChecklistItemRowForm::class);
     $row_form_obj->setChecklistItem($this->item);
     $row_form_obj->setActionUrl(Url::fromRoute(
       'checklist.item.row_form',

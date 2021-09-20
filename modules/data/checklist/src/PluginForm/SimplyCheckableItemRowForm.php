@@ -3,7 +3,7 @@
 namespace Drupal\checklist\PluginForm;
 
 use Drupal\checklist\Entity\ChecklistItemInterface;
-use Drupal\checklist\Form\ChecklistRowForm;
+use Drupal\checklist\Form\ChecklistItemRowForm;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\PluginFormBase;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -63,7 +63,7 @@ class SimplyCheckableItemRowForm extends PluginFormBase {
     if ($item->isComplete() && $is_reversible) {
       $form['complete']['#value'] = new TranslatableMarkup('Reverse');
       $form['complete']['#ajax']['callback'] = [
-        ChecklistRowForm::class,
+        ChecklistItemRowForm::class,
         'onReverseAjaxCallback',
       ];
       $form['complete']['#is_reversing'] = TRUE;
