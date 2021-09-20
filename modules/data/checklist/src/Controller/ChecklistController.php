@@ -4,6 +4,7 @@ namespace Drupal\checklist\Controller;
 
 use Drupal\checklist\ChecklistInterface;
 use Drupal\checklist\Form\ChecklistItemActionForm;
+use Drupal\checklist\Form\ChecklistItemRowForm;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
@@ -113,7 +114,7 @@ class ChecklistController extends ControllerBase {
     }
 
     /** @var \Drupal\checklist\Form\ChecklistItemActionForm $form_obj */
-    $form_obj = $this->classResolver->getInstanceFromDefinition(ChecklistItemActionForm::class);
+    $form_obj = $this->classResolver->getInstanceFromDefinition(ChecklistItemRowForm::class);
     $form_obj->setChecklistItem($item);
     return $this->formBuilder->getForm($form_obj);
   }

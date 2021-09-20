@@ -22,7 +22,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * The row form shows the tick box or a button to start progress on the
  * checklist item, the action forms are handled seperately.
  */
-class ChecklistRowForm extends ChecklistItemFormBase {
+class ChecklistItemRowForm extends ChecklistItemFormBase {
 
   /**
    * {@inheritdoc}
@@ -117,11 +117,9 @@ class ChecklistRowForm extends ChecklistItemFormBase {
 
     if ($url = $this->getActionUrl()) {
       $form['#action'] = $url->toString();
-      $url->mergeOptions([
-        'query' => [
-          FormBuilderInterface::AJAX_FORM_REQUEST,
-        ],
-      ]);
+      $options = $url->getOptions();
+      $options['query'][FormBuilderInterface::AJAX_FORM_REQUEST] = TRUE;
+      $url->setOptions($options);
       $this->prepareAllAjaxSettings($form, $url);
     }
 

@@ -13,3 +13,11 @@ div.checklist-item-row-form-wrapper {
   background-size: cover;
   border-color: transparent;
 }
+
+ul.checklist {
+  margin-left: 0;
+}
+ul.checklist li {
+  list-style-type: none;
+  margin: 0 0 0.25em;
+}

@@ -179,11 +179,10 @@ abstract class ChecklistItemFormBase extends FormBase implements BaseFormIdInter
     if ($form_state->getFormObject() instanceof ChecklistItemFormBase && ($url = $form_state->getFormObject()->getActionUrl())) {
       /** @var \Drupal\Core\Url $ajax_url */
       $ajax_url = clone $url;
-      $ajax_url->mergeOptions([
-        'query' => [
-          FormBuilderInterface::AJAX_FORM_REQUEST => TRUE,
-        ],
-      ]);
+      $options = $ajax_url->getOptions();
+      $options['query'][FormBuilderInterface::AJAX_FORM_REQUEST] = TRUE;
+      $ajax_url->setOptions($options);
+
       $element['#ajax']['url'] = $ajax_url;
       $element['#ajax']['options'] = $ajax_url->getOptions();
     }
