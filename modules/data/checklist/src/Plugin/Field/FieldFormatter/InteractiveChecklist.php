@@ -265,18 +265,9 @@ class InteractiveChecklist extends FormatterBase {
           ],
         ],
         'completion_form' => [
-          '#wrapper_attributes' => [
-            'class' => ['ci', 'ci-checklist-complete-form'],
-          ],
-          'label' => [
-            '#type' => 'html_tag',
-            '#tag' => 'span',
-            '#value' => $this->t('Complete Checklist'),
-            '#attributes' => [
-              'class' => [
-                'ci-label',
-              ],
-            ],
+          '#type' => 'container',
+          '#attributes' => [
+            'class' => ['checklist-complete-form'],
           ],
           'form' => $this->formBuilder->getForm(
             $this->classResolver
