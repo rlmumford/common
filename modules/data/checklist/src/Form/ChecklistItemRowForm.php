@@ -120,7 +120,6 @@ class ChecklistItemRowForm extends ChecklistItemFormBase {
       $options = $url->getOptions();
       $options['query'][FormBuilderInterface::AJAX_FORM_REQUEST] = TRUE;
       $url->setOptions($options);
-
       $this->prepareAllAjaxSettings($form, $url);
     }
 
