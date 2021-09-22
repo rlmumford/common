@@ -31,7 +31,9 @@ use Drupal\typed_data\Context\ContextDefinition;
  *     "triggers",
  *   },
  *   handlers = {
- *     "list_builder" = "Drupal\task_job\Controller\JobListBuilder", *
+ *     "list_builder" = "Drupal\task_job\Controller\JobListBuilder",
+ *     "access" = "Drupal\entity\EntityAccessControlHandler",
+ *     "permission_provider" = "Drupal\entity\EntityPermissionProvider",
  *     "form" = {
  *        "add" = "\Drupal\task_job\Form\JobForm",
  *        "default" = "\Drupal\task_job\Form\JobEditForm",
