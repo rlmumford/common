@@ -34,4 +34,13 @@ interface EnvironmentStackInterface {
    */
   public function getActiveEnvironment() : EnvironmentInterface;
 
+  /**
+   * Reset the default environment.
+   *
+   * @return $this
+   *
+   * @todo Consider working out when to do this on the SET_USER event?
+   */
+  public function resetDefaultEnvironment() : EnvironmentStackInterface;
+
 }

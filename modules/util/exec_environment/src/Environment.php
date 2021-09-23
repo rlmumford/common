@@ -21,7 +21,7 @@ class Environment implements EnvironmentInterface {
    *
    * @var \Drupal\exec_environment\Plugin\ExecEnvironment\Component\ComponentInterface[]
    */
-  protected $components;
+  protected $components = [];
 
   /**
    * {@inheritdoc}

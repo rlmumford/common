@@ -3,7 +3,7 @@
 namespace Drupal\exec_environment\Plugin\ExecEnvironment\Component;
 
 use Drupal\Core\Access\AccessResult;
-use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Session\AccountInterface;
@@ -20,13 +20,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * @package Drupal\exec_environment\Plugin\ExecEnvironment\Component
  */
 class SetConfiguredCurrentUserComponent extends ComponentBase implements CurrentUserComponentInterface, ContainerFactoryPluginInterface {
-
-  /**
-   * The user storage.
-   *
-   * @var \Drupal\Core\Entity\EntityStorageInterface
-   */
-  protected $userStorage;
 
   /**
    * The user that was set.
@@ -50,6 +43,13 @@ class SetConfiguredCurrentUserComponent extends ComponentBase implements Current
   protected $moduleHandler;
 
   /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
@@ -57,7 +57,7 @@ class SetConfiguredCurrentUserComponent extends ComponentBase implements Current
       $configuration,
       $plugin_id,
       $plugin_definition,
-      $container->get('entity_type.manager')->getStorage('user'),
+      $container->get('entity_type.manager'),
       $container->get('current_user'),
       $container->get('module_handler')
     );
@@ -72,8 +72,8 @@ class SetConfiguredCurrentUserComponent extends ComponentBase implements Current
    *   The plugin id.
    * @param mixed $plugin_definition
    *   The plugin definition.
-   * @param \Drupal\Core\Entity\EntityStorageInterface $user_storage
-   *   The user storage.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
    * @param \Drupal\Core\Session\AccountProxyInterface $current_user
    *   The current user.
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
@@ -83,13 +83,13 @@ class SetConfiguredCurrentUserComponent extends ComponentBase implements Current
     array $configuration,
     string $plugin_id,
     $plugin_definition,
-    EntityStorageInterface $user_storage,
+    EntityTypeManagerInterface $entity_type_manager,
     AccountProxyInterface $current_user,
     ModuleHandlerInterface $module_handler
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
-    $this->userStorage = $user_storage;
+    $this->entityTypeManager = $entity_type_manager;
     $this->currentUser = $current_user;
     $this->moduleHandler = $module_handler;
   }
@@ -148,7 +148,9 @@ class SetConfiguredCurrentUserComponent extends ComponentBase implements Current
         $user = $this->configuration['user'];
       }
       elseif (is_numeric($this->configuration['user'])) {
-        $user = $this->userStorage->load($this->configuration['user']);
+        $user = $this->entityTypeManager
+          ->getStorage('user')
+          ->load($this->configuration['user']);
       }
 
       if (isset($user) && $this->checkAccess($user)) {

@@ -118,11 +118,9 @@ class EnvironmentStack implements EnvironmentStackInterface {
   }
 
   /**
-   * Reset the default environment.
-   *
-   * @todo Consider working out when to do this on the SET_USER event?
+   * {@inheritdoc}
    */
-  public function resetDefaultEnvironment() {
+  public function resetDefaultEnvironment() : EnvironmentStackInterface {
     $this->defaultEnvironment = NULL;
     return $this;
   }

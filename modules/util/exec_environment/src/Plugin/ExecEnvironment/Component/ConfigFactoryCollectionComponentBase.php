@@ -18,7 +18,10 @@ abstract class ConfigFactoryCollectionComponentBase extends ComponentBase implem
    *
    * @var string[]
    */
-  protected $excludedConfigPrefixes = ['field.storage'];
+  protected $excludedConfigPrefixes = [
+    'core.extension',
+    'field.storage',
+  ];
 
   /**
    * Determine whether the environment applies to the given name or prefix.
