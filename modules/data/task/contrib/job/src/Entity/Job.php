@@ -16,6 +16,7 @@ use Drupal\typed_data\Context\ContextDefinition;
  * @ConfigEntityType(
  *   id = "task_job",
  *   label = @Translation("Task Job"),
+ *   label_collection = @Translation("Task Jobs"),
  *   admin_permission = "administer task jobs",
  *   config_prefix = "task_job",
  *   entity_keys = {
