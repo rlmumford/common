@@ -40,7 +40,7 @@ use Drupal\typed_data\Context\ContextDefinition;
  *        "delete" = "\Drupal\Core\Entity\EntityDeleteForm",
  *      },
  *     "route_provider" = {
- *       "html" = "Drupal\Core\Entity\Routing\DefaultHtmlRouteProvider",
+ *       "html" = "Drupal\entity\Routing\DefaultHtmlRouteProvider",
  *     }
  *   },
  *   links = {

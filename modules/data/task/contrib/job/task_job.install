@@ -48,7 +48,7 @@ function task_job_schema() {
         'default' => '',
       ],
     ],
-    'primary key' => ['job', 'trigger', 'trigger_key'],
+    'primary key' => ['job', 'trigger_key', 'collection'],
     'indexes' => [
       'trigger' => ['trigger'],
       'trigger_base' => ['trigger_base'],
@@ -212,5 +212,16 @@ function task_job_update_8003() {
         ],
       ],
     ]
+  );
+}
+
+/**
+ * Add collection to the trigger index primary key.
+ */
+function task_job_update_8004() {
+  \Drupal::database()->schema()->dropPrimaryKey('task_job_trigger_index');
+  \Drupal::database()->schema()->addPrimaryKey(
+    'task_job_trigger_index',
+    ['job', 'trigger_key', 'collection']
   );
 }

@@ -10,6 +10,11 @@ services:
     arguments: ['@plugin.manager.exec_environment_impact_applicator', '@plugin.manager.exec_environment_component', '@event_dispatcher']
     tags:
       - { name: persist }
+  exec_environment.authentication_subscriber:
+    class: Drupal\exec_environment\EventSubscriber\AuthenticationSubscriber
+    arguments: [ '@authentication', '@environment_stack' ]
+    tags:
+      - { name: event_subscriber }
   exec_environment.detect_default_environment_subscriber:
     class: Drupal\exec_environment\EventSubscriber\DetectDefaultEnvironmentSubscriber
     arguments: [ '@plugin.manager.exec_environment_component', '@current_user' ]
