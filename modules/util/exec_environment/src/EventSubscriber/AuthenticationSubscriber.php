@@ -45,7 +45,7 @@ class AuthenticationSubscriber implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     // The priority for authentication must be 1 lower than the event defined in
-    // \Drupal\Core\EventSubscriber\AuthenticationSubscriber
+    // \Drupal\Core\EventSubscriber\AuthenticationSubscriber.
     $events[KernelEvents::REQUEST][] = ['onKernelRequestAuthenticate', 299];
     return $events;
   }

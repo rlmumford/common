@@ -20,7 +20,7 @@ abstract class ConfigFactoryCollectionComponentBase extends ComponentBase implem
    */
   protected $excludedConfigPrefixes = [
     'core.extension',
-    'field.storage'
+    'field.storage',
   ];
 
   /**
