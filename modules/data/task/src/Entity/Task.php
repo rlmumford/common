@@ -101,6 +101,7 @@ class Task extends ContentEntityBase implements TaskInterface {
         'type' => 'string',
         'weight' => -5,
       ])
+      ->setDisplayConfigurable('view', TRUE)
       ->setDisplayOptions('form', [
         'type' => 'string_textfield',
         'weight' => -5,
