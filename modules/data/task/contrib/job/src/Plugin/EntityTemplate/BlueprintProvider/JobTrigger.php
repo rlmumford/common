@@ -13,6 +13,7 @@ use Drupal\entity_template\Plugin\EntityTemplate\BlueprintProvider\BlueprintProv
 use Drupal\entity_template\Plugin\EntityTemplate\Builder\BuilderInterface;
 use Drupal\task_job\Plugin\EntityTemplate\Builder\JobTaskBuilder;
 use Drupal\task_job\Plugin\JobTrigger\JobTriggerManager;
+use Drupal\task_job\TaskJobTempstoreRepository;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -42,6 +43,13 @@ class JobTrigger extends PluginBase implements BlueprintProviderInterface, Conta
   protected $entityTypeManager;
 
   /**
+   * The job tempstore repository.
+   *
+   * @var \Drupal\task_job\TaskJobTempstoreRepository
+   */
+  protected $jobTempstoreRepository;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
@@ -50,7 +58,8 @@ class JobTrigger extends PluginBase implements BlueprintProviderInterface, Conta
       $plugin_id,
       $plugin_definition,
       $container->get('plugin.manager.task_job.trigger'),
-      $container->get('entity_type.manager')
+      $container->get('entity_type.manager'),
+      $container->get('task_job.tempstore_repository')
     );
   }
 
@@ -67,15 +76,19 @@ class JobTrigger extends PluginBase implements BlueprintProviderInterface, Conta
    *   The job trigger manager.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
+   * @param \Drupal\task_job\TaskJobTempstoreRepository $job_tempstore_repository
+   *   The job tempstore repo.
    */
   public function __construct(
     array $configuration,
     string $plugin_id,
     $plugin_definition,
     JobTriggerManager $job_trigger_manager,
-    EntityTypeManagerInterface $entity_type_manager
+    EntityTypeManagerInterface $entity_type_manager,
+    TaskJobTempstoreRepository $job_tempstore_repository
   ) {
     $this->jobTriggerManager = $job_trigger_manager;
+    $this->jobTempstoreRepository = $job_tempstore_repository;
     $this->entityTypeManager = $entity_type_manager;
 
     parent::__construct($configuration, $plugin_id, $plugin_definition);
@@ -141,18 +154,18 @@ class JobTrigger extends PluginBase implements BlueprintProviderInterface, Conta
 
     /** @var \Drupal\task_job\JobInterface $job */
     $job = $this->entityTypeManager->getStorage('task_job')->load($job_id);
-    $triggers = $job->getTriggersConfiguration();
 
-    if (!isset($triggers[$trigger])) {
+    // Get from the job tempstore if appropriate.
+    $job = $this->jobTempstoreRepository->get($job);
+    $triggers = $job->getTriggerCollection();
+
+    if (!$triggers->has($trigger)) {
       return NULL;
     }
 
     return new BlueprintStorageJobTriggerAdaptor(
       $job,
-      $this->jobTriggerManager->createInstance(
-        $triggers[$trigger]['id'],
-        $triggers[$trigger]
-      ),
+      $triggers->get($trigger),
       $this
     );
   }
