@@ -28,4 +28,5 @@ class JobChecklistCompleteForm extends PluginFormBase {
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
     // Do Nothing.
   }
+
 }
