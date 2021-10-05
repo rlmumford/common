@@ -112,7 +112,7 @@ class ChecklistItemActionForm extends ChecklistItemFormBase {
     $form['actions'] = ['#type' => 'actions'];
     $form['actions']['complete'] = [
       '#type' => 'submit',
-      '#value' => new TranslatableMarkup('Complete'),
+      '#value' => new TranslatableMarkup('Complete @name', ['@name' => $this->item->getName()]),
       '#name' => 'action_form_complete',
       '#submit' => [
         '::submitForm',

@@ -5,6 +5,8 @@ namespace Drupal\task_job\Plugin\ChecklistType;
 use Drupal\checklist\ChecklistInterface;
 use Drupal\checklist\Plugin\ChecklistType\ChecklistTypeBase;
 use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Plugin\PluginWithFormsInterface;
+use Drupal\Core\Plugin\PluginWithFormsTrait;
 use Drupal\task\Entity\Task;
 use Drupal\task_job\JobInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -17,11 +19,15 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  *   id = "job",
  *   label = @Translation("Job Checklist"),
  *   entity_type = "task",
+ *   forms = {
+ *     "complete" = "Drupal\task_job\PluginForm\JobChecklistCompleteForm",
+ *   }
  * )
  *
  * @package Drupal\task_job\Plugin\ChecklistType
  */
-class Job extends ChecklistTypeBase {
+class Job extends ChecklistTypeBase implements PluginWithFormsInterface {
+  use PluginWithFormsTrait;
 
   /**
    * The job storage.
