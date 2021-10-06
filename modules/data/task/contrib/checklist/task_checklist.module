@@ -21,7 +21,8 @@ function task_checklist_entity_base_field_info(EntityTypeInterface $entity_type)
       ->setDisplayOptions('view', [
         'type' => 'checklist_interactive',
       ])
-      ->setDisplayConfigurable('view', TRUE);
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('form', TRUE);
   }
 
   return $fields;

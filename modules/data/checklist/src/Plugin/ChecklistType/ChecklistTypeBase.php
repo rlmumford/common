@@ -76,7 +76,9 @@ abstract class ChecklistTypeBase extends PluginBase implements ChecklistTypeInte
    * {@inheritdoc}
    */
   public function defaultConfiguration() {
-    return [];
+    return [
+      'default_items' => NULL,
+    ];
   }
 
   /**
@@ -142,6 +144,29 @@ abstract class ChecklistTypeBase extends PluginBase implements ChecklistTypeInte
     // The default behavior is to treat a checklist as complete as soon as it is
     // completable.
     return $checklist->isCompletable();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDefaultItems(): array {
+    if (!is_array($this->configuration['default_items'])) {
+      return [];
+    }
+
+    $items = [];
+    foreach ($this->configuration['default_items'] as $name => $item_config) {
+      $items[$name] = $this->itemStorage()->create([
+        'checklist_type' => $this->getPluginId(),
+        'name' => $name,
+        'title' => $item_config['title'],
+        'handler' => [
+          'id' => $item_config['handler'],
+          'configuration' => $item_config['handler_configuration'],
+        ],
+      ]);
+    }
+    return $items;
   }
 
 }
