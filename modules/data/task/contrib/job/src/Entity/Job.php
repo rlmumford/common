@@ -200,6 +200,11 @@ class Job extends ConfigEntityBase implements JobInterface {
   public function postSave(EntityStorageInterface $storage, $update = TRUE) {
     parent::postSave($storage, $update);
 
+    if (!$update) {
+      \Drupal::service('plugin.manager.entity_template.builder')
+        ->clearCachedDefinitions();
+    }
+
     /** @var \Drupal\task_job\Plugin\JobTrigger\JobTriggerManagerInterface $trigger_manager */
     $trigger_manager = \Drupal::service('plugin.manager.task_job.trigger');
     $trigger_manager->updateTriggerIndex($this);
