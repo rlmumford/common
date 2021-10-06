@@ -247,6 +247,13 @@ class InteractiveChecklist extends FormatterBase {
         }
         if ($checklist_item->getHandler()->hasFormClass('action')) {
           $element[$name]['#attributes']['class'][] = 'checklist-item-has-form';
+
+          $element[$name]['action_form'] = [
+            '#wrapper_attributes' => [
+              'class' => ['action-form-container'],
+              'id' => $id . '--' . $name . '--action-form-container',
+            ],
+          ];
         }
         // @todo When resources are introduce, uncomment the below
         // if ($checklist_item->getHandler()->hasResource()) {
@@ -290,13 +297,6 @@ class InteractiveChecklist extends FormatterBase {
 
       $elements[$delta] = [
         'checklist' => $element,
-        'action_form' => [
-          '#type' => 'html_tag',
-          '#tag' => 'div',
-          '#attributes' => [
-            'id' => $id . '--action-form-container',
-          ],
-        ],
         'completion_form' => [
           '#type' => 'container',
           '#attributes' => [

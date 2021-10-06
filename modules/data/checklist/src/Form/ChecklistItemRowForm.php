@@ -212,6 +212,7 @@ class ChecklistItemRowForm extends ChecklistItemFormBase {
 
     $selector = $selector ?: '#' . $checklist->getEntity()->getEntityTypeId()
       . '--' . str_replace(':', '--', $checklist->getKey())
+      . '--' . $this->item->getName()
       . '--action-form-container';
 
     /** @var \Drupal\checklist\Form\ChecklistItemActionForm $form_object */

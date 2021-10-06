@@ -51,7 +51,7 @@ class ChecklistItemCommand implements CommandInterface {
       $checklist = $checklist_item->checklist->checklist;
 
       $this->ciname = $checklist_item->getName();
-      $this->selector = "ul.{$checklist->getEntity()->getEntityTypeId()}-" .
+      $this->selector = "table.{$checklist->getEntity()->getEntityTypeId()}-" .
         str_replace(':', '--', $checklist->getKey()) .
         "-checklist";
     }

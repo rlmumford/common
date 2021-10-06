@@ -3,14 +3,21 @@ div.checklist-item-row-form-wrapper {
   display: inline-block;
 }
 
-.ci-inprogress .input[type="checkbox"]:not(:checked) + span:not(.lever):before {
-  display: none;
+.ci-inprogress input[type="checkbox"]:not(:checked) {
+  height: 0;
+  border: none;
+  position: relative;
 }
-.ci-inprogress input[type="checkbox"]:not(:checked) + span:not(.lever):after {
+.ci-inprogress input[type="checkbox"]:not(:checked)::after {
+  content: '';
+  width: 21px;
+  height: 21px;
   background: url("/core/misc/throbber-active.gif");
   background-repeat: no-repeat;
   background-position: center;
   background-size: cover;
+  position: absolute;
+  top: -30px;
   border-color: transparent;
 }
 
@@ -20,4 +27,28 @@ ul.checklist {
 ul.checklist li {
   list-style-type: none;
   margin: 0 0 0.25em;
+}
+
+table.interactive-checklist tr.ci td {
+  display: inline-block;
+  line-height: 3rem;
+}
+table.interactive-checklist tr.ci td:nth-child(2) {
+  min-width: 7rem;
+}
+table.interactive-checklist tr.ci td > span, tr.ci td > div {
+  vertical-align: middle;
+  display: inline-block;
+}
+table.interactive-checklist td.action-form-container {
+  display: inline-block !important;
+  width: 0;
+  height: 0;
+  padding: 0;
+  transition: height ease-in-out 1s, padding-top ease-in-out 1s, padding-bottom ease-in-out 1s;
+}
+table.interactive-checklist tr.ci-inprogress td.action-form-container {
+  width: 100%;
+  height: auto;
+  padding: 0.5rem 1rem;
 }

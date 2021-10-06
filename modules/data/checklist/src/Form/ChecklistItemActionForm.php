@@ -150,6 +150,7 @@ class ChecklistItemActionForm extends ChecklistItemFormBase {
     $checklist = $this->item->checklist->checklist;
     $form_container_id = $checklist->getEntity()->getEntityTypeId()
       . '--' . str_replace(':', '--', $checklist->getKey())
+      . '--' . $this->item->getName()
       . '--action-form-container';
     $response->addCommand(new InsertCommand('#' . $form_container_id, '<div id="' . $form_container_id . '"></div>'));
 
