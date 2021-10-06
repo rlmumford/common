@@ -141,7 +141,7 @@ class TaskAddController extends ControllerBase {
               '#title' => $this->t('Select'),
               '#attributes' => [
                 'class' => ['button', 'button--small'],
-              ]
+              ],
             ],
           ];
         }

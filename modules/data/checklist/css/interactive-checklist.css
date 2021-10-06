@@ -36,7 +36,8 @@ table.interactive-checklist tr.ci td {
 table.interactive-checklist tr.ci td:nth-child(2) {
   min-width: 7rem;
 }
-table.interactive-checklist tr.ci td > span, tr.ci td > div {
+table.interactive-checklist tr.ci td > span,
+table.interactive-checklist tr.ci td > div {
   vertical-align: middle;
   display: inline-block;
 }
