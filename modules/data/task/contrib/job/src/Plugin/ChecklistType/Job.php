@@ -99,6 +99,10 @@ class Job extends ChecklistTypeBase implements PluginWithFormsInterface {
    *   The default checklist items.
    */
   public function getDefaultItems() : array {
+    if (isset($this->configuration['default_items']) && is_array($this->configuration['default_items'])) {
+      return parent::getDefaultItems();
+    }
+
     $items = [];
 
     foreach ($this->getJob()->getChecklistItems() as $name => $config) {

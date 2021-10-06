@@ -124,6 +124,7 @@ class Task extends ContentEntityBase implements TaskInterface {
     $fields['status'] = BaseFieldDefinition::create('list_string')
       ->setLabel(t('Status'))
       ->setSetting('allowed_values_function', '\Drupal\task\Entity\Task::statusOptionsList')
+      ->setDefaultValue(static::STATUS_ACTIVE)
       ->setDisplayOptions('view', [
         'label' => 'hidden',
         'type' => 'list_default',
@@ -190,9 +191,6 @@ class Task extends ContentEntityBase implements TaskInterface {
         'label' => 'inline',
         'type' => 'list_default',
       ])
-      ->setDisplayOptions('form', [
-        'type' => 'options_select',
-      ])
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
 
@@ -201,9 +199,6 @@ class Task extends ContentEntityBase implements TaskInterface {
       ->setLabel(t('Dependencies'))
       ->setSetting('target_type', 'task')
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
-      ->setDisplayOptions('form', [
-        'type' => 'entity_reference_autocomplete',
-      ])
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
 

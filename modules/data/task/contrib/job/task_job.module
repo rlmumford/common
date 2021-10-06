@@ -4,6 +4,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldItemListInterface;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
@@ -124,5 +125,46 @@ function _task_job_trigger_entity_operation(string $op, EntityInterface $entity)
   }
   catch (Exception $e) {
     \Drupal::logger('task_job')->error($e->getMessage());
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for task_form.
+ */
+function task_job_form_task_form_alter(array &$form, FormStateInterface $form_state) {
+  $task = $form_state->getFormObject()->getEntity();
+
+  if (!$task->job->isEmpty() && $task->isNew()) {
+    if (!$task->title->isEmpty()) {
+      $form['title']['widget'][0]['value']['#disabled'] = TRUE;
+    }
+    if (!$task->description->isEmpty()) {
+      $form['description']['widget'][0]['#disabled'] = TRUE;
+    }
+
+    if (empty($form['checklist']) && $task->job->entity->getChecklistItems()) {
+      $form['checklist'] = $task->checklist->view([
+        'type' => 'checklist_preview',
+      ]);
+      $form['checklist']['#weight'] = $form['description']['#weight'];
+    }
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_prepare_form() for tasks.
+ *
+ * If we are creating an the job does not have checklist items, expose the
+ * simple checklist widget.
+ */
+function task_job_task_prepare_form(EntityInterface $task, string $op, FormStateInterface $form_state) {
+  /** @var \Drupal\Core\Entity\Display\EntityFormDisplayInterface $form_display */
+  $form_display = $form_state->get('form_display');
+
+  if ($task->isNew() && !$task->job->isEmpty() && !$task->job->entity->getChecklistItems()) {
+    $form_display->setComponent('checklist', [
+      'type' => 'checklist_simple',
+      'weight' => $form_display->getComponent('description')['weight'] ?? 5,
+    ]);
   }
 }
