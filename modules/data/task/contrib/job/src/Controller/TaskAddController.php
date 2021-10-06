@@ -91,6 +91,9 @@ class TaskAddController extends ControllerBase {
   public function selectJob(AccountInterface $assignee = NULL) {
     $build = [
       '#theme' => 'item_list',
+      '#attributes' => [
+        'class' => ['job-select', 'card-list'],
+      ],
       '#items' => [],
     ];
 
@@ -122,9 +125,24 @@ class TaskAddController extends ControllerBase {
 
         if ($job->getTrigger('manual')->access($cache)) {
           $build['#items'][] = [
-            '#type' => 'link',
-            '#url' => Url::fromRoute($route_name, $params),
-            '#title' => $job->label(),
+            'title' => [
+              '#type' => 'html_tag',
+              '#tag' => 'h3',
+              '#value' => $job->label(),
+            ],
+            'description' => [
+              '#type' => 'html_tag',
+              '#tag' => 'p',
+              '#value' => $job->get('description') ?: '',
+            ],
+            'link' => [
+              '#type' => 'link',
+              '#url' => Url::fromRoute($route_name, $params),
+              '#title' => $this->t('Select'),
+              '#attributes' => [
+                'class' => ['button', 'button--small'],
+              ]
+            ],
           ];
         }
       }
