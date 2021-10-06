@@ -38,8 +38,8 @@ class ChecklistPreview extends FormatterBase {
             'checklist-preview',
             $items->getEntity()->getEntityTypeId() . '-checklist',
             $items->getEntity()->getEntityTypeId() . '-' . str_replace(':', '--', $checklist->getKey()) . '-checklist',
-          ]
-        ]
+          ],
+        ],
       ];
 
       foreach ($checklist->getOrderedItems() as $name => $checklist_item) {
@@ -101,7 +101,7 @@ class ChecklistPreview extends FormatterBase {
       }
 
       $elements[$delta] = [
-        'checklist' => $element
+        'checklist' => $element,
       ];
     }
 

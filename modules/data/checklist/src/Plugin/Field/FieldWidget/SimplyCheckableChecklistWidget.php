@@ -4,11 +4,9 @@ namespace Drupal\checklist\Plugin\Field\FieldWidget;
 
 use Drupal\checklist\Plugin\ChecklistItemHandler\SimplyCheckableChecklistItemHandler;
 use Drupal\Component\Utility\NestedArray;
-use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Widget to edit a simple checklist.
@@ -56,7 +54,10 @@ class SimplyCheckableChecklistWidget extends WidgetBase {
       '#type' => 'fieldset',
       'table' => [
         '#type' => 'table',
-        '#parents' => array_merge($element['#field_parents'] ?? [], [$items->getFieldDefinition()->getName(), $delta]),
+        '#parents' => array_merge(
+          $element['#field_parents'] ?? [],
+          [$items->getFieldDefinition()->getName(), $delta]
+        ),
         '#header' => [
           $this->t('Name'),
           $this->t('Title'),
@@ -86,7 +87,10 @@ class SimplyCheckableChecklistWidget extends WidgetBase {
         $element['table'][$name]['operations'] = [
           'remove' => [
             '#type' => 'submit',
-            '#name' => implode('--', array_merge($form['#parents'], [$items->getFieldDefinition()->getName(), $delta, $name, 'remove'])),
+            '#name' => implode('--', array_merge(
+              $form['#parents'],
+              [$items->getFieldDefinition()->getName(), $delta, $name, 'remove']
+            )),
             '#value' => $this->t('Remove'),
             '#limit_validation_errors' => [],
             '#submit' => [
@@ -120,7 +124,10 @@ class SimplyCheckableChecklistWidget extends WidgetBase {
       'add' => [
         '#type' => 'submit',
         '#checklist_type' => $item->id,
-        '#name' => implode('--', array_merge($element['#field_parents'], [$items->getFieldDefinition()->getName(), $delta, 'add'])),
+        '#name' => implode('--', array_merge(
+          $element['#field_parents'],
+          [$items->getFieldDefinition()->getName(), $delta, 'add']
+        )),
         '#value' => $this->t('Add Item'),
         '#limit_validation_errors' => [
           array_merge($element['table']['#parents'], ['__new_item']),
@@ -205,7 +212,7 @@ class SimplyCheckableChecklistWidget extends WidgetBase {
       'handler' => [
         'id' => 'simply_checkable',
         'configuration' => [],
-      ]
+      ],
     ]);
 
     $field_name = $row_parents[count($row_parents) - 3];
