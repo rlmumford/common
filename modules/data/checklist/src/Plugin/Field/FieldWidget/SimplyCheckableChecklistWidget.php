@@ -75,8 +75,9 @@ class SimplyCheckableChecklistWidget extends WidgetBase {
           '#type' => 'textfield',
           '#title' => $this->t('Name'),
           '#title_display' => 'invisible',
-          '#length' => 6,
+          '#size' => 6,
           '#default_value' => $name,
+          '#required' => TRUE,
         ];
         $element['table'][$name]['title'] = [
           '#type' => 'textfield',
@@ -113,7 +114,7 @@ class SimplyCheckableChecklistWidget extends WidgetBase {
       '#type' => 'textfield',
       '#title' => $this->t('Name'),
       '#title_display' => 'invisible',
-      '#length' => 6,
+      '#size' => 6,
     ];
     $element['table']['__new_item']['title'] = [
       '#type' => 'textfield',
@@ -131,6 +132,9 @@ class SimplyCheckableChecklistWidget extends WidgetBase {
         '#value' => $this->t('Add Item'),
         '#limit_validation_errors' => [
           array_merge($element['table']['#parents'], ['__new_item']),
+        ],
+        '#validate' => [
+          static::class . '::addChecklistItemFormValidate',
         ],
         '#submit' => [
           static::class . '::addChecklistItemFormSubmit',
@@ -189,6 +193,37 @@ class SimplyCheckableChecklistWidget extends WidgetBase {
         'id' => $item->id,
         'configuration' => $config,
       ]);
+    }
+  }
+
+  /**
+   * Validate the form to add a checklist item.
+   *
+   * @param array $form
+   *   The form array.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   */
+  public static function addChecklistItemFormValidate(array $form, FormStateInterface $form_state) {
+    $trigger = $form_state->getTriggeringElement();
+    $row_parents = array_slice($trigger['#parents'], 0, -2);
+
+    $row = NestedArray::getValue($form, array_slice($trigger['#array_parents'], 0, -2));
+
+    $values = $form_state->getValue($row_parents);
+    if (empty($values['name'])) {
+      $form_state->setError($row['name'], 'The name is required to add a checklist item.');
+    }
+    else {
+      $field_name = $row_parents[count($row_parents) - 3];
+      $delta = $row_parents[count($row_parents) - 2];
+      $widget_state = static::getWidgetState($form['#parents'], $field_name, $form_state);
+      if (!empty($widget_state[$delta]['checklist_items'][$values['name']])) {
+       $form_state->setError($row['name'], 'The name of a checklist item must be unique in the checklist.');
+      }
+    }
+    if (empty($values['title'])) {
+      $form_state->setError($row['title'], 'The title is required to add a checklist item.');
     }
   }
 
