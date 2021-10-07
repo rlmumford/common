@@ -53,6 +53,7 @@ class JobAddChecklistItemForm extends JobPluginFormBase {
       '#title' => $this->t('Name'),
       '#size' => 10,
       '#weight' => -10,
+      '#required' => TRUE,
     ];
     if ($default_prefix = $this->config('task_checklist.defaults')->get('ci_name_prefix')) {
       $form['name']['#default_value'] = $default_prefix . str_pad(
