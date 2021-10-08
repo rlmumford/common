@@ -1,0 +1,6 @@
+type: module
+name: Typed Data Context Assignment
+description: Use typed data to assign plugin contexts to the properties of available contexts.
+core_version_requirement: ^8 || ^9
+dependencies:
+  - typed_data:typed_data

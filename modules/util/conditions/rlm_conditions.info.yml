@@ -1,0 +1,8 @@
+type: module
+name: More Conditions
+description: A useful set of conditions plugins.
+core_version_requirement: ^8 || ^9
+
+dependencies:
+  - typed_data:typed_data
+  - rlmumford:typed_data_context_assignment

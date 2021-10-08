@@ -1,0 +1,6 @@
+typed_data_context_assignment.data_select_autocomplete:
+  path: '/typed_data_context_assignment_autocomplete/{required_context_key}/{available_context_key}'
+  defaults:
+    _controller: '\Drupal\typed_data_context_assignment\Controller\AutocompleteController::handleAutocomplete'
+  requirements:
+    _access: 'TRUE'
