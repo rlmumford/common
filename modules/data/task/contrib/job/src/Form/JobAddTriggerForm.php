@@ -81,7 +81,7 @@ class JobAddTriggerForm extends JobPluginFormBase {
     $plugin = $form_state->get('plugin');
     /** @var \Drupal\task_job\JobInterface $job */
     $job = $form_state->get('job');
-    $triggers = $job->get('triggers');
+    $triggers = $job->getTriggerCollection()->getConfiguration();
     $triggers[$plugin->getKey()] = [
       'id' => $plugin->getPluginId(),
       'label' => $plugin->getLabel(),

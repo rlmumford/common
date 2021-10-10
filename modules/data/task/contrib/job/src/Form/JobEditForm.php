@@ -142,6 +142,8 @@ class JobEditForm extends JobForm {
       $entity = $this->tempstoreRepository->get($entity);
     }
     else {
+      // Get the trigger collection before setting it to the tempstore.
+      $entity->getTriggerCollection();
       $this->tempstoreRepository->set($entity);
     }
 
