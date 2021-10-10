@@ -29,6 +29,9 @@ class ChecklistAdaptor extends TypedData {
 
     /** @var \Drupal\checklist\Plugin\ChecklistType\ChecklistTypeInterface $checklist_type */
     $checklist_type = $item->plugin;
+    if (!$checklist_type) {
+      return NULL;
+    }
 
     $key = $item->getFieldDefinition()->getName();
     if ($item->getFieldDefinition()->getFieldStorageDefinition()->getCardinality() !== 1) {

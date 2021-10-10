@@ -132,11 +132,13 @@ class EnvironmentAwareJobTriggerManager extends JobTriggerManager {
 
       $result = $query->execute();
       foreach ($result as $row) {
-        if (empty($jobs[$row->job])) {
-          $jobs[$row->job] = $this->jobStorage()->load($row->job);
+        if (empty($jobs[$row->job]) && ($job = $this->jobStorage()->load($row->job))) {
+          $jobs[$row->job] = $job;
         }
 
-        $triggers[] = $jobs[$row->job]->getTrigger($row->trigger_key);
+        if ($jobs[$row->job]) {
+          $triggers[] = $jobs[$row->job]->getTrigger($row->trigger_key);
+        }
       }
 
       // Any job that existed in this collection shouldn't be included in future

@@ -29,6 +29,9 @@ class PluginAdaptor extends TypedData {
     /** @var \Drupal\Core\Field\FieldItemInterface $item */
     $item = $this->getParent();
     $id = $item->id;
+    if (!$id) {
+      return NULL;
+    }
     $configuration = $item->configuration ? $item->configuration : [];
 
     try {
