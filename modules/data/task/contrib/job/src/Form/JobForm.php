@@ -22,7 +22,7 @@ class JobForm extends EntityForm {
       '#title' => $this->t('Label'),
       '#type' => 'textfield',
       '#default_value' => $this->entity->label(),
-      '#description' => t('The builder name.'),
+      '#description' => $this->t("The job name. This will appear on the list of task templates when the 'Add Task' button is clicked. The task title will be set by the template trigger on the next page."),
       '#required' => TRUE,
       '#size' => 30,
     ];
@@ -40,7 +40,7 @@ class JobForm extends EntityForm {
       '#type' => 'textarea',
       '#default_value' => $this->entity->get('description') ?: '',
       '#title' => $this->t('Description'),
-      '#description' => $this->t('This is designed to help administrators understand what jobs are for. User facing documentation should be included in the instructions field or in the checklist.'),
+      '#description' => $this->t('A description for the job. This will appear on the page when a user is selecting which task template to use. Task documentation should be included in the task description or in the checklist.'),
     ];
 
     return $form;
