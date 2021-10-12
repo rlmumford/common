@@ -1,0 +1,16 @@
+<?php
+
+/**
+ * Implements hook_condition_info_alter().
+ */
+function typed_data_context_assignment_condition_info_alter(array &$definitions) {
+  foreach ($definitions as &$definition) {
+    $class_bits = explode("\\", $definition['class']);
+    $class_name = end($class_bits);
+
+    $override_class = 'Drupal\typed_data_context_assignment\Plugin\Condition\\'.$class_name;
+    if (class_exists($override_class) && is_subclass_of($override_class, $definition['class'])) {
+      $definition['class'] = $override_class;
+    }
+  }
+}

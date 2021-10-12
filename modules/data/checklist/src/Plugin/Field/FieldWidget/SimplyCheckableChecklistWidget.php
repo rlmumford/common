@@ -219,7 +219,7 @@ class SimplyCheckableChecklistWidget extends WidgetBase {
       $delta = $row_parents[count($row_parents) - 2];
       $widget_state = static::getWidgetState($form['#parents'], $field_name, $form_state);
       if (!empty($widget_state[$delta]['checklist_items'][$values['name']])) {
-       $form_state->setError($row['name'], 'The name of a checklist item must be unique in the checklist.');
+        $form_state->setError($row['name'], 'The name of a checklist item must be unique in the checklist.');
       }
     }
     if (empty($values['title'])) {
