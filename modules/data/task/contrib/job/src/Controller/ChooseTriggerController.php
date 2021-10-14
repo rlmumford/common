@@ -93,7 +93,6 @@ class ChooseTriggerController extends ControllerBase {
           continue;
         }
 
-
         $category = isset($definition['category']) ? (string) $definition['category'] : 'Other';
         if (!isset($build[$category])) {
           $build[$category]['#type'] = 'details';
