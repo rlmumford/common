@@ -16,6 +16,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * @ChecklistItemHandler(
  *   id = "create_entity",
  *   label = @Translation("Create Entity"),
+ *   category = @Translation("Create Entity"),
  *   deriver = "Drupal\checklist\Plugin\Derivative\ContentEntityTypeDeriver",
  *   forms = {
  *     "row" = "\Drupal\checklist\PluginForm\StartableItemRowForm",

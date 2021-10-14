@@ -48,6 +48,8 @@ class JobAddChecklistItemForm extends JobPluginFormBase {
       $handler_config
     );
 
+    unset($form['message']);
+
     $form['name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Name'),

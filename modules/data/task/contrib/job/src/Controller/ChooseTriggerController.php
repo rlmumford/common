@@ -84,10 +84,7 @@ class ChooseTriggerController extends ControllerBase {
     }
     else {
       $build = [
-        'links' => [
-          '#theme' => 'links',
-          '#links' => [],
-        ],
+        '#type' => 'container',
       ];
 
       $job = $this->tempstoreRepository->get($task_job);
@@ -96,7 +93,19 @@ class ChooseTriggerController extends ControllerBase {
           continue;
         }
 
-        $build['links']['#links'][] = [
+
+        $category = isset($definition['category']) ? (string) $definition['category'] : 'Other';
+        if (!isset($build[$category])) {
+          $build[$category]['#type'] = 'details';
+          $build[$category]['#open'] = TRUE;
+          $build[$category]['#title'] = $category;
+          $build[$category]['links'] = [
+            '#theme' => 'links',
+            '#links' => [],
+          ];
+        }
+
+        $build[$category]['links']['#links'][] = [
           'title' => $definition['label'],
           'url' => Url::fromRoute(
             'task_job.trigger.add',
@@ -124,6 +133,7 @@ class ChooseTriggerController extends ControllerBase {
       return [
         'class' => ['use-ajax'],
         'data-dialog-type' => 'dialog',
+        'data-dialog-renderer' => 'off_canvas',
       ];
     }
     return [];

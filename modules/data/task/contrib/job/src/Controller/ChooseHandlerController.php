@@ -71,14 +71,22 @@ class ChooseHandlerController extends ControllerBase {
     }
     else {
       $build = [
-        'links' => [
-          '#theme' => 'links',
-          '#links' => [],
-        ],
+        '#type' => 'container',
       ];
 
       foreach ($definitions as $name => $definition) {
-        $build['links']['#links'][] = [
+        $category = isset($definition['category']) ? (string) $definition['category'] : 'Other';
+        if (!isset($build[$category])) {
+          $build[$category]['#type'] = 'details';
+          $build[$category]['#open'] = TRUE;
+          $build[$category]['#title'] = $category;
+          $build[$category]['links'] = [
+            '#theme' => 'links',
+            '#links' => [],
+          ];
+        }
+
+        $build[$category]['links']['#links'][] = [
           'title' => $definition['label'],
           'url' => Url::fromRoute(
             'task_job.checklist_item.add',
@@ -106,6 +114,7 @@ class ChooseHandlerController extends ControllerBase {
       return [
         'class' => ['use-ajax'],
         'data-dialog-type' => 'dialog',
+        'data-dialog-renderer' => 'off_canvas',
       ];
     }
     return [];

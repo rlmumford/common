@@ -10,6 +10,7 @@ use Drupal\checklist\Entity\ChecklistItemInterface;
  * @ChecklistItemHandler(
  *   id = "simply_checkable",
  *   label = @Translation("Simple Checkbox"),
+ *   category = @Translation("Basic"),
  *   forms = {
  *     "row" = "\Drupal\checklist\PluginForm\SimplyCheckableItemRowForm",
  *     "configure" = "\Drupal\checklist\PluginForm\SimplyCheckableItemConfigureForm",

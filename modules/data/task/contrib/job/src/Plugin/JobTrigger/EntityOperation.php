@@ -13,6 +13,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * @JobTrigger(
  *   id = "entity_op",
  *   label = @Translation("Entity Operation"),
+ *   category = @Translation("Entity Operations"),
  *   description = @Translation("This job gets triggered when an entity operation happens."),
  *   deriver = "\Drupal\task_job\Plugin\Derivative\EntityOperationTriggerDeriver"
  * )

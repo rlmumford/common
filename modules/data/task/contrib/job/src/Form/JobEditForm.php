@@ -177,6 +177,7 @@ class JobEditForm extends JobForm {
           'use-ajax',
         ],
         'data-dialog-type' => 'dialog',
+        'data-dialog-renderer' => 'off_canvas',
       ],
     ];
 
@@ -448,7 +449,7 @@ class JobEditForm extends JobForm {
       ];
       $element['remove'] = [
         '#type' => 'submit',
-        '#value' => $this->t('Remove'),
+        '#value' => $this->t('Remove Trigger'),
         '#name' => 'trigger_remove_' . $key,
         '#trigger_key' => $key,
         '#limit_validation_errors' => [],
@@ -504,6 +505,10 @@ class JobEditForm extends JobForm {
         $element['template']['conditions']['table']['#empty'] = $this->t(
           'The task will always be created on this trigger.',
         );
+        $element['template']['conditions']['__add']['#weight'] = 10;
+
+        $element['template']['components']['__add']['#weight'] = 10;
+        $element['template']['components']['__add']['#title'] = $this->t('Add Template Component');
       }
 
       $form['triggers'][$key] = $element;

@@ -13,6 +13,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformState;
 use Drupal\Core\Plugin\PluginFormFactoryInterface;
 use Drupal\Core\Plugin\PluginWithFormsInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 use Drupal\task_job\JobInterface;
 use Drupal\task_job\TaskJobTempstoreRepository;
@@ -115,6 +116,9 @@ abstract class JobPluginFormBase extends FormBase {
         $form['plugin_configuration'],
         $subform_state
       );
+    }
+    else {
+      $form['message']['#markup'] = new TranslatableMarkup('Are you sure you want to add @label?', ['@label' => $plugin->getPluginDefinition()['label']]);
     }
 
     $form['actions'] = [
