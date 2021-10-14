@@ -99,7 +99,7 @@ class JobRemoveChecklistItemForm extends FormBase {
       $form['#id'] = Html::getId($form_state->getBuildInfo()['form_id']);
     }
 
-    return $item;
+    return $form;
   }
 
   /**
