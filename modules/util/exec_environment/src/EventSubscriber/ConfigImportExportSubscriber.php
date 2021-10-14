@@ -62,8 +62,8 @@ class ConfigImportExportSubscriber implements EventSubscriberInterface {
     $storage = $event->getStorage();
 
     $exportable_environments = $this->configFactory
-        ->get('exec_environment.exported_config_environments')
-        ->get('collections') ?? [];
+      ->get('exec_environment.exported_config_environments')
+      ->get('collections') ?? [];
     foreach ($storage->getAllCollectionNames() as $collection_name) {
       [$prefix, $env] = explode(':', $collection_name, 2);
       if ($prefix === 'environment' && !in_array($env, $exportable_environments)) {
@@ -82,8 +82,8 @@ class ConfigImportExportSubscriber implements EventSubscriberInterface {
     $storage = $event->getStorage();
 
     $exportable_environments = $this->configFactory
-        ->get('exec_environment.exported_config_environments')
-        ->get('collections') ?? [];
+      ->get('exec_environment.exported_config_environments')
+      ->get('collections') ?? [];
     foreach ($this->configStorage->getAllCollectionNames() as $collection_name) {
       [$prefix, $env] = explode(':', $collection_name, 2);
       if ($prefix === 'environment' && !in_array($env, $exportable_environments)) {
