@@ -1,0 +1,9 @@
+exported_config_environments:
+  type: config_object
+  label: 'Config Environments to Export'
+  mapping:
+    collections:
+      type: sequence
+      label: 'Collection Names'
+      sequence:
+        type: string

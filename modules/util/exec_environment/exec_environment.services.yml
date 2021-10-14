@@ -20,6 +20,11 @@ services:
     arguments: [ '@plugin.manager.exec_environment_component', '@current_user' ]
     tags:
       - { name: event_subscriber }
+  exec_environment.config_import_export_subscriber:
+    class: Drupal\exec_environment\EventSubscriber\ConfigImportExportSubscriber
+    arguments: [ '@config.factory', '@config.storage' ]
+    tags:
+      - { name: event_subscriber }
   exec_environment.set_current_user_permissions:
     class: Drupal\exec_environment\ExecEnvironmentSetCurrentUserPermissions
     arguments: [ '@entity_type.manager' ]
