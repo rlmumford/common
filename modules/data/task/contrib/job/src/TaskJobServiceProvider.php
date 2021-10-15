@@ -23,6 +23,7 @@ class TaskJobServiceProvider extends ServiceProviderBase {
       $definition->setClass(EnvironmentAwareJobTriggerManager::class);
       $definition->addMethodCall('setEnvironmentStack', [new Reference('environment_stack')]);
       $definition->addMethodCall('setConfigFactory', [new Reference('config.factory')]);
+      $definition->addMethodCall('setEventDispatcher', [new Reference('event_dispatcher')]);
     }
   }
 

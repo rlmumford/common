@@ -5,7 +5,10 @@ namespace Drupal\task_job\Plugin\JobTrigger;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\exec_environment\EnvironmentStackInterface;
 use Drupal\exec_environment\Plugin\ExecEnvironment\Component\ConfigFactoryCollectionComponentInterface;
+use Drupal\task_job\Event\HandleTriggerEnvironmentDetectionEvent;
+use Drupal\task_job\Event\TaskJobEvents;
 use Drupal\task_job\JobInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * The job trigger manager used when the exec_environment module is enabled.
@@ -27,6 +30,13 @@ class EnvironmentAwareJobTriggerManager extends JobTriggerManager {
    * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
   protected $configFactory;
+
+  /**
+   * The event dispatcher.
+   *
+   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+   */
+  protected $eventDispatcher;
 
   /**
    * Set the environment stack.
@@ -51,6 +61,19 @@ class EnvironmentAwareJobTriggerManager extends JobTriggerManager {
    */
   public function setConfigFactory(ConfigFactoryInterface $config_factory) : EnvironmentAwareJobTriggerManager {
     $this->configFactory = $config_factory;
+    return $this;
+  }
+
+  /**
+   * Set the event dispatcher.
+   *
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
+   *   The event dispatcher.
+   *
+   * @return $this
+   */
+  public function setEventDispatcher(EventDispatcherInterface $event_dispatcher) : EnvironmentAwareJobTriggerManager {
+    $this->eventDispatcher = $event_dispatcher;
     return $this;
   }
 
@@ -150,6 +173,21 @@ class EnvironmentAwareJobTriggerManager extends JobTriggerManager {
     }
 
     return $triggers;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function handleTrigger(string $plugin_id, array $context_values, bool $save = TRUE): array {
+    $event = new HandleTriggerEnvironmentDetectionEvent($plugin_id, $context_values);
+    $this->eventDispatcher->dispatch(
+      TaskJobEvents::HANDLE_TRIGGER_DETECT_ENVIRONMENT,
+      $event
+    );
+    $event->applyEnvironment();
+    $tasks = parent::handleTrigger($plugin_id, $context_values, $save);
+    $event->resetEnvironment();
+    return $tasks;
   }
 
 }

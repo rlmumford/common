@@ -9,6 +9,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\Context\ContextAwarePluginManagerTrait;
 use Drupal\Core\Plugin\DefaultPluginManager;
+use Drupal\task\Entity\Task;
 use Drupal\task_job\Annotation\JobTrigger;
 use Drupal\task_job\JobInterface;
 
@@ -145,6 +146,42 @@ class JobTriggerManager extends DefaultPluginManager implements JobTriggerManage
     }
 
     return $triggers;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getInUseTriggerIds(string $base_plugin_id = NULL): array {
+    $query = $this->database->select('task_job_trigger_index', 'i');
+    $query->addField('i', 'trigger', 'trigger');
+    $query->distinct();
+    if ($base_plugin_id) {
+      $query->condition('trigger_base', $base_plugin_id);
+    }
+    return $query->execute()->fetchCol();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function handleTrigger(string $plugin_id, array $context_values, bool $save = TRUE) : array {
+    $tasks = [];
+    foreach ($this->getTriggers($plugin_id) as $trigger) {
+      foreach ($trigger->getContextDefinitions() as $name => $definition) {
+        if (isset($context_values[$name])) {
+          $trigger->setContextValue($name, $context_values[$name]);
+        }
+      }
+
+      if ($trigger->access() && ($task = $trigger->createTask())) {
+        $tasks[] = $task;
+        if ($save) {
+          $task->save();
+        }
+      }
+    }
+
+    return $tasks;
   }
 
 }

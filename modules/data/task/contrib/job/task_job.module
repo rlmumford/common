@@ -110,18 +110,13 @@ function _task_job_trigger_entity_operation(string $op, EntityInterface $entity)
     $plugin_id = "entity_op:{$entity->getEntityTypeId()}.{$op}";
     /** @var \Drupal\task_job\Plugin\JobTrigger\JobTriggerManagerInterface $manager */
     $manager = \Drupal::service('plugin.manager.task_job.trigger');
-
-    foreach ($manager->getTriggers($plugin_id) as $trigger) {
-      $trigger->setContextValue($entity->getEntityTypeId(), $entity);
-
-      if ($op === 'update' && isset($entity->original)) {
-        $trigger->setContextValue("original_{$entity->getEntityTypeId()}", $entity);
-      }
-
-      if ($task = $trigger->createTask()) {
-        $task->save();
-      }
-    }
+    $manager->handleTrigger(
+      $plugin_id,
+      [
+        $entity->getEntityTypeId() => $entity,
+        "original_{$entity->getEntityTypeId()}" => $entity->original,
+      ]
+    );
   }
   catch (Exception $e) {
     \Drupal::logger('task_job')->error($e->getMessage());

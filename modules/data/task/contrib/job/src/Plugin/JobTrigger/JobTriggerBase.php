@@ -2,6 +2,8 @@
 
 namespace Drupal\task_job\Plugin\JobTrigger;
 
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Cache\CacheableDependencyInterface;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Plugin\ContextAwarePluginBase;
@@ -9,9 +11,12 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity_template\Exception\NoAvailableBlueprintException;
 use Drupal\entity_template\TemplateBuilderManager;
 use Drupal\task\TaskInterface;
+use Drupal\task_job\Event\TaskJobEvents;
+use Drupal\task_job\Event\TriggerAccessEvent;
 use Drupal\task_job\JobInterface;
 use Drupal\task_job\Plugin\EntityTemplate\BlueprintProvider\BlueprintJobTriggerAdaptor;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * The job trigger base plugin class.
@@ -33,6 +38,13 @@ abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTrigg
   protected $job;
 
   /**
+   * The event dispatcher.
+   *
+   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+   */
+  protected $eventDispatcher;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(
@@ -45,7 +57,8 @@ abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTrigg
       $configuration,
       $plugin_id,
       $plugin_definition,
-      $container->get('plugin.manager.entity_template.builder')
+      $container->get('plugin.manager.entity_template.builder'),
+      $container->get('event_dispatcher')
     );
   }
 
@@ -60,14 +73,18 @@ abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTrigg
    *   The plugin implementation definition.
    * @param \Drupal\entity_template\TemplateBuilderManager $builder_manager
    *   The builder manager.
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
+   *   The event dispatcher.
    */
   public function __construct(
     array $configuration,
     string $plugin_id,
     $plugin_definition,
-    TemplateBuilderManager $builder_manager
+    TemplateBuilderManager $builder_manager,
+    EventDispatcherInterface $event_dispatcher
   ) {
     $this->builderManager = $builder_manager;
+    $this->eventDispatcher = $event_dispatcher;
 
     parent::__construct($configuration, $plugin_id, $plugin_definition);
   }
@@ -169,10 +186,19 @@ abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTrigg
    * {@inheritdoc}
    */
   public function access(CacheableMetadata $cache_metadata = NULL) {
+    $access_event = new TriggerAccessEvent($this);
+    $this->eventDispatcher->dispatch(TaskJobEvents::TRIGGER_ACCESS, $access_event);
+
+    $access = ($access_event->hasAccessResult() ? $access_event->getAccessResult() : AccessResult::allowed());
+    if ($cache_metadata && $access instanceof CacheableDependencyInterface) {
+      $cache_metadata->addCacheableDependency($access);
+    }
+
     $storage = new BlueprintJobTriggerAdaptor($this->getJob(), $this);
     $template = $storage->getTemplate('default');
 
-    return $template->applies($cache_metadata);
+    return $access->andIf(AccessResult::allowedIf($template->applies($cache_metadata)))
+      ->isAllowed();
   }
 
 }
