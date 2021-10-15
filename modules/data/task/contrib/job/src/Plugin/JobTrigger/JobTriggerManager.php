@@ -9,7 +9,6 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\Context\ContextAwarePluginManagerTrait;
 use Drupal\Core\Plugin\DefaultPluginManager;
-use Drupal\task\Entity\Task;
 use Drupal\task_job\Annotation\JobTrigger;
 use Drupal\task_job\JobInterface;
 
