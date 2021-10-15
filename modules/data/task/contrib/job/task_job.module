@@ -112,10 +112,10 @@ function _task_job_trigger_entity_operation(string $op, EntityInterface $entity)
     $manager = \Drupal::service('plugin.manager.task_job.trigger');
     $manager->handleTrigger(
       $plugin_id,
-      [
+      array_filter([
         $entity->getEntityTypeId() => $entity,
-        "original_{$entity->getEntityTypeId()}" => $entity->original,
-      ]
+        "original_{$entity->getEntityTypeId()}" => isset($entity->original) ? $entity->original : NULL,
+      ])
     );
   }
   catch (Exception $e) {
