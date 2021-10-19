@@ -27,7 +27,6 @@ class EnvironmentJobTriggerHandlerTest extends KernelTestBase {
     $this->installEntitySchema('user');
     $this->installSchema('system', ['key_value', 'sequences']);
     $this->installSchema('task_job', 'task_job_trigger_index');
-    //$this->installEntitySchema('task');
   }
 
   /**
@@ -109,7 +108,6 @@ class EnvironmentJobTriggerHandlerTest extends KernelTestBase {
     $this->assertCount(1, $tasks);
     $task = reset($tasks);
     $this->assertEquals('Make Good Tea', $task->title->value);
-
 
     $this->container->get('state')->set('task_job_test.handle_trigger_collection', $collection_name2);
     $tasks = $manager->handleTrigger('test_trigger', [], FALSE);

@@ -2,7 +2,6 @@
 
 namespace Drupal\task_job_test\EventSubscriber;
 
-use Drupal\Core\KeyValueStore\KeyValueStoreInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\exec_environment\EnvironmentComponentManager;

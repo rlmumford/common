@@ -6,7 +6,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\task_job\Plugin\JobTrigger\JobTriggerBase;
 
 /**
- * Class TestTrigger
+ * Test trigger plugin.
  *
  * @JobTrigger(
  *   id = "test_trigger",
