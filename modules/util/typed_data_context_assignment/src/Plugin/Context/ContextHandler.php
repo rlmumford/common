@@ -59,7 +59,7 @@ class ContextHandler extends CoreContextHandler {
    */
   public function getMatchingContexts(array $contexts, ContextDefinitionInterface $definition) {
     return array_filter($contexts, function (ContextInterface $context) use ($definition) {
-      return $definition->isSatisfiedBy($context) || $this->definitionIsSatisfiedByAProperty($definition, $context->getContextData());
+      return $definition->isSatisfiedBy($context) || $this->definitionIsSatisfiedByAnyProperty($definition, $context->getContextData());
     });
   }
 
@@ -70,13 +70,13 @@ class ContextHandler extends CoreContextHandler {
    *   The context definition we are trying to satisfy.
    * @param \Drupal\Core\TypedData\TypedDataInterface $typed_data
    *   The typed data available.
-   * @param integer $recursion_level
+   * @param int $recursion_level
    *   How many layers down we have looked.
    *
    * @return bool
    *   TRUE if the data or one of its properties can satisfy the context.
    */
-  protected function definitionIsSatisfiedByAProperty(ContextDefinitionInterface $definition, TypedDataInterface $typed_data, int $recursion_level = 0) {
+  protected function definitionIsSatisfiedByAnyProperty(ContextDefinitionInterface $definition, TypedDataInterface $typed_data, int $recursion_level = 0) {
     // Assume true if we're already 6 levels deep.
     if ($recursion_level > 6) {
       return TRUE;
@@ -95,38 +95,36 @@ class ContextHandler extends CoreContextHandler {
       /** @var \Drupal\Core\TypedData\ComplexDataInterface $typed_data */
       foreach ($typed_data->getDataDefinition()->getPropertyDefinitions() as $name => $property_def) {
         try {
-          if ($this->definitionIsSatisfiedByAProperty($definition, $typed_data->get($name), $recursion_level + 1)) {
+          if ($this->definitionIsSatisfiedByAnyProperty($definition, $typed_data->get($name), $recursion_level + 1)) {
             return TRUE;
           }
         }
         catch (MissingDataException $exception) {
           // Try to continue with no data.
-          if ($this->definitionIsSatisfiedByAProperty(
+          if ($this->definitionIsSatisfiedByAnyProperty(
             $definition,
             $this->typedDataManager->create($property_def, NULL, $name, $typed_data),
-            $recursion_level +1
+            $recursion_level + 1
           )) {
             return TRUE;
           }
         }
       }
     }
-    else if ($typed_data instanceof ListInterface) {
+    elseif ($typed_data instanceof ListInterface) {
       if ($typed_data->count()) {
         foreach ($typed_data as $item_data) {
-          if ($this->definitionIsSatisfiedByAProperty($definition, $item_data, $recursion_level + 1)) {
+          if ($this->definitionIsSatisfiedByAnyProperty($definition, $item_data, $recursion_level + 1)) {
             return TRUE;
           }
         }
       }
-      else {
-        if ($this->definitionIsSatisfiedByAProperty(
-          $definition,
-          $this->typedDataManager->create($typed_data->getItemDefinition(), NULL, 0, $typed_data),
-          $recursion_level + 1
-        )) {
-          return TRUE;
-        }
+      elseif ($this->definitionIsSatisfiedByAnyProperty(
+        $definition,
+        $this->typedDataManager->create($typed_data->getItemDefinition(), NULL, 0, $typed_data),
+        $recursion_level + 1
+      )) {
+        return TRUE;
       }
     }
 
@@ -142,12 +140,11 @@ class ContextHandler extends CoreContextHandler {
    * harder it also makes the logic easier to read.
    */
   public function applyContextMapping(ContextAwarePluginInterface $plugin, $contexts, $mappings = []) {
-    /** @var $contexts \Drupal\Core\Plugin\Context\ContextInterface[] */
+    /** @var \Drupal\Core\Plugin\Context\ContextInterface[] $contexts  */
     $mappings += $plugin->getContextMapping();
-    // Loop through each of the expected contexts.
-
     $missing_value = [];
 
+    // Loop through each of the expected contexts.
     foreach ($plugin->getContextDefinitions() as $plugin_context_id => $plugin_context_definition) {
       // If this context was given a specific name, use that.
       [$context_id, $data_path] = $this->parseContextId($mappings[$plugin_context_id] ?? $plugin_context_id, $contexts);
@@ -211,7 +208,7 @@ class ContextHandler extends CoreContextHandler {
       catch (ContextException $e) {
         $context = NULL;
       }
-        // @todo Remove in https://www.drupal.org/project/drupal/issues/3046342.
+      // @todo Remove in https://www.drupal.org/project/drupal/issues/3046342.
       catch (PluginException $e) {
         $context = NULL;
       }

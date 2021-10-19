@@ -4,8 +4,6 @@ namespace Drupal\typed_data_context_assignment\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\KeyValueStore\KeyValueStoreInterface;
-use Drupal\entity_template\BlueprintStorageInterface;
-use Drupal\entity_template\Plugin\EntityTemplate\Template\TemplateInterface;
 use Drupal\typed_data\DataFetcherInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -60,8 +58,9 @@ class AutocompleteController extends ControllerBase {
    *   The available context key.
    *
    * @return \Symfony\Component\HttpFoundation\JsonResponse
+   *   The json response.
    *
-   * @todo: Work out how to filter by permitted data types.
+   * @todo Work out how to filter by permitted data types.
    */
   public function handleAutocomplete(Request $request, string $required_context_key, string $available_context_key) {
     if (!$this->keyValue->has($required_context_key) || !$this->keyValue->has($available_context_key)) {
