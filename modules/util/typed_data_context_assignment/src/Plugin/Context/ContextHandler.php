@@ -189,7 +189,7 @@ class ContextHandler extends CoreContextHandler {
                 }
               }
               catch (MissingDataException $exception) {
-                if  ($plugin_context_definition->isRequired()) {
+                if ($plugin_context_definition->isRequired()) {
                   $missing_value[] = $plugin_context_id;
                 }
               }

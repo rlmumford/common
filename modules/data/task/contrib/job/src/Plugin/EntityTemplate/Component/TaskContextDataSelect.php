@@ -79,7 +79,7 @@ class TaskContextDataSelect extends TaskContextBase {
     $task_context = $this->configuration['task_context'];
     $selector = $this->configuration['selector'];
 
-    try  {
+    try {
       $data = $this->selectData($selector);
       if ($data && $data->getValue()) {
         $entity->get('context')->{$task_context} = $data->getValue();
