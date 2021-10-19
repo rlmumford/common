@@ -142,6 +142,7 @@ abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTrigg
       return !empty($tasks) ? reset($tasks) : NULL;
     }
     catch (NoAvailableBlueprintException $e) {
+      print $e->getMessage() . "\n";
       return NULL;
     }
   }
