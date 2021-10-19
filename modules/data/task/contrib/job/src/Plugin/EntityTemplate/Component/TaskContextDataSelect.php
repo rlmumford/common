@@ -9,6 +9,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TypedData\ComplexDataDefinitionInterface;
 use Drupal\Core\TypedData\DataDefinitionInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
+use Drupal\entity_template\Plugin\EntityTemplate\Component\DataSelectComponentTrait;
 use Drupal\entity_template\TemplateResult;
 use Drupal\typed_data\DataFetcherInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -30,13 +31,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * @package Drupal\task_job\Plugin\EntityTemplate\Component
  */
 class TaskContextDataSelect extends TaskContextBase {
-
-  /**
-   * The data fetcher service.
-   *
-   * @var \Drupal\typed_data\DataFetcherInterface
-   */
-  protected $dataFetcher;
+  use DataSelectComponentTrait;
 
   /**
    * {@inheritdoc}
@@ -83,26 +78,15 @@ class TaskContextDataSelect extends TaskContextBase {
   public function apply(EntityInterface $entity, TemplateResult $result) {
     $task_context = $this->configuration['task_context'];
     $selector = $this->configuration['selector'];
-    [$context, $path] = explode('.', $selector . '.', 2);
 
-    if (empty($path)) {
-      $entity->get('context')->{$task_context} = $this->getContextProvidingTemplate()->getContextValue($context);
+    try {
+      $data = $this->selectData($selector);
+      if ($data && $data->getValue()) {
+        $entity->get('context')->{$task_context} = $data->getValue();
+      }
     }
-    else {
-      $path = substr($path, 0, -1);
-      try {
-        $value = $this->dataFetcher->fetchDataByPropertyPath(
-          $this->getContextProvidingTemplate()->getContext($context)->getContextData(),
-          $path
-        );
-
-        if ($value && $value->getValue()) {
-          $entity->get('context')->{$task_context} = $value->getValue();
-        }
-      }
-      catch (MissingDataException $exception) {
-        $result->addMessage($exception->getMessage());
-      }
+    catch (MissingDataException $exception) {
+      $result->addMessage($exception->getMessage());
     }
   }
 
