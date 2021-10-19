@@ -75,7 +75,9 @@ class AutocompleteController extends ControllerBase {
       $definitions[$name] = $definition->getDataDefinition();
     }
 
-    $results = $this->dataFetcher->autocompletePropertyPath($definitions, $request->query->get('q'));
+    // The include filters flag is provided by MR1 on the typed data module.
+    // See https://www.drupal.org/project/typed_data/issues/3244608
+    $results = $this->dataFetcher->autocompletePropertyPath($definitions, $request->query->get('q'), TRUE);
     return new JsonResponse($results);
 
   }

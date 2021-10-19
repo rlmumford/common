@@ -149,6 +149,14 @@ class ContextHandler extends CoreContextHandler {
       // If this context was given a specific name, use that.
       [$context_id, $data_path] = $this->parseContextId($mappings[$plugin_context_id] ?? $plugin_context_id, $contexts);
 
+      if (is_callable([$this->dataFetcher, 'applyFilters'])) {
+        [$path, $filters] = $this->dataFetcher->parsePropertyPathAndFilters($data_path);
+      }
+      else {
+        $path = explode('.', $data_path);
+        $filters = [];
+      }
+
       if (!empty($contexts[$context_id])) {
         // This assignment has been used, remove it.
         unset($mappings[$plugin_context_id]);
@@ -161,10 +169,31 @@ class ContextHandler extends CoreContextHandler {
           $plugin_context->addCacheableDependency($contexts[$context_id]);
         }
 
-        if (empty($data_path)) {
+        if (empty($path)) {
           // Pass the value to the plugin if there is one.
           if ($contexts[$context_id]->hasContextValue()) {
-            $plugin->setContext($plugin_context_id, $contexts[$context_id]);
+            if (empty($filters)) {
+              $plugin->setContext($plugin_context_id, $contexts[$context_id]);
+            }
+            else {
+              try {
+                $data = $this->dataFetcher->applyFilters(
+                  $contexts[$context_id]->getContextData(),
+                  $filters
+                );
+                if ($data && $data->getValue()) {
+                  $plugin->setContextValue($plugin_context_id, $data->getValue());
+                }
+                elseif ($plugin_context_definition->isRequired()) {
+                  $missing_value[] = $plugin_context_id;
+                }
+              }
+              catch (MissingDataException $exception) {
+                if  ($plugin_context_definition->isRequired()) {
+                  $missing_value[] = $plugin_context_id;
+                }
+              }
+            }
           }
           elseif ($plugin_context_definition->isRequired()) {
             // Collect required contexts that exist but are missing a value.
@@ -174,11 +203,14 @@ class ContextHandler extends CoreContextHandler {
         else {
           try {
             $cache_metadata = new BubbleableMetadata();
-            $data = $this->dataFetcher->fetchDataByPropertyPath(
+            $data = $this->dataFetcher->fetchDataBySubPaths(
               $contexts[$context_id]->getContextData(),
-              $data_path,
+              $path,
               $cache_metadata
             );
+            if ($filters) {
+              $data = $this->dataFetcher->applyFilters($data, $filters, $cache_metadata);
+            }
 
             $plugin_context->addCacheableDependency($cache_metadata);
             $plugin->setContextValue($plugin_context_id, $data->getValue());
