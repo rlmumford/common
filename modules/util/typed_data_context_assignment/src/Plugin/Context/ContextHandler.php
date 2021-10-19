@@ -119,7 +119,7 @@ class ContextHandler extends CoreContextHandler {
           }
         }
       }
-      else if ($this->definitionIsSatisfiedByAnyProperty(
+      elseif ($this->definitionIsSatisfiedByAnyProperty(
         $definition,
         $this->typedDataManager->create($typed_data->getItemDefinition(), NULL, 0, $typed_data),
         $recursion_level + 1
