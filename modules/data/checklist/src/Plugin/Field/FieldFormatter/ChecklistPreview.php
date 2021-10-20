@@ -2,8 +2,12 @@
 
 namespace Drupal\checklist\Plugin\Field\FieldFormatter;
 
+use Drupal\Core\Entity\Plugin\DataType\EntityAdapter;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FormatterBase;
+use Drupal\Core\Render\BubbleableMetadata;
+use Drupal\typed_data\PlaceholderResolverTrait;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Formatter to preview a checklist.
@@ -20,6 +24,19 @@ use Drupal\Core\Field\FormatterBase;
  * @package Drupal\checklist\Plugin\Field\FieldFormatter
  */
 class ChecklistPreview extends FormatterBase {
+  use PlaceholderResolverTrait;
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    return parent::create(
+      $container,
+      $configuration,
+      $plugin_id,
+      $plugin_definition
+    )->setPlaceholderResolver($container->get('typed_data.placeholder_resolver'));
+  }
 
   /**
    * {@inheritdoc}
@@ -27,6 +44,9 @@ class ChecklistPreview extends FormatterBase {
   public function viewElements(FieldItemListInterface $items, $langcode) {
     $elements = [];
 
+    $placeholder_datas = [
+      $items->getEntity()->getEntityTypeId() => EntityAdapter::createFromEntity($items->getEntity()),
+    ];
     foreach ($items as $delta => $item) {
       $checklist = $item->getChecklist();
 
@@ -43,6 +63,8 @@ class ChecklistPreview extends FormatterBase {
       ];
 
       foreach ($checklist->getOrderedItems() as $name => $checklist_item) {
+        $placeholder_datas['checklist_item'] = EntityAdapter::createFromEntity($checklist_item);
+
         $checklist_item_classes = ['ci'];
         if ($checklist_item->isComplete()) {
           $checklist_item_classes[] = 'ci-complete';
@@ -69,6 +91,7 @@ class ChecklistPreview extends FormatterBase {
           $checklist_item_classes[] = 'ci-inactionable';
         }
 
+        $cache_metadata = new BubbleableMetadata();
         $element['#rows'][$name] = [
           'class' => $checklist_item_classes,
           'data' => [
@@ -88,7 +111,12 @@ class ChecklistPreview extends FormatterBase {
               'data' => [
                 '#type' => 'html_tag',
                 '#tag' => 'span',
-                '#value' => $checklist_item->title->value,
+                '#value' => $this->getPlaceholderResolver()->replacePlaceHolders(
+                  $checklist_item->title->value,
+                  $placeholder_datas,
+                  $cache_metadata,
+                  ['langcode' => $langcode]
+                ),
                 '#attributes' => [
                   'class' => [
                     'ci-label',
@@ -98,6 +126,7 @@ class ChecklistPreview extends FormatterBase {
             ],
           ],
         ];
+        $cache_metadata->applyTo($element['#rows'][$name]);
       }
 
       $elements[$delta] = [

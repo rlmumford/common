@@ -3,6 +3,8 @@
 namespace Drupal\task_job\Form;
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Plugin\Context\EntityContext;
+use Drupal\Core\Plugin\Context\EntityContextDefinition;
 use Drupal\task_job\JobInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -70,6 +72,23 @@ class JobAddChecklistItemForm extends JobPluginFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Title'),
       '#weight' => -8,
+    ];
+
+    $form['placeholders'] = [
+      '#type' => 'available_placeholders',
+      '#title' => $this->t('Placeholders and Filters'),
+      '#contexts' => [
+        'checklist_item' => new EntityContext(
+          EntityContextDefinition::fromEntityTypeId('checklist_item', 'This Checklist Item')
+            ->addConstraint('Bundle', 'job')
+        ),
+        'task' => new EntityContext(
+          EntityContextDefinition::fromEntityTypeId('task', 'The Task'),
+          \Drupal::entityTypeManager()->getStorage('task')->create([
+            'job' => $task_job,
+          ])
+        ),
+      ],
     ];
 
     return $form;

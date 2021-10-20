@@ -3,6 +3,7 @@
 namespace Drupal\task_job\Form;
 
 use Drupal\checklist\ChecklistItemHandlerManager;
+use Drupal\Component\Serialization\Json;
 use Drupal\Component\Utility\Html;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\RemoveCommand;
@@ -367,6 +368,11 @@ class JobEditForm extends JobForm {
       ],
       '#empty' => $this->t('No checklist items are configured'),
     ];
+
+    $configure_ajax_attributes = $ajax_attributes;
+    $configure_ajax_attributes['attributes']['data-dialog-options'] = Json::encode([
+      'width' => '650px',
+    ]);
     foreach ($this->entity->getChecklistItems() as $name => $definition) {
       /** @var \Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerInterface $plugin */
       $plugin = $this->manager->createInstance(
@@ -395,7 +401,7 @@ class JobEditForm extends JobForm {
               ],
               [
                 'query' => $this->getDestinationArray(),
-              ] + $ajax_attributes
+              ] + $configure_ajax_attributes,
             ),
           ],
           'remove' => [

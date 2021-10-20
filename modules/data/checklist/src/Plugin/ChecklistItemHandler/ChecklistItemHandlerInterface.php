@@ -95,4 +95,9 @@ interface ChecklistItemHandlerInterface extends PluginInspectionInterface, Plugi
    */
   public function buildConfigurationSummary() : array;
 
+  /**
+   * Finalize any placeholders.
+   */
+  public function finalizePlaceholders();
+
 }

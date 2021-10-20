@@ -5,8 +5,10 @@ namespace Drupal\checklist\Entity;
 use Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerInterface;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Entity\Plugin\DataType\EntityAdapter;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldItemInterface;
+use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
@@ -147,6 +149,7 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
   public function setComplete(string $method = self::METHOD_INTERACTIVE): ChecklistItemInterface {
     $this->status = static::STATUS_COMPLETE;
     $this->completion_method = $method;
+    $this->finalizePlaceholders();
     return $this;
   }
 
@@ -261,6 +264,25 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
       ->createInstance($id, $configuration);
     $plugin->setItem($item->getEntity());
     return $plugin;
+  }
+
+  /**
+   * Finalize the placeholders on the checklist item.
+   */
+  protected function finalizePlaceholders() {
+    /** @var \Drupal\typed_data\PlaceholderResolverInterface $placeholder_resolver */
+    $placeholder_resolver = \Drupal::service('typed_data.placeholder_resolver');
+
+    $datas = [
+      'checklist_item' => EntityAdapter::createFromEntity($this),
+      $this->checklist->entity->getEntityTypeId() => EntityAdapter::createFromEntity($this->checklist->entity),
+    ];
+    $this->title = $placeholder_resolver->replacePlaceHolders(
+      $this->title->value,
+      $datas,
+      new BubbleableMetadata()
+    );
+    $this->getHandler()->finalizePlaceholders();
   }
 
 }
