@@ -90,9 +90,9 @@ class PluginReferenceItem extends FieldItemBase {
   public function onChange($property_name, $notify = TRUE) {
     if ($property_name === 'plugin') {
       $this->id = $this->plugin->getValue()->getPluginId();
-      $this->configuration->setValue(
-        $this->plugin->getValue() instanceof ConfigurableInterface ?
-          $this->plugin->getValue()->getConfiguration() :
+      $this->get('configuration')->setValue(
+        $this->plugin instanceof ConfigurableInterface ?
+          $this->plugin->getConfiguration() :
           []
       );
     }
@@ -109,5 +109,17 @@ class PluginReferenceItem extends FieldItemBase {
     }
 
     parent::setValue($values, $notify);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function preSave() {
+    // Make sure the configuration is set correctly.
+    $this->get('configuration')->setValue(
+      $this->plugin instanceof ConfigurableInterface ?
+        $this->plugin->getConfiguration() :
+        []
+    );
   }
 }

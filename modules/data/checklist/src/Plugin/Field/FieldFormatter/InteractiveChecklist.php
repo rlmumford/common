@@ -7,11 +7,14 @@ use Drupal\checklist\Form\ChecklistCompleteForm;
 use Drupal\checklist\Form\ChecklistItemRowForm;
 use Drupal\checklist\Plugin\ChecklistItemHandler\SimplyCheckableChecklistItemHandler;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
+use Drupal\Core\Entity\Plugin\DataType\EntityAdapter;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Form\FormBuilderInterface;
+use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\Url;
+use Drupal\typed_data\PlaceholderResolverTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -29,6 +32,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * @package Drupal\checklist\Plugin\Field\FieldFormatter
  */
 class InteractiveChecklist extends FormatterBase {
+  use PlaceholderResolverTrait;
 
   /**
    * The checklist tempstore factory.
@@ -55,7 +59,7 @@ class InteractiveChecklist extends FormatterBase {
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static(
+    return (new static(
       $plugin_id,
       $plugin_definition,
       $configuration['field_definition'],
@@ -66,7 +70,7 @@ class InteractiveChecklist extends FormatterBase {
       $container->get('checklist.tempstore_repository'),
       $container->get('class_resolver'),
       $container->get('form_builder')
-    );
+    ))->setPlaceholderResolver($container->get('typed_data.placeholder_resolver'));
   }
 
   /**
@@ -143,6 +147,9 @@ class InteractiveChecklist extends FormatterBase {
       ],
     ];
 
+    $placeholder_datas = [
+      $items->getEntity()->getEntityTypeId() => EntityAdapter::createFromEntity($items->getEntity()),
+    ];
     /** @var \Drupal\checklist\Plugin\Field\FieldType\ChecklistItem $item */
     foreach ($items as $delta => $item) {
       $checklist = $item->getChecklist();
@@ -166,6 +173,8 @@ class InteractiveChecklist extends FormatterBase {
       ];
 
       foreach ($checklist->getOrderedItems() as $name => $checklist_item) {
+        $placeholder_datas['checklist_item'] = EntityAdapter::createFromEntity($checklist_item);
+
         $checklist_item_classes = ['ci'];
         if ($checklist_item->isComplete()) {
           $checklist_item_classes[] = 'ci-complete';
@@ -207,6 +216,7 @@ class InteractiveChecklist extends FormatterBase {
 
         // @todo Estimates
         // @todo Icons
+        $cache_metadata = new BubbleableMetadata();
         $element[$name] = [
           '#attributes' => [
             'class' => $checklist_item_classes,
@@ -232,7 +242,12 @@ class InteractiveChecklist extends FormatterBase {
           'label' => [
             '#type' => 'html_tag',
             '#tag' => 'span',
-            '#value' => $checklist_item->title->value,
+            '#value' =>  $this->getPlaceholderResolver()->replacePlaceHolders(
+              $checklist_item->title->value,
+              $placeholder_datas,
+              $cache_metadata,
+              ['langcode' => $langcode]
+            ),
             '#attributes' => [
               'class' => [
                 'ci-label',
@@ -240,6 +255,7 @@ class InteractiveChecklist extends FormatterBase {
             ],
           ],
         ];
+        $cache_metadata->applyTo($element[$name]);
 
         if ($checklist_item->getHandler() instanceof SimplyCheckableChecklistItemHandler) {
           $element[$name]['checkbox']['#attributes']['class'][] = 'checklist-checkbox-checkable';

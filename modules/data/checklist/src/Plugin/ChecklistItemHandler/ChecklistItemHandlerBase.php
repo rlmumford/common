@@ -105,4 +105,11 @@ abstract class ChecklistItemHandlerBase extends PluginBase implements ChecklistI
     return TRUE;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function finalizePlaceholders() {
+    // Do Nothing by default.
+  }
+
 }

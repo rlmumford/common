@@ -3,6 +3,7 @@
 namespace Drupal\task_job\Controller;
 
 use Drupal\checklist\ChecklistItemHandlerManager;
+use Drupal\Component\Serialization\Json;
 use Drupal\Core\Ajax\AjaxHelperTrait;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Form\FormBuilderInterface;
@@ -115,6 +116,9 @@ class ChooseHandlerController extends ControllerBase {
         'class' => ['use-ajax'],
         'data-dialog-type' => 'dialog',
         'data-dialog-renderer' => 'off_canvas',
+        'data-dialog-options' => Json::encode([
+          'width' => '650px',
+        ]),
       ];
     }
     return [];
