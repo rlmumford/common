@@ -242,7 +242,7 @@ class InteractiveChecklist extends FormatterBase {
           'label' => [
             '#type' => 'html_tag',
             '#tag' => 'span',
-            '#value' =>  $this->getPlaceholderResolver()->replacePlaceHolders(
+            '#value' => $this->getPlaceholderResolver()->replacePlaceHolders(
               $checklist_item->title->value,
               $placeholder_datas,
               $cache_metadata,

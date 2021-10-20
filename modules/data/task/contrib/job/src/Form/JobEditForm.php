@@ -369,7 +369,6 @@ class JobEditForm extends JobForm {
       '#empty' => $this->t('No checklist items are configured'),
     ];
 
-
     $configure_ajax_attributes = $ajax_attributes;
     $configure_ajax_attributes['attributes']['data-dialog-options'] = Json::encode([
       'width' => '650px',

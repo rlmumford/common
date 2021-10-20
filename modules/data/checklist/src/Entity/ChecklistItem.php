@@ -3,7 +3,6 @@
 namespace Drupal\checklist\Entity;
 
 use Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerInterface;
-use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\Plugin\DataType\EntityAdapter;

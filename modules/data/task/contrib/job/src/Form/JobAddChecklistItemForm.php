@@ -87,8 +87,8 @@ class JobAddChecklistItemForm extends JobPluginFormBase {
           \Drupal::entityTypeManager()->getStorage('task')->create([
             'job' => $task_job,
           ])
-        )
-      ]
+        ),
+      ],
     ];
 
     return $form;
