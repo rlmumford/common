@@ -170,6 +170,11 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
         ];
       }
     }
+    \Drupal::moduleHandler()->alter(
+      'task_job_trigger_default_template_components',
+      $components,
+      $this->getTrigger()
+    );
 
     return $components;
   }

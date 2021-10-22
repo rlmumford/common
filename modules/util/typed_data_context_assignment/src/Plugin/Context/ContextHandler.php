@@ -109,6 +109,9 @@ class ContextHandler extends CoreContextHandler {
             return TRUE;
           }
         }
+        catch (\InvalidArgumentException $exception) {
+          // Property is unknown. Do nothing.
+        }
       }
     }
     elseif ($typed_data instanceof ListInterface) {
