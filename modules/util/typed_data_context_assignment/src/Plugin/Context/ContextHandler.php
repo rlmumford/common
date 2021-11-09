@@ -149,18 +149,26 @@ class ContextHandler extends CoreContextHandler {
 
     // Loop through each of the expected contexts.
     foreach ($plugin->getContextDefinitions() as $plugin_context_id => $plugin_context_definition) {
-      // If this context was given a specific name, use that.
-      [$context_id, $data_path] = $this->parseContextId($mappings[$plugin_context_id] ?? $plugin_context_id, $contexts);
+      try {
+        // If this context was given a specific name, use that.
+        [$context_id, $data_path] = $this->parseContextId(
+          $mappings[$plugin_context_id] ?? $plugin_context_id,
+          $contexts
+        );
 
-      if (is_callable([$this->dataFetcher, 'applyFilters'])) {
-        [$path, $filters] = $this->dataFetcher->parsePropertyPathAndFilters($data_path);
+        if (is_callable([$this->dataFetcher, 'applyFilters'])) {
+          [$path, $filters] = $this->dataFetcher->parsePropertyPathAndFilters($data_path);
+        }
+        else {
+          $path = explode('.', $data_path);
+          $filters = [];
+        }
       }
-      else {
-        $path = explode('.', $data_path);
-        $filters = [];
+      catch (ContextException $e) {
+        $context_id = FALSE;
       }
 
-      if (!empty($contexts[$context_id])) {
+      if ($context_id && !empty($contexts[$context_id])) {
         // This assignment has been used, remove it.
         unset($mappings[$plugin_context_id]);
 

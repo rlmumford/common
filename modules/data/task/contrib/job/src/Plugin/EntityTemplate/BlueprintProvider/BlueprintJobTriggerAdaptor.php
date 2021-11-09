@@ -3,10 +3,12 @@
 namespace Drupal\task_job\Plugin\EntityTemplate\BlueprintProvider;
 
 use Drupal\Component\Plugin\Exception\ContextException;
+use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Plugin\Context\Context;
 use Drupal\Core\Plugin\Context\EntityContextDefinition;
 use Drupal\Core\Plugin\ContextAwarePluginInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
 use Drupal\entity_template\Blueprint;
 use Drupal\task_job\JobInterface;
 use Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface;
@@ -103,6 +105,15 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
           new TranslatableMarkup('The trigger being fired'),
           $this->getTrigger()->getKey()
       ),
+      'current_date' => new ContextDefinition(
+        'datetime_iso8601',
+        new TranslatableMarkup('Current Date'),
+        FALSE,
+        FALSE,
+        new TranslatableMarkup('The current datetime the trigger is fired.'),
+        DrupalDateTime::createFromTimestamp(\Drupal::time()->getCurrentTime())
+          ->format(\DateTime::ATOM)
+      )
     ] + $this->getTrigger()->getContextDefinitions()
         + parent::getExtraContextDefinitions();
   }
@@ -161,6 +172,17 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
       ];
     }
 
+    $components['start'] = [
+      'id' => 'field.data_select:task.start',
+      'uuid' => 'start',
+      'selector' => 'current_date',
+    ];
+    $components['due'] = [
+      'id' => 'field.data_select:task.due',
+      'uuid' => 'due',
+      'selector' => 'current_date | date_add(1 day)',
+    ];
+
     if ($this->getJob() && ($definitions = $this->getJob()->getContextDefinitions())) {
       foreach ($definitions as $key => $definition) {
         $components["context:{$key}"] = [
@@ -170,10 +192,11 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
         ];
       }
     }
+    $trigger = $this->getTrigger();
     \Drupal::moduleHandler()->alter(
       'task_job_trigger_default_template_components',
       $components,
-      $this->getTrigger()
+      $trigger,
     );
 
     return $components;
