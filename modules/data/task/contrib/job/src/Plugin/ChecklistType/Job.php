@@ -85,10 +85,10 @@ class Job extends ChecklistTypeBase implements PluginWithFormsInterface {
    * We return a Job interface here, rather than a Job entity in anticipation
    * of some complex system of Job overides.
    *
-   * @return \Drupal\task_job\JobInterface
+   * @return \Drupal\task_job\JobInterface|NULL
    *   The job.
    */
-  protected function getJob() : JobInterface {
+  protected function getJob() : ?JobInterface {
     return $this->jobStorage->load($this->getConfiguration()['job']);
   }
 
@@ -105,16 +105,20 @@ class Job extends ChecklistTypeBase implements PluginWithFormsInterface {
 
     $items = [];
 
-    foreach ($this->getJob()->getChecklistItems() as $name => $config) {
-      $items[$name] = $this->itemStorage()->create([
-        'checklist_type' => $this->getPluginId(),
-        'name' => $name,
-        'title' => $config['label'],
-        'handler' => [
-          'id' => $config['handler'],
-          'configuration' => $config['handler_configuration'],
-        ],
-      ]);
+    if ($job = $this->getJob()) {
+      foreach ($job->getChecklistItems() as $name => $config) {
+        $items[$name] = $this->itemStorage()->create(
+          [
+            'checklist_type' => $this->getPluginId(),
+            'name' => $name,
+            'title' => $config['label'],
+            'handler' => [
+              'id' => $config['handler'],
+              'configuration' => $config['handler_configuration'],
+            ],
+          ]
+        );
+      }
     }
 
     return $items;
