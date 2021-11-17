@@ -41,7 +41,7 @@ class JobEditForm extends JobForm {
    *
    * @var \Drupal\task_job\Plugin\EntityTemplate\BlueprintProvider\BlueprintStorageJobTriggerAdaptor[]
    */
-  protected $blueprintStorages;
+  protected $blueprintStorages = [];
 
   /**
    * The blueprint provider manager service.
@@ -754,6 +754,9 @@ class JobEditForm extends JobForm {
   public function formSubmitRemoveTrigger(array $form, FormStateInterface $form_state) {
     $button = $form_state->getTriggeringElement();
     $this->entity->getTriggerCollection()->removeInstanceId($button['#trigger_key']);
+    $triggers = $this->entity->getTriggersConfiguration();
+    unset($triggers[$button['#trigger_key']]);
+    $this->entity->set('triggers', $triggers);
     $form_state->setRebuild(TRUE);
 
     $this->tempstoreRepository->set($this->entity);
