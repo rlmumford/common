@@ -157,6 +157,8 @@ class JobEditForm extends JobForm {
   public function form(array $form, FormStateInterface $form_state) {
     $form = parent::form($form, $form_state);
 
+    $form['#attributes']['novalidate'] = 'novalidate';
+
     if (
       $this->entity->toArray() !==
       $this->entityTypeManager->getStorage($this->entity->getEntityTypeId())

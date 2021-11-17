@@ -121,13 +121,7 @@ class Job extends ConfigEntityBase implements JobInterface {
    * {@inheritdoc}
    */
   public function defaultTriggersConfiguration(): array {
-    return [
-      'manual' => [
-        'id' => 'manual',
-        'key' => 'manual',
-        'template' => [],
-      ],
-    ];
+    return [];
   }
 
   /**
