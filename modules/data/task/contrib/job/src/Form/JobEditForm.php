@@ -628,6 +628,9 @@ class JobEditForm extends JobForm {
       $this->blueprintTempstoreRepository->delete($storage);
     }
     $this->tempstoreRepository->delete($this->entity);
+
+    $this->messenger()->addStatus($this->t('The job has been saved.'));
+
     return $return;
   }
 
