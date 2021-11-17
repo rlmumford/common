@@ -229,16 +229,6 @@ class InteractiveChecklist extends FormatterBase {
             'data-ciname' => $checklist_item->getName(),
           ],
           'checkbox' => $this->formBuilder->getForm($form_obj),
-          'name' => [
-            '#type' => 'html_tag',
-            '#tag' => 'span',
-            '#value' => $checklist_item->getName(),
-            '#attributes' => [
-              'class' => [
-                'ci-name',
-              ],
-            ],
-          ],
           'label' => [
             '#type' => 'html_tag',
             '#tag' => 'span',
@@ -283,16 +273,6 @@ class InteractiveChecklist extends FormatterBase {
           'class' => ['ci', 'ci-checklist-complete-form'],
       // @todo Add resources
           'data-has-resource' => FALSE,
-        ],
-        'name' => [
-          '#type' => 'html_tag',
-          '#tag' => 'span',
-          '#value' => '',
-          '#attributes' => [
-            'class' => [
-              'ci-name',
-            ],
-          ],
         ],
         'label' => [
           '#type' => 'html_tag',
