@@ -3,12 +3,12 @@
 namespace Drupal\Tests\task_job\Kernel;
 
 use Drupal\exec_environment\Environment;
-use Drupal\KernelTests\KernelTestBase;
+use Drupal\KernelTests\Core\Entity\EntityKernelTestBase;
 
 /**
  * Test the job trigger handler.
  */
-class EnvironmentJobTriggerHandlerTest extends KernelTestBase {
+class EnvironmentJobTriggerHandlerTest extends EntityKernelTestBase {
 
   /**
    * {@inheritdoc}
