@@ -3,7 +3,7 @@
 namespace Drupal\Tests\task_job\Kernel;
 
 use Drupal\exec_environment\Environment;
-use Drupal\Tests\token\Kernel\KernelTestBase;
+use Drupal\KernelTests\KernelTestBase;
 
 /**
  * Test the job trigger handler.
