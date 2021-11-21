@@ -85,7 +85,7 @@ class Job extends ChecklistTypeBase implements PluginWithFormsInterface {
    * We return a Job interface here, rather than a Job entity in anticipation
    * of some complex system of Job overides.
    *
-   * @return \Drupal\task_job\JobInterface|NULL
+   * @return \Drupal\task_job\JobInterface|null
    *   The job.
    */
   protected function getJob() : ?JobInterface {
