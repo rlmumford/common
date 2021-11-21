@@ -25,7 +25,7 @@ class EnvironmentJobTriggerHandlerTest extends EntityKernelTestBase {
     parent::setUp();
 
     $this->installEntitySchema('user');
-    $this->installSchema('system', ['key_value', 'sequences']);
+    $this->installSchema('system', ['key_value']);
     $this->installSchema('task_job', 'task_job_trigger_index');
   }
 
