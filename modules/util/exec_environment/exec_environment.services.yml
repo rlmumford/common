@@ -1,13 +1,15 @@
 services:
   plugin.manager.exec_environment_component:
     class: Drupal\exec_environment\EnvironmentComponentManager
-    parent: default_plugin_manager
+    arguments: ['@container.namespaces', '@cache.discovery_noenv', '@module_handler']
   plugin.manager.exec_environment_impact_applicator:
     class: Drupal\exec_environment\EnvironmentImpactApplicatorManager
-    parent: default_plugin_manager
+    arguments: [ '@container.namespaces', '@cache.discovery_noenv', '@module_handler' ]
   environment_stack:
     class: Drupal\exec_environment\EnvironmentStack
-    arguments: ['@plugin.manager.exec_environment_impact_applicator', '@plugin.manager.exec_environment_component', '@event_dispatcher']
+    arguments: ['@event_dispatcher']
+    calls:
+      - [setContainer, ['@service_container']]
     tags:
       - { name: persist }
   exec_environment.authentication_subscriber:
@@ -28,3 +30,10 @@ services:
   exec_environment.set_current_user_permissions:
     class: Drupal\exec_environment\ExecEnvironmentSetCurrentUserPermissions
     arguments: [ '@entity_type.manager' ]
+  cache.discovery_noenv:
+    class: Drupal\Core\Cache\CacheBackendInterface
+    tags:
+      - { name: cache.bin, default_backend: cache.backend.chainedfast }
+    factory: cache_factory:get
+    arguments: [ discovery_noenv ]
+
