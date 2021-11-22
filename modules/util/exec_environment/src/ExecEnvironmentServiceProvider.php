@@ -2,6 +2,7 @@
 
 namespace Drupal\exec_environment;
 
+use Drupal\Core\Cache\CacheFactory;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\DependencyInjection\ServiceProviderBase;
 use Drupal\exec_environment\Cache\EnvironmentAwareCacheFactory;
@@ -22,8 +23,10 @@ class ExecEnvironmentServiceProvider extends ServiceProviderBase {
       ->setClass(EnvironmentConfigFactory::class)
       ->addArgument(new Reference('environment_stack'));
 
-    $container->getDefinition('cache_factory')
-      ->setClass(EnvironmentAwareCacheFactory::class);
+    $cache_factory = $container->getDefinition('cache_factory');
+    if ($cache_factory->getClass() === CacheFactory::class) {
+      $cache_factory->setClass(EnvironmentAwareCacheFactory::class);
+    }
 
     $no_env_discovery = ['entity_type.manager'];
     foreach ($no_env_discovery as $service_id) {
