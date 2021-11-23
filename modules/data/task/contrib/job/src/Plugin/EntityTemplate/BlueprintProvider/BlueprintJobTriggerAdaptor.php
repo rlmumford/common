@@ -8,7 +8,6 @@ use Drupal\Core\Plugin\Context\Context;
 use Drupal\Core\Plugin\Context\EntityContextDefinition;
 use Drupal\Core\Plugin\ContextAwarePluginInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
 use Drupal\entity_template\Blueprint;
 use Drupal\task_job\JobInterface;
 use Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface;
@@ -113,9 +112,8 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
         new TranslatableMarkup('The current datetime the trigger is fired.'),
         DrupalDateTime::createFromTimestamp(\Drupal::time()->getCurrentTime())
           ->format(\DateTime::ATOM)
-      )
-    ] + $this->getTrigger()->getContextDefinitions()
-        + parent::getExtraContextDefinitions();
+      ),
+    ] + $this->getTrigger()->getContextDefinitions() + parent::getExtraContextDefinitions();
   }
 
   /**

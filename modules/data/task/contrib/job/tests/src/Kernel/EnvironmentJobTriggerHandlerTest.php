@@ -3,12 +3,12 @@
 namespace Drupal\Tests\task_job\Kernel;
 
 use Drupal\exec_environment\Environment;
-use Drupal\Tests\token\Kernel\KernelTestBase;
+use Drupal\KernelTests\Core\Entity\EntityKernelTestBase;
 
 /**
  * Test the job trigger handler.
  */
-class EnvironmentJobTriggerHandlerTest extends KernelTestBase {
+class EnvironmentJobTriggerHandlerTest extends EntityKernelTestBase {
 
   /**
    * {@inheritdoc}
@@ -25,7 +25,7 @@ class EnvironmentJobTriggerHandlerTest extends KernelTestBase {
     parent::setUp();
 
     $this->installEntitySchema('user');
-    $this->installSchema('system', ['key_value', 'sequences']);
+    $this->installSchema('system', ['key_value']);
     $this->installSchema('task_job', 'task_job_trigger_index');
   }
 

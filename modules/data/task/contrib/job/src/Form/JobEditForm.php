@@ -159,10 +159,10 @@ class JobEditForm extends JobForm {
 
     $form['#attributes']['novalidate'] = 'novalidate';
 
+    $unchanged = $this->entityTypeManager->getStorage($this->entity->getEntityTypeId())
+      ->loadUnchanged($this->entity->id());
     if (
-      $this->entity->toArray() !==
-      $this->entityTypeManager->getStorage($this->entity->getEntityTypeId())
-        ->loadUnchanged($this->entity->id())->toArray()
+      $this->entity->toArray() !== $unchanged->toArray()
     ) {
       $form['changed'] = [
         '#type' => 'container',
@@ -171,6 +171,16 @@ class JobEditForm extends JobForm {
         ],
         '#children' => $this->t('You have unsaved changes.'),
         '#weight' => -10,
+      ];
+    }
+    if ($this->entity->uuid() !== $unchanged->uuid()) {
+      $form['uuid_error'] = [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['task-job-changed', 'messages', 'messages--error'],
+        ],
+        '#children' => $this->t('Your changes are no longer compatible with the stored job. Please take note of any changes, select "Cancel" at the bottom of this page and apply your changes again.'),
+        '#weight' => -12,
       ];
     }
 
@@ -530,6 +540,10 @@ class JobEditForm extends JobForm {
    */
   public function actions(array $form, FormStateInterface $form_state) {
     $actions = parent::actions($form, $form_state);
+
+    if (isset($form['uuid_error'])) {
+      $actions['submit']['#disabled'] = TRUE;
+    }
 
     if (
       $this->entity->toArray() !==
