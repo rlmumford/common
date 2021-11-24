@@ -90,7 +90,7 @@ class EnvironmentAwareJobTriggerManager extends JobTriggerManager {
 
     $insert = $this->database->insert('task_job_trigger_index')
       ->fields(['job', 'trigger', 'trigger_base', 'trigger_key', 'collection']);
-    if ($triggers = $job->getTriggersConfiguration()) {
+    if ($job->status() && $triggers = $job->getTriggersConfiguration()) {
       foreach ($triggers as $key => $trigger_config) {
         $trigger_def = $this->getDefinition($trigger_config['id']);
         $insert->values(

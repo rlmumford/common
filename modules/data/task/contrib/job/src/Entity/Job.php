@@ -33,15 +33,17 @@ use Drupal\typed_data\Context\ContextDefinition;
  *   },
  *   handlers = {
  *     "list_builder" = "Drupal\task_job\Controller\JobListBuilder",
- *     "access" = "Drupal\entity\EntityAccessControlHandler",
+ *     "access" = "Drupal\task_job\Entity\JobAccessControlHandler",
  *     "permission_provider" = "Drupal\entity\EntityPermissionProvider",
  *     "form" = {
  *        "add" = "\Drupal\task_job\Form\JobForm",
  *        "default" = "\Drupal\task_job\Form\JobEditForm",
  *        "delete" = "\Drupal\Core\Entity\EntityDeleteForm",
+ *        "disable" = "\Drupal\task_job\Form\JobDisableForm",
+ *        "enable" = "\Drupal\task_job\Form\JobEnableForm",
  *      },
  *     "route_provider" = {
- *       "html" = "Drupal\entity\Routing\DefaultHtmlRouteProvider",
+ *       "html" = "Drupal\task_job\Entity\Routing\JobHtmlRouteProvider",
  *     }
  *   },
  *   links = {
@@ -49,6 +51,8 @@ use Drupal\typed_data\Context\ContextDefinition;
  *     "add-form" = "/admin/config/task/job/add",
  *     "canonical" = "/admin/config/task/job/{task_job}",
  *     "edit-form" = "/admin/config/task/job/{task_job}/edit",
+ *     "disable-form" = "/admin/config/task/job/{task_job}/disable",
+ *     "enable-form" = "/admin/config/task/job/{task_job}/enable",
  *     "delete-form" = "/admin/config/task/job/{task_job}/delete",
  *   }
  * );

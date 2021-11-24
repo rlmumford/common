@@ -109,7 +109,7 @@ class TaskAddController extends ControllerBase {
     /** @var \Drupal\task_job\JobInterface $job */
     foreach ($job_storage->loadMultiple() as $job) {
       $cache->addCacheableDependency($job);
-      if ($job->hasTrigger('manual')) {
+      if ($job->status() && $job->hasTrigger('manual')) {
         $route_name = 'task_job.task.add_form';
         $params = ['task_job' => $job->id()];
 
