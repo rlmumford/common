@@ -8,6 +8,16 @@ use Drupal\exec_environment\Plugin\ExecEnvironment\Component\CacheBinSuffixCompo
 /**
  * Cache factory that makes environment aware cache bins.
  *
+ * This doesn't work when applying environments. It would be better to, instead
+ * of changing the bin name, wrap the bin in a class that appends things to the
+ * cids based on the environment stack. That way existing or persistent bins
+ * will still return the correct cache items.
+ *
+ * Plugin managers are known to static cache their definitions on their
+ * definitions property. I'm not sure how to work around that.
+ *
+ * @todo implement the change outlined above.
+ *
  * @package Drupal\exec_environment\Cache
  */
 class EnvironmentAwareCacheFactory extends CacheFactory {
@@ -31,7 +41,7 @@ class EnvironmentAwareCacheFactory extends CacheFactory {
 
     if (!empty($suffixes)) {
       sort($suffixes);
-      $bin .= ".exenv." . implode(".", $suffixes);
+      $bin .= "__exenv_" . implode("_", $suffixes);
     }
 
     return parent::get($bin);
