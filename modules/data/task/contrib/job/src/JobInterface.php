@@ -4,7 +4,6 @@ namespace Drupal\task_job;
 
 use Drupal\Component\Plugin\LazyPluginCollection;
 use Drupal\Core\Config\Entity\ConfigEntityInterface;
-use Drupal\Core\Entity\EntityInterface;
 use Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface;
 use Drupal\typed_data\Context\ContextDefinition;
 

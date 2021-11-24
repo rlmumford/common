@@ -25,9 +25,7 @@ class JobListBuilder extends EntityListBuilder {
    */
   public function buildRow(EntityInterface $entity) {
     return [
-      'title' => $entity->status() ?
-        $entity->label() :
-        Markup::create("<del>{$entity->label()}</del>"),
+      'title' => $entity->status() ? $entity->label() : Markup::create("<del>{$entity->label()}</del>"),
     ] + parent::buildRow($entity);
   }
 
