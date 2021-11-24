@@ -103,18 +103,22 @@ class JobTriggerManager extends DefaultPluginManager implements JobTriggerManage
       ->condition('job', $job->id())
       ->execute();
 
-    $insert = $this->database->insert('task_job_trigger_index')
-      ->fields(['job', 'trigger', 'trigger_base', 'trigger_key']);
-    foreach ($job->getTriggersConfiguration() as $key => $config) {
-      $trigger_def = $this->getDefinition($config['id']);
-      $insert->values([
-        'job' => $job->id(),
-        'trigger' => $config['id'],
-        'trigger_base' => $trigger_def['id'],
-        'trigger_key' => $key,
-      ]);
+    if ($job->status()) {
+      $insert = $this->database->insert('task_job_trigger_index')
+        ->fields(['job', 'trigger', 'trigger_base', 'trigger_key']);
+      foreach ($job->getTriggersConfiguration() as $key => $config) {
+        $trigger_def = $this->getDefinition($config['id']);
+        $insert->values(
+          [
+            'job' => $job->id(),
+            'trigger' => $config['id'],
+            'trigger_base' => $trigger_def['id'],
+            'trigger_key' => $key,
+          ]
+        );
+      }
+      $insert->execute();
     }
-    $insert->execute();
   }
 
   /**

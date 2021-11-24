@@ -3,14 +3,14 @@
 namespace Drupal\task_job;
 
 use Drupal\Component\Plugin\LazyPluginCollection;
-use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Config\Entity\ConfigEntityInterface;
 use Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface;
 use Drupal\typed_data\Context\ContextDefinition;
 
 /**
  * Interface for Jobs.
  */
-interface JobInterface extends EntityInterface {
+interface JobInterface extends ConfigEntityInterface {
 
   /**
    * Get the default checklist items for this job.
