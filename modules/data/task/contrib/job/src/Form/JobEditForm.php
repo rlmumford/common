@@ -349,6 +349,35 @@ class JobEditForm extends JobForm {
     ];
     $form['context_wrapper']['context']['_add_new'] = $row;
 
+    $form['resources'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Resources'),
+      '#description' => $this->t('Resources appear on the task page. Sometimes more resources than those configured here might appear, provided by checklist items or other integrations.'),
+    ];
+    $form['resources']['add'] = [
+      '#type' => 'link',
+      '#title' => $this->t('Add Resource'),
+      '#url' => Url::fromRoute(
+        'task_job.resource.choose_block',
+        [
+          'task_job' => $this->entity->id(),
+        ],
+        $ajax_attributes
+      ),
+      '#attributes' => [
+        'class' => ['add-resource-button', 'btn', 'button'],
+      ],
+    ];
+    $form['resources']['table'] = [
+      '#type' => 'table',
+      '#header' => [
+        $this->t('Resource'),
+        $this->t('Category'),
+        $this->t('Weight'),
+        $this->t('Operations'),
+      ],
+    ];
+
     $form['checklist'] = [
       '#type' => 'details',
       '#title' => $this->t('Default Checklist'),

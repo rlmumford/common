@@ -4,7 +4,6 @@ namespace Drupal\typed_data_reference;
 
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Entity\Plugin\DataType\EntityAdapter;
-use Drupal\Core\Entity\TypedData\EntityDataDefinitionInterface;
 use Drupal\Core\Field\FieldItemList;
 use Drupal\Core\TypedData\ComplexDataDefinitionInterface;
 use Drupal\Core\TypedData\ComplexDataInterface;
