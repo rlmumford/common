@@ -4,4 +4,4 @@ services:
     arguments: ['@tempstore.shared']
   plugin.manager.task_job.trigger:
     class: Drupal\task_job\Plugin\JobTrigger\JobTriggerManager
-    arguments: ['@container.namespaces', '@cache.discovery', '@module_handler', '@database', '@entity_type.manager']
+    arguments: ['@container.namespaces', '@cache.discovery', '@module_handler', '@database', '@entity_type.manager', '@logger.factory']

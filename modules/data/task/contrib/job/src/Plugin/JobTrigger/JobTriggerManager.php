@@ -2,11 +2,14 @@
 
 namespace Drupal\task_job\Plugin\JobTrigger;
 
+use Drupal\Component\Plugin\Exception\PluginNotFoundException;
+use Drupal\Component\Plugin\FallbackPluginManagerInterface;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Plugin\Context\ContextAwarePluginManagerTrait;
 use Drupal\Core\Plugin\DefaultPluginManager;
 use Drupal\task_job\Annotation\JobTrigger;
@@ -15,7 +18,7 @@ use Drupal\task_job\JobInterface;
 /**
  * Manage job triggers.
  */
-class JobTriggerManager extends DefaultPluginManager implements JobTriggerManagerInterface {
+class JobTriggerManager extends DefaultPluginManager implements JobTriggerManagerInterface, FallbackPluginManagerInterface {
   use ContextAwarePluginManagerTrait;
 
   /**
@@ -40,6 +43,13 @@ class JobTriggerManager extends DefaultPluginManager implements JobTriggerManage
   protected $entityTypeManager;
 
   /**
+   * The logger.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelInterface
+   */
+  protected $logger;
+
+  /**
    * JobTriggerManager constructor.
    *
    * @param \Traversable $namespaces
@@ -53,16 +63,16 @@ class JobTriggerManager extends DefaultPluginManager implements JobTriggerManage
    *   The database connection.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
-   *
-   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
-   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
+   *   The logger channel factory.
    */
   public function __construct(
     \Traversable $namespaces,
     CacheBackendInterface $cache_backend,
     ModuleHandlerInterface $module_handler,
     Connection $database,
-    EntityTypeManagerInterface $entity_type_manager
+    EntityTypeManagerInterface $entity_type_manager,
+    LoggerChannelFactoryInterface $logger_factory
   ) {
     parent::__construct(
       'Plugin/JobTrigger',
@@ -77,6 +87,7 @@ class JobTriggerManager extends DefaultPluginManager implements JobTriggerManage
 
     $this->database = $database;
     $this->entityTypeManager = $entity_type_manager;
+    $this->logger = $logger_factory->get('task_job');
   }
 
   /**
@@ -107,12 +118,19 @@ class JobTriggerManager extends DefaultPluginManager implements JobTriggerManage
       $insert = $this->database->insert('task_job_trigger_index')
         ->fields(['job', 'trigger', 'trigger_base', 'trigger_key']);
       foreach ($job->getTriggersConfiguration() as $key => $config) {
-        $trigger_def = $this->getDefinition($config['id']);
+        try {
+          $trigger_def = $this->getDefinition($config['id']);
+          $base_id = $trigger_def['id'];
+        }
+        catch (PluginNotFoundException $exception) {
+          [$base_id] = explode(':', $config['id']);
+        }
+
         $insert->values(
           [
             'job' => $job->id(),
             'trigger' => $config['id'],
-            'trigger_base' => $trigger_def['id'],
+            'trigger_base' => $base_id,
             'trigger_key' => $key,
           ]
         );
@@ -185,6 +203,22 @@ class JobTriggerManager extends DefaultPluginManager implements JobTriggerManage
     }
 
     return $tasks;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFallbackPluginId($plugin_id, array $configuration = []) {
+    return 'missing';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function handlePluginNotFound($plugin_id, array $configuration) {
+    $this->logger->warning('The "%plugin_id" trigger was not found', ['%plugin_id' => $plugin_id]);
+    return parent::handlePluginNotFound($plugin_id, $configuration)
+      ->setIntendedPluginId($plugin_id);
   }
 
 }

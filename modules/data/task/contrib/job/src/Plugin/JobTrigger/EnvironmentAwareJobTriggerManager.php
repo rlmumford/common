@@ -2,6 +2,7 @@
 
 namespace Drupal\task_job\Plugin\JobTrigger;
 
+use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\exec_environment\EnvironmentStackInterface;
 use Drupal\exec_environment\Plugin\ExecEnvironment\Component\ConfigFactoryCollectionComponentInterface;
@@ -92,12 +93,19 @@ class EnvironmentAwareJobTriggerManager extends JobTriggerManager {
       ->fields(['job', 'trigger', 'trigger_base', 'trigger_key', 'collection']);
     if ($job->status() && $triggers = $job->getTriggersConfiguration()) {
       foreach ($triggers as $key => $trigger_config) {
-        $trigger_def = $this->getDefinition($trigger_config['id']);
+        try {
+          $trigger_def = $this->getDefinition($trigger_config['id']);
+          $base_id = $trigger_def['id'];
+        }
+        catch (PluginNotFoundException $exception) {
+          [$base_id] = explode(':', $trigger_config['id']);
+        }
+
         $insert->values(
           [
             'job' => $job->id(),
             'trigger' => $trigger_config['id'],
-            'trigger_base' => $trigger_def['id'],
+            'trigger_base' => $base_id,
             'trigger_key' => $key,
             'collection' => $config->getStorage()->getCollectionName(),
           ]
