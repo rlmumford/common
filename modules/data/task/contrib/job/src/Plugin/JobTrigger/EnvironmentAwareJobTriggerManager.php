@@ -98,7 +98,7 @@ class EnvironmentAwareJobTriggerManager extends JobTriggerManager {
           $base_id = $trigger_def['id'];
         }
         catch (PluginNotFoundException $exception) {
-          [$base_id, ] = explode(':', $trigger_config['id']);
+          [$base_id] = explode(':', $trigger_config['id']);
         }
 
         $insert->values(

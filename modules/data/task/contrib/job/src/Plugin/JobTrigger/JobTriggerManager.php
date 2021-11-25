@@ -123,7 +123,7 @@ class JobTriggerManager extends DefaultPluginManager implements JobTriggerManage
           $base_id = $trigger_def['id'];
         }
         catch (PluginNotFoundException $exception) {
-          [$base_id, ] = explode(':', $config['id']);
+          [$base_id] = explode(':', $config['id']);
         }
 
         $insert->values(
