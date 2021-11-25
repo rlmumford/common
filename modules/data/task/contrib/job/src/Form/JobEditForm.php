@@ -20,6 +20,7 @@ use Drupal\entity_template\TemplateBlueprintProviderManager;
 use Drupal\task_job\JobInterface;
 use Drupal\task_job\Plugin\EntityTemplate\BlueprintProvider\BlueprintStorageJobTriggerAdaptor;
 use Drupal\task_job\Plugin\JobTrigger\JobTriggerManager;
+use Drupal\task_job\Plugin\JobTrigger\Missing;
 use Drupal\task_job\TaskJobTempstoreRepository;
 use Drupal\typed_data\Context\ContextDefinition;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -624,11 +625,13 @@ class JobEditForm extends JobForm {
 
     $triggers_config = [];
     foreach ($this->blueprintStorages as $key => $storage) {
+      $trigger = $storage->getTrigger();
+
       $triggers_config[$key] = [
-        'id' => $storage->getTrigger()->getPluginId(),
-        'key' => $storage->getTrigger()->getKey(),
+        'id' => $trigger instanceof Missing ? $trigger->getIntendedPluginId() : $trigger->getPluginId(),
+        'key' => $trigger->getKey(),
         'template' => $storage->getTemplate('default')->getConfiguration(),
-      ] + $storage->getTrigger()->getConfiguration();
+      ] + $trigger->getConfiguration();
     }
 
     $this->entity->set('triggers', $triggers_config);
@@ -778,6 +781,8 @@ class JobEditForm extends JobForm {
     $this->entity->set('triggers', $triggers);
     $form_state->setRebuild(TRUE);
 
+    $this->blueprintTempstoreRepository->delete($this->blueprintStorages[$button['#trigger_key']]);
+    unset($this->blueprintStorages[$button['#trigger_key']]);
     $this->tempstoreRepository->set($this->entity);
   }
 
