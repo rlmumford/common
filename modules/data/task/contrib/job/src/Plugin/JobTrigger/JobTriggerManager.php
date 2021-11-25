@@ -2,7 +2,6 @@
 
 namespace Drupal\task_job\Plugin\JobTrigger;
 
-use Drupal\Component\Plugin\Exception\PluginException;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Component\Plugin\FallbackPluginManagerInterface;
 use Drupal\Core\Cache\CacheBackendInterface;
