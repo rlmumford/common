@@ -38,7 +38,7 @@ class Regex extends ConditionPluginBase {
     $form['pattern'] = [
       '#type' => 'textfield',
       '#title' => 'Pattern',
-      '#description' => 'The pattern that should be matched by the context. Pattern must include delimeters.',
+      '#description' => 'The pattern that should be matched by the context. Pattern must include delimiters, for example "/pattern/". To perform case-insensitive matching you can add the "i" flag after the closing delimiter, for example "/pattern/i" will match "PaTTern" as well as "pattern". For more information see this <a href="https://www.debuggex.com/cheatsheet/regex/pcre" target="_blank">cheatsheet</a>.',
       '#default_value' => $this->configuration['pattern'] ?? '',
       '#required' => TRUE,
     ];
