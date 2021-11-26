@@ -255,4 +255,5 @@ class Job extends ConfigEntityBase implements JobInterface, EntityWithPluginColl
       'resources' => $this->getResourcesCollection(),
     ];
   }
+
 }

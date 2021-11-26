@@ -2,7 +2,6 @@
 
 namespace Drupal\task\Plugin\Block;
 
-use Drupal\Core\Annotation\ContextDefinition;
 use Drupal\Core\Block\BlockBase;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\task\TaskResourceManagerInterface;
@@ -66,4 +65,5 @@ class TaskResourcesBlock extends BlockBase implements ContainerFactoryPluginInte
   public function build() {
     return $this->resourceManager->buildTaskResources($this->getContextValue('task'));
   }
+
 }

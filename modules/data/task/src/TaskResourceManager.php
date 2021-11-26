@@ -145,7 +145,11 @@ class TaskResourceManager implements TaskResourceManagerInterface {
 
       $cacheability->addCacheableDependency($block_plugin);
 
-      $this->moduleHandler->alter(['block_view', 'block_view_' . $block_plugin->getBaseId()], $block_build, $block_plugin);
+      $this->moduleHandler->alter(
+        ['block_view', 'block_view_' . $block_plugin->getBaseId()],
+        $block_build,
+        $block_plugin
+      );
       $build[$key] = $block_build;
     }
 
@@ -155,7 +159,7 @@ class TaskResourceManager implements TaskResourceManagerInterface {
   }
 
   /**
-   * #pre_render callback for building a block.
+   * Pre render callback for building a block.
    *
    * Renders the content using the provided block plugin, if there is no
    * content, aborts rendering, and makes sure the block won't be rendered.

@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Drupal\task_job\EventSubscriber;
 
 use Drupal\task\Event\CollectResourcesEvent;
@@ -40,4 +39,5 @@ class CollectResourcesSubscriber implements EventSubscriberInterface {
       $event->addResource("job__{$key}", $configuration['id'], $configuration);
     }
   }
+
 }

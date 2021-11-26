@@ -123,10 +123,11 @@ class JobAddResourceForm extends JobPluginFormBase {
     $this->eventDispatcher->dispatch(TaskEvents::COLLECT_RESOURCES_CONTEXTS, $event);
 
     return $event->getContexts() + [
-        'task' => new EntityContext(
+      'task' => new EntityContext(
           new EntityContextDefinition('task', $this->t('The Task')),
           $tmp_task
-        )
-      ];
+      ),
+    ];
   }
+
 }

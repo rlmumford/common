@@ -111,7 +111,7 @@ class ChooseBlockController extends ControllerBase {
         'task' => new EntityContext(
           new EntityContextDefinition('task', $this->t('The Task')),
           $temp_task
-        )
+        ),
       ]
     );
 

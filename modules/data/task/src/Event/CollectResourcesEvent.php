@@ -54,7 +54,7 @@ class CollectResourcesEvent extends Event {
       'task' => new EntityContext(
         new EntityContextDefinition('task', 'The Task'),
         $this->task
-      )
+      ),
     ];
     // @todo replace this with a new class so that blocks get sorted by weight.
     $this->resources = new DefaultLazyPluginCollection($block_manager);
