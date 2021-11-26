@@ -2,6 +2,7 @@
 
 namespace Drupal\task;
 
+use Drupal\Component\Plugin\Exception\MissingValueContextException;
 use Drupal\Core\Block\BlockManagerInterface;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Cache\CacheableMetadata;
@@ -104,9 +105,15 @@ class TaskResourceManager implements TaskResourceManagerInterface {
     $cacheability = new BubbleableMetadata();
     /** @var \Drupal\Core\Block\BlockPluginInterface $block_plugin */
     foreach ($resources as $key => $block_plugin) {
-      if ($block_plugin instanceof ContextAwarePluginInterface) {
-        $this->contextHandler->applyContextMapping($block_plugin, $collect_resources->getContexts());
+      try {
+        if ($block_plugin instanceof ContextAwarePluginInterface) {
+          $this->contextHandler->applyContextMapping($block_plugin, $collect_resources->getContexts());
+        }
       }
+      catch (MissingValueContextException $exception) {
+        continue;
+      }
+
       $access = $block_plugin->access($this->currentUser, TRUE);
       $cacheability->addCacheableDependency($access);
       if (!$access->isAllowed()) {
@@ -115,7 +122,9 @@ class TaskResourceManager implements TaskResourceManagerInterface {
 
       $block_build = [
         '#theme' => 'block',
-        '#attributes' => [],
+        '#attributes' => [
+          'class' => ['resource', 'resource-' . $key],
+        ],
         '#weight' => $weight++,
         '#configuration' => $block_plugin->getConfiguration(),
         '#plugin_id' => $block_plugin->getPluginId(),

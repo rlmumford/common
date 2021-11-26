@@ -11,6 +11,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformState;
+use Drupal\Core\Plugin\ContextAwarePluginInterface;
 use Drupal\Core\Plugin\PluginFormFactoryInterface;
 use Drupal\Core\Plugin\PluginWithFormsInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -93,6 +94,11 @@ abstract class JobPluginFormBase extends FormBase {
 
     /** @var \Drupal\Core\Plugin\PluginWithFormsInterface $plugin */
     $plugin = $this->manager->createInstance($plugin_id, $plugin_configuration);
+
+    if ($plugin instanceof ContextAwarePluginInterface) {
+      $form_state->setTemporaryValue('gathered_contexts', $this->gatherContexts($task_job));
+    }
+
     if (
       $plugin instanceof PluginWithFormsInterface &&
       $plugin->hasFormClass('configure')
@@ -228,6 +234,19 @@ abstract class JobPluginFormBase extends FormBase {
     )->toString()));
 
     return $response;
+  }
+
+  /**
+   * Gather the contexts available for this plugin.
+   *
+   * @param \Drupal\task_job\JobInterface $task_job
+   *   The job.
+   *
+   * @return \Drupal\Core\Plugin\Context\ContextInterface[]
+   *   A list of contexts available to the plugin.
+   */
+  protected function gatherContexts(JobInterface $task_job) {
+    return [];
   }
 
 }
