@@ -15,7 +15,7 @@ class EnvironmentJobTriggerIndexTest extends KernelTestBase {
    */
   public static $modules = [
     'task', 'task_job', 'entity_template', 'exec_environment',
-    'exec_environment_config_test', 'user',
+    'exec_environment_config_test', 'user', 'options',
   ];
 
   /**
@@ -25,6 +25,7 @@ class EnvironmentJobTriggerIndexTest extends KernelTestBase {
     parent::setUp();
 
     $this->installSchema('task_job', 'task_job_trigger_index');
+    $this->installEntitySchema('user');
   }
 
   /**

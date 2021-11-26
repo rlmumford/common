@@ -38,6 +38,7 @@ class EntityOperationJobTriggerTest extends EntityKernelTestBase {
       'label' => 'Make Tea',
       'id' => 'make_tea',
       'default_checklist' => [],
+      'resources' => [],
       'triggers' => [
         'user__insert' => [
           'id' => 'entity_op:user.insert',
