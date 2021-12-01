@@ -22,6 +22,13 @@ class JobEnableForm extends EntityConfirmFormBase {
   /**
    * {@inheritdoc}
    */
+  public function getDescription() {
+    return $this->t('Enabling a job will allow all triggers to fire in future.');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getQuestion() {
     return $this->t('Are you sure you want to enable @job?', ['@job' => $this->entity->label()]);
   }

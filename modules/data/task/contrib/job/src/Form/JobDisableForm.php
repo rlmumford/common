@@ -22,6 +22,13 @@ class JobDisableForm extends EntityConfirmFormBase {
   /**
    * {@inheritdoc}
    */
+  public function getDescription() {
+    return $this->t('Disabling a job will stop all triggers from firing in future. Tasks that have already been triggered will be unchanged.');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getQuestion() {
     return $this->t('Are you sure you want to disable @job?', ['@job' => $this->entity->label()]);
   }
