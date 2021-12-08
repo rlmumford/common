@@ -524,6 +524,7 @@ class JobEditForm extends JobForm {
       ],
     ];
 
+    /** @var \Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface $trigger */
     foreach ($this->entity->getTriggerCollection() as $key => $trigger) {
       $wrapper_id = Html::cleanCssIdentifier("trigger-{$key}-wrapper");
       $element = [

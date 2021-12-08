@@ -11,6 +11,7 @@ use Drupal\Core\Plugin\Context\Context;
 use Drupal\Core\Plugin\Context\ContextDefinitionInterface;
 use Drupal\Core\Plugin\Context\ContextHandler as CoreContextHandler;
 use Drupal\Core\Plugin\Context\ContextInterface;
+use Drupal\Core\Plugin\Context\EntityContextDefinition;
 use Drupal\Core\Plugin\ContextAwarePluginInterface;
 use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\Site\Settings;
@@ -197,7 +198,19 @@ class ContextHandler extends CoreContextHandler {
                   $filters
                 );
                 if ($data && $data->getValue()) {
-                  $plugin->setContextValue($plugin_context_id, $data->getValue());
+                  $old_context_def = $plugin->getContext($plugin_context_id)->getContextDefinition();
+                  $new_def_class = strpos($data->getDataDefinition()->getDataType(), 'entity:') !== 0 ? ContextDefinition::class : EntityContextDefinition::class;
+                  $plugin->setContext($plugin_context_id, new Context(
+                    (new $new_def_class(
+                      $data->getDataDefinition()->getDataType(),
+                      $old_context_def->getLabel(),
+                      $old_context_def->isRequired(),
+                      $old_context_def->isMultiple(),
+                      $old_context_def->getDescription(),
+                      $old_context_def->getDefaultValue(),
+                    ))->setConstraints(array_merge($old_context_def->getConstraints(), $data->getDataDefinition()->getConstraints())),
+                    $data->getValue()
+                  ));
                 }
                 elseif ($plugin_context_definition->isRequired()) {
                   $missing_value[] = $plugin_context_id;
@@ -228,7 +241,19 @@ class ContextHandler extends CoreContextHandler {
             }
 
             $plugin_context->addCacheableDependency($cache_metadata);
-            $plugin->setContextValue($plugin_context_id, $data->getValue());
+            $old_context_def = $plugin->getContextDefinition($plugin_context_id);
+            $new_def_class = strpos($data->getDataDefinition()->getDataType(), 'entity:') !== 0 ? ContextDefinition::class : EntityContextDefinition::class;
+            $plugin->setContext($plugin_context_id, new Context(
+              (new $new_def_class(
+                $data->getDataDefinition()->getDataType(),
+                $old_context_def->getLabel(),
+                $old_context_def->isRequired(),
+                $old_context_def->isMultiple(),
+                $old_context_def->getDescription(),
+                $old_context_def->getDefaultValue(),
+              ))->setConstraints(array_merge($old_context_def->getConstraints(), $data->getDataDefinition()->getConstraints())),
+              $data->getValue()
+            ));
 
             $new_plugin_context = $plugin->getContext($plugin_context_id);
             if ($new_plugin_context instanceof ContextInterface) {
