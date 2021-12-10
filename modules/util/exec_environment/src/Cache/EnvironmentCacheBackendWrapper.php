@@ -9,6 +9,8 @@ use Drupal\exec_environment\EnvironmentStackInterface;
 use Drupal\exec_environment\Plugin\ExecEnvironment\Component\CacheBinSuffixComponentInterface;
 
 /**
+ * Wrapper for environment aware cache bins.
+ *
  * This cache backend wraps another and applies an environment suffix to the
  * front of each items cid.
  *
@@ -87,7 +89,7 @@ class EnvironmentCacheBackendWrapper implements CacheBackendInterface, CacheTags
    */
   protected function mapCids(array &$cids) {
     if ($prefix = $this->getBinSuffixesAsPrefix()) {
-      $cids = array_map(function($cid) use ($prefix) {
+      $cids = array_map(function ($cid) use ($prefix) {
         return $prefix . $cid;
       }, $cids);
     }

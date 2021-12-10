@@ -3,7 +3,6 @@
 namespace Drupal\exec_environment\Cache;
 
 use Drupal\Core\Cache\CacheFactory;
-use Drupal\exec_environment\Plugin\ExecEnvironment\Component\CacheBinSuffixComponentInterface;
 
 /**
  * Cache factory that makes environment aware cache bins.
