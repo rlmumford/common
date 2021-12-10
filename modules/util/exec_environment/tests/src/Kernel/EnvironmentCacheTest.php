@@ -55,19 +55,16 @@ class EnvironmentCacheTest extends KernelTestBase {
       );
     $environment_stack->applyEnvironment($environment);
 
-    $bin = $cache_factory->get('default');
     $this->assertEmpty($bin->get($key));
     $env_data = $this->randomString(30);
     $bin->set($key, $env_data);
 
     $environment_stack->resetEnvironment();
 
-    $bin = $cache_factory->get('default');
     $this->assertEquals($no_env_data, $bin->get($key)->data);
 
     $environment_stack->applyEnvironment($environment);
 
-    $bin = $cache_factory->get('default');
     $this->assertEquals($env_data, $bin->get($key)->data);
   }
 
