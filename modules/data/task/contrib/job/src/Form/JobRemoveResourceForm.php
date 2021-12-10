@@ -17,8 +17,15 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 /**
  * Form to remove a checklist item.
  */
-class JobRemoveChecklistItemForm extends FormBase {
+class JobRemoveResourceForm extends FormBase {
   use AjaxFormHelperTrait;
+
+  /**
+   * The tempstore repo.
+   *
+   * @var \Drupal\task_job\TaskJobTempstoreRepository
+   */
+  protected $tempstoreRepository;
 
   /**
    * {@inheritdoc}
@@ -30,7 +37,7 @@ class JobRemoveChecklistItemForm extends FormBase {
   }
 
   /**
-   * JobEditForm constructor.
+   * JobRemoveResourceForm constructor.
    *
    * @param \Drupal\task_job\TaskJobTempstoreRepository $tempstore_repository
    *   The tempstore repository.
@@ -45,7 +52,7 @@ class JobRemoveChecklistItemForm extends FormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'job_remove_checklist_item_form';
+    return 'job_remove_resource_form';
   }
 
   /**
@@ -55,7 +62,7 @@ class JobRemoveChecklistItemForm extends FormBase {
     array $form,
     FormStateInterface $form_state,
     JobInterface $task_job = NULL,
-    $name = NULL
+    $uuid = NULL
   ) {
     // Get the Job from tempstore if available.
     $job = $task_job;
@@ -63,27 +70,23 @@ class JobRemoveChecklistItemForm extends FormBase {
       $job = $this->tempstoreRepository->get($job);
     }
     $form_state->set('job', $job);
-    $form_state->set('name', $name);
 
-    $checklist_items = $job->get('default_checklist');
-    if (!isset($checklist_items[$name])) {
+    $resources = $job->getResourcesCollection()->getConfiguration();
+    if (!isset($resources[$uuid])) {
       throw new NotFoundHttpException();
     }
-    $item = $checklist_items[$name];
+    $form_state->set('resource_uuid', $uuid);
 
     $form['message'] = [
       '#markup' => $this->t(
-        'Are you sure you want to remove @item?',
-        [
-          '@item' => $item['name'] . ' ' . $item['label'],
-        ]
+        'Are you sure you want to remove this resource?',
       ),
     ];
 
     $form['actions']['#type'] = 'actions';
     $form['actions']['submit'] = [
       '#type' => 'submit',
-      '#value' => $this->t('Remove Item'),
+      '#value' => $this->t('Remove Resource'),
     ];
 
     if ($this->isAjax()) {
@@ -106,10 +109,14 @@ class JobRemoveChecklistItemForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+    /** @var \Drupal\task_job\JobInterface $job */
     $job = $form_state->get('job');
-    $checklist_items = $job->get('default_checklist');
-    unset($checklist_items[$form_state->get('name')]);
-    $job->set('default_checklist', $checklist_items);
+
+    $uuid = $form_state->get('resource_uuid');
+    $resources = $job->getResourcesCollection()->getConfiguration();
+    unset($resources[$uuid]);
+    $job->set('resources', $resources);
+    $job->getResourcesCollection()->setConfiguration($job->getResourcesConfiguration());
 
     $this->tempstoreRepository->set($job);
   }

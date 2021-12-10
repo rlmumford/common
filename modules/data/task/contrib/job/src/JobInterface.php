@@ -25,6 +25,22 @@ interface JobInterface extends ConfigEntityInterface {
   public function getChecklistItems() : array;
 
   /**
+   * Get the resources to be displayed on task of this job.
+   *
+   * @return array
+   *   An array of resources configuration.
+   */
+  public function getResourcesConfiguration() : array;
+
+  /**
+   * Get the resources collection.
+   *
+   * @return \Drupal\Component\Plugin\LazyPluginCollection
+   *   The resources collection.
+   */
+  public function getResourcesCollection(): LazyPluginCollection;
+
+  /**
    * Get the triggers associated with this job.
    *
    * @return array

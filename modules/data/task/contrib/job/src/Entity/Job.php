@@ -5,6 +5,8 @@ namespace Drupal\task_job\Entity;
 use Drupal\Component\Plugin\LazyPluginCollection;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
 use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\EntityWithPluginCollectionInterface;
+use Drupal\Core\Plugin\DefaultLazyPluginCollection;
 use Drupal\task_job\JobInterface;
 use Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface;
 use Drupal\task_job\Plugin\JobTrigger\LazyJobTriggerCollection;
@@ -28,6 +30,7 @@ use Drupal\typed_data\Context\ContextDefinition;
  *     "label",
  *     "context",
  *     "description",
+ *     "resources",
  *     "default_checklist",
  *     "triggers",
  *   },
@@ -59,7 +62,7 @@ use Drupal\typed_data\Context\ContextDefinition;
  *
  * @package Drupal\task_job\Entity
  */
-class Job extends ConfigEntityBase implements JobInterface {
+class Job extends ConfigEntityBase implements JobInterface, EntityWithPluginCollectionInterface {
 
   /**
    * The triggers configuration.
@@ -74,6 +77,20 @@ class Job extends ConfigEntityBase implements JobInterface {
    * @var \Drupal\Component\Plugin\LazyPluginCollection
    */
   protected $triggerCollection;
+
+  /**
+   * The resources configuration.
+   *
+   * @var array
+   */
+  protected $resources = [];
+
+  /**
+   * The resources collection.
+   *
+   * @var \Drupal\Component\Plugin\LazyPluginCollection
+   */
+  protected $resourcesCollection;
 
   /**
    * The default checklist configuration.
@@ -112,6 +129,27 @@ class Job extends ConfigEntityBase implements JobInterface {
    */
   public function getChecklistItems(): array {
     return $this->get('default_checklist') ?: [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getResourcesConfiguration(): array {
+    return $this->get('resources') ?: [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getResourcesCollection(): LazyPluginCollection {
+    if (!$this->resourcesCollection) {
+      $this->resourcesCollection = new DefaultLazyPluginCollection(
+        \Drupal::service('plugin.manager.block'),
+        $this->getResourcesConfiguration()
+      );
+    }
+
+    return $this->resourcesCollection;
   }
 
   /**
@@ -206,6 +244,16 @@ class Job extends ConfigEntityBase implements JobInterface {
     /** @var \Drupal\task_job\Plugin\JobTrigger\JobTriggerManagerInterface $trigger_manager */
     $trigger_manager = \Drupal::service('plugin.manager.task_job.trigger');
     $trigger_manager->updateTriggerIndex($this);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getPluginCollections() {
+    return [
+      'triggers' => $this->getTriggerCollection(),
+      'resources' => $this->getResourcesCollection(),
+    ];
   }
 
 }

@@ -349,6 +349,73 @@ class JobEditForm extends JobForm {
     ];
     $form['context_wrapper']['context']['_add_new'] = $row;
 
+    $form['resources'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Resources'),
+      '#description' => $this->t('Resources appear on the task page. Sometimes more resources than those configured here might appear, provided by checklist items or other integrations.'),
+    ];
+    $form['resources']['add'] = [
+      '#type' => 'link',
+      '#title' => $this->t('Add Resource'),
+      '#url' => Url::fromRoute(
+        'task_job.resource.choose_block',
+        [
+          'task_job' => $this->entity->id(),
+        ],
+        $ajax_attributes
+      ),
+      '#attributes' => [
+        'class' => ['add-resource-button', 'btn', 'button'],
+      ],
+    ];
+    $form['resources']['table'] = [
+      '#type' => 'table',
+      '#header' => [
+        $this->t('Resource'),
+        $this->t('Category'),
+        $this->t('Operations'),
+      ],
+    ];
+    /** @var \Drupal\Core\Block\BlockPluginInterface $block */
+    foreach ($this->entity->getResourcesCollection() as $uuid => $block) {
+      $row = [];
+      $row['resource'] = $block->label();
+      $row['category'] = $block->getPluginDefinition()['category'] ?? $this->t('Other');
+      $row['operations']['data'] = [
+        '#type' => 'dropbutton',
+        '#links' => [
+          'configure' => [
+            'title' => $this->t('configure'),
+            'url' => Url::fromRoute(
+              'task_job.resource.configure',
+              [
+                'task_job' => $this->entity->id(),
+                'uuid' => $uuid,
+              ],
+              [
+                'query' => $this->getDestinationArray(),
+              ] + $ajax_attributes,
+            ),
+          ],
+          'remove' => [
+            'title' => $this->t('remove'),
+            'url' => Url::fromRoute(
+              'task_job.resource.remove',
+              [
+                'task_job' => $this->entity->id(),
+                'uuid' => $uuid,
+              ],
+              [
+                'query' => $this->getDestinationArray(),
+              ] + $ajax_attributes
+            ),
+          ],
+        ],
+      ];
+
+      $form['resources']['table']['#rows'][] = $row;
+    }
+
     $form['checklist'] = [
       '#type' => 'details',
       '#title' => $this->t('Default Checklist'),
@@ -457,6 +524,7 @@ class JobEditForm extends JobForm {
       ],
     ];
 
+    /** @var \Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface $trigger */
     foreach ($this->entity->getTriggerCollection() as $key => $trigger) {
       $wrapper_id = Html::cleanCssIdentifier("trigger-{$key}-wrapper");
       $element = [
@@ -633,8 +701,8 @@ class JobEditForm extends JobForm {
         'template' => $storage->getTemplate('default')->getConfiguration(),
       ] + $trigger->getConfiguration();
     }
-
     $this->entity->set('triggers', $triggers_config);
+    $this->entity->set('resources', $this->entity->getResourcesCollection()->getConfiguration());
   }
 
   /**
