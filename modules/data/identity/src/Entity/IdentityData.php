@@ -85,6 +85,9 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface, E
         'weight' => -4,
       ])
       ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'options_select',
+      ])
       ->setDisplayConfigurable('form', TRUE);
 
     $fields['identity'] = BaseFieldDefinition::create('entity_reference')

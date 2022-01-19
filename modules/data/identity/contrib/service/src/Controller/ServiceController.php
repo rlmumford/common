@@ -338,7 +338,6 @@ class ServiceController extends ControllerBase {
     );
 
     $query->addTag('identity_data_access');
-    $query->addTag('identity_access');
 
     $ids = $query->execute();
     $result = [];

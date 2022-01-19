@@ -125,19 +125,16 @@ class Identity extends ContentEntityBase implements IdentityInterface {
       $query = $data_storage->getQuery();
       $query->condition('identity', $this->id());
       $query->condition('class', $class);
+      $query->accessCheck(!$bypass_access);
 
-      if (!$bypass_access) {
-        $query->addTag('identity_data_access');
-      }
-
-      if ((clone $query)->count()->execute() > 40) {
+      $count = (clone $query)->count()->execute();
+      if ($count > 40) {
         $this->{$list}[$class] = new IdentityDataIterator($query->execute());
       }
       else {
         $this->{$list}[$class] = $data_storage->loadMultiple($query->execute());
       }
     }
-
     return $this->applyDataFilters($this->{$list}[$class], $filters);
   }
 
