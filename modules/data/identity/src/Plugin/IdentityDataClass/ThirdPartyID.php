@@ -258,6 +258,9 @@ class ThirdPartyID extends IdentityDataClassBase {
     $fields['value'] = BundleFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('ID'))
       ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'textfield',
+      ])
       ->setDisplayConfigurable('form', TRUE);
 
     $fields['value_encrypted'] = BundleFieldDefinition::create('text')
