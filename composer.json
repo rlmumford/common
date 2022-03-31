@@ -12,7 +12,7 @@
     "require": {
         "cweagans/composer-patches": "dev-relative-patches-1.x as 1.x-dev",
         "webmozart/path-util": "^2.3",
-        "drupal/range": "1.x-dev",
+        "drupal/range": "^1",
         "drupal/entity": "^1.0-rc2",
         "drupal/views_block_filter_block": "1.x-dev",
         "drupal/name": "^1.0",
