@@ -52,10 +52,10 @@
               "Allow unsaved profiles": "https://www.drupal.org/files/issues/2019-09-12/3058223-5.patch"
           },
           "drupal/core": {
-              "Layout builder context hook": "https://www.drupal.org/files/issues/2019-05-10/3001188-5.patch",
-              "Layout builder visibility rules": "https://www.drupal.org/files/issues/2020-06-10/2916876-83.patch",
-              "Entity reference views autocomplete filters": "https://www.drupal.org/files/issues/2020-09-30/2429699-351--on-8_9_x.do-not-test.patch",
-              "#2988123 - Fix Item List Change Notification": "https://www.drupal.org/files/issues/2019-11-16/2988123-22.patch"
+              "#3001188 - Layout builder context hook": "https://www.drupal.org/files/issues/2021-07-23/3001188-22.patch",
+              "#2916876 - Layout builder visibility rules": "https://www.drupal.org/files/issues/2020-06-10/2916876-83.patch",
+              "#2429699 - Entity reference views autocomplete filters": "https://www.drupal.org/files/issues/2021-12-02/2429699-453-9.3.x.patch",
+              "#2988123 - Fix Item List Change Notification": "https://www.drupal.org/files/issues/2022-01-12/2988123-29.patch"
           }
       }
     },
