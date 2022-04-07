@@ -1,5 +1,5 @@
 name: Context Reference
 description: Reference contexts in a field.
 type: module
-core_version_requirement: ^8 || 9
+core_version_requirement: ^8 || ^9
 package: RLMumford
