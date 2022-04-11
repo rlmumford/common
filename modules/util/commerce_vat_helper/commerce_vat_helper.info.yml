@@ -1,7 +1,7 @@
 type: module
 name: Commerce Vat Helper
 description: 'Tools to help build VAT reports.'
-core: 8.x
+core_version_requirement: ^8 || ^9
 package: Commerce
 
 dependencies:

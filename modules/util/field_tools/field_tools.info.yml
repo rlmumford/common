@@ -2,4 +2,4 @@ name: Field Tools
 description: "Provides useful tools for entity reference fields."
 type: module
 package: RLMumford
-core: 8.x
+core_version_requirement: ^8 || ^9

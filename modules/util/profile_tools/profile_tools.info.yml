@@ -1,5 +1,5 @@
 type: module
-core: 8.x
+core_version_requirement: ^8 || ^9
 name: Profile Tools
 description: Improvements to the profile system for easier querying with flexiform.
 dependencies:

@@ -11,7 +11,7 @@ description: ''
 tag: ''
 base_table: service
 base_field: id
-core: 8.x
+core_version_requirement: ^8 || ^9
 display:
   default:
     display_plugin: default
