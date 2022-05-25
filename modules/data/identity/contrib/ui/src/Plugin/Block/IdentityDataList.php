@@ -13,7 +13,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * @Block(
  *   id = "identity_data_list",
  *   deriver = "\Drupal\identity_ui\Plugin\Derivative\IdentityDataClassDeriver",
- *   context = {
+ *   context_definitions = {
  *     "identity" = @ContextDefinition("entity:identity", label = @Translation("Identity")),
  *   }
  * );
