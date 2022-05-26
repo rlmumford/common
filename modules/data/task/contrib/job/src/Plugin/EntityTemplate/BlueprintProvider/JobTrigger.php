@@ -150,7 +150,7 @@ class JobTrigger extends PluginBase implements BlueprintProviderInterface, Conta
    * {@inheritdoc}
    */
   public function getBlueprintStorage($id) {
-    list($job_id, $trigger) = explode('.', $id, 2);
+    [$job_id, $trigger] = explode('.', $id, 2);
 
     /** @var \Drupal\task_job\JobInterface $job */
     $job = $this->entityTypeManager->getStorage('task_job')->load($job_id);
