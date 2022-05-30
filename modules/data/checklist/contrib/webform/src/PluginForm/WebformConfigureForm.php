@@ -66,7 +66,7 @@ class WebformConfigureForm extends PluginFormBase implements ContainerInjectionI
           '@link' => Link::createFromRoute(
             'click here',
             'entity.webform.add_form'
-          )
+          ),
         ]
       ),
       '#options' => $available_webforms,

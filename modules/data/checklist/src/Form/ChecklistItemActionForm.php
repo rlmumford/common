@@ -11,7 +11,6 @@ use Drupal\Core\DependencyInjection\ClassResolverInterface;
 use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\PluginFormFactoryInterface;
-use Drupal\Core\Render\Element;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
@@ -123,8 +122,7 @@ class ChecklistItemActionForm extends ChecklistItemFormBase {
         'wrapper' => $wrapper_id,
       ],
     ];
-    //$this->prepareAjaxSettings($form['actions']['complete'], $form_state);
-
+    // $this->prepareAjaxSettings($form['actions']['complete'], $form_state);
     $form['#process'][] = '::processSetAjaxActionUrls';
 
     return parent::buildForm($form, $form_state);

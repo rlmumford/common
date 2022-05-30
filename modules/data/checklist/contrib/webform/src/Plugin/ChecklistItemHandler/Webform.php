@@ -40,7 +40,7 @@ class Webform extends ChecklistItemHandlerBase implements ContainerFactoryPlugin
   /**
    * The webform.
    *
-   * @var \Drupal\webform\Entity\Webform|NULL
+   * @var \Drupal\webform\Entity\Webform|null
    */
   protected ?WebformConfig $webform = NULL;
 
@@ -77,7 +77,7 @@ class Webform extends ChecklistItemHandlerBase implements ContainerFactoryPlugin
   /**
    * Get the webform.
    *
-   * @return \Drupal\webform\Entity\Webform|NULL
+   * @return \Drupal\webform\Entity\Webform|null
    *   The webform config.
    *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
@@ -122,8 +122,8 @@ class Webform extends ChecklistItemHandlerBase implements ContainerFactoryPlugin
       '#type' => 'item',
       '#title' => new TranslatableMarkup('Webform'),
       '#markup' => $this->getWebform() ?
-        $this->getWebform()->toLink(NULL, 'edit-form')->toString() :
-        new TranslatableMarkup('Not Defined'),
+      $this->getWebform()->toLink(NULL, 'edit-form')->toString() :
+      new TranslatableMarkup('Not Defined'),
     ];
     return $build;
   }

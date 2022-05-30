@@ -38,7 +38,7 @@ class WebformChecklistItemActionForm extends ChecklistItemActionForm {
    * @return mixed
    *   Whatever the method on the webform form object returns.
    */
-  public function __call($name, $arguments) {
+  public function __call(string $name, array $arguments) {
     if (!method_exists($this->webformFormObject, $name)) {
       throw new \BadMethodCallException('Call to undefined method ' . get_class($this->webformFormObject) . "::{$name}()", 0);
     }

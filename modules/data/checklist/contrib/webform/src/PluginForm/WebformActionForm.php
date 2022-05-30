@@ -73,10 +73,10 @@ class WebformActionForm extends PluginFormBase implements ContainerInjectionInte
         ->getStorage('webform_submission')
         ->create($values);
 
-      // Pass this webform to the webform submission as a direct entity reference.
-      // This guarantees overridden properties and settings are maintained.
-      // Not sure why the overridden webform is not being correctly passed to the
-      // webform submission.
+      // Pass this webform to the webform submission as a direct entity
+      // reference. This guarantees overridden properties and settings are
+      // maintained. Not sure why the overridden webform is not being correctly
+      // passed to the webform submission.
       // @see \Drupal\Core\Field\Plugin\Field\FieldType\EntityReferenceItem::setValue
       if ($this->plugin->getWebform()->isOverridden()) {
         $webform_submission->webform_id->entity = $this->plugin->getWebform();
@@ -153,7 +153,7 @@ class WebformActionForm extends PluginFormBase implements ContainerInjectionInte
     $this->webformObjectSave($form, $sub_form_state);
     $this->webformObjectConfirmForm($form, $sub_form_state);
 
-    // @todo: Store a reference to the submission.
+    // @todo Store a reference to the submission.
     if (!$form_state->isRebuilding()) {
       $item = $this->plugin->getItem();
       $item->setComplete(ChecklistItemInterface::METHOD_INTERACTIVE);
@@ -198,7 +198,7 @@ class WebformActionForm extends PluginFormBase implements ContainerInjectionInte
    * @return mixed
    *   Whatever the webform objects would have returned.
    */
-  public function __call($name, $arguments) {
+  public function __call(string $name, array $arguments) {
     if (!strtolower(substr($name, 0, 13)) === 'webformobject') {
       throw new \BadMethodCallException('Call to undefined method ' . static::class . "::{$name}()", 0);
     }
@@ -215,6 +215,5 @@ class WebformActionForm extends PluginFormBase implements ContainerInjectionInte
     $arguments[1]->setFormObject($form_object);
     return $return;
   }
-
 
 }

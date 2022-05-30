@@ -26,7 +26,7 @@ class ChecklistReferenceChecklistAdaptor extends TypedData {
     $key = $item->checklist_key;
 
     if (strpos($key, ':')) {
-      list($field_name, $delta) = explode(':', $key, 2);
+      [$field_name, $delta] = explode(':', $key, 2);
 
       // @todo Load from tempstore?
       return $entity->{$field_name}[$delta]->checklist;
