@@ -74,6 +74,15 @@ class Webform extends ChecklistItemHandlerBase implements ContainerFactoryPlugin
     );
   }
 
+  /**
+   * Get the webform.
+   *
+   * @return \Drupal\webform\Entity\Webform|NULL
+   *   The webform config.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   */
   public function getWebform() : ?WebformConfig {
     $configuration = $this->getConfiguration();
 
@@ -81,7 +90,10 @@ class Webform extends ChecklistItemHandlerBase implements ContainerFactoryPlugin
       $this->webform = $this->entityTypeManager
         ->getStorage('webform')
         ->load($configuration['webform']);
-      $this->webform->setSetting('ajax', TRUE);
+
+      if ($this->webform) {
+        $this->webform->setSetting('ajax', TRUE);
+      }
     }
 
     return $this->webform;

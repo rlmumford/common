@@ -4,6 +4,7 @@ namespace Drupal\checklist\Form;
 
 use Drupal\checklist\ChecklistTempstoreRepository;
 use Drupal\checklist\Entity\ChecklistItemInterface;
+use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Form\BaseFormIdInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormBuilderInterface;
@@ -128,7 +129,7 @@ abstract class ChecklistItemFormBase extends FormBase implements BaseFormIdInter
   public function buildForm(array $form, FormStateInterface $form_state) {
     $handler = $this->item->getHandler();
     if (!$handler->hasFormClass($this->formClass)) {
-      throw new \Exception('Checklist item plugins MUST have a row form.');
+      throw new \Exception('Checklist item plugins MUST have a ' . $this->formClass . ' form.');
     }
 
     if ($url = $this->getActionUrl()) {
@@ -184,7 +185,10 @@ abstract class ChecklistItemFormBase extends FormBase implements BaseFormIdInter
       $ajax_url->setOptions($options);
 
       $element['#ajax']['url'] = $ajax_url;
-      $element['#ajax']['options'] = $ajax_url->getOptions();
+      $element['#ajax']['options'] = NestedArray::mergeDeep(
+        $element['#ajax']['options'] ?? [],
+        $ajax_url->getOptions()
+      );
     }
   }
 
@@ -199,12 +203,39 @@ abstract class ChecklistItemFormBase extends FormBase implements BaseFormIdInter
   protected function prepareAllAjaxSettings(array &$elements, Url $url) {
     if (!empty($elements['#ajax']) && empty($elements['#ajax']['url'])) {
       $elements['#ajax']['url'] = $url;
-      $elements['#ajax']['options'] = $url->getOptions();
+      $elements['#ajax']['options'] = NestedArray::mergeDeep(
+        $elements['#ajax']['options'] ?? [],
+        $url->getOptions()
+      );
+    }
+
+    if (isset($elements['#type']) && $elements['#type'] === 'managed_file') {
+      $elements['#process'][] = '::prepareManagedFileAjaxSettings';
+      $elements['#ajax_url'] = $url;
     }
 
     foreach (Element::children($elements) as $child) {
       $this->prepareAllAjaxSettings($elements[$child], $url);
     }
+  }
+
+  /**
+   * Set the ajax url on file elements.
+   *
+   * @param array $element
+   *   The managed file element.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array
+   *   The updated element.
+   */
+  public function prepareManagedFileAjaxSettings(array $element, FormStateInterface $form_state) {
+    if (!empty($element['#ajax_url'])) {
+      $this->prepareAllAjaxSettings($element, $element['#ajax_url']);
+      unset($element['#ajax_url']);
+    }
+    return $element;
   }
 
 }

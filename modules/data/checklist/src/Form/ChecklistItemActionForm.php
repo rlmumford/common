@@ -11,6 +11,7 @@ use Drupal\Core\DependencyInjection\ClassResolverInterface;
 use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\PluginFormFactoryInterface;
+use Drupal\Core\Render\Element;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
@@ -122,9 +123,35 @@ class ChecklistItemActionForm extends ChecklistItemFormBase {
         'wrapper' => $wrapper_id,
       ],
     ];
-    $this->prepareAjaxSettings($form['actions']['complete'], $form_state);
+    //$this->prepareAjaxSettings($form['actions']['complete'], $form_state);
+
+    $form['#process'][] = '::processSetAjaxActionUrls';
 
     return parent::buildForm($form, $form_state);
+  }
+
+  /**
+   * Traverse the form/element to correct any ajax urls.
+   *
+   * @param array $element
+   *   The element.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   *
+   * @return array
+   *   The corrected element.
+   */
+  public function processSetAjaxActionUrls(array $element, FormStateInterface $form_state) {
+    if ($form_state->getFormObject() instanceof ChecklistItemFormBase && ($url = $form_state->getFormObject()->getActionUrl())) {
+      $ajax_url = clone $url;
+      $options = $ajax_url->getOptions();
+      $options['query'][FormBuilderInterface::AJAX_FORM_REQUEST] = TRUE;
+      $ajax_url->setOptions($options);
+
+      $this->prepareAllAjaxSettings($element, $ajax_url);
+    }
+
+    return $element;
   }
 
   /**

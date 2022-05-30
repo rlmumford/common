@@ -3,7 +3,11 @@
 namespace Drupal\checklist_webform\PluginForm;
 
 use Drupal\checklist\Entity\ChecklistItemInterface;
+use Drupal\checklist\PluginForm\CustomFormObjectClassInterface;
+use Drupal\checklist_webform\Form\WebformChecklistItemActionForm;
+use Drupal\Component\Plugin\PluginInspectionInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformState;
@@ -14,7 +18,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * The action form for webform checklist items.
  */
-class WebformActionForm extends PluginFormBase implements ContainerInjectionInterface {
+class WebformActionForm extends PluginFormBase implements ContainerInjectionInterface, CustomFormObjectClassInterface {
+  use DependencySerializationTrait;
 
   /**
    * The webform plugin.
@@ -35,6 +40,13 @@ class WebformActionForm extends PluginFormBase implements ContainerInjectionInte
    */
   public static function create(ContainerInterface $container) {
     return new static($container->get('entity_type.manager'));
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function getFormObjectClass(PluginInspectionInterface $plugin, string $default_class): string {
+    return WebformChecklistItemActionForm::class;
   }
 
   /**
@@ -73,11 +85,13 @@ class WebformActionForm extends PluginFormBase implements ContainerInjectionInte
       $form_state->set('webform_submission', $webform_submission);
     }
 
+    /** @var \Drupal\checklist_webform\Form\WebformChecklistItemActionForm $form_object */
     $form_object = $form_state->getFormObject();
     $sub_form_object = $this->entityTypeManager->getFormObject('webform_submission', 'add');
     $sub_form_object->setEntity($form_state->get('webform_submission'));
 
     $form_state->set('webform_object', $sub_form_object);
+    $form_object->setWebformFormObject($sub_form_object);
 
     $form['submission'] = [
       '#type' => 'container',
@@ -201,5 +215,6 @@ class WebformActionForm extends PluginFormBase implements ContainerInjectionInte
     $arguments[1]->setFormObject($form_object);
     return $return;
   }
+
 
 }

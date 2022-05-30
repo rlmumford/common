@@ -5,6 +5,7 @@ namespace Drupal\checklist\Controller;
 use Drupal\checklist\ChecklistInterface;
 use Drupal\checklist\Form\ChecklistItemActionForm;
 use Drupal\checklist\Form\ChecklistItemRowForm;
+use Drupal\checklist\PluginForm\CustomFormObjectClassInterface;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
@@ -55,7 +56,7 @@ class ChecklistController extends ControllerBase {
   }
 
   /**
-   * Get the action for for the checklist item.
+   * Get the action form for the checklist item.
    *
    * @param \Drupal\checklist\ChecklistInterface $checklist
    *   The checklist.
@@ -73,8 +74,13 @@ class ChecklistController extends ControllerBase {
       throw new NotFoundHttpException();
     }
 
+    $form_class = ChecklistItemActionForm::class;
+    if (is_subclass_of($handler->getFormClass('action'), CustomFormObjectClassInterface::class)) {
+      $form_class = [$handler->getFormClass('action'), 'getFormObjectClass']($handler, $form_class);
+    }
+
     /** @var \Drupal\checklist\Form\ChecklistItemActionForm $form_obj */
-    $form_obj = $this->classResolver->getInstanceFromDefinition(ChecklistItemActionForm::class);
+    $form_obj = $this->classResolver->getInstanceFromDefinition($form_class);
     $form_obj->setChecklistItem($item);
     return $this->formBuilder->getForm($form_obj);
   }
@@ -113,8 +119,13 @@ class ChecklistController extends ControllerBase {
       throw new NotFoundHttpException();
     }
 
+    $form_class = ChecklistItemRowForm::class;
+    if (is_subclass_of($handler->getFormClass('row'), CustomFormObjectClassInterface::class)) {
+      $form_class = [$handler->getFormClass('row'), 'getFormObjectClass']($handler, $form_class);
+    }
+
     /** @var \Drupal\checklist\Form\ChecklistItemActionForm $form_obj */
-    $form_obj = $this->classResolver->getInstanceFromDefinition(ChecklistItemRowForm::class);
+    $form_obj = $this->classResolver->getInstanceFromDefinition($form_class);
     $form_obj->setChecklistItem($item);
     return $this->formBuilder->getForm($form_obj);
   }

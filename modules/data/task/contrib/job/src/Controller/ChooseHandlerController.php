@@ -76,6 +76,10 @@ class ChooseHandlerController extends ControllerBase {
       ];
 
       foreach ($definitions as $name => $definition) {
+        if ($name === "missing") {
+          continue;
+        }
+
         $category = isset($definition['category']) ? (string) $definition['category'] : 'Other';
         if (!isset($build[$category])) {
           $build[$category]['#type'] = 'details';

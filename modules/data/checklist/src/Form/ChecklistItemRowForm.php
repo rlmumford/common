@@ -6,6 +6,7 @@ use Drupal\checklist\Ajax\EnsureItemCompleteCommand;
 use Drupal\checklist\Ajax\EnsureItemInProgressCommand;
 use Drupal\checklist\Ajax\StartNextItemCommand;
 use Drupal\checklist\ChecklistTempstoreRepository;
+use Drupal\checklist\PluginForm\CustomFormObjectClassInterface;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
@@ -215,8 +216,14 @@ class ChecklistItemRowForm extends ChecklistItemFormBase {
       . '--' . $this->item->getName()
       . '--action-form-container';
 
+    $handler = $this->item->getHandler();
+    $form_class = ChecklistItemActionForm::class;
+    if (is_subclass_of($handler->getFormClass('action'), CustomFormObjectClassInterface::class)) {
+      $form_class = [$handler->getFormClass('action'), 'getFormObjectClass']($handler, $form_class);
+    }
+
     /** @var \Drupal\checklist\Form\ChecklistItemActionForm $form_object */
-    $form_object = $this->classResolver->getInstanceFromDefinition(ChecklistItemActionForm::class);
+    $form_object = $this->classResolver->getInstanceFromDefinition($form_class);
     $form_object->setChecklistItem($this->item);
     $form_object->setActionUrl(Url::fromRoute(
       'checklist.item.action_form',
