@@ -2,13 +2,17 @@
 
 namespace Drupal\task_job\Controller;
 
+use Drupal\checklist\ChecklistContextCollectorInterface;
 use Drupal\checklist\ChecklistItemHandlerManager;
+use Drupal\checklist\ChecklistTypeManager;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Ajax\AjaxHelperTrait;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Form\FormBuilderInterface;
+use Drupal\Core\Plugin\Context\ContextHandlerInterface;
 use Drupal\Core\Url;
 use Drupal\task_job\Form\JobAddChecklistItemForm;
+use Drupal\task_job\JobConfigurationChecklist;
 use Drupal\task_job\JobInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -26,12 +30,36 @@ class ChooseHandlerController extends ControllerBase {
   protected $manager;
 
   /**
+   * The context handler service.
+   *
+   * @var \Drupal\Core\Plugin\Context\ContextHandlerInterface
+   */
+  protected ContextHandlerInterface $contextHandler;
+
+  /**
+   * The context collector.
+   *
+   * @var \Drupal\checklist\ChecklistContextCollectorInterface
+   */
+  protected ChecklistContextCollectorInterface $contextCollector;
+
+  /**
+   * The checklist type manager.
+   *
+   * @var \Drupal\checklist\ChecklistTypeManager
+   */
+  protected ChecklistTypeManager $checklistTypeManager;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('plugin.manager.checklist_item_handler'),
-      $container->get('form_builder')
+      $container->get('form_builder'),
+      $container->get('context.handler'),
+      $container->get('checklist.context_collector'),
+      $container->get('plugin.manager.checklist_type')
     );
   }
 
@@ -42,13 +70,25 @@ class ChooseHandlerController extends ControllerBase {
    *   The checklist item handler manager.
    * @param \Drupal\Core\Form\FormBuilderInterface $form_builder
    *   The form builder service.
+   * @param \Drupal\Core\Plugin\Context\ContextHandlerInterface $context_handler
+   *   The context handler service.
+   * @param \Drupal\checklist\ChecklistContextCollectorInterface $context_collector
+   *   The checklist context collector service.
+   * @param \Drupal\checklist\ChecklistTypeManager $checklist_type_manager
+   *   The checklist type manager.
    */
   public function __construct(
     ChecklistItemHandlerManager $manager,
-    FormBuilderInterface $form_builder
+    FormBuilderInterface $form_builder,
+    ContextHandlerInterface $context_handler,
+    ChecklistContextCollectorInterface $context_collector,
+    ChecklistTypeManager $checklist_type_manager
   ) {
     $this->manager = $manager;
     $this->formBuilder = $form_builder;
+    $this->contextHandler = $context_handler;
+    $this->contextCollector = $context_collector;
+    $this->checklistTypeManager = $checklist_type_manager;
   }
 
   /**
@@ -62,6 +102,12 @@ class ChooseHandlerController extends ControllerBase {
    */
   public function build(JobInterface $task_job) {
     $definitions = $this->manager->getDefinitions();
+    $definitions = $this->contextHandler->filterPluginDefinitionsByContexts(
+      $this->contextCollector->collectConfigContexts(
+        JobConfigurationChecklist::createFromJob($task_job, $this->checklistTypeManager)
+      ),
+      $definitions
+    );
 
     if (count($definitions) === 1) {
       return $this->formBuilder()->getForm(

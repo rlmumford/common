@@ -2,6 +2,7 @@
 
 namespace Drupal\checklist\Controller;
 
+use Drupal\checklist\ChecklistContextCollectorInterface;
 use Drupal\checklist\ChecklistInterface;
 use Drupal\checklist\Form\ChecklistItemActionForm;
 use Drupal\checklist\Form\ChecklistItemRowForm;
@@ -10,6 +11,8 @@ use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
 use Drupal\Core\Form\FormBuilderInterface;
+use Drupal\Core\Plugin\Context\ContextHandlerInterface;
+use Drupal\Core\Plugin\ContextAwarePluginInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -33,12 +36,28 @@ class ChecklistController extends ControllerBase {
   protected $formBuilder;
 
   /**
+   * The context handler.
+   *
+   * @var \Drupal\Core\Plugin\Context\ContextHandlerInterface
+   */
+  protected ContextHandlerInterface $contextHandler;
+
+  /**
+   * The context collector.
+   *
+   * @var \Drupal\checklist\ChecklistContextCollectorInterface
+   */
+  protected ChecklistContextCollectorInterface $contextCollector;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('form_builder'),
-      $container->get('class_resolver')
+      $container->get('class_resolver'),
+      $container->get('context.handler'),
+      $container->get('checklist.context_collector'),
     );
   }
 
@@ -49,10 +68,16 @@ class ChecklistController extends ControllerBase {
    *   The form builder service.
    * @param \Drupal\Core\DependencyInjection\ClassResolverInterface $class_resolver
    *   The class resolver service.
+   * @param \Drupal\Core\Plugin\Context\ContextHandlerInterface $context_handler
+   *   The context handler.
+   * @param \Drupal\checklist\ChecklistContextCollectorInterface $collector
+   *   The context collector.
    */
-  public function __construct(FormBuilderInterface $form_builder, ClassResolverInterface $class_resolver) {
+  public function __construct(FormBuilderInterface $form_builder, ClassResolverInterface $class_resolver, ContextHandlerInterface $context_handler, ChecklistContextCollectorInterface $collector) {
     $this->classResolver = $class_resolver;
     $this->formBuilder = $form_builder;
+    $this->contextHandler = $context_handler;
+    $this->contextCollector = $collector;
   }
 
   /**
@@ -69,6 +94,13 @@ class ChecklistController extends ControllerBase {
   public function actionForm(ChecklistInterface $checklist, string $item_name) {
     $item = $checklist->getItem($item_name);
     $handler = $item->getHandler();
+
+    if ($handler instanceof ContextAwarePluginInterface) {
+      $this->contextHandler->applyContextMapping(
+        $handler,
+        $this->contextCollector->collectRuntimeContexts($checklist)
+      );
+    }
 
     if (!$handler->hasFormClass('action')) {
       throw new NotFoundHttpException();

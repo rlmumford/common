@@ -149,4 +149,16 @@ interface ChecklistItemInterface extends EntityInterface {
    */
   public function getHandler() : ChecklistItemHandlerInterface;
 
+  /**
+   * Add an outcome to this checklist item.
+   *
+   * @param string $name
+   *   The name of the outcome.
+   * @param mixed $value
+   *   The value of the outcome.
+   *
+   * @return $this
+   */
+  public function setOutcome(string $name, $value) : ChecklistItemInterface;
+
 }

@@ -157,6 +157,7 @@ class WebformActionForm extends PluginFormBase implements ContainerInjectionInte
     if (!$form_state->isRebuilding()) {
       $item = $this->plugin->getItem();
       $item->setComplete(ChecklistItemInterface::METHOD_INTERACTIVE);
+      $item->setOutcome('submission', $form_state->getFormObject()->getEntity());
       $item->save();
     }
   }

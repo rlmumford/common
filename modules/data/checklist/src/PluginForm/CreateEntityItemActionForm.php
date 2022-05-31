@@ -111,12 +111,13 @@ class CreateEntityItemActionForm extends PluginFormBase implements ContainerInje
    * {@inheritdoc}
    */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
+    /** @var \Drupal\Core\Entity\EntityInterface $entity */
     $entity = $form['entity']['#entity'];
     $entity->save();
 
-    // @todo Outcomes.
     $item = $this->plugin->getItem();
     $item->setComplete(ChecklistItemInterface::METHOD_INTERACTIVE);
+    $item->setOutcome($entity->getEntityTypeId(), $entity);
     $item->save();
   }
 

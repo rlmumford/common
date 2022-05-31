@@ -105,15 +105,17 @@ class Checklist implements ChecklistInterface {
 
     $this->items = [];
 
-    // Load first.
-    $ids_to_load = $this->getType()->itemStorage()
-      ->getQuery()
-      ->condition('checklist.target_id', $this->getEntity()->id())
-      ->condition('checklist.checklist_key', $this->getKey())
-      ->execute();
-    /** @var \Drupal\checklist\Entity\ChecklistItemInterface $item */
-    foreach ($this->getType()->itemStorage()->loadMultiple($ids_to_load) as $item) {
-      $this->items[$item->getName()] = $item;
+    // Load first if the entity has an id to load by.
+    if ($this->getEntity()->id()) {
+      $ids_to_load = $this->getType()->itemStorage()
+        ->getQuery()
+        ->condition('checklist.target_id', $this->getEntity()->id())
+        ->condition('checklist.checklist_key', $this->getKey())
+        ->execute();
+      /** @var \Drupal\checklist\Entity\ChecklistItemInterface $item */
+      foreach ($this->getType()->itemStorage()->loadMultiple($ids_to_load) as $item) {
+        $this->items[$item->getName()] = $item;
+      }
     }
 
     // Fill in gaps.
