@@ -34,9 +34,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * @package Drupal\checklist\Plugin\ChecklistItemHandler
  */
-class UpdateEntity extends ChecklistItemHandlerBase implements ContainerFactoryPluginInterface, ContextAwarePluginInterface {
+class UpdateEntity extends ContextAwareChecklistItemHandlerBase implements ContainerFactoryPluginInterface, InteractiveChecklistItemHandlerInterface {
   use DependencySerializationTrait;
-  use ContextAwarePluginTrait;
 
   /**
    * The entity display repository service.
@@ -123,8 +122,9 @@ class UpdateEntity extends ChecklistItemHandlerBase implements ContainerFactoryP
    * {@inheritdoc}
    */
   public function buildConfigurationSummary(): array {
-    $conf = $this->getConfiguration();
+    $build = parent::buildConfigurationSummary();
 
+    $conf = $this->getConfiguration();
     $build['form_mode'] = [
       '#type' => 'item',
       '#title' => new TranslatableMarkup('Form Mode'),

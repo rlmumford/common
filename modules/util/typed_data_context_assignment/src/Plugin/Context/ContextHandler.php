@@ -327,7 +327,7 @@ class ContextHandler extends CoreContextHandler {
    *   the data path.
    */
   protected function parseContextId(string $context_id, array $contexts) : array {
-    $bits = explode(':', $context_id);
+    $bits = explode(':', $context_id, 2);
 
     $service = '';
     $context_name_and_path = reset($bits);

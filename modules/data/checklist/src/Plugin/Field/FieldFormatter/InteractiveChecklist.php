@@ -2,16 +2,22 @@
 
 namespace Drupal\checklist\Plugin\Field\FieldFormatter;
 
+use Drupal\checklist\ChecklistContextCollectorInterface;
 use Drupal\checklist\ChecklistTempstoreRepository;
 use Drupal\checklist\Form\ChecklistCompleteForm;
 use Drupal\checklist\Form\ChecklistItemRowForm;
 use Drupal\checklist\Plugin\ChecklistItemHandler\SimplyCheckableChecklistItemHandler;
+use Drupal\checklist\PluginForm\CustomFormObjectClassInterface;
+use Drupal\Component\Plugin\Exception\ContextException;
+use Drupal\Component\Plugin\Exception\MissingValueContextException;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
 use Drupal\Core\Entity\Plugin\DataType\EntityAdapter;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Form\FormBuilderInterface;
+use Drupal\Core\Plugin\Context\ContextHandlerInterface;
+use Drupal\Core\Plugin\ContextAwarePluginInterface;
 use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\Url;
 use Drupal\typed_data\PlaceholderResolverTrait;
@@ -56,6 +62,20 @@ class InteractiveChecklist extends FormatterBase {
   protected $classResolver;
 
   /**
+   * The context handler service.
+   *
+   * @var \Drupal\Core\Plugin\Context\ContextHandlerInterface
+   */
+  protected ContextHandlerInterface $contextHandler;
+
+  /**
+   * The context collector service.
+   *
+   * @var \Drupal\checklist\ChecklistContextCollectorInterface
+   */
+  protected ChecklistContextCollectorInterface $contextCollector;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
@@ -69,7 +89,9 @@ class InteractiveChecklist extends FormatterBase {
       $configuration['third_party_settings'],
       $container->get('checklist.tempstore_repository'),
       $container->get('class_resolver'),
-      $container->get('form_builder')
+      $container->get('form_builder'),
+      $container->get('context.handler'),
+      $container->get('checklist.context_collector')
     ))->setPlaceholderResolver($container->get('typed_data.placeholder_resolver'));
   }
 
@@ -96,6 +118,10 @@ class InteractiveChecklist extends FormatterBase {
    *   The class resolver service.
    * @param \Drupal\Core\Form\FormBuilderInterface $form_builder
    *   The form builder.
+   * @param \Drupal\Core\Plugin\Context\ContextHandlerInterface $context_handler
+   *   The context handler.
+   * @param \Drupal\checklist\ChecklistContextCollectorInterface $context_collector
+   *   The context collector.
    */
   public function __construct(
     string $plugin_id,
@@ -107,13 +133,17 @@ class InteractiveChecklist extends FormatterBase {
     array $third_party_settings,
     ChecklistTempstoreRepository $checklist_tempstore_repository,
     ClassResolverInterface $class_resolver,
-    FormBuilderInterface $form_builder
+    FormBuilderInterface $form_builder,
+    ContextHandlerInterface $context_handler,
+    ChecklistContextCollectorInterface $context_collector
   ) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings);
 
     $this->tempstoreRepo = $checklist_tempstore_repository;
     $this->formBuilder = $form_builder;
     $this->classResolver = $class_resolver;
+    $this->contextHandler = $context_handler;
+    $this->contextCollector = $context_collector;
   }
 
   /**
@@ -153,6 +183,11 @@ class InteractiveChecklist extends FormatterBase {
     /** @var \Drupal\checklist\Plugin\Field\FieldType\ChecklistItem $item */
     foreach ($items as $delta => $item) {
       $checklist = $item->getChecklist();
+      $contexts = $this->contextCollector->collectRuntimeContexts($checklist);
+      foreach ($contexts as $name => $context) {
+        $placeholder_datas[$name] = $context->getContextData();
+      }
+
       $id = $checklist->getEntity()->getEntityTypeId()
         . '--' . str_replace(':', '--', $checklist->getKey());
 
@@ -173,6 +208,23 @@ class InteractiveChecklist extends FormatterBase {
       ];
 
       foreach ($checklist->getOrderedItems() as $name => $checklist_item) {
+        $handler = $checklist_item->getHandler();
+
+        // Handle contexts.
+        if ($handler instanceof ContextAwarePluginInterface) {
+          try {
+            $this->contextHandler->applyContextMapping($handler, $contexts);
+          }
+          catch (MissingValueContextException $exception) {
+            // We're ok with missing values here, do nothing.
+          }
+          catch (ContextException $exception) {
+            // Having the context not available at all is more of a problem, so
+            // we just skip this CI.
+            continue;
+          }
+        }
+
         $placeholder_datas['checklist_item'] = EntityAdapter::createFromEntity($checklist_item);
 
         $checklist_item_classes = ['ci'];
@@ -201,8 +253,13 @@ class InteractiveChecklist extends FormatterBase {
           $checklist_item_classes[] = 'ci-inactionable';
         }
 
+        $form_class = ChecklistItemRowForm::class;
+        if (is_subclass_of($handler->getFormClass('row'), CustomFormObjectClassInterface::class)) {
+          $form_class = [$handler->getFormClass('row'), 'getFormObjectClass']($handler, $form_class);
+        }
+
         /** @var \Drupal\checklist\Form\ChecklistItemRowForm $form_obj */
-        $form_obj = $this->classResolver->getInstanceFromDefinition(ChecklistItemRowForm::class);
+        $form_obj = $this->classResolver->getInstanceFromDefinition($form_class);
         $form_obj->setChecklistItem($checklist_item);
         $form_obj->setActionUrl(Url::fromRoute(
           'checklist.item.row_form',

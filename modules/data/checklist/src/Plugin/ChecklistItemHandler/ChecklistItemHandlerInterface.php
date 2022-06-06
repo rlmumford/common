@@ -8,7 +8,16 @@ use Drupal\Component\Plugin\PluginInspectionInterface;
 use Drupal\Core\Plugin\PluginWithFormsInterface;
 
 /**
- * Base class for checklist item handlers.
+ * Interface for checklist item handlers.
+ *
+ * Checklist item handlers provide and execute the logic of checklist items.
+ * Handlers that are interactive, i.e. they display a form to be used by the
+ * user to complete the activity represented by the checklist itm, should
+ * implement InteractiveChecklistItemHandlerInterface.
+ * Handlers that require contexts can define context_definitions in the plugin
+ * definition and should implement ContextAwarePluginInterface.
+ * Handlers that provide new data should implement
+ * ExpectedOutcomeChecklistItemHandler.
  */
 interface ChecklistItemHandlerInterface extends PluginInspectionInterface, PluginWithFormsInterface, ConfigurableInterface {
 

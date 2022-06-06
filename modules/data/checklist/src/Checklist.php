@@ -173,6 +173,22 @@ class Checklist implements ChecklistInterface {
   /**
    * {@inheritdoc}
    */
+  public function setItem(string $name, ChecklistItemInterface $item) {
+    if ($item->name->isEmpty()) {
+      $item->name = $name;
+    }
+
+    if ($item->name->value !== $name) {
+      throw new \InvalidArgumentException("Invalid checklist item supplied for {$name}.");
+    }
+
+    $this->items[$name] = $item;
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function process(): ?bool {
     $items = $this->getOrderedItems();
 

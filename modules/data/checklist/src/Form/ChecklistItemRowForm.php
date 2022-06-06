@@ -111,11 +111,10 @@ class ChecklistItemRowForm extends ChecklistItemFormBase {
     ContextHandlerInterface $context_handler,
     ChecklistContextCollectorInterface $collector
   ) {
-    parent::__construct($plugin_form_factory, $checklist_tempstore_repository);
+    parent::__construct($plugin_form_factory, $checklist_tempstore_repository, $context_handler);
     $this->formBuilder = $form_builder;
     $this->classResolver = $class_resolver;
     $this->renderer = $renderer;
-    $this->contextHandler = $context_handler;
     $this->contextCollector = $collector;
   }
 
@@ -173,9 +172,27 @@ class ChecklistItemRowForm extends ChecklistItemFormBase {
 
     $response = static::prepareAjaxResponse($form, $form_state);
 
-    // @todo Reload any dependent forms.
-    // @todo Close any resource or form panes.
     $response->addCommand(new EnsureItemCompleteCommand($this->item));
+
+    if ($this->item->isComplete()) {
+      $checklist = $this->item->checklist->checklist;
+      $contexts = $this->contextCollector->collectRuntimeContexts($checklist);
+
+      foreach ($checklist->getItems() as $item) {
+        if ($item->isComplete() || $item->id() === $this->item->id()) {
+          continue;
+        }
+
+        try {
+          $this->addRefreshRowCommand($response, $checklist, $item, $contexts);
+        }
+        catch (ContextException $exception) {
+          // Do nothing.
+        }
+      }
+    }
+
+    // @todo Close any resource or form panes.
     $response->addCommand(new StartNextItemCommand($this->item));
 
     return $response;

@@ -30,7 +30,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * @package Drupal\checklist\Plugin\ChecklistItemHandler
  */
-class CreateEntity extends ChecklistItemHandlerBase implements ContainerFactoryPluginInterface, ExpectedOutcomeChecklistItemHandlerInterface {
+class CreateEntity extends ChecklistItemHandlerBase implements ContainerFactoryPluginInterface, ExpectedOutcomeChecklistItemHandlerInterface, InteractiveChecklistItemHandlerInterface {
 
   /**
    * The entity type.
