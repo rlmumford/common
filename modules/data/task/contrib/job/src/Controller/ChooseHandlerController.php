@@ -14,6 +14,7 @@ use Drupal\Core\Url;
 use Drupal\task_job\Form\JobAddChecklistItemForm;
 use Drupal\task_job\JobConfigurationChecklist;
 use Drupal\task_job\JobInterface;
+use Drupal\task_job\TaskJobTempstoreRepository;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -21,6 +22,13 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class ChooseHandlerController extends ControllerBase {
   use AjaxHelperTrait;
+
+  /**
+   * The tempstore repo.
+   *
+   * @var \Drupal\task_job\TaskJobTempstoreRepository
+   */
+  protected TaskJobTempstoreRepository $tempstoreRepository;
 
   /**
    * The handler plugin manager.
@@ -59,7 +67,8 @@ class ChooseHandlerController extends ControllerBase {
       $container->get('form_builder'),
       $container->get('context.handler'),
       $container->get('checklist.context_collector'),
-      $container->get('plugin.manager.checklist_type')
+      $container->get('plugin.manager.checklist_type'),
+      $container->get('task_job.tempstore_repository')
     );
   }
 
@@ -82,13 +91,15 @@ class ChooseHandlerController extends ControllerBase {
     FormBuilderInterface $form_builder,
     ContextHandlerInterface $context_handler,
     ChecklistContextCollectorInterface $context_collector,
-    ChecklistTypeManager $checklist_type_manager
+    ChecklistTypeManager $checklist_type_manager,
+    TaskJobTempstoreRepository $tempstore_repository
   ) {
     $this->manager = $manager;
     $this->formBuilder = $form_builder;
     $this->contextHandler = $context_handler;
     $this->contextCollector = $context_collector;
     $this->checklistTypeManager = $checklist_type_manager;
+    $this->tempstoreRepository = $tempstore_repository;
   }
 
   /**
@@ -101,6 +112,10 @@ class ChooseHandlerController extends ControllerBase {
    *   A build array for the page.
    */
   public function build(JobInterface $task_job) {
+    if ($this->tempstoreRepository->has($task_job)) {
+      $task_job = $this->tempstoreRepository->get($task_job);
+    }
+
     $definitions = $this->manager->getDefinitions();
     $definitions = $this->contextHandler->filterPluginDefinitionsByContexts(
       $this->contextCollector->collectConfigContexts(
