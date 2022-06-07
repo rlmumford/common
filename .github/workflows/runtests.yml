@@ -36,6 +36,7 @@ jobs:
         run: |
           composer config repositories.patches_fork vcs git@github.com:rlmumford/composer-patches.git
           composer config repositories.assets composer https://asset-packagist.org
+          composer config minimum-stability dev
       - name: "Set GitHub Token"
         run: composer config --global github-oauth.github.com ${{ secrets.GH_ACCESS_TOKEN }}
       - name: "Install Common (PR)"
