@@ -85,6 +85,8 @@ class ChooseHandlerController extends ControllerBase {
    *   The checklist context collector service.
    * @param \Drupal\checklist\ChecklistTypeManager $checklist_type_manager
    *   The checklist type manager.
+   * @param \Drupal\task_job\TaskJobTempstoreRepository $tempstore_repository
+   *   The job tempstore repo.
    */
   public function __construct(
     ChecklistItemHandlerManager $manager,

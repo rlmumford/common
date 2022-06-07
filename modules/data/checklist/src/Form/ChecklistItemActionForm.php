@@ -5,23 +5,17 @@ namespace Drupal\checklist\Form;
 use Drupal\checklist\Ajax\EnsureItemCompleteCommand;
 use Drupal\checklist\Ajax\StartNextItemCommand;
 use Drupal\checklist\ChecklistContextCollectorInterface;
-use Drupal\checklist\ChecklistInterface;
 use Drupal\checklist\ChecklistTempstoreRepository;
-use Drupal\checklist\Entity\ChecklistItemInterface;
-use Drupal\checklist\PluginForm\CustomFormObjectClassInterface;
 use Drupal\Component\Plugin\Exception\ContextException;
-use Drupal\Component\Plugin\Exception\MissingValueContextException;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\InsertCommand;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
 use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\Context\ContextHandlerInterface;
-use Drupal\Core\Plugin\ContextAwarePluginInterface;
 use Drupal\Core\Plugin\PluginFormFactoryInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**

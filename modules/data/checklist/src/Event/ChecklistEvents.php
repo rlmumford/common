@@ -17,5 +17,4 @@ final class ChecklistEvents {
    */
   const COLLECT_CONFIG_CONTEXTS = 'checklist.collect_config_contexts';
 
-
 }

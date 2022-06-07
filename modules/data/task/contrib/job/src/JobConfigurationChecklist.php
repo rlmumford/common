@@ -18,7 +18,7 @@ class JobConfigurationChecklist extends Checklist {
    *
    * @param \Drupal\task_job\JobInterface $job
    *   The job.
-   * @param \Drupal\Component\Plugin\PluginManagerInterface|NULL $checklist_type_manager
+   * @param \Drupal\Component\Plugin\PluginManagerInterface|null $checklist_type_manager
    *   The checklist type manager.
    *
    * @return static

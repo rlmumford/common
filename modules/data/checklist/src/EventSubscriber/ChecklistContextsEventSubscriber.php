@@ -22,10 +22,22 @@ class ChecklistContextsEventSubscriber implements EventSubscriberInterface {
    * {@inheritdoc}
    */
   public static function getSubscribedEvents() {
-    $events[ChecklistEvents::COLLECT_RUNTIME_CONTEXTS][] = ['addChecklistEntityContext', 255];
-    $events[ChecklistEvents::COLLECT_CONFIG_CONTEXTS][] = ['addChecklistEntityContext', 255];
-    $events[ChecklistEvents::COLLECT_CONFIG_CONTEXTS][] = ['addExpectedItemOutcomes', 128];
-    $events[ChecklistEvents::COLLECT_RUNTIME_CONTEXTS][] = ['addItemOutcomes', 128];
+    $events[ChecklistEvents::COLLECT_RUNTIME_CONTEXTS][] = [
+      'addChecklistEntityContext',
+      255,
+    ];
+    $events[ChecklistEvents::COLLECT_CONFIG_CONTEXTS][] = [
+      'addChecklistEntityContext',
+      255,
+    ];
+    $events[ChecklistEvents::COLLECT_CONFIG_CONTEXTS][] = [
+      'addExpectedItemOutcomes',
+      128,
+    ];
+    $events[ChecklistEvents::COLLECT_RUNTIME_CONTEXTS][] = [
+      'addItemOutcomes',
+      128,
+    ];
 
     return $events;
   }
@@ -43,7 +55,7 @@ class ChecklistContextsEventSubscriber implements EventSubscriberInterface {
       ->addConstraint('Bundle', $checklist_entity->bundle())
       ->setLabel(new TranslatableMarkup(
         'Checklist @entity_type',
-        [ '@entity_type' => $checklist_entity->getEntityType()->getLabel() ]
+        ['@entity_type' => $checklist_entity->getEntityType()->getLabel()]
       ));
     $event->addContext('checklist:entity', new EntityContext($definition, $checklist_entity));
   }

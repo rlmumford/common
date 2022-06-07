@@ -36,4 +36,5 @@ class ContextAwareItemConfigureForm extends PluginFormBase {
       $this->plugin->setContextMapping($form_state->getValue('context_mapping'));
     }
   }
+
 }

@@ -64,7 +64,7 @@ class ContentEntityTypeDeriver extends DeriverBase implements ContainerDeriverIn
             'entity_type' => $id,
             'label' => $this->t('@op @entity', [
               '@op' => $base_plugin_definition['entity_op'],
-              '@entity' => $entity_type->getLabel()
+              '@entity' => $entity_type->getLabel(),
             ]),
           ] + $base_plugin_definition;
 

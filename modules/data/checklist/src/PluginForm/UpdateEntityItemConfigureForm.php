@@ -72,4 +72,5 @@ class UpdateEntityItemConfigureForm extends ContextAwareItemConfigureForm implem
     $configuration['form_mode'] = $form_state->getValue('form_mode');
     $this->plugin->setConfiguration($configuration);
   }
+
 }

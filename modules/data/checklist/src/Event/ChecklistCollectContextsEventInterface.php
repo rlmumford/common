@@ -5,6 +5,9 @@ namespace Drupal\checklist\Event;
 use Drupal\checklist\ChecklistInterface;
 use Drupal\Core\Plugin\Context\ContextInterface;
 
+/**
+ * Interface for checklist context collection events.
+ */
 interface ChecklistCollectContextsEventInterface {
 
   /**

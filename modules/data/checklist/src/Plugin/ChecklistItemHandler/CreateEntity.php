@@ -218,4 +218,5 @@ class CreateEntity extends ChecklistItemHandlerBase implements ContainerFactoryP
       $this->entityType->id() => $definition,
     ];
   }
+
 }

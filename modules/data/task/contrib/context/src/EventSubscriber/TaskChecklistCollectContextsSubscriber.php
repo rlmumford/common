@@ -19,8 +19,14 @@ class TaskChecklistCollectContextsSubscriber implements EventSubscriberInterface
    * {@inheritdoc}
    */
   public static function getSubscribedEvents() {
-    $events[ChecklistEvents::COLLECT_CONFIG_CONTEXTS][] = ['addTaskContextsToChecklistContext', 50];
-    $events[ChecklistEvents::COLLECT_RUNTIME_CONTEXTS][] = ['addTaskContextsToChecklistContext', 50];
+    $events[ChecklistEvents::COLLECT_CONFIG_CONTEXTS][] = [
+      'addTaskContextsToChecklistContext',
+      50,
+    ];
+    $events[ChecklistEvents::COLLECT_RUNTIME_CONTEXTS][] = [
+      'addTaskContextsToChecklistContext',
+      50,
+    ];
 
     return $events;
   }

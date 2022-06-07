@@ -8,8 +8,6 @@ use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\Core\Plugin\ContextAwarePluginInterface;
-use Drupal\Core\Plugin\ContextAwarePluginTrait;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -83,7 +81,7 @@ class UpdateEntity extends ContextAwareChecklistItemHandlerBase implements Conta
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager service.
    * @param \Drupal\Core\Entity\EntityDisplayRepositoryInterface $entity_display_repository
-   *   the entity display repository.
+   *   The entity display repository.
    *
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
@@ -129,8 +127,8 @@ class UpdateEntity extends ContextAwareChecklistItemHandlerBase implements Conta
       '#type' => 'item',
       '#title' => new TranslatableMarkup('Form Mode'),
       '#markup' => $conf['form_mode'] ?
-        $this->entityDisplayRepository->getFormModeOptions($this->entityType->id())[$conf['form_mode']] :
-        'Unknown'
+      $this->entityDisplayRepository->getFormModeOptions($this->entityType->id())[$conf['form_mode']] :
+      'Unknown',
     ];
 
     return $build;
