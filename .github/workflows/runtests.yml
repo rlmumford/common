@@ -25,7 +25,7 @@ jobs:
           tools: composer:v2
           extensions: dom, curl, libxml, mbstring, zip, pdo, mysql, pdo_mysql, gd
       - name: "Build Drupal"
-        run: "composer create-project drupal/recommended-project:^8.9 ."
+        run: "composer create-project drupal/recommended-project:^9.3 ."
       - name: "Add PR Repo to Composer"
         run: "composer config repositories.github vcs $GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git"
         if: ${{ github.event_name == 'pull_request' }}
