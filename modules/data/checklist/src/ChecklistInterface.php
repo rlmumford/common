@@ -110,4 +110,14 @@ interface ChecklistInterface {
    */
   public function isCompletable() : bool;
 
+  /**
+   * Set a checklist item.
+   *
+   * @param string $name
+   *   The name of the checklist item.
+   * @param \Drupal\checklist\Entity\ChecklistItemInterface $item
+   *   The checklist item entity.
+   */
+  public function setItem(string $name, ChecklistItemInterface $item);
+
 }

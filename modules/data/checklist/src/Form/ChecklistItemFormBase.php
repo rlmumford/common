@@ -2,13 +2,20 @@
 
 namespace Drupal\checklist\Form;
 
+use Drupal\checklist\ChecklistInterface;
 use Drupal\checklist\ChecklistTempstoreRepository;
 use Drupal\checklist\Entity\ChecklistItemInterface;
+use Drupal\checklist\PluginForm\CustomFormObjectClassInterface;
+use Drupal\Component\Plugin\Exception\MissingValueContextException;
 use Drupal\Component\Utility\NestedArray;
+use Drupal\Core\Ajax\AjaxResponse;
+use Drupal\Core\Ajax\InsertCommand;
 use Drupal\Core\Form\BaseFormIdInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Plugin\Context\ContextHandlerInterface;
+use Drupal\Core\Plugin\ContextAwarePluginInterface;
 use Drupal\Core\Plugin\PluginFormFactoryInterface;
 use Drupal\Core\Render\Element;
 use Drupal\Core\Url;
@@ -55,12 +62,20 @@ abstract class ChecklistItemFormBase extends FormBase implements BaseFormIdInter
   protected $checklistTempstoreRepo;
 
   /**
+   * The context handler.
+   *
+   * @var \Drupal\Core\Plugin\Context\ContextHandlerInterface
+   */
+  protected ContextHandlerInterface $contextHandler;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('plugin_form.factory'),
-      $container->get('checklist.tempstore_repository')
+      $container->get('checklist.tempstore_repository'),
+      $container->get('context.handler')
     );
   }
 
@@ -71,13 +86,17 @@ abstract class ChecklistItemFormBase extends FormBase implements BaseFormIdInter
    *   The plugin form factory.
    * @param \Drupal\checklist\ChecklistTempstoreRepository $checklist_tempstore_repository
    *   The tempstore repository.
+   * @param \Drupal\Core\Plugin\Context\ContextHandlerInterface $context_handler
+   *   The context handler service.
    */
   public function __construct(
     PluginFormFactoryInterface $plugin_form_factory,
-    ChecklistTempstoreRepository $checklist_tempstore_repository
+    ChecklistTempstoreRepository $checklist_tempstore_repository,
+    ContextHandlerInterface $context_handler
   ) {
     $this->pluginFormFactory = $plugin_form_factory;
     $this->checklistTempstoreRepo = $checklist_tempstore_repository;
+    $this->contextHandler = $context_handler;
   }
 
   /**
@@ -236,6 +255,54 @@ abstract class ChecklistItemFormBase extends FormBase implements BaseFormIdInter
       unset($element['#ajax_url']);
     }
     return $element;
+  }
+
+  /**
+   * Add ajax commands to refresh the rows of future items.
+   *
+   * @param \Drupal\Core\Ajax\AjaxResponse $response
+   *   The ajax response to add commands to.
+   * @param \Drupal\checklist\ChecklistInterface $checklist
+   *   The checklist.
+   * @param \Drupal\checklist\Entity\ChecklistItemInterface $item
+   *   The checklist item to refresh.
+   * @param \Drupal\Core\Plugin\Context\ContextInterface[] $contexts
+   *   The contexts.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\ContextException
+   */
+  protected function addRefreshRowCommand(AjaxResponse $response, ChecklistInterface $checklist, ChecklistItemInterface $item, array $contexts = []) {
+    $handler = $item->getHandler();
+    if ($handler instanceof ContextAwarePluginInterface) {
+      try {
+        $this->contextHandler->applyContextMapping($handler, $contexts);
+      }
+      catch (MissingValueContextException $e) {
+        // Do nothing on missing value exceptions.
+      }
+    }
+
+    $form_class = ChecklistItemRowForm::class;
+    if (is_subclass_of($handler->getFormClass('row'), CustomFormObjectClassInterface::class)) {
+      $form_class = [$handler->getFormClass('row'), 'getFormObjectClass']($handler, $form_class);
+    }
+
+    /** @var \Drupal\checklist\Form\ChecklistItemRowForm $form_obj */
+    $row_form_obj = $this->classResolver->getInstanceFromDefinition($form_class);
+    $row_form_obj->setChecklistItem($item);
+    $row_form_obj->setActionUrl(Url::fromRoute(
+      'checklist.item.row_form',
+      [
+        'entity_type' => $checklist->getEntity()->getEntityTypeId(),
+        'entity_id' => $checklist->getEntity()->id(),
+        'checklist' => $checklist->getKey(),
+        'item_name' => $item->getName(),
+      ]
+    ));
+    $row_form = $this->formBuilder->getForm($row_form_obj);
+    $row_form_html = $this->renderer->renderRoot($row_form);
+    $response->addAttachments($row_form['#attached']);
+    $response->addCommand(new InsertCommand('#' . $row_form['#wrapper_id'], $row_form_html));
   }
 
 }

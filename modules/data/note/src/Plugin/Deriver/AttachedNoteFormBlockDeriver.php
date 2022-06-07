@@ -4,7 +4,7 @@ namespace Drupal\note\Plugin\Deriver;
 
 use Drupal\Component\Plugin\Derivative\DeriverBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\Core\Plugin\Context\EntityContextDefinition;
 use Drupal\Core\Plugin\Discovery\ContainerDeriverInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationManager;
@@ -71,7 +71,7 @@ class AttachedNoteFormBlockDeriver extends DeriverBase implements ContainerDeriv
         ),
         'entity_type' => $entity_type,
         'context' => [
-          'entity' => new ContextDefinition(
+          'entity' => new EntityContextDefinition(
             'entity:' . $entity_type->id(),
             $this->t(
               'Base @entity_type',

@@ -5,13 +5,17 @@ namespace Drupal\checklist\Form;
 use Drupal\checklist\Ajax\EnsureItemCompleteCommand;
 use Drupal\checklist\Ajax\EnsureItemInProgressCommand;
 use Drupal\checklist\Ajax\StartNextItemCommand;
+use Drupal\checklist\ChecklistContextCollectorInterface;
 use Drupal\checklist\ChecklistTempstoreRepository;
 use Drupal\checklist\PluginForm\CustomFormObjectClassInterface;
+use Drupal\Component\Plugin\Exception\ContextException;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
 use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Plugin\Context\ContextHandlerInterface;
+use Drupal\Core\Plugin\ContextAwarePluginInterface;
 use Drupal\Core\Plugin\PluginFormFactoryInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Url;
@@ -52,6 +56,20 @@ class ChecklistItemRowForm extends ChecklistItemFormBase {
   protected $renderer;
 
   /**
+   * The context handler.
+   *
+   * @var \Drupal\Core\Plugin\Context\ContextHandlerInterface
+   */
+  protected ContextHandlerInterface $contextHandler;
+
+  /**
+   * The context collector.
+   *
+   * @var \Drupal\checklist\ChecklistContextCollectorInterface
+   */
+  protected ChecklistContextCollectorInterface $contextCollector;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
@@ -60,7 +78,9 @@ class ChecklistItemRowForm extends ChecklistItemFormBase {
       $container->get('checklist.tempstore_repository'),
       $container->get('form_builder'),
       $container->get('class_resolver'),
-      $container->get('renderer')
+      $container->get('renderer'),
+      $container->get('context.handler'),
+      $container->get('checklist.context_collector')
     );
   }
 
@@ -77,18 +97,25 @@ class ChecklistItemRowForm extends ChecklistItemFormBase {
    *   The class resolver.
    * @param \Drupal\Core\Render\RendererInterface $renderer
    *   The renderer.
+   * @param \Drupal\Core\Plugin\Context\ContextHandlerInterface $context_handler
+   *   The context handler service.
+   * @param \Drupal\checklist\ChecklistContextCollectorInterface $collector
+   *   The context collector service.
    */
   public function __construct(
     PluginFormFactoryInterface $plugin_form_factory,
     ChecklistTempstoreRepository $checklist_tempstore_repository,
     FormBuilderInterface $form_builder,
     ClassResolverInterface $class_resolver,
-    RendererInterface $renderer
+    RendererInterface $renderer,
+    ContextHandlerInterface $context_handler,
+    ChecklistContextCollectorInterface $collector
   ) {
-    parent::__construct($plugin_form_factory, $checklist_tempstore_repository);
+    parent::__construct($plugin_form_factory, $checklist_tempstore_repository, $context_handler);
     $this->formBuilder = $form_builder;
     $this->classResolver = $class_resolver;
     $this->renderer = $renderer;
+    $this->contextCollector = $collector;
   }
 
   /**
@@ -145,9 +172,27 @@ class ChecklistItemRowForm extends ChecklistItemFormBase {
 
     $response = static::prepareAjaxResponse($form, $form_state);
 
-    // @todo Reload any dependent forms.
-    // @todo Close any resource or form panes.
     $response->addCommand(new EnsureItemCompleteCommand($this->item));
+
+    if ($this->item->isComplete()) {
+      $checklist = $this->item->checklist->checklist;
+      $contexts = $this->contextCollector->collectRuntimeContexts($checklist);
+
+      foreach ($checklist->getItems() as $item) {
+        if ($item->isComplete() || $item->id() === $this->item->id()) {
+          continue;
+        }
+
+        try {
+          $this->addRefreshRowCommand($response, $checklist, $item, $contexts);
+        }
+        catch (ContextException $exception) {
+          // Do nothing.
+        }
+      }
+    }
+
+    // @todo Close any resource or form panes.
     $response->addCommand(new StartNextItemCommand($this->item));
 
     return $response;
@@ -217,6 +262,20 @@ class ChecklistItemRowForm extends ChecklistItemFormBase {
       . '--action-form-container';
 
     $handler = $this->item->getHandler();
+
+    if ($handler instanceof ContextAwarePluginInterface) {
+      try {
+        $this->contextHandler->applyContextMapping(
+          $handler,
+          $this->contextCollector->collectRuntimeContexts($checklist)
+        );
+      }
+      catch (ContextException $e) {
+        $response->addCommand(new HtmlCommand($selector, 'Missing Context'));
+        return;
+      }
+    }
+
     $form_class = ChecklistItemActionForm::class;
     if (is_subclass_of($handler->getFormClass('action'), CustomFormObjectClassInterface::class)) {
       $form_class = [$handler->getFormClass('action'), 'getFormObjectClass']($handler, $form_class);

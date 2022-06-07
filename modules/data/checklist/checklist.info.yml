@@ -8,3 +8,4 @@ dependencies:
   - inline_entity_form:inline_entity_form
   - plugin_reference
   - typed_data:typed_data
+  - typed_data_reference

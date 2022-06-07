@@ -5,9 +5,11 @@ namespace Drupal\checklist_webform\Plugin\ChecklistItemHandler;
 use Drupal\checklist\Entity\ChecklistItemInterface;
 use Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerBase;
 use Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerInterface;
+use Drupal\checklist\Plugin\ChecklistItemHandler\ExpectedOutcomeChecklistItemHandlerInterface;
 use Drupal\checklist\Plugin\ChecklistItemHandler\InteractiveChecklistItemHandlerInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Entity\TypedData\EntityDataDefinition;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\webform\Entity\Webform as WebformConfig;
@@ -27,7 +29,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *   }
  * )
  */
-class Webform extends ChecklistItemHandlerBase implements ContainerFactoryPluginInterface, InteractiveChecklistItemHandlerInterface {
+class Webform extends ChecklistItemHandlerBase implements ContainerFactoryPluginInterface, InteractiveChecklistItemHandlerInterface, ExpectedOutcomeChecklistItemHandlerInterface {
   use DependencySerializationTrait;
 
   /**
@@ -135,6 +137,16 @@ class Webform extends ChecklistItemHandlerBase implements ContainerFactoryPlugin
     $config = parent::defaultConfiguration();
     $config['webform'] = NULL;
     return $config;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function expectedOutcomeDefinitions(): array {
+    return [
+      'submission' => EntityDataDefinition::create('webform_submission', $this->configuration['webform'] ?? NULL)
+        ->setLabel('Webform Submission'),
+    ];
   }
 
 }

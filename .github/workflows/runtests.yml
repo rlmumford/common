@@ -21,11 +21,11 @@ jobs:
         uses: "shivammathur/setup-php@v2"
         with:
           coverage: "none"
-          php-version: "7.3"
+          php-version: "7.4"
           tools: composer:v2
           extensions: dom, curl, libxml, mbstring, zip, pdo, mysql, pdo_mysql, gd
       - name: "Build Drupal"
-        run: "composer create-project drupal/recommended-project:^8.9 ."
+        run: "composer create-project drupal/recommended-project:^9.3 ."
       - name: "Add PR Repo to Composer"
         run: "composer config repositories.github vcs $GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git"
         if: ${{ github.event_name == 'pull_request' }}
@@ -36,16 +36,19 @@ jobs:
         run: |
           composer config repositories.patches_fork vcs git@github.com:rlmumford/composer-patches.git
           composer config repositories.assets composer https://asset-packagist.org
+          composer config minimum-stability dev
+          composer config preferred-install.rlmumford/common source
+          composer config preferred-install.* dist
       - name: "Set GitHub Token"
         run: composer config --global github-oauth.github.com ${{ secrets.GH_ACCESS_TOKEN }}
       - name: "Install Common (PR)"
-        run: composer require rlmumford/common:dev-$GITHUB_HEAD_REF
+        run: composer require rlmumford/common:dev-$GITHUB_HEAD_REF#${{ github.event.pull_request.head.sha }}
         if: ${{ github.event_name == 'pull_request' }}
       - name: "Install Common (Push)"
         run: composer require rlmumford/common:dev-${GITHUB_REF#refs/heads/}#${{ github.sha }}
         if: ${{ github.event_name == 'push' }}
       - name: "Install Other Dependencies"
-        run: composer require drupal/coder drupal/core-dev:^8.9 dealerdirect/phpcodesniffer-composer-installer drupal/entity_template drupal/inline_entity_form
+        run: composer require drupal/coder drupal/core-dev:^9.3 phpspec/prophecy-phpunit:^2 dealerdirect/phpcodesniffer-composer-installer drupal/entity_template drupal/inline_entity_form
       - name: "Code Style"
         run: "vendor/bin/phpcs --standard=Drupal --ignore='*.min.*'  ./web/modules/contrib/common/modules/data/checklist ./web/modules/contrib/common/modules/data/task ./web/modules/contrib/common/modules/data/note ./web/modules/contrib/common/modules/util/exec_environment ./web/modules/contrib/common/modules/util/typed_data_context_assignment"
       - name: "Set up Mysql"

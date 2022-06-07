@@ -88,8 +88,10 @@ class Job extends ChecklistTypeBase implements PluginWithFormsInterface {
    * @return \Drupal\task_job\JobInterface|null
    *   The job.
    */
-  protected function getJob() : ?JobInterface {
-    return $this->jobStorage->load($this->getConfiguration()['job']);
+  public function getJob() : ?JobInterface {
+    return $this->configuration['job'] instanceof JobInterface ?
+      $this->configuration['job'] :
+      ($this->jobStorage->load($this->configuration['job']) ?? NULL);
   }
 
   /**
@@ -131,6 +133,20 @@ class Job extends ChecklistTypeBase implements PluginWithFormsInterface {
     /** @var \Drupal\task\Entity\Task $task */
     $task = $checklist->getEntity();
     return $task->status->value == Task::STATUS_RESOLVED || $task->status->value == Task::STATUS_CLOSED;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getConfiguration() {
+    $config = parent::getConfiguration();
+
+    // Ensure job object is downcasted.
+    if ($config['job'] instanceof JobInterface) {
+      $config['job'] = $config['job']->id();
+    }
+
+    return $config;
   }
 
 }

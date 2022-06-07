@@ -8,6 +8,7 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\Plugin\DataType\EntityAdapter;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldItemInterface;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 
@@ -97,6 +98,10 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
       ->setLabel(new TranslatableMarkup('Completion Method'))
       ->setSetting('allowed_values', $method_values)
       ->setDisplayConfigurable('view', TRUE);
+
+    $fields['outcomes'] = BaseFieldDefinition::create('typed_data_reference')
+      ->setLabel(new TranslatableMarkup('Contexts'))
+      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED);
 
     return $fields;
   }
@@ -283,6 +288,16 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
       new BubbleableMetadata()
     );
     $this->getHandler()->finalizePlaceholders();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setOutcome(string $name, $value) : ChecklistItemInterface {
+    /** @var \Drupal\typed_data_reference\TypedDataReferenceItemList $outcome_list */
+    $outcome_list = $this->get('outcomes');
+    $outcome_list->set($name, $value);
+    return $this;
   }
 
 }

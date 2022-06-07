@@ -3,7 +3,7 @@
 namespace Drupal\checklist\Event;
 
 use Drupal\checklist\ChecklistInterface;
-use Symfony\Component\EventDispatcher\Event;
+use Drupal\Component\EventDispatcher\Event;
 
 /**
  * Checklist Event class for dispatched checklist events.
