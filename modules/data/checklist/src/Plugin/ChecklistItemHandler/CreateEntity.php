@@ -205,7 +205,7 @@ class CreateEntity extends ChecklistItemHandlerBase implements ContainerFactoryP
 
     $definition = EntityDataDefinition::create(
       $this->entityType->id(),
-      $conf['bundle'] !== '__select' ? $conf['bundle'] : NULL
+      ($conf['bundle'] !== '__select') ? $conf['bundle'] : NULL
     );
     $definition->setLabel(new TranslatableMarkup(
       'Created @entity_type',

@@ -84,6 +84,11 @@ class ChecklistContextsEventSubscriber implements EventSubscriberInterface {
 
   /**
    * Get the runtime contexts from actual outcomes.
+   *
+   * @param \Drupal\checklist\Event\ChecklistCollectContextsEventInterface $event
+   *   The collector event.
+   *
+   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function addItemOutcomes(ChecklistCollectContextsEventInterface $event) {
     foreach ($event->getChecklist()->getItems() as $name => $item) {

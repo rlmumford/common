@@ -50,13 +50,6 @@ class ChecklistItemActionForm extends ChecklistItemFormBase {
   protected $renderer;
 
   /**
-   * The context handler service.
-   *
-   * @var \Drupal\Core\Plugin\Context\ContextHandlerInterface
-   */
-  protected ContextHandlerInterface $contextHandler;
-
-  /**
    * The context collector service.
    *
    * @var \Drupal\checklist\ChecklistContextCollectorInterface

@@ -128,7 +128,7 @@ class UpdateEntity extends ContextAwareChecklistItemHandlerBase implements Conta
       '#title' => new TranslatableMarkup('Form Mode'),
       '#markup' => $conf['form_mode'] ?
       $this->entityDisplayRepository->getFormModeOptions($this->entityType->id())[$conf['form_mode']] :
-      'Unknown',
+      'Not configured',
     ];
 
     return $build;

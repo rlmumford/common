@@ -9,7 +9,10 @@ use Drupal\task\Entity\Task;
 use Drupal\task_job\Plugin\ChecklistType\Job;
 
 /**
- * A checklist object for when configuring a job.
+ * A checklist object for configuring a job.
+ *
+ * This is primarily used to collect configuration contexts when configuring a
+ * job.
  */
 class JobConfigurationChecklist extends Checklist {
 
