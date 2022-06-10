@@ -35,7 +35,7 @@ jobs:
       - name: "Add other Repos to Composer"
         run: |
           composer config repositories.patches_fork vcs git@github.com:rlmumford/composer-patches.git
-          composer config repositories.assets composer https://asset-packagist.org
+          composer config repositories.assets composer https://asset-packagist.oroinc.com
           composer config minimum-stability dev
           composer config preferred-install.rlmumford/common source
           composer config preferred-install.* dist
