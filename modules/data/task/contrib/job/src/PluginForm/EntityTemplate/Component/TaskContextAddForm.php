@@ -29,7 +29,7 @@ class TaskContextAddForm extends PluginFormBase {
         '#type' => 'select',
         '#title' => new TranslatableMarkup('Context'),
         '#options' => [],
-        '#default_value' => isset($configuration['task_context']) ? $configuration['task_context'] : NULL,
+        '#default_value' => $configuration['task_context'] ?? NULL,
         '#required' => TRUE,
       ];
 

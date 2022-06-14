@@ -1,7 +1,7 @@
 type: module
 name: Identity Communication
 description: 'Communication Identity Contacts'
-core: 8.x
+core_version_requirement: ^8 || ^9
 package: Communication
 
 dependencies:

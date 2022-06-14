@@ -1,6 +1,6 @@
 name: Job Role
 type: module
-core: 8.x
+core_version_requirement: ^8 || ^9
 description: "Storage for Job Role"
 package: RLMumford
 dependencies:

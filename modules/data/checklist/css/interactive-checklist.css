@@ -3,12 +3,12 @@ div.checklist-item-row-form-wrapper {
   display: inline-block;
 }
 
-.ci-inprogress input[type="checkbox"]:not(:checked) {
+.ci-inprogress .ci-row-form input[type="checkbox"]:not(:checked) {
   height: 0;
   border: none;
   position: relative;
 }
-.ci-inprogress input[type="checkbox"]:not(:checked)::after {
+.ci-inprogress .ci-row-form input[type="checkbox"]:not(:checked)::after {
   content: '';
   width: 21px;
   height: 21px;

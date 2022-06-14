@@ -85,6 +85,9 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface, E
         'weight' => -4,
       ])
       ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayOptions('form', [
+        'type' => 'options_select',
+      ])
       ->setDisplayConfigurable('form', TRUE);
 
     $fields['identity'] = BaseFieldDefinition::create('entity_reference')
@@ -298,12 +301,16 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface, E
    * Get the allowed values for the type field
    *
    * @param \Drupal\Core\Field\FieldStorageDefinitionInterface $definition
-   * @param \Drupal\identity\Entity\IdentityData $entity
+   * @param \Drupal\identity\Entity\IdentityData|NULL  $entity
    * @param $cacheable
    *
    * @return array
    */
-  public static function typeAllowedValues(FieldStorageDefinitionInterface $definition, IdentityData $entity, &$cacheable) {
+  public static function typeAllowedValues(FieldStorageDefinitionInterface $definition, IdentityData $entity = NUll, &$cacheable = TRUE) {
+    if (!$entity) {
+      return [];
+    }
+
     $cacheable = FALSE;
     return $entity->getClass()->typeOptions();
   }

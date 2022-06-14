@@ -16,7 +16,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * @Block(
  *   id = "record_communication_for_contact_dropbutton",
  *   admin_label = @Translation("Record Communication for Contact"),
- *   context = {
+ *   context_definitions = {
  *     "contact" = @ContextDefinition("entity:user", label = @Translation("Contact"))
  *   }
  * )

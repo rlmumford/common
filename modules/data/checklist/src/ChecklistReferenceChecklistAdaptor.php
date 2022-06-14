@@ -26,14 +26,21 @@ class ChecklistReferenceChecklistAdaptor extends TypedData {
     $key = $item->checklist_key;
 
     if (strpos($key, ':')) {
-      list($field_name, $delta) = explode(':', $key, 2);
+      [$field_name, $delta] = explode(':', $key, 2);
 
       // @todo Load from tempstore?
-      return $entity->{$field_name}[$delta]->checklist;
+      $checklist = $entity->{$field_name}[$delta]->checklist;
     }
     else {
-      return $entity->{$key}->checklist;
+      $checklist = $entity->{$key}->checklist;
     }
+
+    /** @var \Drupal\checklist\ChecklistInterface $checklist */
+    if ($item->getEntity()->getEntityTypeId() === 'checklist_item') {
+      $checklist->setItem($item->getEntity()->getName(), $item->getEntity());
+    }
+
+    return $checklist;
   }
 
 }

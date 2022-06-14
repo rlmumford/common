@@ -18,7 +18,7 @@ use Drupal\task_job\Plugin\JobTrigger\Manual as BaseManual;
  *   id = "project_manual",
  *   label = @Translation(Project Manual"),
  *   description = @Translation("This job can be manually created in relation to a project."),
- *   context = {
+ *   context_definitions = {
  *     "project" = @ContextDefinition("entity:project",
  *       label = @Translation("Project")
  *     )

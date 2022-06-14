@@ -7,7 +7,9 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Entity\TypedData\EntityDataDefinition;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -16,8 +18,9 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * @ChecklistItemHandler(
  *   id = "create_entity",
  *   label = @Translation("Create Entity"),
- *   category = @Translation("Create Entity"),
+ *   category = @Translation("Entity"),
  *   deriver = "Drupal\checklist\Plugin\Derivative\ContentEntityTypeDeriver",
+ *   entity_op = @Translation("Create"),
  *   forms = {
  *     "row" = "\Drupal\checklist\PluginForm\StartableItemRowForm",
  *     "action" = "\Drupal\checklist\PluginForm\CreateEntityItemActionForm",
@@ -27,7 +30,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * @package Drupal\checklist\Plugin\ChecklistItemHandler
  */
-class CreateEntity extends ChecklistItemHandlerBase implements ContainerFactoryPluginInterface {
+class CreateEntity extends ChecklistItemHandlerBase implements ContainerFactoryPluginInterface, ExpectedOutcomeChecklistItemHandlerInterface, InteractiveChecklistItemHandlerInterface {
 
   /**
    * The entity type.
@@ -192,6 +195,28 @@ class CreateEntity extends ChecklistItemHandlerBase implements ContainerFactoryP
    */
   public function getEntityType() : EntityTypeInterface {
     return $this->entityType;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function expectedOutcomeDefinitions(): array {
+    $conf = $this->getConfiguration();
+
+    $definition = EntityDataDefinition::create(
+      $this->entityType->id(),
+      ($conf['bundle'] !== '__select') ? $conf['bundle'] : NULL
+    );
+    $definition->setLabel(new TranslatableMarkup(
+      'Created @entity_type',
+      [
+        '@entity_type' => $this->entityType->getLabel(),
+      ]
+    ));
+
+    return [
+      $this->entityType->id() => $definition,
+    ];
   }
 
 }

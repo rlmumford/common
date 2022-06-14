@@ -1,0 +1,19 @@
+<?php
+
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+
+/**
+ * Install the outcomes field.
+ */
+function checklist_update_8100() {
+  \Drupal::entityDefinitionUpdateManager()->installFieldStorageDefinition(
+    'outcomes',
+    'checklist_item',
+    'checklist',
+    BaseFieldDefinition::create('typed_data_reference')
+      ->setLabel(new TranslatableMarkup('Contexts'))
+      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
+  );
+}

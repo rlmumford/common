@@ -20,6 +20,7 @@ use Drupal\entity_template\TemplateBlueprintProviderManager;
 use Drupal\task_job\JobInterface;
 use Drupal\task_job\Plugin\EntityTemplate\BlueprintProvider\BlueprintStorageJobTriggerAdaptor;
 use Drupal\task_job\Plugin\JobTrigger\JobTriggerManager;
+use Drupal\task_job\Plugin\JobTrigger\Missing;
 use Drupal\task_job\TaskJobTempstoreRepository;
 use Drupal\typed_data\Context\ContextDefinition;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -41,7 +42,7 @@ class JobEditForm extends JobForm {
    *
    * @var \Drupal\task_job\Plugin\EntityTemplate\BlueprintProvider\BlueprintStorageJobTriggerAdaptor[]
    */
-  protected $blueprintStorages;
+  protected $blueprintStorages = [];
 
   /**
    * The blueprint provider manager service.
@@ -157,10 +158,12 @@ class JobEditForm extends JobForm {
   public function form(array $form, FormStateInterface $form_state) {
     $form = parent::form($form, $form_state);
 
+    $form['#attributes']['novalidate'] = 'novalidate';
+
+    $unchanged = $this->entityTypeManager->getStorage($this->entity->getEntityTypeId())
+      ->loadUnchanged($this->entity->id());
     if (
-      $this->entity->toArray() !==
-      $this->entityTypeManager->getStorage($this->entity->getEntityTypeId())
-        ->loadUnchanged($this->entity->id())->toArray()
+      $this->entity->toArray() !== $unchanged->toArray()
     ) {
       $form['changed'] = [
         '#type' => 'container',
@@ -169,6 +172,16 @@ class JobEditForm extends JobForm {
         ],
         '#children' => $this->t('You have unsaved changes.'),
         '#weight' => -10,
+      ];
+    }
+    if ($this->entity->uuid() !== $unchanged->uuid()) {
+      $form['uuid_error'] = [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['task-job-changed', 'messages', 'messages--error'],
+        ],
+        '#children' => $this->t('Your changes are no longer compatible with the stored job. Please take note of any changes, select "Cancel" at the bottom of this page and apply your changes again.'),
+        '#weight' => -12,
       ];
     }
 
@@ -336,6 +349,73 @@ class JobEditForm extends JobForm {
     ];
     $form['context_wrapper']['context']['_add_new'] = $row;
 
+    $form['resources'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Resources'),
+      '#description' => $this->t('Resources appear on the task page. Sometimes more resources than those configured here might appear, provided by checklist items or other integrations.'),
+    ];
+    $form['resources']['add'] = [
+      '#type' => 'link',
+      '#title' => $this->t('Add Resource'),
+      '#url' => Url::fromRoute(
+        'task_job.resource.choose_block',
+        [
+          'task_job' => $this->entity->id(),
+        ],
+        $ajax_attributes
+      ),
+      '#attributes' => [
+        'class' => ['add-resource-button', 'btn', 'button'],
+      ],
+    ];
+    $form['resources']['table'] = [
+      '#type' => 'table',
+      '#header' => [
+        $this->t('Resource'),
+        $this->t('Category'),
+        $this->t('Operations'),
+      ],
+    ];
+    /** @var \Drupal\Core\Block\BlockPluginInterface $block */
+    foreach ($this->entity->getResourcesCollection() as $uuid => $block) {
+      $row = [];
+      $row['resource'] = $block->label();
+      $row['category'] = $block->getPluginDefinition()['category'] ?? $this->t('Other');
+      $row['operations']['data'] = [
+        '#type' => 'dropbutton',
+        '#links' => [
+          'configure' => [
+            'title' => $this->t('configure'),
+            'url' => Url::fromRoute(
+              'task_job.resource.configure',
+              [
+                'task_job' => $this->entity->id(),
+                'uuid' => $uuid,
+              ],
+              [
+                'query' => $this->getDestinationArray(),
+              ] + $ajax_attributes,
+            ),
+          ],
+          'remove' => [
+            'title' => $this->t('remove'),
+            'url' => Url::fromRoute(
+              'task_job.resource.remove',
+              [
+                'task_job' => $this->entity->id(),
+                'uuid' => $uuid,
+              ],
+              [
+                'query' => $this->getDestinationArray(),
+              ] + $ajax_attributes
+            ),
+          ],
+        ],
+      ];
+
+      $form['resources']['table']['#rows'][] = $row;
+    }
+
     $form['checklist'] = [
       '#type' => 'details',
       '#title' => $this->t('Default Checklist'),
@@ -444,6 +524,7 @@ class JobEditForm extends JobForm {
       ],
     ];
 
+    /** @var \Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface $trigger */
     foreach ($this->entity->getTriggerCollection() as $key => $trigger) {
       $wrapper_id = Html::cleanCssIdentifier("trigger-{$key}-wrapper");
       $element = [
@@ -529,6 +610,10 @@ class JobEditForm extends JobForm {
   public function actions(array $form, FormStateInterface $form_state) {
     $actions = parent::actions($form, $form_state);
 
+    if (isset($form['uuid_error'])) {
+      $actions['submit']['#disabled'] = TRUE;
+    }
+
     if (
       $this->entity->toArray() !==
       $this->entityTypeManager->getStorage($this->entity->getEntityTypeId())
@@ -608,14 +693,16 @@ class JobEditForm extends JobForm {
 
     $triggers_config = [];
     foreach ($this->blueprintStorages as $key => $storage) {
-      $triggers_config[$key] = [
-        'id' => $storage->getTrigger()->getPluginId(),
-        'key' => $storage->getTrigger()->getKey(),
-        'template' => $storage->getTemplate('default')->getConfiguration(),
-      ] + $storage->getTrigger()->getConfiguration();
-    }
+      $trigger = $storage->getTrigger();
 
+      $triggers_config[$key] = [
+        'id' => $trigger instanceof Missing ? $trigger->getIntendedPluginId() : $trigger->getPluginId(),
+        'key' => $trigger->getKey(),
+        'template' => $storage->getTemplate('default')->getConfiguration(),
+      ] + $trigger->getConfiguration();
+    }
     $this->entity->set('triggers', $triggers_config);
+    $this->entity->set('resources', $this->entity->getResourcesCollection()->getConfiguration());
   }
 
   /**
@@ -628,6 +715,9 @@ class JobEditForm extends JobForm {
       $this->blueprintTempstoreRepository->delete($storage);
     }
     $this->tempstoreRepository->delete($this->entity);
+
+    $this->messenger()->addStatus($this->t('The job has been saved.'));
+
     return $return;
   }
 
@@ -754,8 +844,13 @@ class JobEditForm extends JobForm {
   public function formSubmitRemoveTrigger(array $form, FormStateInterface $form_state) {
     $button = $form_state->getTriggeringElement();
     $this->entity->getTriggerCollection()->removeInstanceId($button['#trigger_key']);
+    $triggers = $this->entity->getTriggersConfiguration();
+    unset($triggers[$button['#trigger_key']]);
+    $this->entity->set('triggers', $triggers);
     $form_state->setRebuild(TRUE);
 
+    $this->blueprintTempstoreRepository->delete($this->blueprintStorages[$button['#trigger_key']]);
+    unset($this->blueprintStorages[$button['#trigger_key']]);
     $this->tempstoreRepository->set($this->entity);
   }
 

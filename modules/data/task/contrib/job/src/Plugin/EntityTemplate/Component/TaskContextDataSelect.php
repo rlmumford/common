@@ -99,7 +99,7 @@ class TaskContextDataSelect extends TaskContextBase {
       $form['selector'] = [
         '#type' => 'textfield',
         '#title' => $this->t('Select Data'),
-        '#default_value' => isset($this->configuration['selector']) ? $this->configuration['selector'] : '',
+        '#default_value' => $this->configuration['selector'] ?? '',
         '#attributes' => [
           'class' => ['entity-template-ui-autocomplete'],
         ],
@@ -127,7 +127,7 @@ class TaskContextDataSelect extends TaskContextBase {
    */
   public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
     $selector = $form_state->getValue('selector');
-    list($context, $path) = explode('.', $selector . '.', 2);
+    [$context, $path] = explode('.', $selector . '.', 2);
 
     if (empty($path)) {
       $selected_data_def = $this->getContextProvidingTemplate()

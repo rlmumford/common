@@ -5,6 +5,8 @@ namespace Drupal\task_job\Entity;
 use Drupal\Component\Plugin\LazyPluginCollection;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
 use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\EntityWithPluginCollectionInterface;
+use Drupal\Core\Plugin\DefaultLazyPluginCollection;
 use Drupal\task_job\JobInterface;
 use Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface;
 use Drupal\task_job\Plugin\JobTrigger\LazyJobTriggerCollection;
@@ -28,20 +30,23 @@ use Drupal\typed_data\Context\ContextDefinition;
  *     "label",
  *     "context",
  *     "description",
+ *     "resources",
  *     "default_checklist",
  *     "triggers",
  *   },
  *   handlers = {
  *     "list_builder" = "Drupal\task_job\Controller\JobListBuilder",
- *     "access" = "Drupal\entity\EntityAccessControlHandler",
+ *     "access" = "Drupal\task_job\Entity\JobAccessControlHandler",
  *     "permission_provider" = "Drupal\entity\EntityPermissionProvider",
  *     "form" = {
  *        "add" = "\Drupal\task_job\Form\JobForm",
  *        "default" = "\Drupal\task_job\Form\JobEditForm",
  *        "delete" = "\Drupal\Core\Entity\EntityDeleteForm",
+ *        "disable" = "\Drupal\task_job\Form\JobDisableForm",
+ *        "enable" = "\Drupal\task_job\Form\JobEnableForm",
  *      },
  *     "route_provider" = {
- *       "html" = "Drupal\entity\Routing\DefaultHtmlRouteProvider",
+ *       "html" = "Drupal\task_job\Entity\Routing\JobHtmlRouteProvider",
  *     }
  *   },
  *   links = {
@@ -49,13 +54,15 @@ use Drupal\typed_data\Context\ContextDefinition;
  *     "add-form" = "/admin/config/task/job/add",
  *     "canonical" = "/admin/config/task/job/{task_job}",
  *     "edit-form" = "/admin/config/task/job/{task_job}/edit",
+ *     "disable-form" = "/admin/config/task/job/{task_job}/disable",
+ *     "enable-form" = "/admin/config/task/job/{task_job}/enable",
  *     "delete-form" = "/admin/config/task/job/{task_job}/delete",
  *   }
  * );
  *
  * @package Drupal\task_job\Entity
  */
-class Job extends ConfigEntityBase implements JobInterface {
+class Job extends ConfigEntityBase implements JobInterface, EntityWithPluginCollectionInterface {
 
   /**
    * The triggers configuration.
@@ -70,6 +77,20 @@ class Job extends ConfigEntityBase implements JobInterface {
    * @var \Drupal\Component\Plugin\LazyPluginCollection
    */
   protected $triggerCollection;
+
+  /**
+   * The resources configuration.
+   *
+   * @var array
+   */
+  protected $resources = [];
+
+  /**
+   * The resources collection.
+   *
+   * @var \Drupal\Component\Plugin\LazyPluginCollection
+   */
+  protected $resourcesCollection;
 
   /**
    * The default checklist configuration.
@@ -113,6 +134,27 @@ class Job extends ConfigEntityBase implements JobInterface {
   /**
    * {@inheritdoc}
    */
+  public function getResourcesConfiguration(): array {
+    return $this->get('resources') ?: [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getResourcesCollection(): LazyPluginCollection {
+    if (!$this->resourcesCollection) {
+      $this->resourcesCollection = new DefaultLazyPluginCollection(
+        \Drupal::service('plugin.manager.block'),
+        $this->getResourcesConfiguration()
+      );
+    }
+
+    return $this->resourcesCollection;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getTriggersConfiguration(): array {
     return $this->get('triggers') ?: [];
   }
@@ -121,13 +163,7 @@ class Job extends ConfigEntityBase implements JobInterface {
    * {@inheritdoc}
    */
   public function defaultTriggersConfiguration(): array {
-    return [
-      'manual' => [
-        'id' => 'manual',
-        'key' => 'manual',
-        'template' => [],
-      ],
-    ];
+    return [];
   }
 
   /**
@@ -208,6 +244,16 @@ class Job extends ConfigEntityBase implements JobInterface {
     /** @var \Drupal\task_job\Plugin\JobTrigger\JobTriggerManagerInterface $trigger_manager */
     $trigger_manager = \Drupal::service('plugin.manager.task_job.trigger');
     $trigger_manager->updateTriggerIndex($this);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getPluginCollections() {
+    return [
+      'triggers' => $this->getTriggerCollection(),
+      'resources' => $this->getResourcesCollection(),
+    ];
   }
 
 }

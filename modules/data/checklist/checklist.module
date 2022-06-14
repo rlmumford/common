@@ -1,0 +1,24 @@
+<?php
+
+use Drupal\checklist\Plugin\ChecklistItemHandler\ExpectedOutcomeChecklistItemHandlerInterface;
+use Drupal\typed_data_reference\TypedDataReferenceItemList;
+
+/**
+ * Implements hook_typed_data_reference_property_definitions.
+ */
+function checklist_typed_data_reference_property_definitions(TypedDataReferenceItemList $item_list) {
+  if (
+    $item_list->getFieldDefinition()->getName() !== 'outcomes' ||
+    $item_list->getFieldDefinition()->getTargetEntityTypeId() !== 'checklist_item'
+  ) {
+    return [];
+  }
+
+  /** @var \Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerInterface $handler */
+  $handler = $item_list->getEntity()->getHandler();
+  if (!($handler instanceof ExpectedOutcomeChecklistItemHandlerInterface)) {
+    return [];
+  }
+
+  return $handler->expectedOutcomeDefinitions();
+}

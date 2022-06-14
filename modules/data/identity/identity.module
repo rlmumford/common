@@ -36,6 +36,6 @@ function identity_query_identity_data_access_alter(AlterableInterface $query) {
   }
   else {
     // In this instance, block access to the query.
-    $query->where('1 = 0');
+    $query->alwaysFalse();
   }
 }

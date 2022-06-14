@@ -64,6 +64,9 @@ class Role extends IdentityDataClassBase {
     $fields['role'] = BundleFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Role'))
       ->setRevisionable(TRUE)
+      ->setDisplayOptions('view', [
+        'type' => 'list_default',
+      ])
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
 

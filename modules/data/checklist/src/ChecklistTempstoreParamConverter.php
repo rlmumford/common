@@ -65,7 +65,7 @@ class ChecklistTempstoreParamConverter implements ParamConverterInterface {
       $delta = 0;
     }
     else {
-      list($field_name, $delta) = explode(':', $checklist);
+      [$field_name, $delta] = explode(':', $checklist);
     }
 
     if (!($entity instanceof FieldableEntityInterface) || !$entity->hasField($field_name)) {

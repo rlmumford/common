@@ -15,7 +15,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * @Block(
  *   id = "invoice_generation_form",
  *   admin_label = @Translation("Invoice Generation Form"),
- *   context = {
+ *   context_definitions = {
  *     "order" = @ContextDefinition("entity:commerce_order", label = @Translation("Order"))
  *   }
  * )

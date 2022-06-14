@@ -91,8 +91,7 @@ class EntityOperation extends JobTriggerBase implements ContainerFactoryPluginIn
    *   The past tense label of the operation.
    */
   protected function getOperationPastLabel() {
-    return isset($this->pluginDefinition['operation_past_label']) ?
-      $this->pluginDefinition['operation_past_label'] :
+    return $this->pluginDefinition['operation_past_label'] ??
       $this->pluginDefinition['operation'] . 'd';
   }
 

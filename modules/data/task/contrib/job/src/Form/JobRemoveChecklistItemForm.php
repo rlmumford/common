@@ -45,7 +45,7 @@ class JobRemoveChecklistItemForm extends FormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'job_configure_checklist_item_form';
+    return 'job_remove_checklist_item_form';
   }
 
   /**

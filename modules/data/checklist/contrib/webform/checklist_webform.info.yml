@@ -1,0 +1,8 @@
+name: Checklist Webform
+description: Use Webforms in Programmable checklists
+type: module
+core_version_requirement: ^8 || ^9
+package: RLMumford
+dependencies:
+  - rlmumford:checklist
+  - webform:webform

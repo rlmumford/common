@@ -3,12 +3,15 @@
 namespace Drupal\task_job\Plugin\EntityTemplate\BlueprintProvider;
 
 use Drupal\Component\Plugin\Exception\ContextException;
+use Drupal\Component\Plugin\Exception\PluginNotFoundException;
+use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Plugin\Context\Context;
 use Drupal\Core\Plugin\Context\EntityContextDefinition;
 use Drupal\Core\Plugin\ContextAwarePluginInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity_template\Blueprint;
 use Drupal\task_job\JobInterface;
+use Drupal\task_job\Plugin\EntityTemplate\Builder\JobTaskBuilder;
 use Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface;
 use Drupal\typed_data\Context\ContextDefinition;
 
@@ -103,17 +106,40 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
           new TranslatableMarkup('The trigger being fired'),
           $this->getTrigger()->getKey()
       ),
-    ] + $this->getTrigger()->getContextDefinitions()
-        + parent::getExtraContextDefinitions();
+      'current_date' => new ContextDefinition(
+        'datetime_iso8601',
+        new TranslatableMarkup('Current Date'),
+        FALSE,
+        FALSE,
+        new TranslatableMarkup('The current datetime the trigger is fired.'),
+        DrupalDateTime::createFromTimestamp(\Drupal::time()->getCurrentTime())
+          ->format(\DateTime::ATOM)
+      ),
+    ] + $this->getTrigger()->getContextDefinitions() + parent::getExtraContextDefinitions();
   }
 
   /**
    * {@inheritdoc}
    */
   public function getBuilder() {
-    return $this->builderManager()->createInstance(
-      'task_job:' . $this->getJob()->id()
-    );
+    try {
+      return $this->builderManager()->createInstance(
+        'task_job:' . $this->getJob()->id()
+      );
+    }
+    catch (PluginNotFoundException $exception) {
+      // Sometimes we land here before the builder plugin has been registered.
+      return JobTaskBuilder::create(
+        \Drupal::getContainer(),
+        [],
+        'task_job:' . $this->getJob()->id(),
+        [
+          'task_job' => $this->getJob()->id(),
+          'label' => $this->getJob()->label(),
+          'context_definitions' => [],
+        ]
+      );
+    }
   }
 
   /**
@@ -161,6 +187,17 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
       ];
     }
 
+    $components['start'] = [
+      'id' => 'field.data_select:task.start',
+      'uuid' => 'start',
+      'selector' => 'current_date',
+    ];
+    $components['due'] = [
+      'id' => 'field.data_select:task.due',
+      'uuid' => 'due',
+      'selector' => 'current_date | date_add(1 day)',
+    ];
+
     if ($this->getJob() && ($definitions = $this->getJob()->getContextDefinitions())) {
       foreach ($definitions as $key => $definition) {
         $components["context:{$key}"] = [
@@ -170,10 +207,11 @@ class BlueprintJobTriggerAdaptor extends Blueprint {
         ];
       }
     }
+    $trigger = $this->getTrigger();
     \Drupal::moduleHandler()->alter(
       'task_job_trigger_default_template_components',
       $components,
-      $this->getTrigger()
+      $trigger,
     );
 
     return $components;

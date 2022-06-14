@@ -4,6 +4,7 @@ namespace Drupal\checklist;
 
 use Drupal\checklist\Annotation\ChecklistItemHandler;
 use Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerInterface;
+use Drupal\Component\Plugin\FallbackPluginManagerInterface;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
@@ -11,7 +12,7 @@ use Drupal\Core\Plugin\DefaultPluginManager;
 /**
  * Plugin manager for checklist item handlers.
  */
-class ChecklistItemHandlerManager extends DefaultPluginManager {
+class ChecklistItemHandlerManager extends DefaultPluginManager implements FallbackPluginManagerInterface {
 
   /**
    * Constructs a new ChecklistTypeManager object.
@@ -35,6 +36,13 @@ class ChecklistItemHandlerManager extends DefaultPluginManager {
 
     $this->alterInfo('checklist_item_handler_info');
     $this->setCacheBackend($cache_backend, 'checklist_item_handler_info');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFallbackPluginId($plugin_id, array $configuration = []) {
+    return "missing";
   }
 
 }

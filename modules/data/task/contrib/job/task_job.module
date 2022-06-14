@@ -163,3 +163,22 @@ function task_job_task_prepare_form(EntityInterface $task, string $op, FormState
     ]);
   }
 }
+
+/**
+ * Implement hook_plugin_filter_PLUGIN_TYPE__CONSUMER() for block and task_job_resource.
+ *
+ * Some block plugins make no sense as resources. Remove them.
+ */
+function task_job_plugin_filter_block__task_job_resource_alter(array &$definitions) {
+  $blacklist = [
+    'system_menu_block', 'system_powered_by_block', 'shortcuts',
+    'system_breadcrumb_block', 'system_messages_block', 'system_main_block',
+    'system_branding_block', 'task_resources', 'user_login_block', 'broken',
+    'page_title_block', 'local_actions_block', 'local_tasks_block',
+  ];
+  foreach ($definitions as $id => $definition) {
+    if (in_array($id, $blacklist) || in_array($definition['id'], $blacklist)) {
+      unset($definitions[$id]);
+    }
+  }
+}

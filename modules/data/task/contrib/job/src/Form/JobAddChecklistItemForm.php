@@ -2,9 +2,11 @@
 
 namespace Drupal\task_job\Form;
 
+use Drupal\checklist\ChecklistContextCollectorInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\Context\EntityContext;
 use Drupal\Core\Plugin\Context\EntityContextDefinition;
+use Drupal\task_job\JobConfigurationChecklist;
 use Drupal\task_job\JobInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -14,15 +16,35 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class JobAddChecklistItemForm extends JobPluginFormBase {
 
   /**
+   * The context collector service.
+   *
+   * @var \Drupal\checklist\ChecklistContextCollectorInterface
+   */
+  protected ChecklistContextCollectorInterface $contextCollector;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    return new static(
+    return (new static(
       $container->get('task_job.tempstore_repository'),
       $container->get('plugin_form.factory'),
       $container->get('plugin.manager.checklist_item_handler'),
       $container->get('config.factory')
-    );
+    ))->setChecklistContextCollector($container->get('checklist.context_collector'));
+  }
+
+  /**
+   * Set the context collector.
+   *
+   * @param \Drupal\checklist\ChecklistContextCollectorInterface $context_collector
+   *   The context collector service.
+   *
+   * @return $this
+   */
+  public function setChecklistContextCollector(ChecklistContextCollectorInterface $context_collector) : JobAddChecklistItemForm {
+    $this->contextCollector = $context_collector;
+    return $this;
   }
 
   /**
@@ -113,6 +135,19 @@ class JobAddChecklistItemForm extends JobPluginFormBase {
     $job->set('default_checklist', $checklist_items);
 
     $this->tempstoreRepository->set($job);
+  }
+
+  /**
+   * Gather the contexts available for this plugin.
+   *
+   * @param \Drupal\task_job\JobInterface $task_job
+   *   The job.
+   *
+   * @return \Drupal\Core\Plugin\Context\ContextInterface[]
+   *   A list of contexts available to the plugin.
+   */
+  protected function gatherContexts(JobInterface $task_job) {
+    return $this->contextCollector->collectConfigContexts(JobConfigurationChecklist::createFromJob($task_job));
   }
 
 }

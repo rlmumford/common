@@ -2,7 +2,6 @@ type: module
 name: Material Helpers
 description: 'Helpful tools an plugins for using the material theme.'
 package: RLMumford
-core: 8.x
-
+core_version_requirement: ^8 || ^9
 dependencies:
 - block_class

@@ -64,7 +64,7 @@ function identity_ui_entity_base_field_info(EntityTypeInterface $entity_type) {
       ])
       ->setClass(IdentityDataReferenceItemList::class)
       ->setDisplayOptions('view', [
-        'type' => 'entity_reference_entity_view',
+        'type' => 'identity_data_reference_table',
       ])
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayOptions('form', [

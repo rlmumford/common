@@ -5,13 +5,17 @@ namespace Drupal\typed_data_context_assignment\Plugin\Context;
 use Drupal\Component\Plugin\Exception\ContextException;
 use Drupal\Component\Plugin\Exception\MissingValueContextException;
 use Drupal\Component\Plugin\Exception\PluginException;
+use Drupal\Component\Utility\Crypt;
 use Drupal\Core\Cache\CacheableDependencyInterface;
 use Drupal\Core\Plugin\Context\Context;
 use Drupal\Core\Plugin\Context\ContextDefinitionInterface;
 use Drupal\Core\Plugin\Context\ContextHandler as CoreContextHandler;
 use Drupal\Core\Plugin\Context\ContextInterface;
+use Drupal\Core\Plugin\Context\EntityContextDefinition;
 use Drupal\Core\Plugin\ContextAwarePluginInterface;
 use Drupal\Core\Render\BubbleableMetadata;
+use Drupal\Core\Site\Settings;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TypedData\ComplexDataDefinitionInterface;
 use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\TypedData\ListInterface;
@@ -149,18 +153,27 @@ class ContextHandler extends CoreContextHandler {
 
     // Loop through each of the expected contexts.
     foreach ($plugin->getContextDefinitions() as $plugin_context_id => $plugin_context_definition) {
-      // If this context was given a specific name, use that.
-      [$context_id, $data_path] = $this->parseContextId($mappings[$plugin_context_id] ?? $plugin_context_id, $contexts);
+      try {
+        // If this context was given a specific name, use that.
+        [$context_id, $data_path] = $this->parseContextId(
+          $mappings[$plugin_context_id] ?? $plugin_context_id,
+          $contexts
+        );
 
-      if (is_callable([$this->dataFetcher, 'applyFilters'])) {
-        [$path, $filters] = $this->dataFetcher->parsePropertyPathAndFilters($data_path);
+        if (is_callable([$this->dataFetcher, 'applyFilters'])) {
+          [$path, $filters] = $this->dataFetcher->parsePropertyPathAndFilters($data_path);
+        }
+        else {
+          $path = explode('.', $data_path);
+          $filters = [];
+        }
       }
-      else {
-        $path = explode('.', $data_path);
-        $filters = [];
+      catch (ContextException $e) {
+        $context_id = $plugin_context_id;
+        $path = $filters = [];
       }
 
-      if (!empty($contexts[$context_id])) {
+      if ($context_id && !empty($contexts[$context_id])) {
         // This assignment has been used, remove it.
         unset($mappings[$plugin_context_id]);
 
@@ -185,7 +198,19 @@ class ContextHandler extends CoreContextHandler {
                   $filters
                 );
                 if ($data && $data->getValue()) {
-                  $plugin->setContextValue($plugin_context_id, $data->getValue());
+                  $old_context_def = $plugin->getContext($plugin_context_id)->getContextDefinition();
+                  $new_def_class = strpos($data->getDataDefinition()->getDataType(), 'entity:') !== 0 ? ContextDefinition::class : EntityContextDefinition::class;
+                  $plugin->setContext($plugin_context_id, new Context(
+                    (new $new_def_class(
+                      $data->getDataDefinition()->getDataType(),
+                      $old_context_def->getLabel(),
+                      $old_context_def->isRequired(),
+                      $old_context_def->isMultiple(),
+                      $old_context_def->getDescription(),
+                      $old_context_def->getDefaultValue(),
+                    ))->setConstraints(array_merge($old_context_def->getConstraints(), $data->getDataDefinition()->getConstraints())),
+                    $data->getValue()
+                  ));
                 }
                 elseif ($plugin_context_definition->isRequired()) {
                   $missing_value[] = $plugin_context_id;
@@ -216,7 +241,19 @@ class ContextHandler extends CoreContextHandler {
             }
 
             $plugin_context->addCacheableDependency($cache_metadata);
-            $plugin->setContextValue($plugin_context_id, $data->getValue());
+            $old_context_def = $plugin->getContextDefinition($plugin_context_id);
+            $new_def_class = strpos($data->getDataDefinition()->getDataType(), 'entity:') !== 0 ? ContextDefinition::class : EntityContextDefinition::class;
+            $plugin->setContext($plugin_context_id, new Context(
+              (new $new_def_class(
+                $data->getDataDefinition()->getDataType(),
+                $old_context_def->getLabel(),
+                $old_context_def->isRequired(),
+                $old_context_def->isMultiple(),
+                $old_context_def->getDescription(),
+                $old_context_def->getDefaultValue(),
+              ))->setConstraints(array_merge($old_context_def->getConstraints(), $data->getDataDefinition()->getConstraints())),
+              $data->getValue()
+            ));
 
             $new_plugin_context = $plugin->getContext($plugin_context_id);
             if ($new_plugin_context instanceof ContextInterface) {
@@ -290,7 +327,7 @@ class ContextHandler extends CoreContextHandler {
    *   the data path.
    */
   protected function parseContextId(string $context_id, array $contexts) : array {
-    $bits = explode(':', $context_id);
+    $bits = explode(':', $context_id, 2);
 
     $service = '';
     $context_name_and_path = reset($bits);
@@ -311,6 +348,45 @@ class ContextHandler extends CoreContextHandler {
     }
 
     return [$context_name, implode('.', $bits)];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getContextAssignmentElement(ContextAwarePluginInterface $plugin, array $contexts) {
+    $assignments = $plugin->getContextMapping();
+
+    $element = ['#tree' => TRUE];
+    foreach ($plugin->getContextDefinitions() as $context_slot => $definition) {
+      $valid_contexts = $this->getMatchingContexts($contexts, $definition);
+
+      $key_value_storage = \Drupal::keyValue('typed_data_context_assignment_autocomplete');
+      $data = serialize($definition);
+      $required_context_key = Crypt::hmacBase64($data, Settings::getHashSalt());
+      $key_value_storage->set($required_context_key, $definition);
+
+      $available_definitions = [];
+      foreach ($valid_contexts as $name => $context) {
+        $available_definitions[$name] = $context->getContextDefinition();
+      }
+      $available_context_key = Crypt::hmacBase64(serialize($available_definitions), Settings::getHashSalt());
+      $key_value_storage->set($available_context_key, $available_definitions);
+
+      $element[$context_slot] = [
+        '#title' => $definition->getLabel() ?: new TranslatableMarkup('Select a @context value:', ['@context' => $context_slot]),
+        '#type' => 'textfield',
+        '#description' => $definition->getDescription(),
+        '#required' => $definition->isRequired(),
+        '#default_value' => !empty($assignments[$context_slot]) ? $assignments[$context_slot] : '',
+        '#autocomplete_route_name' => 'typed_data_context_assignment.data_select_autocomplete',
+        '#autocomplete_route_parameters' => [
+          'required_context_key' => $required_context_key,
+          'available_context_key' => $available_context_key,
+        ],
+      ];
+    }
+
+    return $element;
   }
 
 }

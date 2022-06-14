@@ -5,6 +5,13 @@ services:
   plugin.manager.checklist_item_handler:
     class: Drupal\checklist\ChecklistItemHandlerManager
     parent: default_plugin_manager
+  checklist.context_collector:
+    class: Drupal\checklist\ChecklistContextCollector
+    arguments: ['@event_dispatcher']
+  checklist.context_collector_subscriber:
+    class: Drupal\checklist\EventSubscriber\ChecklistContextsEventSubscriber
+    tags:
+      - { name: event_subscriber }
   checklist.tempstore_repository:
     class: Drupal\checklist\ChecklistTempstoreRepository
     arguments: ['@tempstore.shared']

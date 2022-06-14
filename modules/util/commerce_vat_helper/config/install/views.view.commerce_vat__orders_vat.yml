@@ -18,7 +18,7 @@ description: ''
 tag: ''
 base_table: commerce_payment
 base_field: payment_id
-core: 8.x
+core_version_requirement: ^8 || ^9
 display:
   default:
     display_plugin: default

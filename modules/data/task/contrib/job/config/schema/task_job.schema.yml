@@ -33,6 +33,10 @@ task_job.task_job.*:
             description:
               type: string
               label: 'A description of the context'
+    resources:
+      type: sequence
+      sequence:
+        type: block.settings.[id]
     default_checklist:
       type: sequence
       label: 'Default chacklist'

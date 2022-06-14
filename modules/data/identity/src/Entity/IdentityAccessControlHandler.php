@@ -57,7 +57,6 @@ class IdentityAccessControlHandler extends EntityAccessControlHandler implements
     if (!$access->isAllowed()) {
       $query = $this->entityTypeManager->getStorage('identity_data')->getQuery();
       $query->condition('identity', $entity->id());
-      $query->addTag('identity_data_access');
       $query->addMetaData('account', $account);
       $query->addMetaData('op', $operation);
       $query->range(0, 1);
