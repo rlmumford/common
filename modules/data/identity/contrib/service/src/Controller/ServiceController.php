@@ -12,7 +12,6 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\identity\Entity\Identity;
 use Drupal\identity\Entity\IdentityData;
 use Drupal\identity\Entity\IdentityDataSource;
-use Drupal\identity\IdentityAcquisitionResult;
 use Drupal\identity\IdentityDataGroup;
 use Drupal\identity\IdentityDataIdentityAcquirer;
 use Drupal\identity\IdentityLabelContext;
@@ -30,6 +29,9 @@ use Symfony\Component\Serializer\Exception\InvalidArgumentException;
 use Symfony\Component\Serializer\Exception\UnexpectedValueException;
 use Symfony\Component\Serializer\SerializerInterface;
 
+/**
+ * Controller for service end points.
+ */
 class ServiceController extends ControllerBase {
 
   /**
@@ -326,12 +328,6 @@ class ServiceController extends ControllerBase {
       !empty($conditions['conjunction']) ? $conditions['conjunction'] : 'AND'
     );
     $this->queryDataCompileConditions($query, $conditions);
-
-    // Prepare labeling context.
-    $label_context = new IdentityLabelContext(array_filter([
-      IdentityLabelContext::DATA_PREFERENCE_CLASS => $request->query->get('label_dpclass', NULL),
-      IdentityLabelContext::DATA_PREFERENCE_TYPE => $request->query->get('label_dptype', NULL),
-    ]));
     $query->range(
       $request->query->get('start', 0),
       $request->query->get('end', 10)
@@ -339,7 +335,14 @@ class ServiceController extends ControllerBase {
 
     $query->addTag('identity_data_access');
 
-    $ids = $query->execute();
+    $ids = $query->accessCheck()->execute();
+
+    // Prepare labeling context.
+    $label_context = new IdentityLabelContext(array_filter([
+      IdentityLabelContext::DATA_PREFERENCE_CLASS => $request->query->get('label_dpclass', NULL),
+      IdentityLabelContext::DATA_PREFERENCE_TYPE => $request->query->get('label_dptype', NULL),
+    ]));
+
     $result = [];
     foreach ($storage->loadMultiple($ids) as $identity) {
       $result[] = [
@@ -377,14 +380,31 @@ class ServiceController extends ControllerBase {
         $condition_set->condition($condition_group);
       }
       else {
-        $class = $condition['class'];
+        $class = $condition['class'] ?? FALSE;
 
         foreach ($condition as $field => $value) {
           if (in_array($field, ['_t', 'class'])) {
             continue;
           }
 
-          $condition_set->condition($class.'::'.$field, $value['value'], $value['op']);
+          if (is_array($value) && !empty(array_intersect_key($value, ['value' => TRUE, 'op' => TRUE]))) {
+            $value = [
+              'value' => $value['value'] ?? NULL,
+              'op' => $value['op'] ?? (is_array($value['value'] ?? FALSE) ? 'IN' : '='),
+            ];
+          }
+          else {
+            $value = [
+              'value' => $value,
+              'op' => is_array($value) ? 'IN' : '=',
+            ];
+          }
+
+          $condition_set->condition(
+            ($class ? $class.'::' : '') . $field,
+            $value['value'],
+            $value['op']
+          );
         }
       }
     }
