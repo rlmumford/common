@@ -8,12 +8,10 @@ use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\Query\ConditionInterface;
 use Drupal\Core\Render\RendererInterface;
-use Drupal\Core\Routing\NullMatcherDumper;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\identity\Entity\Identity;
 use Drupal\identity\Entity\IdentityData;
 use Drupal\identity\Entity\IdentityDataSource;
-use Drupal\identity\IdentityAcquisitionResult;
 use Drupal\identity\IdentityDataGroup;
 use Drupal\identity\IdentityDataIdentityAcquirer;
 use Drupal\identity\IdentityLabelContext;
@@ -31,6 +29,9 @@ use Symfony\Component\Serializer\Exception\InvalidArgumentException;
 use Symfony\Component\Serializer\Exception\UnexpectedValueException;
 use Symfony\Component\Serializer\SerializerInterface;
 
+/**
+ * Controller for service end points.
+ */
 class ServiceController extends ControllerBase {
 
   /**
