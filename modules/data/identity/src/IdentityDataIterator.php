@@ -33,7 +33,7 @@ class IdentityDataIterator implements \Iterator, \ArrayAccess {
    *
    * @var int
    */
-  protected $batchSize = 10;
+  protected $batchSize = 1;
 
   /**
    * The identity data storage.

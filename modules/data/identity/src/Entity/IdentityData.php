@@ -97,13 +97,6 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface, E
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
 
-    $fields['source'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('Source'))
-      ->setRevisionable(TRUE)
-      ->setSetting('target_type', 'identity_data_source')
-      ->setDisplayConfigurable('view', TRUE)
-      ->setDisplayConfigurable('form', TRUE);
-
     $fields['created'] = BaseFieldDefinition::create('created')
       ->setLabel(t('Created'))
       ->setRevisionable(TRUE)
