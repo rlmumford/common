@@ -5,6 +5,48 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\identity\Field\BundleFieldDefinition;
 
 /**
+ * Implements hook_schema().
+ */
+function identity_schema() {
+  $schema = array();
+
+  $schema['identity_label'] = [
+    'description' => 'Stores identity labels.',
+    'fields' => [
+      'identity' => [
+        'description' => 'The identity the label is about.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'label' => [
+        'description' => 'Label',
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'context' => [
+        'description' => 'Label context',
+        'type' => 'varchar',
+        'length' => 256,
+        'not null' => TRUE,
+        'default' => '',
+      ]
+    ],
+    'indexes' => [
+      'identity' => ['identity'],
+      'context' => ['context'],
+    ],
+    'unique keys' => [
+      'identity_context' => ['identity', 'context'],
+    ],
+  ];
+
+  return $schema;
+}
+
+/**
  * Install works at relationship.
  */
 function identity_update_8001() {
@@ -103,4 +145,43 @@ function identity_update_8006() {
       ->setDescription(new TranslatableMarkup('Which identity has this been merged into.'))
       ->setDisplayConfigurable('view', TRUE)
   );
+}
+
+/**
+ * Store generated labels more persistently than in cache.
+ */
+function identity_update_8007() {
+  \Drupal::database()->schema()
+    ->createTable('identity_label', [
+      'description' => 'Stores identity labels.',
+      'fields' => [
+        'identity' => [
+          'description' => 'The identity the label is about.',
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ],
+        'label' => [
+          'description' => 'Label',
+          'type' => 'varchar',
+          'length' => 128,
+          'not null' => TRUE,
+          'default' => '',
+        ],
+        'context' => [
+          'description' => 'Label context',
+          'type' => 'varchar',
+          'length' => 256,
+          'not null' => TRUE,
+          'default' => '',
+        ]
+      ],
+      'indexes' => [
+        'identity' => ['identity'],
+        'context' => ['context'],
+      ],
+      'unique keys' => [
+        'identity_context' => ['identity', 'context'],
+      ],
+    ]);
 }

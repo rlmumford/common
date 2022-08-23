@@ -79,6 +79,8 @@ trait IdentityCreationTestTrait {
     $this->installEntitySchema('identity');
     $this->installEntitySchema('identity_data');
 
+    $this->installSchema('identity', ['identity_label']);
+
     $this->installConfig(['name']);
 
     $this->entityTypeManager = \Drupal::entityTypeManager();

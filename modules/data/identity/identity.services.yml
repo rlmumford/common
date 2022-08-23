@@ -10,7 +10,7 @@ services:
     arguments: [ '@entity_type.manager', '@event_dispatcher' ]
   identity.labeler:
     class: Drupal\identity\IdentityLabeler
-    arguments: [ '@entity_type.manager', '@plugin.manager.identity_data_class', '@cache.data' ]
+    arguments: [ '@entity_type.manager', '@plugin.manager.identity_data_class', '@cache.data', '@database' ]
   identity.query.sql:
     class: Drupal\identity\Entity\Query\IdentityQueryFactory
     arguments: ['@database']
