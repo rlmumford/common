@@ -343,12 +343,15 @@ class ServiceController extends ControllerBase {
       IdentityLabelContext::DATA_PREFERENCE_TYPE => $request->query->get('label_dptype', NULL),
     ]));
 
+    $identities = $storage->loadMultiple($ids);
+    $labels = $this->identityLabeler->labelMultiple($identities, $label_context);
+
     $result = [];
-    foreach ($storage->loadMultiple($ids) as $identity) {
+    foreach ($identities as $key => $identity) {
       $result[] = [
         'id' => $identity->id(),
         'uuid' => $identity->uuid(),
-        'label' => $this->identityLabeler->label($identity, $label_context),
+        'label' => $labels[$key],
         'relevance' => 1,
       ];
     }
