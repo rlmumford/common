@@ -8,6 +8,7 @@ use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\identity\IdentityMatch;
+use Drupal\identity\Plugin\IdentityDataClass\LabelingIdentityDataClassInterface;
 use Drupal\user\EntityOwnerInterface;
 use Drupal\user\EntityOwnerTrait;
 
@@ -233,6 +234,8 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface, E
    */
   public function postSave(EntityStorageInterface $storage, $update = TRUE) {
     parent::postSave($storage, $update);
+
+    // @todo: Clear stored labels when a change happens.
 
     if (!$this->_skipIdentitySave && $this->getIdentity()) {
       $this->getIdentity()->save();
