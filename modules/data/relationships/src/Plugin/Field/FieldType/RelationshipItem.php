@@ -48,7 +48,7 @@ class RelationshipItem extends EntityReferenceItem {
   public static function schema(FieldStorageDefinitionInterface $field_definition) {
     $schema = parent::schema($field_definition);
 
-    $relationship_type_info = \Drupal::entityManager()->getDefinition('relationship');
+    $relationship_type_info = \Drupal::entityTypeManager()->getDefinition('relationship');
     $properties = static::propertyDefinitions($field_definition)['relationship_id'];
     if ($relationship_type_info->entityClassImplements(FieldableEntityInterface::class) && $properties->getDataType() === 'integer') {
       $schema['columns']['relationship_id'] = [
@@ -83,11 +83,11 @@ class RelationshipItem extends EntityReferenceItem {
   public static function propertyDefinitions(FieldStorageDefinitionInterface $field_definition) {
     $properties = parent::propertyDefinitions($field_definition);
 
-    $relationship_type_info = \Drupal::entityManager()->getDefinition('relationship');
+    $relationship_type_info = \Drupal::entityTypeManager()->getDefinition('relationship');
 
     $relationship_id_data_type = 'string';
     if ($relationship_type_info->entityClassImplements(FieldableEntityInterface::class)) {
-      $id_definition = \Drupal::entityManager()->getBaseFieldDefinitions('relationship')[$relationship_type_info->getKey('id')];
+      $id_definition = \Drupal::entityTypeManager()->getBaseFieldDefinitions('relationship')[$relationship_type_info->getKey('id')];
       if ($id_definition->getType() === 'integer') {
         $relationship_id_data_type = 'integer';
       }
