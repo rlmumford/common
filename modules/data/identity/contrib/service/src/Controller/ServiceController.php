@@ -303,7 +303,7 @@ class ServiceController extends ControllerBase {
       $unserialized['notification_url']
     );
 
-    return ResourceResponse::create($results);
+    return new ResourceResponse($results);
   }
 
   /**

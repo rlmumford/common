@@ -92,10 +92,10 @@ class TaskResourceManager implements TaskResourceManagerInterface {
    */
   public function buildTaskResources(TaskInterface $task): array {
     $collect_contexts = new CollectResourcesContextsEvent($task);
-    $this->eventDispatcher->dispatch(TaskEvents::COLLECT_RESOURCES_CONTEXTS, $collect_contexts);
+    $this->eventDispatcher->dispatch($collect_contexts, TaskEvents::COLLECT_RESOURCES_CONTEXTS);
 
     $collect_resources = new CollectResourcesEvent($this->blockManager, $task, $collect_contexts->getContexts());
-    $this->eventDispatcher->dispatch(TaskEvents::COLLECT_RESOURCES, $collect_resources);
+    $this->eventDispatcher->dispatch($collect_resources, TaskEvents::COLLECT_RESOURCES);
 
     $resources = $collect_resources->getResources();
     $resources->sort();

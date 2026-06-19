@@ -99,7 +99,7 @@ class TaskAddController extends ControllerBase {
 
     if ($this->moduleHandler()->moduleExists('exec_environment')) {
       $event = new SelectJobEnvironmentDetectionEvent($assignee);
-      $this->eventDispatcher->dispatch(TaskJobEvents::SELECT_JOB_DETECT_ENVIRONMENT, $event);
+      $this->eventDispatcher->dispatch($event, TaskJobEvents::SELECT_JOB_DETECT_ENVIRONMENT);
       $event->applyEnvironment();
     }
 

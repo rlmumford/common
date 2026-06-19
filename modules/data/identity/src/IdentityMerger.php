@@ -59,7 +59,7 @@ class IdentityMerger implements IdentityMergerInterface {
     $identity_two->save();
 
     $event = new PostIdentityMergeEvent($identity_one, $identity_two, $identity_one);
-    $this->eventDispatcher->dispatch(IdentityEvents::POST_MERGE, $event);
+    $this->eventDispatcher->dispatch($event, IdentityEvents::POST_MERGE);
 
     return $identity_one;
   }

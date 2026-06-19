@@ -104,7 +104,7 @@ class ChooseBlockController extends ControllerBase {
       'job' => $task_job,
     ]);
     $collect_resource_contexts = new CollectResourcesContextsEvent($temp_task);
-    $this->eventDispatcher->dispatch(TaskEvents::COLLECT_RESOURCES_CONTEXTS, $collect_resource_contexts);
+    $this->eventDispatcher->dispatch($collect_resource_contexts, TaskEvents::COLLECT_RESOURCES_CONTEXTS);
     $definitions = $this->blockManager->getFilteredDefinitions(
       'task_job_resource',
       $collect_resource_contexts->getContexts() + [

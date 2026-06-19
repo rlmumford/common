@@ -98,7 +98,7 @@ class EnvironmentStack implements EnvironmentStackInterface {
   protected function defaultEnvironment() : EnvironmentInterface {
     if (!$this->defaultEnvironment) {
       $event = new EnvironmentDetectionEvent();
-      $this->eventDispatcher->dispatch(ExecEnvironmentEvents::DETECT_DEFAULT_ENVIRONMENT, $event);
+      $this->eventDispatcher->dispatch($event, ExecEnvironmentEvents::DETECT_DEFAULT_ENVIRONMENT);
       $this->defaultEnvironment = $event->getEnvironment();
     }
     return $this->defaultEnvironment;

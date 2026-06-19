@@ -186,7 +186,7 @@ abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTrigg
    */
   public function access(CacheableMetadata $cache_metadata = NULL) {
     $access_event = new TriggerAccessEvent($this);
-    $this->eventDispatcher->dispatch(TaskJobEvents::TRIGGER_ACCESS, $access_event);
+    $this->eventDispatcher->dispatch($access_event, TaskJobEvents::TRIGGER_ACCESS);
 
     $access = ($access_event->hasAccessResult() ? $access_event->getAccessResult() : AccessResult::allowed());
     if ($cache_metadata && $access instanceof CacheableDependencyInterface) {

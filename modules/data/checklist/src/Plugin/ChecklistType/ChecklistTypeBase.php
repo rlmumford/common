@@ -124,16 +124,16 @@ abstract class ChecklistTypeBase extends PluginBase implements ChecklistTypeInte
    */
   public function completeChecklist(ChecklistInterface $checklist) {
     $event = new ChecklistEvent($checklist);
-    $this->eventDispatcher->dispatch('checklist.complete', $event);
+    $this->eventDispatcher->dispatch($event, 'checklist.complete');
 
     $entity_type = $checklist->getEntity()->getEntityTypeId();
     $this->eventDispatcher->dispatch(
-      "checklist.complete.{$entity_type}",
-      $event
+      $event,
+      "checklist.complete.{$entity_type}"
     );
     $this->eventDispatcher->dispatch(
-      "checklist.complete.{$entity_type}.{$checklist->getKey()}",
-      $event
+      $event,
+      "checklist.complete.{$entity_type}.{$checklist->getKey()}"
     );
   }
 

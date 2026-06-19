@@ -24,7 +24,7 @@ class TaskStorage extends SqlContentEntityStorage {
 
       /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface $dispatcher */
       $dispatcher = \Drupal::service('event_dispatcher');
-      $dispatcher->dispatch(TaskEvents::SELECT_ASSIGNEE, $event);
+      $dispatcher->dispatch($event, TaskEvents::SELECT_ASSIGNEE);
 
       if ($event->getAssignee()) {
         $entity->assignee = $event->getAssignee();

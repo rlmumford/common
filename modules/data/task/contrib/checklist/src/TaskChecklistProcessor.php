@@ -63,7 +63,7 @@ class TaskChecklistProcessor implements TaskChecklistProcessorInterface {
     ) {
       if ($this->moduleHandler->moduleExists('exec_environment')) {
         $environment = new TaskChecklistEnvironmentDetectionEvent($task);
-        $this->eventDispatcher->dispatch(TaskChecklistEvents::DETECT_CHECKLIST_ENVIRONMENT, $environment);
+        $this->eventDispatcher->dispatch($environment, TaskChecklistEvents::DETECT_CHECKLIST_ENVIRONMENT);
         $environment->applyEnvironment();
       }
 

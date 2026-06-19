@@ -104,7 +104,7 @@ class IdentityDataIdentityAcquirer implements IdentityDataIdentityAcquirerInterf
 
     // Allow modules to massage data in the group
     $event = new PreAcquisitionEvent($data_group);
-    $this->eventDispatcher->dispatch(IdentityEvents::PRE_ACQUISITION, $event);
+    $this->eventDispatcher->dispatch($event, IdentityEvents::PRE_ACQUISITION);
 
     // Order datas by their acquisition priority.
     $datas = $data_group->getDatas();
