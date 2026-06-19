@@ -5,7 +5,7 @@ namespace Drupal\exec_environment\EventSubscriber;
 use Drupal\Core\Authentication\AuthenticationProviderInterface;
 use Drupal\exec_environment\EnvironmentStackInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpKernel\Event\GetResponseEvent;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
@@ -43,7 +43,7 @@ class AuthenticationSubscriber implements EventSubscriberInterface {
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     // The priority for authentication must be 1 lower than the event defined in
     // \Drupal\Core\EventSubscriber\AuthenticationSubscriber.
     $events[KernelEvents::REQUEST][] = ['onKernelRequestAuthenticate', 299];
@@ -53,13 +53,13 @@ class AuthenticationSubscriber implements EventSubscriberInterface {
   /**
    * Clears the execution environment just after the core authentication event.
    *
-   * @param \Symfony\Component\HttpKernel\Event\GetResponseEvent $event
+   * @param \Symfony\Component\HttpKernel\Event\RequestEvent $event
    *   The request event.
    *
    * @see \Drupal\Core\Authentication\AuthenticationProviderInterface::authenticate()
    */
-  public function onKernelRequestAuthenticate(GetResponseEvent $event) {
-    if ($event->isMasterRequest()) {
+  public function onKernelRequestAuthenticate(RequestEvent $event) {
+    if ($event->isMainRequest()) {
       $request = $event->getRequest();
       if ($this->authenticationProvider->applies($request)) {
         $this->environmentStack->resetDefaultEnvironment();
