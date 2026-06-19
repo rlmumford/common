@@ -2,7 +2,7 @@ type: module
 name: Project
 description: 'Project Entity data storage.'
 package: RLMumford
-core_version_requirement: ^8 || ^9
+core_version_requirement: ^9 || ^10 || ^11 || ^9
 
 dependencies:
   - entity:entity

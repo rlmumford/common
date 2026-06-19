@@ -2,7 +2,7 @@ name: Task Checklist
 description: Task checklists
 type: module
 package: Tasks
-core_version_requirement: ^8 || ^9
+core_version_requirement: ^9 || ^10 || ^11 || ^9
 
 dependencies:
   - rlmumford:task

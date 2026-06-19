@@ -4,7 +4,7 @@ namespace Drupal\task\Event;
 
 use Drupal\Core\Plugin\Context\ContextInterface;
 use Drupal\task\TaskInterface;
-use Symfony\Component\EventDispatcher\Event;
+use Drupal\Component\EventDispatcher\Event;
 
 /**
  * Event to collect additional contexts for task resources.

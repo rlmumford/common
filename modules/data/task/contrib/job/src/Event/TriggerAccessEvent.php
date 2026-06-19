@@ -5,7 +5,7 @@ namespace Drupal\task_job\Event;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultInterface;
 use Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface;
-use Symfony\Component\EventDispatcher\Event;
+use Drupal\Component\EventDispatcher\Event;
 
 /**
  * Event to collect trigger access.

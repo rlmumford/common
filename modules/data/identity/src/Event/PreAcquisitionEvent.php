@@ -3,7 +3,7 @@
 namespace Drupal\identity\Event;
 
 use Drupal\identity\IdentityDataGroup;
-use Symfony\Component\EventDispatcher\Event;
+use Drupal\Component\EventDispatcher\Event;
 
 class PreAcquisitionEvent extends Event {
 

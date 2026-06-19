@@ -25,7 +25,7 @@ class ComputedEntityReferenceItemList extends EntityReferenceFieldItemList {
   /**
    * {@inheritdoc}
    */
-  public function getIterator() {
+  public function getIterator(): \Traversable {
     $this->ensurePopulated();
     return parent::getIterator();
   }

@@ -1,5 +1,5 @@
 type: module
-core_version_requirement: ^8 || ^9
+core_version_requirement: ^9 || ^10 || ^11 || ^9
 name: Identity Address Data
 description: "Stores Identity Address Data"
 package: RLMumford

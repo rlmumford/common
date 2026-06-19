@@ -2,4 +2,4 @@ type: module
 name: RLMumford Tools
 description: 'Tools common to RLMumford Projects'
 package: RLMumford
-core_version_requirement: ^8 || ^9
+core_version_requirement: ^9 || ^10 || ^11 || ^9

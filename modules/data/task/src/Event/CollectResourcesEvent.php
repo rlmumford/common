@@ -8,7 +8,7 @@ use Drupal\Core\Plugin\Context\EntityContext;
 use Drupal\Core\Plugin\Context\EntityContextDefinition;
 use Drupal\Core\Plugin\DefaultLazyPluginCollection;
 use Drupal\task\TaskInterface;
-use Symfony\Component\EventDispatcher\Event;
+use Drupal\Component\EventDispatcher\Event;
 
 /**
  * Event to collect resources.

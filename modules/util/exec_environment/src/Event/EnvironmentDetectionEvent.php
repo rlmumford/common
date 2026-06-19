@@ -3,7 +3,7 @@
 namespace Drupal\exec_environment\Event;
 
 use Drupal\exec_environment\Environment;
-use Symfony\Component\EventDispatcher\Event;
+use Drupal\Component\EventDispatcher\Event;
 
 /**
  * Object for environment detection events.

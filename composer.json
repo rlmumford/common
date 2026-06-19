@@ -14,7 +14,7 @@
         "webmozart/path-util": "^2.3",
         "drupal/range": "^1",
         "drupal/entity": "^1.0-rc2",
-        "drupal/views_block_filter_block": "1.x-dev",
+        "drupal/views_block_filter_block": "^2.1",
         "drupal/name": "^1.0",
         "drupal/mini_layouts": "1.x-dev",
         "drupal/block_class": "1.x-dev",

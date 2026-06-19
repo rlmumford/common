@@ -1,5 +1,5 @@
 name: Notes
 description: Provides an entity for storing notes.
 type: module
-core_version_requirement: ^8 || ^9
+core_version_requirement: ^9 || ^10 || ^11 || ^9
 

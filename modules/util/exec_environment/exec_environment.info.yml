@@ -1,7 +1,7 @@
 type: module
 name: 'Execution Environments'
 description: 'Enable Drupal to run code in different execution environments controlling what config is loaded and what user executes the commands.'
-core_version_requirement: ^8 || ^9
+core_version_requirement: ^9 || ^10 || ^11 || ^9
 
 dependencies:
   - drupal:user

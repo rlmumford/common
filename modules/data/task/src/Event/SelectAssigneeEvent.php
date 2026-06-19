@@ -4,7 +4,7 @@ namespace Drupal\task\Event;
 
 use Drupal\task\Entity\Task;
 use Drupal\user\Entity\User;
-use Symfony\Component\EventDispatcher\Event;
+use Drupal\Component\EventDispatcher\Event;
 
 /**
  * Event called to select an assignee.

@@ -1,7 +1,7 @@
 name: Task Checklist Sample
 description: Sample for simple task checklists
 type: module
-core_version_requirement: ^8 || ^9
+core_version_requirement: ^9 || ^10 || ^11 || ^9
 package: Tasks
 dependencies:
   - rlmumford:task
