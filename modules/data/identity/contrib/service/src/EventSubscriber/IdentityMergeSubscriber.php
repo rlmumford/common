@@ -7,7 +7,7 @@ use Drupal\identity\Event\IdentityEvents;
 use Drupal\identity\Event\PostIdentityMergeEvent;
 use Drupal\identity_service\IdentitySubscriptionNotifierInterface;
 use GuzzleHttp\ClientInterface;
-use function GuzzleHttp\Promise\settle;
+use GuzzleHttp\Promise\Utils as PromiseUtils;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class IdentityMergeSubscriber implements EventSubscriberInterface {
@@ -64,6 +64,6 @@ class IdentityMergeSubscriber implements EventSubscriberInterface {
       );
     }
 
-    settle($requests)->wait();
+    PromiseUtils::settle($requests)->wait();
   }
 }

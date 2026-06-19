@@ -5,7 +5,7 @@ namespace Drupal\identity_service;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\identity\Entity\Identity;
 use GuzzleHttp\ClientInterface;
-use function GuzzleHttp\Promise\settle;
+use GuzzleHttp\Promise\Utils as PromiseUtils;
 
 class IdentitySubscriptionNotifier implements IdentitySubscriptionNotifierInterface {
 
@@ -74,6 +74,6 @@ class IdentitySubscriptionNotifier implements IdentitySubscriptionNotifierInterf
    */
   public function notify(Identity $identity, $event, array $content) {
     $requests = $this->notifyAsync($identity, $event, $content);
-    return settle($requests)->wait();
+    return PromiseUtils::settle($requests)->wait();
   }
 }
