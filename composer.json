@@ -49,6 +49,10 @@
           },
           "drupal/decoupled_auth": {
               "Allow unsaved profiles": "https://www.drupal.org/files/issues/2019-09-12/3058223-5.patch"
+          },
+          "drupal/core": {
+              "#3001188 - Layout builder context hook": "https://www.drupal.org/files/issues/2021-07-23/3001188-22.patch",
+              "#2988123 - Fix Item List Change Notification": "https://www.drupal.org/files/issues/2022-01-12/2988123-29.patch"
           }
       }
     },
