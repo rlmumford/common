@@ -11,7 +11,7 @@ class TaskAssigneeSubscriber implements EventSubscriberInterface {
   /**
    * {@inheritdoc
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     $events[TaskEvents::SELECT_ASSIGNEE][] = ['onAssigneeSelect'];
     return $events;
   }

@@ -22,7 +22,7 @@ class TaskResourceCollectResourcesContextsSubscriber implements EventSubscriberI
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     $events = [];
     $events[TaskEvents::COLLECT_RESOURCES_CONTEXTS] = 'collectResourceContexts';
     return $events;

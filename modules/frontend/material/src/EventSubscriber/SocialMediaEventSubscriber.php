@@ -26,7 +26,7 @@ class SocialMediaEventSubscriber implements EventSubscriberInterface {
    *
    * @return array The event names to listen to
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     $events = [
       'social_media.pre_render' => ['onPreRender', 0],
     ];

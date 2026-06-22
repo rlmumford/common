@@ -46,7 +46,7 @@ class TaskJobTriggerSubscriber extends DetectEnvironmentSubscriberBase {
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     $events = [];
     $events[TaskJobEvents::HANDLE_TRIGGER_DETECT_ENVIRONMENT] = 'onHandleTrigger';
     return $events;

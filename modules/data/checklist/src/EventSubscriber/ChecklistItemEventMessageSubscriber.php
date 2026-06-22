@@ -35,7 +35,7 @@ class ChecklistItemEventMessageSubscriber implements EventSubscriberInterface {
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     return [
       ChecklistItemEvents::ITEM_COMPLETED => 'onItemCompleted',
     ];

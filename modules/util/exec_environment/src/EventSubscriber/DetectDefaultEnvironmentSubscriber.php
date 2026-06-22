@@ -16,7 +16,7 @@ class DetectDefaultEnvironmentSubscriber extends DetectEnvironmentSubscriberBase
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     $events[ExecEnvironmentEvents::DETECT_DEFAULT_ENVIRONMENT] = 'onDetectDefaultEnvironment';
     return $events;
   }

@@ -16,7 +16,7 @@ class TaskChecklistEnvironmentDetectionSubscriber extends DetectEnvironmentSubsc
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     $events[TaskChecklistEvents::DETECT_CHECKLIST_ENVIRONMENT] = 'onDetectChecklistEnvironment';
     return $events;
   }

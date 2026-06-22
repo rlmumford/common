@@ -11,7 +11,7 @@ class IdentityPreAcquisition implements EventSubscriberInterface {
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     return [
       IdentityEvents::PRE_ACQUISITION => 'onPreAcquisition',
     ];

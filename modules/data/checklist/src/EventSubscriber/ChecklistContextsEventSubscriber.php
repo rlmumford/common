@@ -21,7 +21,7 @@ class ChecklistContextsEventSubscriber implements EventSubscriberInterface {
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     $events[ChecklistEvents::COLLECT_RUNTIME_CONTEXTS][] = [
       'addChecklistEntityContext',
       255,
