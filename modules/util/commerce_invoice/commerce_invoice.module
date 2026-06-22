@@ -17,7 +17,7 @@ function commerce_invoice_commerce_order_view_alter(array &$build, EntityInterfa
  * Implements hook_theme_registry_alter().
  */
 function commerce_invoice_theme_registry_alter(&$theme_registry) {
-  $path = drupal_get_path('module', 'commerce_invoice');
+  $path = \Drupal::service('extension.list.module')->getPath('commerce_invoice');
 
   $theme_registry['commerce_order__admin']['path'] = $path.'/templates';
 }

@@ -12,7 +12,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\pdf_tools\PDFGeneratorInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Symfony\Component\HttpFoundation\File\MimeType\MimeTypeGuesserInterface;
+use Symfony\Component\Mime\MimeTypeGuesserInterface;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 class InvoiceGenerateForm extends FormBase {
@@ -163,7 +163,7 @@ class InvoiceGenerateForm extends FormBase {
       'uid' => \Drupal::currentUser()->id(),
       'status' => 1,
       'filename' => basename($uri),
-      'filemime' => $this->mimeTypeGuesser->guess($uri),
+      'filemime' => $this->mimeTypeGuesser->guessMimeType($uri),
     ]);
 
     $this->fileSystem->chmod($file->getFileUri());

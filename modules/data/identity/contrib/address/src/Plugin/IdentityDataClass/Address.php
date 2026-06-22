@@ -78,7 +78,7 @@ class Address extends IdentityDataClassBase {
       'type' => 'address_plain',
       'label' => 'hidden',
     ]);
-    return drupal_render($render);
+    return (string) \Drupal::service('renderer')->renderInIsolation($render);
   }
 
   /**

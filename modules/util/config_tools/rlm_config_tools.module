@@ -10,7 +10,7 @@ use Drupal\Core\Config\FileStorage;
  * @param array $names
  */
 function rlm_config_tools_install_module_config(string $module, array $names = [], string $type = 'module') {
-  $source = new FileStorage(drupal_get_path($type, $module) . '/config/install');
+  $source = new FileStorage(\Drupal::service('extension.list.' . $type)->getPath($module) . '/config/install');
   /** @var \Drupal\Core\Config\StorageInterface $config_storage */
   $config_storage = \Drupal::service('config.storage');
 
