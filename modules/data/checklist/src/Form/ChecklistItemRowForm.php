@@ -252,7 +252,7 @@ class ChecklistItemRowForm extends ChecklistItemFormBase {
    * @param string|null $selector
    *   The selector to insert the form at.
    */
-  protected function insertActionForm(AjaxResponse $response, string $selector = NULL) {
+  protected function insertActionForm(AjaxResponse $response, ?string $selector = NULL) {
     /** @var \Drupal\checklist\ChecklistInterface $checklist */
     $checklist = $this->item->checklist->checklist;
 

@@ -10,7 +10,7 @@ class EditRelationship extends AddRelationship {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, SectionStorageInterface $section_storage = NULL, $machine_name = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, ?SectionStorageInterface $section_storage = NULL, $machine_name = NULL) {
     return $this->doBuildForm($form, $form_state, $section_storage, 'edit', $machine_name);
   }
 

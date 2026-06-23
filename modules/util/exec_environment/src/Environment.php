@@ -49,7 +49,7 @@ class Environment implements EnvironmentInterface {
   /**
    * {@inheritdoc}
    */
-  public function getComponents(string $impact_interface = NULL) : array {
+  public function getComponents(?string $impact_interface = NULL) : array {
     $result = $this->components;
     if ($impact_interface) {
       $result = array_filter(

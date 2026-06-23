@@ -276,7 +276,7 @@ class EnvironmentConfigFactory extends ConfigFactory {
    * @return \Drupal\Core\Config\Config|\Drupal\Core\Config\ImmutableConfig
    *   The configuration object.
    */
-  protected function createConfigObject($name, $immutable, StorageInterface $storage = NULL) {
+  protected function createConfigObject($name, $immutable, ?StorageInterface $storage = NULL) {
     // Note that we set the storage to the best storage to use based on the
     // current environment, rather than the storage it got loaded from. This is
     // to ensure that if the config gets saved it always saves to the best fit

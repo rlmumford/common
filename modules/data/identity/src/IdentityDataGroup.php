@@ -38,7 +38,7 @@ class IdentityDataGroup {
   /**
    * IdentityDataGroup constructor.
    */
-  public function __construct(array $datas, IdentityDataSource $source = NULL, $id = NULL) {
+  public function __construct(array $datas, ?IdentityDataSource $source = NULL, $id = NULL) {
     $this->datas = $datas;
     $this->source = $source;
     $this->id = !empty($id) ? $id : \Drupal::service('uuid')->generate();

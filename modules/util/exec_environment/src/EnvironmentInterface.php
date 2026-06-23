@@ -49,6 +49,6 @@ interface EnvironmentInterface {
    * @return \Drupal\exec_environment\Plugin\ExecEnvironment\Component\ComponentInterface[]
    *   The relevant components.
    */
-  public function getComponents(string $impact_interface = NULL) : array;
+  public function getComponents(?string $impact_interface = NULL) : array;
 
 }

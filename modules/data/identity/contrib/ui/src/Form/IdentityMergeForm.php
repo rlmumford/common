@@ -73,8 +73,8 @@ class IdentityMergeForm extends FormBase {
   public function buildForm(
     array $form,
     FormStateInterface $form_state,
-    Identity $identity1 = NULL,
-    Identity $identity2 = NULL
+    ?Identity $identity1 = NULL,
+    ?Identity $identity2 = NULL
   ) {
     if (!$form_state->get('identity1') && $identity1) {
       $form_state->set('identity1', $identity1);

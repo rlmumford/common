@@ -63,8 +63,8 @@ class IdentityAddForm extends ContentEntityForm {
     IdentityDataIdentityAcquirer $identity_acquirer,
     EntityTypeManagerInterface $entity_type_manager,
     EntityRepositoryInterface $entity_repository,
-    EntityTypeBundleInfoInterface $entity_type_bundle_info = NULL,
-    TimeInterface $time = NULL
+    ?EntityTypeBundleInfoInterface $entity_type_bundle_info = NULL,
+    ?TimeInterface $time = NULL
   ) {
     parent::__construct($entity_repository, $entity_type_bundle_info, $time);
 

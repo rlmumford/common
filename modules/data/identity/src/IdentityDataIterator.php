@@ -48,7 +48,7 @@ class IdentityDataIterator implements \Iterator, \ArrayAccess {
    * @param array $ids
    * @param \Drupal\identity\Entity\IdentityDataStorage|NULL $storage
    */
-  public function __construct(array $ids, IdentityDataStorage $storage = NULL) {
+  public function __construct(array $ids, ?IdentityDataStorage $storage = NULL) {
     $this->ids = array_values($ids);
     $this->entities = array_combine($this->ids, $this->ids);
     $this->storage = $storage;
@@ -77,7 +77,7 @@ class IdentityDataIterator implements \Iterator, \ArrayAccess {
    * @return mixed Can return any type.
    * @since 5.0.0
    */
-  public function current() {
+  public function current(): mixed {
     $id = $this->ids[$this->current];
     if (is_numeric($this->entities[$id])) {
       $to_load = array_slice($this->ids, $this->current, $this->batchSize);
@@ -104,7 +104,7 @@ class IdentityDataIterator implements \Iterator, \ArrayAccess {
    * @return void Any returned value is ignored.
    * @since 5.0.0
    */
-  public function next() {
+  public function next(): void {
     $this->current++;
   }
 
@@ -115,7 +115,7 @@ class IdentityDataIterator implements \Iterator, \ArrayAccess {
    * @return mixed scalar on success, or null on failure.
    * @since 5.0.0
    */
-  public function key() {
+  public function key(): mixed {
     return $this->ids[$this->current];
   }
 
@@ -127,7 +127,7 @@ class IdentityDataIterator implements \Iterator, \ArrayAccess {
    * Returns true on success or false on failure.
    * @since 5.0.0
    */
-  public function valid() {
+  public function valid(): bool {
     return isset($this->ids[$this->current]);
   }
 
@@ -138,7 +138,7 @@ class IdentityDataIterator implements \Iterator, \ArrayAccess {
    * @return void Any returned value is ignored.
    * @since 5.0.0
    */
-  public function rewind() {
+  public function rewind(): void {
     $this->current = 0;
   }
 
@@ -157,7 +157,7 @@ class IdentityDataIterator implements \Iterator, \ArrayAccess {
    * The return value will be casted to boolean if non-boolean was returned.
    * @since 5.0.0
    */
-  public function offsetExists($offset) {
+  public function offsetExists($offset): bool {
     return isset($this->entities[$offset]);
   }
 
@@ -173,7 +173,7 @@ class IdentityDataIterator implements \Iterator, \ArrayAccess {
    * @return mixed Can return all value types.
    * @since 5.0.0
    */
-  public function offsetGet($offset) {
+  public function offsetGet($offset): mixed {
     if (isset($this->entities[$offset]) && is_numeric($this->entities[$offset])) {
       $this->entities[$offset] = $this->storage()->load($offset);
     }
@@ -196,7 +196,7 @@ class IdentityDataIterator implements \Iterator, \ArrayAccess {
    * @return void
    * @since 5.0.0
    */
-  public function offsetSet($offset, $value) {
+  public function offsetSet($offset, $value): void {
     if (!($value instanceof IdentityDataInterface) || $value->id() != $offset) {
       throw new \Exception('Illegal given for '.__CLASS__);
     }
@@ -220,7 +220,7 @@ class IdentityDataIterator implements \Iterator, \ArrayAccess {
    * @return void
    * @since 5.0.0
    */
-  public function offsetUnset($offset) {
+  public function offsetUnset($offset): void {
     unset($this->entities[$offset]);
 
     if ($key = array_search($offset, $this->ids)) {

@@ -18,7 +18,7 @@ class RelationshipAccessControlHandler extends EntityAccessControlHandler {
   /**
    * {@inheritdoc}
    */
-  protected function checkFieldAccess($operation, FieldDefinitionInterface $field_definition, AccountInterface $account, FieldItemListInterface $items = NULL) {
+  protected function checkFieldAccess($operation, FieldDefinitionInterface $field_definition, AccountInterface $account, ?FieldItemListInterface $items = NULL) {
     $result = AccessResult::allowedIf(!($operation == 'edit' && in_array($field_definition->getName(), ['tail', 'head']) && $items && !$items->isEmpty()))
       ->addCacheableDependency($field_definition);
     if ($items) {

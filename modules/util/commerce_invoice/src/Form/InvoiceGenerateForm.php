@@ -113,7 +113,7 @@ class InvoiceGenerateForm extends FormBase {
    * @return array
    *   The form structure.
    */
-  public function buildForm(array $form, FormStateInterface $form_state, OrderInterface $order = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, ?OrderInterface $order = NULL) {
     $this->order = $order;
 
     $form['actions'] = [

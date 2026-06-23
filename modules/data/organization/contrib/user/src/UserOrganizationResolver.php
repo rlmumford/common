@@ -64,7 +64,7 @@ class UserOrganizationResolver {
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  public function getOrganization(AccountInterface $user = NULL) : ?Organization {
+  public function getOrganization(?AccountInterface $user = NULL) : ?Organization {
     if (!$user) {
       $user = $this->currentUser;
     }

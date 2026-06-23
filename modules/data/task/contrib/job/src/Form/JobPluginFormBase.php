@@ -76,7 +76,7 @@ abstract class JobPluginFormBase extends FormBase {
   public function buildForm(
     array $form,
     FormStateInterface $form_state,
-    JobInterface $task_job = NULL,
+    ?JobInterface $task_job = NULL,
     $plugin_id = NULL,
     $plugin_configuration = []
   ) {

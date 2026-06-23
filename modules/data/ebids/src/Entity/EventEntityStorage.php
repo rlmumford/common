@@ -52,7 +52,7 @@ class EventEntityStorage extends EntityStorageBase {
    *
    * @throws \Drupal\Component\Plugin\Exception\PluginException
    */
-  public function __construct(EntityTypeInterface $entity_type, EventStorageManager $event_storage_manager, MemoryCacheInterface $memory_cache = NULL) {
+  public function __construct(EntityTypeInterface $entity_type, EventStorageManager $event_storage_manager, ?MemoryCacheInterface $memory_cache = NULL) {
     parent::__construct($entity_type, $memory_cache);
 
     $this->eventStorage = $event_storage_manager->createInstance(
@@ -74,7 +74,7 @@ class EventEntityStorage extends EntityStorageBase {
    * @return \Drupal\Core\Entity\EntityInterface[]
    *   Associative array of entities, keyed on the entity ID.
    */
-  protected function doLoadMultiple(array $ids = NULL) {
+  protected function doLoadMultiple(?array $ids = NULL) {
     $entities = $this->eventStorage->readEvents($ids, $this->entityClass);
     return $entities;
   }

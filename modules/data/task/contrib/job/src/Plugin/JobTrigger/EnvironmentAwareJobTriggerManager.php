@@ -128,7 +128,7 @@ class EnvironmentAwareJobTriggerManager extends JobTriggerManager {
   /**
    * {@inheritdoc}
    */
-  public function getTriggers(string $plugin_id = NULL, string $base_plugin_id = NULL): array {
+  public function getTriggers(?string $plugin_id = NULL, ?string $base_plugin_id = NULL): array {
     $environment = $this->environmentStack->getActiveEnvironment();
 
     /** @var \Drupal\task_job\JobInterface[] $jobs */

@@ -20,7 +20,7 @@ interface IdentityLabelerInterface {
    * @return string|null
    *   A label for the provided identity.
    */
-  public function label(Identity $identity, IdentityLabelContext $context = NULL, BubbleableMetadata $bubbleable_metadata = NULL) : ?string;
+  public function label(Identity $identity, ?IdentityLabelContext $context = NULL, ?BubbleableMetadata $bubbleable_metadata = NULL) : ?string;
 
   /**
    * Label a set of entities.
@@ -35,5 +35,5 @@ interface IdentityLabelerInterface {
    * @return array
    *   An array of labels keyed by the keys of $identities.
    */
-  public function labelMultiple(array $identities, IdentityLabelContext $context = NULL, BubbleableMetadata $bubbleable_metadata = NULL) : array;
+  public function labelMultiple(array $identities, ?IdentityLabelContext $context = NULL, ?BubbleableMetadata $bubbleable_metadata = NULL) : array;
 }

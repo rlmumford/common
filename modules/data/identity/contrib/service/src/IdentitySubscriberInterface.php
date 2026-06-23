@@ -19,5 +19,5 @@ interface IdentitySubscriberInterface {
    *   An array of results, one for each event. Either 'already_subscribed' or
    *   'subscribed'
    */
-  public function subscribe(Identity $identity, $events, $notification_url, AccountInterface $subscriber = NULL);
+  public function subscribe(Identity $identity, $events, $notification_url, ?AccountInterface $subscriber = NULL);
 }

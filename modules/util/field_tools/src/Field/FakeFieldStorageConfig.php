@@ -41,7 +41,7 @@ class FakeFieldStorageConfig implements FieldStorageConfigInterface {
   /**
    * {@inheritdoc}
    */
-  public function access($operation, AccountInterface $account = NULL, $return_as_object = FALSE) {
+  public function access($operation, ?AccountInterface $account = NULL, $return_as_object = FALSE) {
     throw UncallableOnFakeFieldStorageConfigException::createFromMethod(__METHOD__);
   }
 
@@ -276,7 +276,7 @@ class FakeFieldStorageConfig implements FieldStorageConfigInterface {
   /**
    * {@inheritdoc}
    */
-  public static function loadMultiple(array $ids = NULL) {
+  public static function loadMultiple(?array $ids = NULL) {
     throw UncallableOnFakeFieldStorageConfigException::createFromMethod(__METHOD__);
   }
 

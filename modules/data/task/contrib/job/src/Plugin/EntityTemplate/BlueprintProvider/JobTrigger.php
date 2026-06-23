@@ -120,7 +120,7 @@ class JobTrigger extends PluginBase implements BlueprintProviderInterface, Conta
   public function getAvailableBlueprints(
     BuilderInterface $builder,
     $parameters = [],
-    AccountInterface $account = NULL
+    ?AccountInterface $account = NULL
   ) {
     if (!($builder instanceof JobTaskBuilder) || !isset($parameters['trigger'])) {
       return $this->getAllBlueprints($builder);

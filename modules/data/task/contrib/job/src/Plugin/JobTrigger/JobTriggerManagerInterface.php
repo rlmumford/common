@@ -29,7 +29,7 @@ interface JobTriggerManagerInterface extends PluginManagerInterface {
    * @return \Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface[]
    *   A list of triggers.
    */
-  public function getTriggers(string $plugin_id = NULL, string $base_plugin_id = NULL) : array;
+  public function getTriggers(?string $plugin_id = NULL, ?string $base_plugin_id = NULL) : array;
 
   /**
    * Get all of the trigger ids that are in use.
@@ -40,7 +40,7 @@ interface JobTriggerManagerInterface extends PluginManagerInterface {
    * @return string[]
    *   The trigger plugin ids that are currently in use.
    */
-  public function getInUseTriggerIds(string $base_plugin_id = NULL) : array;
+  public function getInUseTriggerIds(?string $base_plugin_id = NULL) : array;
 
   /**
    * Handle a trigger.

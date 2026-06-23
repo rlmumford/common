@@ -180,7 +180,7 @@ class Service extends ContentEntityBase implements ServiceInterface, EntityOwner
   /**
    * Apply tokens to a string.
    */
-  protected function applyTokens($string, BubbleableMetadata $bubbleable_metadata = NULL) {
+  protected function applyTokens($string, ?BubbleableMetadata $bubbleable_metadata = NULL) {
     $token_service = \Drupal::token();
     $return  = $token_service->replace($string, ['service' => $this], [], $bubbleable_metadata);
     return $return;

@@ -40,7 +40,7 @@ class IdentitySubscriber implements IdentitySubscriberInterface {
     Identity $identity,
     $events,
     $notification_url,
-    AccountInterface $subscriber = NULL
+    ?AccountInterface $subscriber = NULL
   ) {
     if (is_string($events)) {
       $events = [$events];

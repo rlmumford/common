@@ -81,7 +81,7 @@ class EditStaticContext extends FormBase {
    * @return array
    *   The form structure.
    */
-  public function buildForm(array $form, FormStateInterface $form_state, SectionStorageInterface $section_storage = NULL, $machine_name = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, ?SectionStorageInterface $section_storage = NULL, $machine_name = NULL) {
     if (!$section_storage instanceof ThirdPartySettingsInterface) {
       \Drupal::messenger()->addError(new TranslatableMarkup('Only Section Storages with third party settings can have configurable contexts.'));
       return $form;

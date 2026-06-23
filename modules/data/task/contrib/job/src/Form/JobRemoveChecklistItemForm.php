@@ -54,7 +54,7 @@ class JobRemoveChecklistItemForm extends FormBase {
   public function buildForm(
     array $form,
     FormStateInterface $form_state,
-    JobInterface $task_job = NULL,
+    ?JobInterface $task_job = NULL,
     $name = NULL
   ) {
     // Get the Job from tempstore if available.

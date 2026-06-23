@@ -71,7 +71,7 @@ class IdentityLabeler implements IdentityLabelerInterface {
   /**
    * {@inheritdoc}
    */
-  public function label(Identity $identity, IdentityLabelContext $context = NULL, BubbleableMetadata $bubbleable_metadata = NULL) : ?string {
+  public function label(Identity $identity, ?IdentityLabelContext $context = NULL, ?BubbleableMetadata $bubbleable_metadata = NULL) : ?string {
     $context = $context ?: new IdentityLabelContext();
     $cid = 'identity:'.$identity->id().':label'. $context->getCacheCid();
 
@@ -102,8 +102,8 @@ class IdentityLabeler implements IdentityLabelerInterface {
    */
   public function labelMultiple(
     array $identities,
-    IdentityLabelContext $context = NULL,
-    BubbleableMetadata $bubbleable_metadata = NULL
+    ?IdentityLabelContext $context = NULL,
+    ?BubbleableMetadata $bubbleable_metadata = NULL
   ): array {
     $bubbleable_metadata = $bubbleable_metadata ?: new BubbleableMetadata();
     $context = $context ?: new IdentityLabelContext();

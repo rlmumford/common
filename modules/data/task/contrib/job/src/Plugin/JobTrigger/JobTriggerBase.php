@@ -187,7 +187,7 @@ abstract class JobTriggerBase extends PluginBase implements JobTriggerInterface,
   /**
    * {@inheritdoc}
    */
-  public function access(CacheableMetadata $cache_metadata = NULL) {
+  public function access(?CacheableMetadata $cache_metadata = NULL) {
     $access_event = new TriggerAccessEvent($this);
     $this->eventDispatcher->dispatch($access_event, TaskJobEvents::TRIGGER_ACCESS);
 

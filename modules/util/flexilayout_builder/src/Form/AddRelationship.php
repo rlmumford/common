@@ -100,7 +100,7 @@ class AddRelationship extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, SectionStorageInterface $section_storage = NULL, $plugin = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, ?SectionStorageInterface $section_storage = NULL, $plugin = NULL) {
     return $this->doBuildForm($form, $form_state, $section_storage, 'add', $plugin);
   }
 
@@ -115,7 +115,7 @@ class AddRelationship extends FormBase {
    * @return array
    *   The form structure.
    */
-  public function doBuildForm(array $form, FormStateInterface $form_state, SectionStorageInterface $section_storage = NULL, $op = 'edit', $plugin = NULL) {
+  public function doBuildForm(array $form, FormStateInterface $form_state, ?SectionStorageInterface $section_storage = NULL, $op = 'edit', $plugin = NULL) {
     if (!$section_storage instanceof ThirdPartySettingsInterface) {
       \Drupal::messenger()->addError(new TranslatableMarkup('Only Section Storages with third party settings can have configurable contexts.'));
       return $form;

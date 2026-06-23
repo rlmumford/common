@@ -146,7 +146,7 @@ function _flexilayout_builder_layout_builder_block_form_submit(array $form, Form
 /**
  * Implements hook_layout_builder_view_context().
  */
-function flexilayout_builder_layout_builder_view_context_alter(array &$contexts, SectionStorageInterface $storage = NULL, $allow_sample = FALSE) {
+function flexilayout_builder_layout_builder_view_context_alter(array &$contexts, ?SectionStorageInterface $storage = NULL, $allow_sample = FALSE) {
   if (!($storage instanceof ThirdPartySettingsInterface)) {
     return;
   }

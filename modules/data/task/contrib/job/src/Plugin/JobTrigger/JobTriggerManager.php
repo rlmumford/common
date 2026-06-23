@@ -142,7 +142,7 @@ class JobTriggerManager extends DefaultPluginManager implements JobTriggerManage
   /**
    * {@inheritdoc}
    */
-  public function getTriggers(string $plugin_id = NULL, string $base_plugin_id = NULL) : array {
+  public function getTriggers(?string $plugin_id = NULL, ?string $base_plugin_id = NULL) : array {
     $query = $this->database->select('task_job_trigger_index', 'i')
       ->fields('i', ['job', 'trigger_key']);
 
@@ -172,7 +172,7 @@ class JobTriggerManager extends DefaultPluginManager implements JobTriggerManage
   /**
    * {@inheritdoc}
    */
-  public function getInUseTriggerIds(string $base_plugin_id = NULL): array {
+  public function getInUseTriggerIds(?string $base_plugin_id = NULL): array {
     $query = $this->database->select('task_job_trigger_index', 'i');
     $query->addField('i', 'trigger', 'trigger');
     $query->distinct();

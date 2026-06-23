@@ -88,7 +88,7 @@ class TaskAddController extends ControllerBase {
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  public function selectJob(AccountInterface $assignee = NULL) {
+  public function selectJob(?AccountInterface $assignee = NULL) {
     $build = [
       '#theme' => 'item_list',
       '#attributes' => [
@@ -170,7 +170,7 @@ class TaskAddController extends ControllerBase {
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  public function selectJobForAssignee(AccountInterface $assignee = NULL) {
+  public function selectJobForAssignee(?AccountInterface $assignee = NULL) {
     if (!$assignee) {
       $assignee = $this->currentUser();
     }
@@ -189,7 +189,7 @@ class TaskAddController extends ControllerBase {
    * @return array
    *   The build form.
    */
-  public function createTask(JobInterface $task_job, AccountInterface $assignee = NULL) {
+  public function createTask(JobInterface $task_job, ?AccountInterface $assignee = NULL) {
     $task = $task_job->getTrigger('manual')->createTask();
     if ($task && $assignee) {
       $task->assignee = $assignee->id();
@@ -213,7 +213,7 @@ class TaskAddController extends ControllerBase {
    * @return array
    *   The build form.
    */
-  public function createTaskForAssignee(JobInterface $task_job, AccountInterface $assignee = NULL) {
+  public function createTaskForAssignee(JobInterface $task_job, ?AccountInterface $assignee = NULL) {
     if (!$assignee) {
       $assignee = $this->currentUser();
     }

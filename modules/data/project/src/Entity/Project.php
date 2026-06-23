@@ -172,7 +172,7 @@ class Project extends ContentEntityBase implements ProjectInterface, EntityOwner
   /**
    * Apply tokens to a string.
    */
-  protected function applyPlaceholders($string, BubbleableMetadata $bubbleable_metadata = NULL) {
+  protected function applyPlaceholders($string, ?BubbleableMetadata $bubbleable_metadata = NULL) {
     /** @var \Drupal\typed_data\PlaceholderResolverInterface $placeholder_resolver */
     $placeholder_resolver = \Drupal::service('typed_data.placeholder_resolver');
     return $placeholder_resolver->replacePlaceHolders(

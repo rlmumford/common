@@ -24,7 +24,7 @@ class JobConfigureChecklistItemForm extends JobAddChecklistItemForm {
   public function buildForm(
     array $form,
     FormStateInterface $form_state,
-    JobInterface $task_job = NULL,
+    ?JobInterface $task_job = NULL,
     $name = NULL,
     $conf = []
   ) {

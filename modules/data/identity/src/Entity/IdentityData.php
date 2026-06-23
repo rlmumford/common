@@ -302,7 +302,7 @@ class IdentityData extends ContentEntityBase implements IdentityDataInterface, E
    *
    * @return array
    */
-  public static function typeAllowedValues(FieldStorageDefinitionInterface $definition, IdentityData $entity = NUll, &$cacheable = TRUE) {
+  public static function typeAllowedValues(FieldStorageDefinitionInterface $definition, ?IdentityData $entity = NUll, &$cacheable = TRUE) {
     if (!$entity) {
       return [];
     }

@@ -31,7 +31,7 @@ interface JobTriggerInterface extends PluginInspectionInterface, ConfigurableInt
    * @return bool
    *   TRUE if the trigger can fire, false otherwise.
    */
-  public function access(CacheableMetadata $bubbleable_metadata = NULL);
+  public function access(?CacheableMetadata $bubbleable_metadata = NULL);
 
   /**
    * Get the key.

@@ -60,7 +60,7 @@ trait TypedDataCastingTrait {
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    * @throws \Drupal\Core\TypedData\Exception\ReadOnlyException
    */
-  protected function upcastValue($value, DataDefinitionInterface $definition, TypedDataInterface $target_data = NULL) {
+  protected function upcastValue($value, DataDefinitionInterface $definition, ?TypedDataInterface $target_data = NULL) {
     if ($definition instanceof EntityDataDefinitionInterface && !empty($value)) {
       $value = $this->entityTypeManager()->getStorage($definition->getEntityTypeId())
         ->load($value);

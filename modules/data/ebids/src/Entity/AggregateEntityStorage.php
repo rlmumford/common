@@ -48,7 +48,7 @@ class AggregateEntityStorage extends EntityStorageBase {
    * @return \Drupal\Core\Entity\EntityInterface[]
    *   Associative array of entities, keyed on the entity ID.
    */
-  protected function doLoadMultiple(array $ids = NULL) {
+  protected function doLoadMultiple(?array $ids = NULL) {
     // TODO: Implement doLoadMultiple() method.
   }
 

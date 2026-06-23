@@ -29,7 +29,7 @@ class JobConfigurationChecklist extends Checklist {
    *
    * @throws \Drupal\Component\Plugin\Exception\PluginException
    */
-  public static function createFromJob(JobInterface $job, PluginManagerInterface $checklist_type_manager = NULL) {
+  public static function createFromJob(JobInterface $job, ?PluginManagerInterface $checklist_type_manager = NULL) {
     if (!$checklist_type_manager) {
       $checklist_type_manager = \Drupal::service('plugin.manager.checklist_type');
     }

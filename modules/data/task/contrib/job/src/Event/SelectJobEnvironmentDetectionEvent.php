@@ -25,7 +25,7 @@ class SelectJobEnvironmentDetectionEvent extends EnvironmentDetectionEvent {
    * @param \Drupal\Core\Session\AccountInterface|null $assignee
    *   The target assignee.
    */
-  public function __construct(AccountInterface $assignee = NULL) {
+  public function __construct(?AccountInterface $assignee = NULL) {
     $this->assignee = $assignee;
   }
 

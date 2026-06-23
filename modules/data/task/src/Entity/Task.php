@@ -282,7 +282,7 @@ class Task extends ContentEntityBase implements TaskInterface {
    *
    * @return $this
    */
-  public function resolve(string $resolution = Task::RESOLUTION_COMPLETE, \DateTimeInterface $time = NULL) {
+  public function resolve(string $resolution = Task::RESOLUTION_COMPLETE, ?\DateTimeInterface $time = NULL) {
     $this->status = static::STATUS_RESOLVED;
     $this->resolution = $resolution;
     $this->resolved = ($time ?? new DrupalDateTime())->format(DateTimeItemInterface::DATETIME_STORAGE_FORMAT);
