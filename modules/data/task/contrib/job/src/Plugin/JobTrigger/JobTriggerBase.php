@@ -6,7 +6,8 @@ use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Cache\CacheableDependencyInterface;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\Core\Plugin\ContextAwarePluginBase;
+use Drupal\Core\Plugin\ContextAwarePluginTrait;
+use Drupal\Core\Plugin\PluginBase;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity_template\Exception\NoAvailableBlueprintException;
 use Drupal\entity_template\TemplateBuilderManager;
@@ -21,7 +22,9 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 /**
  * The job trigger base plugin class.
  */
-abstract class JobTriggerBase extends ContextAwarePluginBase implements JobTriggerInterface, ContainerFactoryPluginInterface {
+abstract class JobTriggerBase extends PluginBase implements JobTriggerInterface, ContainerFactoryPluginInterface, CacheableDependencyInterface {
+
+  use ContextAwarePluginTrait;
 
   /**
    * The builder manager service.
