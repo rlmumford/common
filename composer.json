@@ -10,26 +10,22 @@
         }
     ],
     "require": {
-        "cweagans/composer-patches": "dev-relative-patches-1.x as 1.x-dev",
-        "webmozart/path-util": "^2.3",
-        "drupal/range": "^1",
-        "drupal/entity": "^1.0-rc2",
-        "drupal/views_block_filter_block": "^2.1",
-        "drupal/name": "^1.0",
-        "drupal/mini_layouts": "2.0.x-dev",
-        "drupal/block_class": "1.x-dev",
-        "drupal/pdf_tools": "1.x-dev",
-        "drupal/ctools": "^3.4",
-        "aws/aws-sdk-php": "3.*"
+        "drupal/entity": "^1.4"
+    },
+    "suggest": {
+        "aws/aws-sdk-php": "Required by the aws and ebids modules.",
+        "drupal/block_class": "Required by the layout modules.",
+        "drupal/ctools": "Required by the relationship and plugin_reference modules.",
+        "drupal/mini_layouts": "Required by the layout modules.",
+        "drupal/name": "Required by the identity module.",
+        "drupal/pdf_tools": "Required by the document rendering modules.",
+        "drupal/range": "Required by the fields module.",
+        "drupal/views_block_filter_block": "Required by the views modules."
     },
     "repositories": [
       {
         "type": "composer",
         "url": "https://packages.drupal.org/8"
-      },
-      {
-        "type": "vcs",
-        "url": "git@github.com:rlmumford/composer-patches.git"
       }
     ],
     "minimum-stability": "dev",
@@ -40,21 +36,6 @@
     },
     "scripts": {
       "rlmumford-dev": "RLMumford\\composer\\ScriptHandler::developRLMumford"
-    },
-    "extra": {
-      "enable-patching": true,
-      "patches": {
-          "drupal/ctools": {
-              "#3079000: Fix Label for Context Definition in Relationship Deriver": "https://www.drupal.org/files/issues/2021-06-16/3079000-7-on-2866323-10.patch"
-          },
-          "drupal/decoupled_auth": {
-              "Allow unsaved profiles": "https://www.drupal.org/files/issues/2019-09-12/3058223-5.patch"
-          },
-          "drupal/core": {
-              "#3001188 - Layout builder context hook": "https://www.drupal.org/files/issues/2021-07-23/3001188-22.patch",
-              "#2988123 - Fix Item List Change Notification": "https://www.drupal.org/files/issues/2022-01-12/2988123-29.patch"
-          }
-      }
     },
     "require-dev": {
     }
