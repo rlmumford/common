@@ -1,0 +1,45 @@
+# Splits each module in this monorepo out to its own read-only repository, so a
+# site can require one module without inheriting twenty.
+#
+# This repo stays the place work happens. The split repos are outputs: never
+# commit to them, they are force-written on every push here. Each is registered
+# on Packagist once, after which `composer require rlmumford/<name>` resolves
+# with no repositories entry - which matters, because Composer only reads
+# repositories from the root package, so every unregistered package is a line
+# each consuming site has to carry.
+name: Split packages
+
+on:
+  push:
+    branches:
+      - 2.x
+  workflow_dispatch:
+
+jobs:
+  split:
+    runs-on: ubuntu-latest
+    strategy:
+      # Keep going: one package failing to split should not hide the others.
+      fail-fast: false
+      matrix:
+        include:
+          - directory: modules/data/document
+            repository: document
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The splitter needs the history of the directory, not just its tip.
+          fetch-depth: 0
+
+      - name: Split ${{ matrix.repository }}
+        uses: symplify/monorepo-split-github-action@v2.3.0
+        with:
+          package_directory: ${{ matrix.directory }}
+          repository_organization: rlmumford
+          repository_name: ${{ matrix.repository }}
+          branch: 2.x
+          user_name: rlmumford
+          user_email: rlmumford@googlemail.com
+        env:
+          GITHUB_TOKEN: ${{ secrets.SPLIT_TOKEN }}
