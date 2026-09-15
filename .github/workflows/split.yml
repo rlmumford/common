@@ -25,6 +25,8 @@ jobs:
         include:
           - directory: modules/data/document
             repository: document
+          - directory: modules/util/field_tools
+            repository: field_tools
 
     steps:
       - uses: actions/checkout@v4

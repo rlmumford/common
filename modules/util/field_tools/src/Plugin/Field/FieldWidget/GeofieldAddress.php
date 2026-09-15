@@ -229,7 +229,7 @@ class GeofieldAddress extends AddressDefaultWidget implements ContainerFactoryPl
         continue;
       }
 
-      $address_collection = $this->geocoder->geocode($value['value'], ['googlemaps', 'googlemaps_business']);
+      $address_collection = $this->geocoder->geocode($value['value'], ['googlemaps']);
       if ($address_collection) {
         $values[$delta] = $dumper->dump($address_collection->first());
 

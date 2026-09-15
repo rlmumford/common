@@ -25,7 +25,7 @@ class ComputedEntityReferenceItemList extends EntityReferenceFieldItemList {
   /**
    * {@inheritdoc}
    */
-  public function getIterator(): \Traversable {
+  public function getIterator() {
     $this->ensurePopulated();
     return parent::getIterator();
   }
@@ -73,33 +73,33 @@ class ComputedEntityReferenceItemList extends EntityReferenceFieldItemList {
   /**
    * {@inheritdoc}
    */
-  public function offsetExists($index) {
+  public function offsetExists($offset) {
     $this->ensurePopulated();
-    return parent::offsetExists($index);
+    return parent::offsetExists($offset);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function offsetGet($index) {
+  public function offsetGet($offset) {
     $this->ensurePopulated();
-    return parent::offsetGet($index);
+    return parent::offsetGet($offset);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function offsetSet($index, $value) {
+  public function offsetSet($offset, $value) {
     $this->ensurePopulated();
-    return parent::offsetSet($index, $value);
+    parent::offsetSet($offset, $value);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function offsetUnset($index) {
+  public function offsetUnset($offset) {
     $this->ensurePopulated();
-    return parent::offsetUnset($index);
+    parent::offsetUnset($offset);
   }
 
   /**

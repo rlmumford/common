@@ -3,6 +3,7 @@
 namespace Drupal\field_tools\Plugin\EntityReferenceSelection;
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\user\Entity\Role;
 use Drupal\user\Plugin\EntityReferenceSelection\UserSelection as CoreUserSelection;
 use Drupal\user\RoleInterface;
 
@@ -15,10 +16,20 @@ class UserSelection extends CoreUserSelection {
     $form = parent::buildConfigurationForm($form, $form_state);
     $configuration = $this->getConfiguration();
 
+    // Labels of the real (non-anonymous, non-authenticated) roles a new user
+    // can be stored as. Replaces the deprecated user_role_names() (deprecated in
+    // drupal:10.2.0, removed in drupal:11.0.0).
+    $role_names = [];
+    foreach (Role::loadMultiple() as $role) {
+      if (!in_array($role->id(), [RoleInterface::ANONYMOUS_ID, RoleInterface::AUTHENTICATED_ID], TRUE)) {
+        $role_names[$role->id()] = $role->label();
+      }
+    }
+
     $form['auto_create_roles'] = [
       '#type' => 'checkboxes',
       '#title' => $this->t('Store new users as'),
-      '#options' => array_diff_key(user_role_names(TRUE), [RoleInterface::AUTHENTICATED_ID => RoleInterface::AUTHENTICATED_ID]),
+      '#options' => $role_names,
       '#default_value' => !empty($configuration['auto_create_roles']) ? $configuration['auto_create_roles'] : [],
       '#states' => [
         'visible' => [

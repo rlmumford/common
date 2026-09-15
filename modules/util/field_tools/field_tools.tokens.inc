@@ -22,7 +22,7 @@ function field_tools_token_info_alter(&$info) {
 
   // Attach field tokens to their respecitve entity tokens.
   foreach (\Drupal::entityTypeManager()->getDefinitions() as $entity_type_id => $entity_type) {
-    if (!$entity_type->isSubclassOf('\Drupal\Core\Entity\ContentEntityInterface')) {
+    if (!$entity_type->entityClassImplements('\Drupal\Core\Entity\ContentEntityInterface')) {
       continue;
     }
 
@@ -47,7 +47,7 @@ function field_tools_token_info_alter(&$info) {
       }
 
       // Generate a description for the token.
-      $labels = _token_field_label($entity_type_id, $field_name);
+      $labels = _field_tools_token_field_label($entity_type_id, $field_name);
       $label = array_shift($labels);
       $params['@type'] = $type_info[$field->getType()]['label'];
       if (!empty($labels)) {
@@ -144,4 +144,43 @@ function field_tools_token_info_alter(&$info) {
       }
     }
   }
+}
+
+/**
+ * Returns the label(s) of a field, most-used label first.
+ *
+ * Replicates the token module's internal field-label lookup. That logic used to
+ * be the procedural token helper _token_field_label(), which was removed when
+ * token 8.x-1.x moved its hooks into
+ * \Drupal\token\Hook\TokenTokenInfoHooks::tokenFieldLabel() (a protected method
+ * we cannot call). Inlined here so field_tools no longer depends on a token
+ * internal that no longer exists.
+ *
+ * @param string $entity_type
+ *   The entity type id.
+ * @param string $field_name
+ *   The field name.
+ *
+ * @return string[]
+ *   Field labels, most frequently used first; falls back to the field name.
+ */
+function _field_tools_token_field_label($entity_type, $field_name) {
+  $labels = [];
+  $bundle_info = \Drupal::service('entity_type.bundle.info')->getBundleInfo($entity_type);
+  $field_manager = \Drupal::service('entity_field.manager');
+  foreach (array_keys($bundle_info) as $bundle) {
+    $bundle_instances = $field_manager->getFieldDefinitions($entity_type, $bundle);
+    if (isset($bundle_instances[$field_name])) {
+      $label = (string) $bundle_instances[$field_name]->getLabel();
+      $labels[$label] = isset($labels[$label]) ? ++$labels[$label] : 1;
+    }
+  }
+
+  if (empty($labels)) {
+    return [$field_name];
+  }
+
+  // Sort by most-used label and return the labels.
+  arsort($labels);
+  return array_keys($labels);
 }
