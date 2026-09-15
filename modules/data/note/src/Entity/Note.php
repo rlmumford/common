@@ -62,8 +62,8 @@ class Note extends ContentEntityBase implements EntityOwnerInterface, NoteInterf
    * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
    *   The entity type that can be attached.
    *
-   * @return \Drupal\Core\Field\BaseFieldDefinition
-   *   The attachment entity reference field.
+   * @return \Drupal\Core\Field\BaseFieldDefinition[]
+   *   The attachment entity reference fields, keyed by entity type id.
    */
   public static function attachmentBaseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields[$entity_type->id()] = BaseFieldDefinition::create('entity_reference')

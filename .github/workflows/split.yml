@@ -27,6 +27,10 @@ jobs:
             repository: document
           - directory: modules/util/field_tools
             repository: field_tools
+          - directory: modules/data/note
+            repository: note
+          - directory: modules/util/commerce_invoice
+            repository: commerce_invoice
 
     steps:
       - uses: actions/checkout@v4

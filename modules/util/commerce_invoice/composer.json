@@ -1,0 +1,16 @@
+{
+    "name": "rlmumford/commerce_invoice",
+    "description": "PDF invoice generation for Drupal Commerce orders.",
+    "type": "drupal-module",
+    "license": "GPL-2.0+",
+    "authors": [
+        {
+            "name": "rlmumford",
+            "email": "rlmumford@googlemail.com"
+        }
+    ],
+    "require": {
+        "drupal/pdf_tools": "1.x-dev"
+    },
+    "minimum-stability": "dev"
+}

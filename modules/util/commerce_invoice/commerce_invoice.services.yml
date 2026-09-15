@@ -1,0 +1,9 @@
+services:
+  commerce_invoice.order_invoice_generator:
+    class: Drupal\commerce_invoice\OrderInvoiceGenerator
+    arguments: ['@pdf_tools.generator', '@entity_type.manager', '@file_system', '@file.mime_type.guesser.extension']
+  commerce_invoice.order_placed_subscriber:
+    class: Drupal\commerce_invoice\EventSubscriber\OrderPlacedSubscriber
+    arguments: ['@commerce_invoice.order_invoice_generator']
+    tags:
+      - { name: event_subscriber }
