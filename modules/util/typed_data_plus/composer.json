@@ -1,0 +1,11 @@
+{
+    "name": "rlmumford/typed_data_plus",
+    "description": "Typed data reference fields and plugin context assignment for Drupal.",
+    "type": "drupal-module",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": ">=8.1",
+        "drupal/core": "^10 || ^11",
+        "drupal/typed_data": "^2"
+    }
+}

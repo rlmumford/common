@@ -30,7 +30,7 @@ jobs:
           from pathlib import Path
           path = Path('composer.json')
           data = json.loads(path.read_text())
-          names = ['task', 'checklist', 'service', 'plugin_reference', 'typed_data_reference', 'typed_data_context_assignment', 'note']
+          names = ['task', 'checklist', 'service', 'plugin_reference', 'typed_data_plus', 'note']
           repos = data['repositories']
           for repo in repos.values() if isinstance(repos, dict) else repos:
               if repo['type'] == 'path':

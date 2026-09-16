@@ -29,7 +29,7 @@ only one permission:
 ```
 Repository access:  Only select repositories → document, field_tools, note,
                     commerce_invoice, task, checklist, service, plugin_reference,
-                    typed_data_reference, typed_data_context_assignment
+                    typed_data_plus
 Permissions:        Contents → Read and write
 ```
 
