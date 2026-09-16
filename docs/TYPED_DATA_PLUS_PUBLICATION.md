@@ -2,9 +2,13 @@
 
 Status, 16 September 2026: project created; code pushed to Drupal.org branch
 `2.0.x` at `aa33954`; tag `2.0.0-alpha1` pushed. Contents match Common `d316fb4`.
-The independent consumer CI passed with the new Composer identity. The Drupal.org
-release page and normal Composer installation proof remain pending; the package
-metadata endpoint returned 404 before the release page was created.
+The independent consumer CI passed with the new Composer identity. The Drupal.org release page is published. A clean Composer consumer installed
+`drupal/typed_data_plus:2.0.0-alpha1` from the standard Drupal repository with
+Drupal 10.6.16 and Typed Data 2.1.1. The migrated Entity Template branch also
+installed against that published package; only the unreleased Entity Template
+code used a local path repository. No custom Typed Data Plus repository was used.
+Composer reported no security advisories. This verifies package installation,
+not an existing-site deployment or Drupal 11 runtime support.
 
 Publication is required before releasing Entity Template's shared-fetcher
 migration. The current GitHub-only dependency works only when a consuming site's
@@ -66,8 +70,8 @@ Only list supported Drupal/PHP versions verified by the release tests.
 
 The repository remains authored in Common. The publication mechanism must preserve
 Drupal.org history/tags and verify the published content, just as the GitHub split
-is verified. The Git publication is complete. Release-page publication, package metadata
-resolution and normal Composer installation proofs remain pending.
+is verified. The initial alpha publication and normal Composer installation proof are complete.
+Existing-site deployment and automatic Drupal.org mirroring remain separate work.
 
 References: [creating a project](https://www.drupal.org/docs/develop/managing-a-drupalorg-theme-module-or-distribution-project/creating-a-new-project),
 [project types](https://www.drupal.org/docs/develop/managing-a-drupalorg-theme-module-or-distribution-project/sandbox-projects),
