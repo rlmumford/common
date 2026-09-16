@@ -1,0 +1,15 @@
+{
+  "name": "rlmumford/common-coder",
+  "description": "Drupal coding standards for Common pull requests.",
+  "type": "project",
+  "license": "GPL-2.0-or-later",
+  "require-dev": {
+    "drupal/coder": "^8.3"
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    },
+    "sort-packages": true
+  }
+}

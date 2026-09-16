@@ -8,7 +8,7 @@ A Composer package containing independently enabled Drupal modules:
 - `typed_data_context_assignment` maps available typed data into plugin inputs,
   with assignment forms, autocomplete, context handling and condition support.
 
-Install `rlmumford/typed_data_plus`, then enable only the modules your application
+Install `drupal/typed_data_plus:^2.0@alpha`, then enable only the modules your application
 requires. Enabling the new `typed_data_plus` module does not enable either existing
 submodule. Existing module names, field types, configuration and PHP namespaces
 are preserved. No database update is required for this additive module.
@@ -60,9 +60,16 @@ existing Entity Template callers or duplicate its filter plugin IDs. Kernel test
 exercise standalone use and coexistence with Entity Template alpha17, including
 its legacy wrapped-field filter.
 
-The coordinated Entity Template compatibility wrappers, placeholder/Twig migration,
-filter ownership transfer, condition evaluator and Views predicates are subsequent
-P1 work. This package does not yet provide a condition-string evaluator.
+`typed_data_plus.placeholder_resolver` now applies the same parser and filters,
+including wrapped values and output escaping. It is available without Entity
+Template. The coordinated Entity Template branch delegates its legacy service IDs,
+classes, Twig and selectors to these shared services. Existing alpha17 remains
+supported until that migration is released. Filter ownership transfer, the
+condition evaluator and Views predicates remain subsequent P1 work. This package does not yet provide a condition-string evaluator.
 
 Source lives in `rlmumford/common` on `2.x`, under `modules/util/typed_data_plus`.
-The `rlmumford/typed_data_plus` repository is an automated split output.
+The Drupal.org `typed_data_plus` project publishes this package with Composer
+identity `drupal/typed_data_plus`. The old GitHub repository is being retired;
+it is no longer a split target. Remove any old root requirement for
+`rlmumford/typed_data_plus` when updating task/checklist together; the two package
+identities must not be installed alongside each other.

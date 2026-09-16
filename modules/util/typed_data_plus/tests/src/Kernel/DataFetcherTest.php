@@ -26,8 +26,14 @@ use Drupal\typed_data_plus\WrappedValueFilterInterface;
  */
 class DataFetcherTest extends KernelTestBase {
 
+  /**
+   * {@inheritdoc}
+   */
   protected static $modules = ['system', 'typed_data', 'typed_data_plus'];
 
+  /**
+   * Tests service isolation and typed list traversal.
+   */
   public function testStandaloneServiceAndListTraversal(): void {
     $fetcher = $this->container->get('typed_data_plus.data_fetcher');
     $this->assertInstanceOf(DataFetcherInterface::class, $fetcher);
@@ -41,6 +47,9 @@ class DataFetcherTest extends KernelTestBase {
     $fetcher->fetchFilteredData($data, '9');
   }
 
+  /**
+   * Tests that later wrapped filters see the transformed value.
+   */
   public function testScalarTransformRefreshesWrappedValue(): void {
     $upper = $this->filter(static fn($definition, $value) => strtoupper($value));
     $wrapped = $this->filter(static function ($definition, TypedDataInterface $value) {
@@ -53,6 +62,9 @@ class DataFetcherTest extends KernelTestBase {
     $this->assertSame('before', $data->getValue());
   }
 
+  /**
+   * Tests preservation of typed filter results.
+   */
   public function testTypedResultPreservesIdentityAndDefinition(): void {
     $result = $this->container->get('typed_data_manager')->create(DataDefinition::create('integer'), 42);
     $filter = $this->filter(static fn() => $result);
@@ -61,6 +73,9 @@ class DataFetcherTest extends KernelTestBase {
     $this->assertSame(42, $fetcher->applyFiltersToValue($this->stringData('input'), [['typed', []]]));
   }
 
+  /**
+   * Tests markup handling and propagation of render metadata.
+   */
   public function testMarkupAndCacheMetadata(): void {
     $markup = Markup::create('<b>value</b>');
     $render = $this->filter(static function ($definition, $value, $arguments, BubbleableMetadata $metadata) use ($markup) {
@@ -83,12 +98,18 @@ class DataFetcherTest extends KernelTestBase {
     $this->assertContains('example/view', $metadata->getAttachments()['library']);
   }
 
+  /**
+   * Tests fallback filtering for a missing value.
+   */
   public function testNullAwareFilter(): void {
     $fallback = $this->filter(static fn($definition, $value, $arguments) => $value ?? $arguments[0], FALSE, TRUE);
     $fetcher = $this->fetcher(['fallback' => $fallback]);
     $this->assertSame('a.b,c|d', $fetcher->fetchFilteredData($this->stringData(NULL), "|fallback('a.b,c|d')")->getValue());
   }
 
+  /**
+   * Tests that null-intolerant filters never execute on missing values.
+   */
   public function testMissingValueDoesNotInvokeFilter(): void {
     $filter = $this->createMock(DataFilterInterface::class);
     $filter->method('canFilter')->willReturn(TRUE);
@@ -98,6 +119,9 @@ class DataFetcherTest extends KernelTestBase {
     $fetcher->fetchFilteredData($this->stringData(NULL), '|strict');
   }
 
+  /**
+   * Tests rejection of invalid arguments before execution.
+   */
   public function testValidationDoesNotInvokeFilter(): void {
     $filter = $this->createMock(DataFilterInterface::class);
     $filter->method('canFilter')->willReturn(TRUE);
@@ -108,6 +132,9 @@ class DataFetcherTest extends KernelTestBase {
     $fetcher->fetchFilteredData($this->stringData('input'), '|invalid');
   }
 
+  /**
+   * Tests type inspection without filter execution.
+   */
   public function testDefinitionOnlyFiltering(): void {
     $filter = $this->createMock(DataFilterInterface::class);
     $filter->method('canFilter')->willReturn(TRUE);
@@ -117,16 +144,25 @@ class DataFetcherTest extends KernelTestBase {
     $this->assertSame('integer', $fetcher->fetchFilteredDefinition(DataDefinition::create('string'), '|length')->getDataType());
   }
 
+  /**
+   * Creates a typed string for filter tests.
+   */
   protected function stringData(?string $value): TypedDataInterface {
     return $this->container->get('typed_data_manager')->create(DataDefinition::create('string'), $value);
   }
 
+  /**
+   * Creates a fetcher with the supplied filter instances.
+   */
   protected function fetcher(array $filters): DataFetcher {
     $manager = $this->createMock(DataFilterManagerInterface::class);
     $manager->method('createInstance')->willReturnCallback(static fn($id) => $filters[$id]);
     return new DataFetcher($manager, $this->container->get('typed_data_manager'));
   }
 
+  /**
+   * Creates a filter with controllable input and output behavior.
+   */
   protected function filter(callable $callback, bool $wrapped = FALSE, bool $allows_null = FALSE): DataFilterInterface {
     $filter = $this->createMock(WrappedValueFilterInterface::class);
     $filter->method('canFilter')->willReturn(TRUE);

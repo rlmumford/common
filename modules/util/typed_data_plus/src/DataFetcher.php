@@ -81,15 +81,15 @@ class DataFetcher extends BaseDataFetcher implements DataFetcherInterface {
       if ($value === NULL && !$filter->allowsNullValues()) {
         throw new MissingDataException("There is no data value for filter '$id' to work on.");
       }
-      // Support existing Entity Template filters until they adopt the interface.
+      // Support Entity Template filters until they adopt the interface.
       $uses_wrapped = ($filter instanceof WrappedValueFilterInterface || is_callable([$filter, 'usesWrappedValue'])) && $filter->usesWrappedValue();
       $input = $uses_wrapped
         ? ($wrapped ?? $this->typedDataManager->create($definition, $value))
         : ($value instanceof MarkupInterface ? (string) $value : $value);
       $value = $filter->filter($definition, $input, $arguments, $metadata);
       $definition = $filter->filtersTo($definition, $arguments);
-      // A scalar transform invalidates the previous wrapper. Rebuild lazily so
-      // trusted Markup is preserved for raw-value consumers at the end of a chain.
+      // A scalar transform invalidates the previous wrapper. Rebuild lazily
+      // to preserve final Markup for raw-value consumers.
       $wrapped = $value instanceof TypedDataInterface ? $value : NULL;
       if ($wrapped !== NULL) {
         $definition = $wrapped->getDataDefinition();
