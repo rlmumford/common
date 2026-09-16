@@ -15,6 +15,7 @@ class TaskListBuilder extends EntityListBuilder {
    */
   protected function getEntityIds() {
     $query = $this->getStorage()->getQuery();
+    $query->accessCheck(TRUE);
     $header = $this->buildHeader();
     $query->tableSort($header);
     if ($this->limit) {

@@ -180,8 +180,7 @@ class Task extends ContentEntityBase implements TaskInterface {
         'type' => 'entity_reference_autocomplete',
       ])
       ->setDisplayConfigurable('view', TRUE)
-      ->setDisplayConfigurable('form', TRUE)
-      ->setDefaultValueCallback('Drupal\task\Entity\Task::getCurrentUserId');
+      ->setDisplayConfigurable('form', TRUE);
 
     // The Resolution of the Task.
     $fields['resolution'] = BaseFieldDefinition::create('list_string')
@@ -216,6 +215,20 @@ class Task extends ContentEntityBase implements TaskInterface {
    * {@inheritdoc}
    */
   public function preSave(EntityStorageInterface $storage) {
+    parent::preSave($storage);
+    if ($this->id()) {
+      $pending = $this->dependencies->referencedEntities();
+      $visited = [];
+      while ($dependency = array_pop($pending)) {
+        if ((string) $dependency->id() === (string) $this->id()) {
+          throw new \InvalidArgumentException('Task dependencies must not contain a cycle.');
+        }
+        if (!isset($visited[$dependency->id()])) {
+          $visited[$dependency->id()] = TRUE;
+          array_push($pending, ...$dependency->dependencies->referencedEntities());
+        }
+      }
+    }
     $current_user = \Drupal::currentUser();
 
     // Set Creator and Updater.
@@ -225,26 +238,23 @@ class Task extends ContentEntityBase implements TaskInterface {
     $this->updater->target_id = $current_user->id();
 
     // Set the start date to now if its not already set.
-    $now = gmdate(DateTimeItemInterface::DATE_STORAGE_FORMAT);
+    $now = gmdate(DateTimeItemInterface::DATETIME_STORAGE_FORMAT, \Drupal::time()->getRequestTime());
     if (!$this->start->value) {
       $this->start->value = $now;
     }
 
-    // Set the default status if not set already.
-    if (!$this->status->value) {
-      $this->status->value = ($this->start->value >= $now) ? 'active' : 'pending';
-    }
-
-    if (!in_array($this->status->value, ['closed', 'resolved'])) {
+    // Pending is derived from the schedule and dependencies. Waiting is an
+    // explicit manual hold and must not be released by the scheduler.
+    if (in_array($this->status->value, [NULL, '', 'pending', 'active'], TRUE)) {
       $open_dependencies = FALSE;
       foreach ($this->dependencies as $item) {
-        if (!in_array($item->status->value, ['closed', 'resolved'])) {
+        if (!$item->entity || !in_array($item->entity->status->value, ['closed', 'resolved'], TRUE)) {
           $open_dependencies = TRUE;
           break;
         }
       }
 
-      $this->status->value = $open_dependencies ? 'waiting' : $this->status->value;
+      $this->status->value = ($open_dependencies || $this->start->value > $now) ? 'pending' : 'active';
     }
 
     // @todo Lock tokens if this is resolved.
@@ -254,8 +264,12 @@ class Task extends ContentEntityBase implements TaskInterface {
    * {@inheritdoc}
    */
   public function postSave(EntityStorageInterface $storage, $update = TRUE) {
+    parent::postSave($storage, $update);
     if ($update && $this->status->value != $this->original->status->value) {
       $query = $storage->getQuery();
+      // This maintains dependencies across assignees, independently of the
+      // permissions of the user who resolved the prerequisite.
+      $query->accessCheck(FALSE);
       $query->condition('dependencies.entity.id', $this->id());
       if ($ids = $query->execute()) {
         foreach ($storage->loadMultiple($ids) as $dependency) {

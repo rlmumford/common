@@ -2,13 +2,13 @@ name: Task Job
 description: Store task jobs
 type: module
 package: Tasks
-core_version_requirement: ^9 || ^10 || ^11 || ^9
+core_version_requirement: ^10 || ^11
 
 dependencies:
-  - rlmumford:task
-  - rlmumford:task_context
-  - rlmumford:task_checklist
-  - rlmumford:checklist
+  - task:task
+  - task:task_context
+  - task:task_checklist
+  - checklist:checklist
   - entity:entity
   - entity_template:entity_template
   - entity_template:entity_template_ui

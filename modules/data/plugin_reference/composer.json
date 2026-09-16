@@ -1,0 +1,10 @@
+{
+    "name": "rlmumford/plugin_reference",
+    "description": "Reusable plugin reference module extracted from rlmumford/common.",
+    "type": "drupal-module",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "drupal/core": "^10 || ^11",
+        "php": ">=8.1"
+    }
+}

@@ -21,6 +21,7 @@ class ChecklistServiceProvider extends ServiceProviderBase {
         '\Drupal\checklist\EventSubscriber\ChecklistItemEventMessageSubscriber'
       );
       $definition->addTag('event_subscriber');
+      $definition->setPublic(TRUE);
       $container->setDefinition(
         'checklist.checklist_item_event_message_subscriber',
         $definition

@@ -109,6 +109,9 @@ class Checklist implements ChecklistInterface {
     if ($this->getEntity()->id()) {
       $ids_to_load = $this->getType()->itemStorage()
         ->getQuery()
+        // Completion must inspect every item, including during cron. Access
+        // to the checklist is checked against its containing entity.
+        ->accessCheck(FALSE)
         ->condition('checklist.target_id', $this->getEntity()->id())
         ->condition('checklist.checklist_key', $this->getKey())
         ->execute();
@@ -198,7 +201,7 @@ class Checklist implements ChecklistInterface {
 
     $default_resolvable = TRUE;
     foreach ($items as $item) {
-      if (!$item->isApplicable() || !$item->isIncomplete()) {
+      if (!$item->isApplicable() || $item->isComplete()) {
         continue;
       }
 
@@ -249,6 +252,9 @@ class Checklist implements ChecklistInterface {
    * {@inheritdoc}
    */
   public function complete() {
+    if (!$this->isCompletable()) {
+      throw new \LogicException('Required checklist items are not complete.');
+    }
     $this->getType()->completeChecklist($this);
     $this->isComplete = TRUE;
   }
@@ -270,7 +276,7 @@ class Checklist implements ChecklistInterface {
   public function isCompletable() : bool {
     $completable = TRUE;
     foreach ($this->getItems() as $item) {
-      if (!$item->isApplicable() || !$item->isIncomplete()) {
+      if (!$item->isApplicable() || $item->isComplete()) {
         continue;
       }
 

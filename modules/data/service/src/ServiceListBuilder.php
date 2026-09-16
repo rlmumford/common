@@ -30,7 +30,7 @@ class ServiceListBuilder extends EntityListBuilder {
     $row['title']['data'] = array(
       '#type' => 'link',
       '#title' => $entity->label(),
-      '#url' => $entity->urlInfo(),
+      '#url' => $entity->toUrl(),
     );
     $row['type'] = $entity->type->entity->label();
     $row['manager']['data'] = $entity->manager->view();

@@ -1,0 +1,16 @@
+{
+    "name": "rlmumford/checklist",
+    "description": "Reusable checklist module extracted from rlmumford/common.",
+    "type": "drupal-module",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "drupal/core": "^10 || ^11",
+        "drupal/entity": "^1.4",
+        "drupal/inline_entity_form": "^1 || ^3",
+        "drupal/typed_data": "^2",
+        "rlmumford/plugin_reference": "2.x-dev",
+        "rlmumford/typed_data_reference": "2.x-dev",
+        "rlmumford/typed_data_context_assignment": "2.x-dev",
+        "php": ">=8.1"
+    }
+}

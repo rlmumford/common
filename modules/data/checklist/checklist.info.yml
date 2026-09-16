@@ -1,7 +1,7 @@
 name: Checklist
 description: Programmable checklists
 type: module
-core_version_requirement: ^9 || ^10 || ^11 || ^9
+core_version_requirement: ^10 || ^11
 package: RLMumford
 dependencies:
   - entity:entity
@@ -9,3 +9,4 @@ dependencies:
   - plugin_reference
   - typed_data:typed_data
   - typed_data_reference
+  - typed_data_context_assignment:typed_data_context_assignment

@@ -23,11 +23,12 @@ only one permission:
 
 ```
 Repository access:  Only select repositories → document, field_tools, note,
-                    commerce_invoice
+                    commerce_invoice, task, checklist, service, plugin_reference,
+                    typed_data_reference, typed_data_context_assignment
 Permissions:        Contents → Read and write
 ```
 
-That is genuinely all it does: write commits to those four repositories.
+That is genuinely all it does: write commits to those package repositories.
 
 **If you use a classic token instead, `public_repo` is enough** — every split
 repository is public. Do not reach for `repo`: there is no separate "write"

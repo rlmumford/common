@@ -164,6 +164,9 @@ abstract class ChecklistItemFormBase extends FormBase implements BaseFormIdInter
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
+    if (!$this->item->checklist->checklist->getEntity()->access('update')) {
+      throw new \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException();
+    }
     $plugin_form = $this->pluginFormFactory->createInstance($this->item->getHandler(), $this->formClass);
     $plugin_form->validateConfigurationForm($form, $form_state);
   }
@@ -173,6 +176,9 @@ abstract class ChecklistItemFormBase extends FormBase implements BaseFormIdInter
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $checklist = $this->item->checklist->checklist;
+    if (!$checklist->getEntity()->access('update')) {
+      throw new \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException();
+    }
     $checklist = $this->checklistTempstoreRepo->get($checklist);
     $item = $checklist->getItem($this->item->getName());
     $this->item = $item;
