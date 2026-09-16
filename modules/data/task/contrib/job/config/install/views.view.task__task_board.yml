@@ -24,7 +24,7 @@ display:
       access:
         type: perm
         options:
-          perm: 'view any tasks+view assigned tasks'
+          perm: 'view assigned tasks'
       cache:
         type: tag
         options: {  }

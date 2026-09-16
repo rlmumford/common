@@ -95,6 +95,9 @@ class TaskFoundationTest extends KernelTestBase {
     $time->method('getRequestTime')->willReturnCallback(function () use (&$now) {
       return $now;
     });
+    $time->method('getCurrentTime')->willReturnCallback(function () use (&$now) {
+      return $now;
+    });
     $this->container->set('datetime.time', $time);
     $task = Task::create(['title' => 'Due later', 'start' => gmdate('Y-m-d\TH:i:s', $now + 60)]);
     $task->save();
