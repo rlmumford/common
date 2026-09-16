@@ -95,18 +95,29 @@ context contracts and filtered local/global context assignment. Binary
 succeeds when they differ, XAnd when they agree. Larger expressions nest groups.
 `condition_constant:true` and `condition_constant:false` are separately selectable
 TRUE/FALSE gates without contexts or a value setting.
-The original context-assignment submodule provides site-wide integration. The optional Views integration is implemented in
+The original context-assignment submodule provides site-wide integration.
+The optional Views integration is implemented in
 [Typed Data Plus MR !2](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/2)
-(awaiting merge): `typed_data_plus_views` provides the native `view_result_count`
-condition, scalar contextual/exposed bindings through the data fetcher, full-match
-counts independent of paging, execution-user display access, fresh query results
-and configuration dependency tracking. Access/configuration failures remain errors
-under negation. Local validation: 17 new kernel tests; full suite 84 tests / 334
-assertions; Drupal/DrupalPractice Coder clean. Views is optional and the condition
-composes with the existing groups. The legacy condition-string `view` adapter,
-array-valued exposed bindings and skipped contextual slots remain open.
-Filter extraction, the remaining grammar/adapters and component conditions also
-remain open; P1 is not complete.
+(awaiting merge). `typed_data_plus_views` adds a **Condition** display type and one
+`view_result_count:VIEW-DISPLAY` derivative per enabled display. Contextual-filter
+handlers/validators supply argument context definitions; exposed filters supply
+optional scalar contexts. The shared context handler resolves mappings, nested
+properties, filters and global providers. There is no separate binding parser or
+YAML binding form. The standard context UI also receives caller-declared source
+definitions through the shared condition base class.
+
+The condition compares full-match counts independent of paging, checks display
+access as the execution user and uses fresh queries. Configuration dependencies
+include the View; Views edits invalidate derivative discovery. Missing argument
+contexts, access failures and configuration errors cannot pass through negation.
+Kernel coverage includes discovery/invalidation, typed/entity argument contexts,
+exposed contexts, standard form/schema, condition groups, user-sensitive queries
+and changed data. See the MR for current Drupal 10/11 and Coder results.
+
+Views stays optional. The legacy condition-string `view` adapter, array-valued
+exposed contexts and skipped contextual slots remain open. Filter extraction,
+the remaining grammar/adapters and component conditions also remain open;
+P1 is not complete.
 
 Deliverables:
 
