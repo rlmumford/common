@@ -11,7 +11,7 @@
     ],
     "require": {
         "drupal/entity": "^1.4",
-        "drupal/typed_data_plus": "^2.0@alpha"
+        "drupal/typed_data_plus": "2.0.x-dev"
     },
     "suggest": {
         "aws/aws-sdk-php": "Required by the aws and ebids modules.",
@@ -24,6 +24,10 @@
         "drupal/views_block_filter_block": "Required by the views modules."
     },
     "repositories": [
+      {
+        "type": "vcs",
+        "url": "https://git.drupalcode.org/project/typed_data_plus.git"
+      },
       {
         "type": "composer",
         "url": "https://packages.drupal.org/8"

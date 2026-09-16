@@ -23,6 +23,7 @@ jobs:
           composer create-project drupal/recommended-project:^10 /tmp/task-consumer --no-interaction
           cd /tmp/task-consumer
           composer config minimum-stability dev
+          composer config repositories.typed-data-plus vcs https://git.drupalcode.org/project/typed_data_plus.git
           composer config repositories.common-data path "$GITHUB_WORKSPACE/modules/data/*"
           composer config repositories.common-util path "$GITHUB_WORKSPACE/modules/util/*"
           python3 - <<'PY'

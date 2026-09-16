@@ -77,7 +77,8 @@ Runtime integration proofs remain in their owning implementation phases.
 
 Implementation and its Coder/PHPUnit CI live in the Drupal.org
 [Typed Data Plus repository](https://git.drupalcode.org/project/typed_data_plus).
-Common owns this integration plan and consumes published Composer releases;
+Common owns this integration plan and currently consumes `2.0.x-dev` from the
+official Git repository through Composer;
 it does not contain or mirror Typed Data Plus source.
 
 First slice: an independently enabled `typed_data_plus` module exposes a filtered
