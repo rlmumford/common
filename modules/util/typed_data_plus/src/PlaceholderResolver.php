@@ -8,6 +8,7 @@ use Drupal\Component\Render\HtmlEscapedText;
 use Drupal\Component\Render\MarkupInterface;
 use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\TypedData\Exception\MissingDataException;
+use Drupal\typed_data\DataFilterManagerInterface;
 use Drupal\typed_data\Exception\InvalidArgumentException;
 use Drupal\typed_data\PlaceholderResolver as TypedDataPlaceholderResolver;
 
@@ -19,8 +20,17 @@ use Drupal\typed_data\PlaceholderResolver as TypedDataPlaceholderResolver;
  */
 class PlaceholderResolver extends TypedDataPlaceholderResolver {
 
-  public function __construct(DataFetcherInterface $data_fetcher, \Drupal\typed_data\DataFilterManagerInterface $data_filter_manager) {
-    parent::__construct($data_fetcher, $data_filter_manager);
+  /**
+   * Constructs a resolver requiring the extended filtered-fetcher interface.
+   *
+   * @param \Drupal\typed_data_plus\DataFetcherInterface $data_fetcher
+   *   The shared filtered data fetcher.
+   * @param \Drupal\typed_data\DataFilterManagerInterface $data_filter_manager
+   *   The filter manager, retained for constructor compatibility.
+   */
+  public function __construct(DataFetcherInterface $data_fetcher, DataFilterManagerInterface $data_filter_manager) {
+    $this->dataFetcher = $data_fetcher;
+    $this->dataFilterManager = $data_filter_manager;
   }
 
   /**
@@ -29,7 +39,6 @@ class PlaceholderResolver extends TypedDataPlaceholderResolver {
   protected function parseMainPlaceholderPart(string $main_part, string $placeholder): array {
     return $this->dataFetcher->parsePropertyPathAndFilters($main_part);
   }
-
 
   /**
    * {@inheritdoc}
@@ -54,7 +63,7 @@ class PlaceholderResolver extends TypedDataPlaceholderResolver {
           [$property_sub_paths, $filters] = $this->parseMainPlaceholderPart($placeholder_main_part, $placeholder);
           $fetched_data = $this->dataFetcher->fetchDataBySubPaths($data[$data_name], $property_sub_paths, $bubbleable_metadata, $options['langcode']);
 
-          // Share filter semantics with selectors and future condition consumers.
+          // Share filter semantics with selectors and condition consumers.
           if ($filters) {
             $value = $this->dataFetcher->applyFiltersToValue($fetched_data, $filters, $bubbleable_metadata);
           }

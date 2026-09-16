@@ -14,8 +14,14 @@ use Drupal\KernelTests\KernelTestBase;
  */
 class PlaceholderResolverTest extends KernelTestBase {
 
+  /**
+   * {@inheritdoc}
+   */
   protected static $modules = ['system', 'typed_data', 'typed_data_plus'];
 
+  /**
+   * Tests quoted filter arguments and escaping of untrusted values.
+   */
   public function testQuotedArgumentsAndEscaping(): void {
     $resolver = $this->container->get('typed_data_plus.placeholder_resolver');
     $manager = $this->container->get('typed_data_manager');
@@ -26,6 +32,9 @@ class PlaceholderResolverTest extends KernelTestBase {
     $this->assertSame('UNSAFE', $resolver->replacePlaceHolders('{{text|striptags|upper}}', $data));
   }
 
+  /**
+   * Tests preserving or clearing unresolved placeholders.
+   */
   public function testMissingAndMalformedValues(): void {
     $resolver = $this->container->get('typed_data_plus.placeholder_resolver');
     $data = ['text' => $this->container->get('typed_data_manager')->create(DataDefinition::create('string'), 'value')];
