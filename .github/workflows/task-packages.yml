@@ -31,7 +31,8 @@ jobs:
           path = Path('composer.json')
           data = json.loads(path.read_text())
           names = ['task', 'checklist', 'service', 'plugin_reference', 'typed_data_reference', 'typed_data_context_assignment', 'note']
-          for repo in data['repositories'].values():
+          repos = data['repositories']
+          for repo in repos.values() if isinstance(repos, dict) else repos:
               if repo['type'] == 'path':
                   repo['options'] = {'versions': {'rlmumford/' + n: '2.x-dev' for n in names}}
           path.write_text(json.dumps(data, indent=2))
