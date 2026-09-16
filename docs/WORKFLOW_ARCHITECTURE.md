@@ -119,9 +119,11 @@ properties on service references. Build on this model, with cycle prevention,
 safe traversal, reparenting rules, descendant cache invalidation and access checks.
 Keep service ancestry separate from task roots and task dependencies.
 
-Parent/child status propagation, ancestor draft gating, manager fallback, permission
-inheritance and deletion behavior are design decisions still to close. Nesting alone
-must not silently grant access or cascade cancellation. The implementation plan's
+Task readiness is gated only by the immediate service. Ancestor statuses do not
+independently gate descendant tasks, and parent transitions leave child statuses
+unchanged unless an explicit workflow changes them. Manager fallback, permission
+inheritance and deletion behavior are specified in the Phase 0 contract. Nesting
+alone must not silently grant access or cascade cancellation. The implementation plan's
 P2 defines the hierarchy work and its acceptance criteria.
 
 ## Checklist contracts

@@ -134,12 +134,12 @@ Deliverables:
 - Preserve explicit assignees and support extensible assignment policies, including
   condition-based rules. Specify manager fallback through the hierarchy if desired.
 
-Decisions to close before hierarchy behavior ships:
+Hierarchy decisions and remaining implementation policies:
 
-| Question | Proposed starting position, subject to P0 review |
+| Question | Decision or proposed policy |
 | --- | --- |
-| Does an ancestor in draft block descendant tasks? | Consider an effective-readiness gate across ancestors while retaining each child's own status; confirm before implementing. |
-| Do parent transitions change child statuses? | No automatic cascade by default. Define explicit policies for complete/cancel/supersede and task handling. |
+| Does an ancestor in draft block descendant tasks? | No. Confirmed: gate only on the immediate service; ancestor statuses do not independently affect task readiness. |
+| Do parent transitions change child statuses? | Leave child statuses unchanged unless an explicit workflow changes them. |
 | Does parent completion require children complete? | Explicit completion policy, not an accidental consequence of nesting. |
 | Are manager, recipients or permissions inherited? | No implicit inheritance. Separate optional assignment fallback from authorization. |
 | Can a service move across organization boundaries? | Validate through a scope-policy extension; a move must not silently expose its tasks, notes or descendants. Common must not hardcode CounselKit firm entities. |
@@ -148,7 +148,8 @@ Decisions to close before hierarchy behavior ships:
 
 Acceptance: multilevel trees, independent roots, cycles, reparenting, stale root
 caches and unauthorized moves are tested. Task gates react to the chosen hierarchy
-policy. Every service transition has tested task/child effects, including no-effect
+policy, including an active immediate service beneath draft or terminal ancestors.
+Every service transition has tested task/child effects, including no-effect
 cases. Upgrade tests preserve existing references. State precedence, manual holds,
 closed-versus-resolved compatibility and reopening semantics are explicit.
 

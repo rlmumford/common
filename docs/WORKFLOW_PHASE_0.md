@@ -24,7 +24,7 @@ Paths in this table are relative to the CounselKit module directory above.
 | Contract / source | Disposition and target | Acceptance scenario |
 | --- | --- | --- |
 | `ck_task/ck_task.entity.inc`, task processing, dates, dependencies, assignment and contexts | Adapt to `task`; preserve task root separately from service root | T01: future start stays pending; due/external deadline do not silently activate or resolve work; only resolved prerequisites release it |
-| `ck_service/includes/service.entity.inc`, `ck_service.info.inc` | Adapt to `service`; draft, active, complete, cancelled, superseded | T02: every transition and its no-cascade effects; cancellation and supersession emit distinct events |
+| `ck_service/includes/service.entity.inc`, `ck_service.info.inc` | Adapt to `service`; draft, active, complete, cancelled, superseded | T02: immediate draft service keeps tasks pending; active immediate service permits execution despite draft or terminal ancestors; parent transitions do not cascade; cancellation and supersession emit distinct events |
 | `ck_task/modules/job/ck_task_job.entity.inc` and job triggers | Adapt to `task_job`; config-driven jobs and assignment rules | T03: repeated trigger handling does not duplicate work; explicit assignment is preserved; rules recheck access |
 | `ck_task/includes/checklist_item/interface.item_plugin.inc`, `base.item_plugin.inc`, `action_result.item_plugin.inc` | Adapt to `checklist`; action, form and structured action result contracts | T04: action/form/operation have equivalent domain effects and gates |
 | `interface.action_operations.inc`, `trait.action_operations.inc`, `action_operation_result.inc` in the same directory; `ck_task/includes/ck_task.checklist_routes.inc` | Adapt to `checklist`; discoverable schema-defined operations and API adapter | T05: schema validation and denied operations leave state/outcomes unchanged |
@@ -114,18 +114,18 @@ from a valid false condition and must prevent automatic completion.
 
 ## Lifecycle decisions
 
-These are implementation defaults. Ancestor draft gating and retained failure
-state were specifically raised for user feedback; absent a correction, use the
-following defaults and keep them visible in implementation PRs.
+Immediate-service-only gating is confirmed by the user. Retained failure state
+remains a proposed default pending feedback; keep that distinction visible in
+implementation PRs.
 
 ### Task and service
 
 - Persist task lifecycle intent and compute readiness separately. Preserve existing
   field names `start`, `due`, `deadline`, `resolved`, `dependencies`, `service`
   where present; verify actual schema before adding or renaming any field.
-- Readiness precedence: terminal task state first; otherwise future start or any
-  draft service ancestor means pending; otherwise manual hold, unresolved/missing
-  dependency or non-active service means blocked; otherwise active. Return all
+- Readiness precedence: terminal task state first; otherwise future start or a
+  draft immediate service means pending; otherwise manual hold, unresolved/missing
+  dependency or non-active immediate service means blocked; otherwise active. Return all
   reasons as well as the primary state. A task without a service has no service gate.
 - Only `resolved` satisfies a task dependency. Existing Common also accepts
   `closed`; remove that behavior with a migration/release note, not a silent alias.
@@ -137,8 +137,9 @@ following defaults and keep them visible in implementation PRs.
   Draft can activate/cancel/supersede; active can complete/cancel/supersede.
   Reopening a terminal service is an explicit authorized transition with history.
   Supersession has its own event, never the cancellation event by alias.
-- Parent transitions do not mutate descendant statuses. Ancestor draft prevents
-  descendant task execution; terminal ancestors block new execution by default.
+- Parent transitions do not mutate descendant statuses unless an explicit workflow
+  changes them. Only the immediate service gates task execution: draft, complete,
+  cancelled or superseded ancestors do not independently gate descendant tasks.
   Already resolved tasks retain their outcome. Completion of a parent need not
   complete children: installations may register a stricter completion policy.
 - Keep the existing service-to-service `service` field as parent. `all` is ordered
