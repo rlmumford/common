@@ -8,6 +8,8 @@ task port. It distinguishes implemented foundations, agreed requirements and
 proposals that still need validation. It is not a claim that the framework below
 has already been built.
 
+The phased delivery plan is [Workflow implementation plan](WORKFLOW_IMPLEMENTATION_PLAN.md).
+
 ## Purpose and scope
 
 The priority is to give **rlmumford/common a reusable workflow framework** before
@@ -108,6 +110,19 @@ The current Common foundation has the date fields, dependencies, root, service
 reference, basic assignment and scheduling. It currently marks dependency-blocked
 work pending, accepts closed prerequisites, has only a boolean service state and
 no service-activation gate. Those are implementation gaps, not the target model.
+
+### Nested services
+
+Nested services are an explicit requirement. Common already stores a parent service
+in the service entity's `service` reference and exposes computed `root` and `all`
+properties on service references. Build on this model, with cycle prevention,
+safe traversal, reparenting rules, descendant cache invalidation and access checks.
+Keep service ancestry separate from task roots and task dependencies.
+
+Parent/child status propagation, ancestor draft gating, manager fallback, permission
+inheritance and deletion behavior are design decisions still to close. Nesting alone
+must not silently grant access or cascade cancellation. The implementation plan's
+P2 defines the hierarchy work and its acceptance criteria.
 
 ## Checklist contracts
 
