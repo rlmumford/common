@@ -40,7 +40,7 @@ truth for code; split package repositories are publishing outputs.
 | Operational history | Required. Record execution identity, attempts, transitions and results. |
 | Configurable recovery framework | Out of scope; it has not proved useful in practice. Basic retry/reset behavior remains necessary. |
 | Typed-data dependencies | Preferred and agreed direction: move shared fetching/filtering and condition evaluation below Entity Template into TypedDataPlus. Verify exact extraction boundaries in code. |
-| Distribution | Keep the existing GitHub packages while APIs settle. Drupal.org publication is deferred, not a prerequisite for development. |
+| Distribution | Publish Typed Data Plus on Drupal.org before releasing the Entity Template dependency. Other Common packages remain on GitHub. See [publication steps](TYPED_DATA_PLUS_PUBLICATION.md). |
 | AI reuse | Recommended: Drupal AI provider/tool infrastructure plus our durable run and checklist integration. Validate the agent-loop boundary before adoption. |
 | Background execution | Recommended: a generic execution interface with a Messenger adapter. Prove this before replacing existing queues/runners. |
 | Deployment | Recommended: separate web and worker containers using the same application image. Co-location is also possible. |

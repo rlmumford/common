@@ -98,7 +98,8 @@ quoted-expression grammar without tests. Keep compatibility wrappers/deprecation
 for existing PHP consumers in a coordinated Entity Template release. Do not ship
 two classes registering the same filter ID. Root Composer repositories must list
 GitHub packages; dependent packages' repository declarations are not inherited.
-Drupal.org publication remains deferred.
+Typed Data Plus publication on Drupal.org is required before releasing the
+Entity Template dependency; see [publication steps](TYPED_DATA_PLUS_PUBLICATION.md).
 
 Condition grammar inventory: `never`, `passes`, `view`, `exists`, `empty`, `with`,
 `contains`/`notcontains`, `in`/`notin`, equality/order/`matches`, `isroot`,

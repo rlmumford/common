@@ -96,7 +96,8 @@ Deliverables:
   of the same engine.
 - Provide a compatibility path for existing Entity Template fetcher callers and
   context-assignment configuration. Document Composer repository requirements;
-  Drupal.org publication remains deferred.
+  Typed Data Plus publication on Drupal.org is required before releasing the
+Entity Template dependency; see [publication steps](TYPED_DATA_PLUS_PUBLICATION.md).
 
 Acceptance:
 
