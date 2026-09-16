@@ -1,6 +1,6 @@
 {
     "name": "rlmumford/typed_data_plus",
-    "description": "Typed data reference fields and plugin context assignment for Drupal.",
+    "description": "Filtered typed-data fetching, reference fields and plugin context assignment for Drupal.",
     "type": "drupal-module",
     "license": "GPL-2.0-or-later",
     "require": {

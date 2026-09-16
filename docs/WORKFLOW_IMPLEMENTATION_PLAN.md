@@ -1,6 +1,6 @@
 # Workflow framework implementation plan
 
-Status: planned, not implemented. Updated 16 September 2026.
+Status: P0 design baseline recorded; P1 development started; P2–P9 not implemented. Updated 16 September 2026.
 
 This plan implements the requirements in [Workflow architecture](WORKFLOW_ARCHITECTURE.md)
 within `rlmumford/common` on `2.x`. CounselKit `11.5.x` is the behavioral reference.
@@ -69,7 +69,18 @@ Exit criteria: every agreed requirement has an owning package and planned test;
 no circular dependency; migration-sensitive decisions are documented before schema
 changes. Unresolved optional features are explicitly deferred, not silently omitted.
 
+P0 evidence: [contracts, source inventory and lifecycle decisions](WORKFLOW_PHASE_0.md),
+including a reproducible dependency probe and planned acceptance scenarios.
+Runtime integration proofs remain in their owning implementation phases.
+
 ## P1 — TypedDataPlus fetching and condition evaluation
+
+First slice: an independently enabled `typed_data_plus` module exposes a filtered
+fetcher and definition-only API, strict quoted-argument parsing and wrapped-filter
+compatibility. It coexists with Entity Template using a separate service ID.
+See the [package guide](../modules/util/typed_data_plus/README.md). Coordinated
+Entity Template migration, filter extraction and condition evaluation remain open;
+P1 is not complete.
 
 Deliverables:
 
@@ -130,12 +141,12 @@ Deliverables:
 - Preserve explicit assignees and support extensible assignment policies, including
   condition-based rules. Specify manager fallback through the hierarchy if desired.
 
-Decisions to close before hierarchy behavior ships:
+Hierarchy decisions and remaining implementation policies:
 
-| Question | Proposed starting position, subject to P0 review |
+| Question | Decision or proposed policy |
 | --- | --- |
-| Does an ancestor in draft block descendant tasks? | Consider an effective-readiness gate across ancestors while retaining each child's own status; confirm before implementing. |
-| Do parent transitions change child statuses? | No automatic cascade by default. Define explicit policies for complete/cancel/supersede and task handling. |
+| Does an ancestor in draft block descendant tasks? | No. Confirmed: gate only on the immediate service; ancestor statuses do not independently affect task readiness. |
+| Do parent transitions change child statuses? | Leave child statuses unchanged unless an explicit workflow changes them. |
 | Does parent completion require children complete? | Explicit completion policy, not an accidental consequence of nesting. |
 | Are manager, recipients or permissions inherited? | No implicit inheritance. Separate optional assignment fallback from authorization. |
 | Can a service move across organization boundaries? | Validate through a scope-policy extension; a move must not silently expose its tasks, notes or descendants. Common must not hardcode CounselKit firm entities. |
@@ -144,7 +155,8 @@ Decisions to close before hierarchy behavior ships:
 
 Acceptance: multilevel trees, independent roots, cycles, reparenting, stale root
 caches and unauthorized moves are tested. Task gates react to the chosen hierarchy
-policy. Every service transition has tested task/child effects, including no-effect
+policy, including an active immediate service beneath draft or terminal ancestors.
+Every service transition has tested task/child effects, including no-effect
 cases. Upgrade tests preserve existing references. State precedence, manual holds,
 closed-versus-resolved compatibility and reopening semantics are explicit.
 
@@ -161,8 +173,9 @@ Deliverables:
   turns are already supported by the D7 implementation.
 - Durable execution-attempt history: initiator, executor, status/transition times,
   action/completion method, errors and links to results. Define retention/access.
-- Proposed failure policy: retain intermediate state for an explicit resume or
-  reset; clear it on successful completion. Confirm exact cleanup/reopening rules.
+- Confirmed failure policy: retain intermediate state for explicit resume. Resume
+  creates a successor attempt using retained state; start-fresh creates a new attempt
+  and clears working state while preserving history. Clear state on success.
   Optional redacted diagnostics belong in restricted history, not normal outcomes.
 - Plugin/configuration discovery schemas and configuration-time validation.
 
