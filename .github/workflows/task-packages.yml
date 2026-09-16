@@ -35,7 +35,6 @@ jobs:
           for repo in repos.values() if isinstance(repos, dict) else repos:
               if repo['type'] == 'path':
                   versions = {'rlmumford/' + n: '2.x-dev' for n in names}
-                  versions['drupal/typed_data_plus'] = '2.0.0-alpha1'
                   repo['options'] = {'versions': versions}
           path.write_text(json.dumps(data, indent=2))
           PY
@@ -46,9 +45,3 @@ jobs:
           SIMPLETEST_DB: 'sqlite://localhost/:memory:'
           SYMFONY_DEPRECATIONS_HELPER: weak
         run: vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/task/tests/src/Kernel
-      - name: Test Typed Data Plus
-        working-directory: /tmp/task-consumer
-        env:
-          SIMPLETEST_DB: 'sqlite://localhost/:memory:'
-          SYMFONY_DEPRECATIONS_HELPER: weak
-        run: vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/typed_data_plus/tests/src

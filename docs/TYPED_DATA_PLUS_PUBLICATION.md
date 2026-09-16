@@ -1,101 +1,42 @@
-# Typed Data Plus: Drupal.org publication
+# Typed Data Plus: ownership and publication
 
-Status, 16 September 2026: project created; code pushed to Drupal.org branch
-`2.0.x` at `aa33954`; tag `2.0.0-alpha1` pushed. Contents match Common `d316fb4`.
-The independent consumer CI passed with the new Composer identity. The Drupal.org release page is published. A clean Composer consumer installed
-`drupal/typed_data_plus:2.0.0-alpha1` from the standard Drupal repository with
-Drupal 10.6.16 and Typed Data 2.1.1. The migrated Entity Template branch also
-installed against that published package; only the unreleased Entity Template
-code used a local path repository. No custom Typed Data Plus repository was used.
-Composer reported no security advisories. This verifies package installation,
-not an existing-site deployment or Drupal 11 runtime support.
+Typed Data Plus is maintained directly in the
+[Drupal.org GitLab repository](https://git.drupalcode.org/project/typed_data_plus),
+using branch `2.0.x` and Composer identity `drupal/typed_data_plus`.
+The repository owns the root module, `typed_data_reference` and
+`typed_data_context_assignment` submodules, tests and GitLab CI. Common does not
+contain a source copy and does not split or mirror this package.
 
-Publication is required before releasing Entity Template's shared-fetcher
-migration. The current GitHub-only dependency works only when a consuming site's
-root Composer configuration adds its repository. That is not the intended public
-installation experience.
+The initial `2.0.0-alpha1` release is published and resolvable from the standard
+Drupal Composer repository. Entity Template's dependency migration is merged.
+Common's task/checklist packages require `drupal/typed_data_plus:^2.0@alpha`.
+Condition plugins and provider-aware context mapping are subsequent development
+work; they are not part of alpha1. Their code is on the
+[feature branch](https://git.drupalcode.org/project/typed_data_plus/-/tree/feature/context-aware-conditions).
+Publish a new release after that work is reviewed; never alter the alpha1 tag.
 
-## Project page draft
+## Development and release process
 
-Name: **Typed Data Plus**
+1. Make code changes and commits in the Drupal.org repository. Run its Coder and
+   module test suite through GitLab CI and review the feature branch before merge.
+2. Tag reviewed code on `2.0.x` with the next appropriate release number and publish
+   the release through the Drupal.org project page.
+3. Verify the release is indexed by `packages.drupal.org/8` and installable in a
+   fresh Composer consumer. Update Common/Entity Template requirements when a
+   feature needs the new release; do not substitute unpublished local source in
+   Common's package tests.
+4. Keep Common's workflow architecture and implementation plan here. Link to
+   Typed Data Plus implementation and tests in the Drupal.org repository.
 
-Machine name: **typed_data_plus** (subject to Drupal.org availability).
+## Existing consumers and GitHub retirement
 
-Description:
+Do not install `rlmumford/typed_data_plus` and `drupal/typed_data_plus` together.
+Remove the old root requirement and custom GitHub repository entry when updating
+consumer lockfiles with task/checklist. Enable the root `typed_data_plus` module
+before deploying Entity Template's migrated code.
 
-> Typed Data Plus provides filtered typed-data fetching and placeholder resolution,
-> typed-data reference fields, and plugin context assignment. It builds on the
-> Typed Data API Enhancements module. Its shared services let templates and workflow
-> modules use consistent data selection and filter behavior.
->
-> This project is under active development. The initial release is an alpha;
-> public APIs may change. It does not yet provide the planned condition-string
-> evaluator. It is maintained as part of RLMumford Common; the Drupal.org repository
-> receives the package extracted from that source.
-
-Use a full project so a named Composer package and releases can be provided.
-Do not claim security advisory coverage or a stable API merely by creating it.
-Only list supported Drupal/PHP versions verified by the release tests.
-
-## Publication sequence
-
-1. Create the Drupal.org project under the maintainer's account. Project-page
-   creation needs an authenticated Drupal.org session; existing SSH Git access is
-   sufficient to push code once the repository exists, not to create that page.
-2. Publish the current Common work through `2.x`, including the shared resolver.
-   Preserve all three module machine names and current directory layout.
-3. Change the package's Composer name to `drupal/typed_data_plus`. Use Drupal.org
-   branch `2.0.x` and an initial `2.0.0-alpha1` release, preserving the major version
-   associated with Common's existing package. Do not set a hardcoded Composer
-   version; release metadata comes from the tag.
-4. Update task and checklist to require `drupal/typed_data_plus:^2.0@alpha`, and
-   update their independent-consumer path-repository version mapping. Update
-   Entity Template to the same dependency. These coordinated metadata changes must
-   not land while Drupal.org cannot resolve the package.
-5. Avoid installing both package names over the same module directory. Consumers
-   should remove their root `rlmumford/typed_data_plus` requirement, if any, and
-   update dependent packages together. Add a conflict with the obsolete package
-   identity rather than an unbounded `replace` claiming compatibility with all
-   past/future releases. Retire the GitHub repository after removing its split
-   target and migrating known consumers; Drupal.org is the publication destination.
-6. Publish the extracted package to Drupal.org and create the alpha release.
-   Check its metadata through `packages.drupal.org/8` and prove that a fresh Drupal
-   consumer can require Entity Template without a custom Typed Data Plus repository.
-7. Test an existing installation's Composer transition and module enablement,
-   including reference/context-assignment fields and template configuration.
-   Enable `typed_data_plus` before deploying Entity Template's migrated code.
-8. Release Entity Template only after those checks pass. Wire subsequent Common
-   package publication to Drupal.org with repository-scoped credentials; do not
-   assume the GitHub SPLIT_TOKEN authenticates to Drupal.org.
-
-The repository remains authored in Common. The publication mechanism must preserve
-Drupal.org history/tags and verify the published content, just as the GitHub split
-is verified. The initial alpha publication and normal Composer installation proof are complete.
-Existing-site deployment and automatic Drupal.org mirroring remain separate work.
-
-References: [creating a project](https://www.drupal.org/docs/develop/managing-a-drupalorg-theme-module-or-distribution-project/creating-a-new-project),
-[project types](https://www.drupal.org/docs/develop/managing-a-drupalorg-theme-module-or-distribution-project/sandbox-projects),
-[Composer naming](https://project.pages.drupalcode.org/coding_standards/composer/package-name/).
-
-## Initial alpha release notes
-
-Initial alpha providing shared filtered typed-data fetching, placeholder
-resolution, typed-data reference fields and plugin context assignment. Includes
-quoted filter argument parsing, wrapped-value compatibility and definition-only
-fetching. Public APIs remain under development; the planned condition-string
-evaluator is not included. Requires Drupal 10/11, PHP 8.1+ and Typed Data 2.1+.
-
-Common remains the source repository. Until Drupal.org publication credentials
-are configured in CI, subsequent Drupal.org updates must be explicitly extracted,
-content-verified and pushed; the GitHub split does not update Drupal.org.
-
-## GitHub repository retirement
-
-The split target and token-access documentation are removed in Common PR #50.
-Delete `rlmumford/typed_data_plus` only after #50 and its parent #48 reach `2.x`,
-the updated task/checklist packages are split, and known consumer lockfiles no
-longer reference the GitHub source or distribution URLs. Christian Jobs currently
-has both a custom GitHub repository entry and old package references in its lock.
-Migrate them together with task/checklist; removing the repository entry alone does
-not update the lockfile. Verify a fresh Composer install before deletion. The
-repository has not yet been deleted, so existing locked installations still work.
+The GitHub split target and token-access instructions have been removed.
+`rlmumford/typed_data_plus` can be deleted once known consumer lockfiles no longer
+reference its source or distribution URLs and a fresh install succeeds.
+Christian Jobs still has old package/repository references in its lockfile;
+that consumer migration and repository deletion remain separate work.

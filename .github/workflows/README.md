@@ -45,7 +45,9 @@ One thing that would change this: if a package directory ever contains its own
 `.github/workflows`, pushing it needs the `workflow` scope as well. None of them
 do today.
 
-Typed Data Plus is published on Drupal.org and is no longer a GitHub split target.
+Typed Data Plus is developed and published in its Drupal.org GitLab repository.
+Its Coder and module suite run there; Common consumes the released Composer
+package and tests the task/checklist integration. It is not a GitHub split target.
 See [its publication and retirement notes](../../docs/TYPED_DATA_PLUS_PUBLICATION.md).
 
 ## Pull request coding standards

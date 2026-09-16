@@ -26,7 +26,9 @@ they must not require those integrations.
 This is the canonical architecture record for Common's checklist framework and
 its task, service and AI integrations. Application-specific integration notes
 belong in the consuming application's repository. Common remains the source of
-truth for code; split package repositories are publishing outputs.
+truth for its task/checklist/service code; their split repositories are publishing
+outputs. Typed Data Plus is maintained separately in its Drupal.org GitLab
+repository and consumed through Composer.
 
 ## Decisions and proposals
 

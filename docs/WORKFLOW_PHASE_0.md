@@ -76,7 +76,8 @@ flowchart TD
 
 New adapter/module names here are design labels, not published packages. Keep the
 existing `typed_data_reference` and `typed_data_context_assignment` module IDs
-inside the single `rlmumford/typed_data_plus` Composer package. Add the low-level
+inside the single `drupal/typed_data_plus` Composer package, maintained in its
+Drupal.org repository. Add the low-level
 fetcher/evaluator there; no dependency back to Entity Template, task or checklist.
 The task Composer package currently requires Entity Template because it ships
 `task_job`; this packaging edge is acceptable and distinct from enabling the

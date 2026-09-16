@@ -10,7 +10,8 @@
         }
     ],
     "require": {
-        "drupal/entity": "^1.4"
+        "drupal/entity": "^1.4",
+        "drupal/typed_data_plus": "^2.0@alpha"
     },
     "suggest": {
         "aws/aws-sdk-php": "Required by the aws and ebids modules.",

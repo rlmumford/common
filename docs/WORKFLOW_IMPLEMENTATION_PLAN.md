@@ -75,10 +75,15 @@ Runtime integration proofs remain in their owning implementation phases.
 
 ## P1 — TypedDataPlus fetching and condition evaluation
 
+Implementation and its Coder/PHPUnit CI live in the Drupal.org
+[Typed Data Plus repository](https://git.drupalcode.org/project/typed_data_plus).
+Common owns this integration plan and consumes published Composer releases;
+it does not contain or mirror Typed Data Plus source.
+
 First slice: an independently enabled `typed_data_plus` module exposes a filtered
 fetcher and definition-only API, strict quoted-argument parsing and wrapped-filter
 compatibility. It coexists with Entity Template using a separate service ID.
-See the [package guide](../modules/util/typed_data_plus/README.md). Coordinated
+See the [package guide](https://git.drupalcode.org/project/typed_data_plus/-/blob/feature/context-aware-conditions/README.md). Coordinated
 Entity Template migration is merged upstream. The next development slice adds
 strict grouped parsing, data predicates, typed references, expected-definition
 validation and cacheable explanations. It exposes `condition_string`,
