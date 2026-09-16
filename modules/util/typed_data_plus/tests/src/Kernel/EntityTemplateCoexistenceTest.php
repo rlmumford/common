@@ -20,7 +20,7 @@ class EntityTemplateCoexistenceTest extends KernelTestBase {
   public function testSharedFilterRegistry(): void {
     $fetcher = $this->container->get('typed_data_plus.data_fetcher');
     $this->assertInstanceOf(DataFetcherInterface::class, $fetcher);
-    $this->assertInstanceOf(\Drupal\entity_template\DataFetcher::class, $this->container->get('typed_data.data_fetcher'));
+    $this->assertInstanceOf(\Drupal\typed_data\DataFetcherInterface::class, $this->container->get('typed_data.data_fetcher'));
     $data = $this->container->get('typed_data_manager')->create(DataDefinition::create('timestamp'), 1704067200);
     $this->assertSame('1704153600', $fetcher->fetchFilteredData($data, "|date_add('P1D')")->getValue());
     $this->assertSame(1704067200, $data->getValue());

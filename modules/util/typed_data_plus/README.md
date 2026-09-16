@@ -60,9 +60,12 @@ existing Entity Template callers or duplicate its filter plugin IDs. Kernel test
 exercise standalone use and coexistence with Entity Template alpha17, including
 its legacy wrapped-field filter.
 
-The coordinated Entity Template compatibility wrappers, placeholder/Twig migration,
-filter ownership transfer, condition evaluator and Views predicates are subsequent
-P1 work. This package does not yet provide a condition-string evaluator.
+`typed_data_plus.placeholder_resolver` now applies the same parser and filters,
+including wrapped values and output escaping. It is available without Entity
+Template. The coordinated Entity Template branch delegates its legacy service IDs,
+classes, Twig and selectors to these shared services. Existing alpha17 remains
+supported until that migration is released. Filter ownership transfer, the
+condition evaluator and Views predicates remain subsequent P1 work. This package does not yet provide a condition-string evaluator.
 
 Source lives in `rlmumford/common` on `2.x`, under `modules/util/typed_data_plus`.
 The `rlmumford/typed_data_plus` repository is an automated split output.
