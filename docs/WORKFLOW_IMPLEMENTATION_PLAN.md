@@ -83,8 +83,9 @@ it does not contain or mirror Typed Data Plus source.
 First slice: an independently enabled `typed_data_plus` module exposes a filtered
 fetcher and definition-only API, strict quoted-argument parsing and wrapped-filter
 compatibility. It coexists with Entity Template using a separate service ID.
-See the [package guide](https://git.drupalcode.org/project/typed_data_plus/-/blob/feature/context-aware-conditions/README.md). Coordinated
-Entity Template migration is merged upstream. The next development slice adds
+See the [package guide](https://git.drupalcode.org/project/typed_data_plus/-/blob/2.0.x/README.md). Coordinated
+Entity Template migration is merged upstream. Typed Data Plus MR !1 is also merged
+into `2.0.x` (not yet released). This slice adds
 strict grouped parsing, data predicates, typed references, expected-definition
 validation and cacheable explanations. It exposes `condition_string`,
 `condition_and` and `condition_or` as Drupal condition plugins, with dynamic

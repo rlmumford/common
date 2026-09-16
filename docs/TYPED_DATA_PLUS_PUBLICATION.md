@@ -11,9 +11,11 @@ The initial `2.0.0-alpha1` release is published and resolvable from the standard
 Drupal Composer repository. Entity Template's dependency migration is merged.
 Common's task/checklist packages require `drupal/typed_data_plus:^2.0@alpha`.
 Condition plugins and provider-aware context mapping are subsequent development
-work; they are not part of alpha1. Their code is on the
-[feature branch](https://git.drupalcode.org/project/typed_data_plus/-/tree/feature/context-aware-conditions).
-Publish a new release after that work is reviewed; never alter the alpha1 tag.
+work; they are not part of alpha1. Their code is merged into
+[`2.0.x`](https://git.drupalcode.org/project/typed_data_plus/-/tree/2.0.x) through
+[MR !1](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/1).
+Publish a new release to make these features available to Composer consumers;
+never alter the alpha1 tag.
 
 ## Development and release process
 
