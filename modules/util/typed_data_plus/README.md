@@ -8,7 +8,7 @@ A Composer package containing independently enabled Drupal modules:
 - `typed_data_context_assignment` maps available typed data into plugin inputs,
   with assignment forms, autocomplete, context handling and condition support.
 
-Install `rlmumford/typed_data_plus`, then enable only the modules your application
+Install `drupal/typed_data_plus:^2.0@alpha`, then enable only the modules your application
 requires. Enabling the new `typed_data_plus` module does not enable either existing
 submodule. Existing module names, field types, configuration and PHP namespaces
 are preserved. No database update is required for this additive module.
@@ -68,4 +68,8 @@ supported until that migration is released. Filter ownership transfer, the
 condition evaluator and Views predicates remain subsequent P1 work. This package does not yet provide a condition-string evaluator.
 
 Source lives in `rlmumford/common` on `2.x`, under `modules/util/typed_data_plus`.
-The `rlmumford/typed_data_plus` repository is an automated split output.
+The Drupal.org `typed_data_plus` project publishes this package; the GitHub
+`rlmumford/typed_data_plus` repository remains a split mirror. Both use the same
+Composer identity, `drupal/typed_data_plus`. Remove any old root requirement for
+`rlmumford/typed_data_plus` when updating task/checklist together; the two package
+identities must not be installed alongside each other.
