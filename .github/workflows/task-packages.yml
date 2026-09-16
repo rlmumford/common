@@ -46,7 +46,7 @@ jobs:
           SIMPLETEST_DB: 'sqlite://localhost/:memory:'
           SYMFONY_DEPRECATIONS_HELPER: weak
         run: vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/task/tests/src/Kernel
-      - name: Test shared typed-data fetching
+      - name: Test Typed Data Plus
         working-directory: /tmp/task-consumer
         env:
           SIMPLETEST_DB: 'sqlite://localhost/:memory:'

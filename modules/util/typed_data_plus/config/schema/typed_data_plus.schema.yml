@@ -1,0 +1,21 @@
+condition.plugin.condition_string:
+  type: condition.plugin
+  label: 'Condition string'
+  mapping:
+    condition_string:
+      type: string
+      label: 'Expression'
+
+condition.plugin.condition_and:
+  type: condition.plugin
+  label: 'All conditions'
+  mapping:
+    conditions:
+      type: sequence
+      label: 'Conditions'
+      sequence:
+        type: condition.plugin.[id]
+
+condition.plugin.condition_or:
+  type: condition.plugin.condition_and
+  label: 'Any condition'

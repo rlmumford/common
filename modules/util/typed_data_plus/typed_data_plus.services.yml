@@ -10,3 +10,6 @@ services:
   typed_data_plus.condition_evaluator:
     class: Drupal\typed_data_plus\Condition\ConditionEvaluator
     arguments: ['@typed_data_plus.condition_parser', '@typed_data_plus.data_fetcher']
+  typed_data_plus.context_handler:
+    class: Drupal\typed_data_plus\Plugin\Context\ContextHandler
+    arguments: ['@typed_data_plus.data_fetcher', '@context.repository']

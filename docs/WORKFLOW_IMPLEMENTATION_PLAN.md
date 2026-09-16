@@ -81,13 +81,20 @@ compatibility. It coexists with Entity Template using a separate service ID.
 See the [package guide](../modules/util/typed_data_plus/README.md). Coordinated
 Entity Template migration is merged upstream. The next development slice adds
 strict grouped parsing, data predicates, typed references, expected-definition
-validation and cacheable explanations. Filter extraction, Views, the remaining
-grammar/adapters and component conditions remain open; P1 is not complete.
+validation and cacheable explanations. It exposes `condition_string`,
+`condition_and` and `condition_or` as Drupal condition plugins, with dynamic
+context contracts and filtered local/global context assignment. The original
+context-assignment submodule provides site-wide integration. Filter extraction,
+Views, the remaining grammar/adapters and component conditions remain open; P1 is not complete.
 
 Deliverables:
 
 - Extract/adapt the extended data fetcher and filter registry from Entity Template.
   Preserve existing filter behavior, list handling and typed-data definitions.
+- Store checklist gates as Drupal condition plugin configurations. A condition
+  string is one plugin; AND/OR groups compose ordinary core/contrib conditions.
+  Supply expected contexts during configuration and fresh contexts at runtime,
+  including global provider mappings. The containing editor owns group editing.
 - Implement the shared condition parser/evaluator, extension interfaces, validation
   and unmet-condition explanations. Inventory grammar compatibility with 11.5.
 - Integrate typed property/filter traversal, boolean composition, missing values

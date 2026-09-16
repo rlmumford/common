@@ -146,7 +146,17 @@ Machine-readable configuration schemas and operation schemas are part of the
 framework. Adapt the D7 declarations to Drupal's plugin/configuration mechanisms;
 do not simply copy the D7 compatibility layer.
 
-### Conditional strings
+### Condition plugins and conditional strings
+
+Dependencies, applicability and requiredness store Drupal condition plugin
+configurations. Typed Data Plus provides a condition-string plugin and AND/OR
+plugins containing arbitrary Drupal condition configurations. Its
+`ContextAwareCondition` base accepts expected definitions during configuration
+and fresh runtime contexts during execution. Global context providers augment
+caller contexts through `@provider:context` mappings, separate from local names.
+Callers can explicitly override the same qualified provider key. Selector mappings
+use the shared data fetcher, including filters. The bundled context-assignment
+submodule extends Drupal's standard context selection and assignment APIs.
 
 The evaluator and integrations are prerequisites for checklist processing. Inventory
 11.5's grammar and integration points before implementing a subset. Required areas

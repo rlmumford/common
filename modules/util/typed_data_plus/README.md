@@ -123,3 +123,73 @@ bare item-completion shorthand are not implemented yet. They raise configuration
 errors. Their adapters/extension registry, semantic reference descriptions and
 Entity Template component conditions remain P1 work; do not migrate complete
 CounselKit job configurations to this subset yet.
+
+## Drupal condition plugins and context providers (development branch)
+
+Checklist dependencies, applicability and requiredness are **Drupal condition
+plugin configurations**. `condition_string` is one such plugin; `condition_and`
+and `condition_or` contain a `conditions` array of other condition configurations,
+including core/contrib plugins. Every level supports Drupal's `negate` and
+`context_mapping`. Empty AND is true; empty OR is false. Execute with `execute()`
+so the condition manager applies negation once.
+
+```php
+$condition = $condition_manager->createInstance('condition_and', [
+  'conditions' => [
+    ['id' => 'condition_string', 'condition_string' => 'count > 0'],
+    [
+      'id' => 'user_role',
+      'roles' => ['staff'],
+      'context_mapping' => ['user' => '@user.current_user_context:current_user'],
+    ],
+  ],
+]);
+$condition->setExpectedContexts([
+  'count' => ContextDefinition::create('integer')->setRequired(FALSE),
+]);
+// During configuration: definitions suffice; runtime values are not required.
+// During execution: provide Core ContextInterface objects, not raw values.
+$condition->setRuntimeContexts([
+  'count' => new Context(ContextDefinition::create('integer'), 3),
+]);
+$met = $condition->execute();
+```
+
+`ContextAwareCondition` separates `setExpectedContexts()` (the named context
+contract) from `setRuntimeContexts()` (available values for this execution).
+Declare optional contexts for outcomes that do not yet exist. Definitions and
+runtime values are not serialized into plugin configuration. Calling
+`setRuntimeContexts()` clears previous values and evaluation metadata.
+`ConditionString::validate()` checks configuration against expected definitions;
+its standard configuration form performs this check too. Groups expose fresh
+children through `getConditions()` with expected definitions propagated. The
+containing editor owns adding/removing child configurations and embedding their
+standard forms; this package does not yet supply a recursive group editor.
+
+`typed_data_plus.context_handler` extends the original context-assignment design.
+It resolves both local context keys and repository/provider-qualified IDs, then
+uses the shared filtered data fetcher. For example, a string slot can map to
+`@user.current_user_context:current_user.name.value|upper`. The leading `@` separates provider references from ordinary local names. A caller
+can deliberately override a provider by supplying its exact qualified `@...` key. Runtime repository requests name
+only mapped globals. Available-context discovery follows Drupal's provider API;
+some core providers themselves load live values during discovery.
+
+Enable the bundled `typed_data_context_assignment` submodule to use this handler
+as Drupal's site-wide `context.handler`. The standard select UI offers matching
+roots and bounded nested-property suggestions (three levels, 128 candidates per
+root). Deeper paths and filter expressions remain valid mappings. The existing
+`ContextAwarePluginAssignmentTrait` retains the textfield/autocomplete widget for
+editors needing arbitrary selectors. Autocomplete uses local/global definitions,
+including provider IDs containing dots. Ordinary direct mappings, required and
+optional values, and core mapping errors retain Drupal's semantics; zero/false
+are values, not missing data. Invalid selectors/types raise errors.
+
+Global contexts remain execution-environment dependent. A CLI worker must supply
+its executor context explicitly or establish that identity before resolving
+providers. Drupal's lazy context repository caches runtime contexts: reset the
+execution container/repository between worker jobs that change identity. Do not
+reuse provider values from a previous job. The handler is not an access checker.
+
+Groups evaluate all children so errors and cache metadata cannot disappear behind
+short-circuiting. Consumers must propagate the resulting condition cache metadata
+and treat exceptions as configuration/execution failures, never a satisfied gate.

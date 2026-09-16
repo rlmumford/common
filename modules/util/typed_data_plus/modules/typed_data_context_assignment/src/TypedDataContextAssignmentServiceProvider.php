@@ -21,8 +21,8 @@ class TypedDataContextAssignmentServiceProvider extends ServiceProviderBase {
     $container->getDefinition('context.handler')
       ->setClass(ContextHandler::class)
       ->setArguments([
-        new Reference('typed_data.data_fetcher'),
-        new Reference('typed_data_manager'),
+        new Reference('typed_data_plus.data_fetcher'),
+        new Reference('context.repository'),
       ]);
   }
 
