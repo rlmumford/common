@@ -53,6 +53,8 @@ class ConditionPluginTest extends KernelTestBase {
     $definition = ContextDefinition::create('integer')->setRequired(FALSE);
     $plugin->setExpectedContexts(['value' => $definition]);
     $plugin->validate();
+    $summary = $this->container->get('plugin.manager.condition')->createInstance('condition_string', ['condition_string' => '<em>literal</em>']);
+    $this->assertSame('&lt;em&gt;literal&lt;/em&gt;', (string) $summary->summary());
     $form_state = new FormState();
     $form = $plugin->buildConfigurationForm([], $form_state);
     $this->assertSame('value == 0', $form['condition_string']['#default_value']);

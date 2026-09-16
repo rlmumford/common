@@ -104,7 +104,7 @@ class ConditionString extends ContextAwareCondition implements ContainerFactoryP
    */
   public function summary() {
     $expression = $this->configuration['condition_string'];
-    return $this->isNegated() ? $this->t('NOT: @expression', ['@expression' => $expression]) : $expression;
+    return $this->isNegated() ? $this->t('NOT: @expression', ['@expression' => $expression]) : $this->t('@expression', ['@expression' => $expression]);
   }
 
 }
