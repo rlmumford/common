@@ -1,6 +1,6 @@
 # Workflow framework implementation plan
 
-Status: P0 design baseline recorded; P1–P9 not implemented. Updated 16 September 2026.
+Status: P0 design baseline recorded; P1 development started; P2–P9 not implemented. Updated 16 September 2026.
 
 This plan implements the requirements in [Workflow architecture](WORKFLOW_ARCHITECTURE.md)
 within `rlmumford/common` on `2.x`. CounselKit `11.5.x` is the behavioral reference.
@@ -74,6 +74,13 @@ including a reproducible dependency probe and planned acceptance scenarios.
 Runtime integration proofs remain in their owning implementation phases.
 
 ## P1 — TypedDataPlus fetching and condition evaluation
+
+First slice: an independently enabled `typed_data_plus` module exposes a filtered
+fetcher and definition-only API, strict quoted-argument parsing and wrapped-filter
+compatibility. It coexists with Entity Template using a separate service ID.
+See the [package guide](../modules/util/typed_data_plus/README.md). Coordinated
+Entity Template migration, filter extraction and condition evaluation remain open;
+P1 is not complete.
 
 Deliverables:
 
