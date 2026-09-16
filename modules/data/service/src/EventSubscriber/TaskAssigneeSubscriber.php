@@ -24,8 +24,9 @@ class TaskAssigneeSubscriber implements EventSubscriberInterface {
   public function onAssigneeSelect(SelectAssigneeEvent $event) {
     $task = $event->getTask();
 
-    if ($task->service->entity && $task->service->entity->manager->entity) {
-      $event->setAssignee($task->service->entity->manager->entity);
+    $manager = $task->service->entity ? $task->service->entity->manager->entity : NULL;
+    if (!$event->getAssignee() && $manager && $manager->isAuthenticated() && $manager->isActive()) {
+      $event->setAssignee($manager);
     }
   }
 }

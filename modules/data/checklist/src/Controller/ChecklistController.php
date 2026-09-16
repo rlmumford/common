@@ -129,7 +129,7 @@ class ChecklistController extends ControllerBase {
    *   The access result.
    */
   public function actionFormAccess(ChecklistInterface $checklist, string $item_name) {
-    return AccessResult::allowed();
+    return $this->rowFormAccess($checklist, $item_name);
   }
 
   /**
@@ -174,7 +174,8 @@ class ChecklistController extends ControllerBase {
    *   The access result.
    */
   public function rowFormAccess(ChecklistInterface $checklist, string $item_name) {
-    return AccessResult::allowed();
+    return $checklist->getEntity()->access('update', NULL, TRUE)
+      ->andIf(AccessResult::allowedIf($checklist->getItem($item_name) !== NULL));
   }
 
 }

@@ -85,6 +85,9 @@ class ChecklistCompleteForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    if (!$this->checklist->getEntity()->access('update')) {
+      return [];
+    }
     $form_state->set('checklist', $this->checklist);
 
     if ($this->checklist->isComplete()) {
@@ -117,6 +120,9 @@ class ChecklistCompleteForm extends FormBase {
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     parent::validateForm($form, $form_state);
+    if (!$this->checklist->getEntity()->access('update')) {
+      throw new \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException();
+    }
 
     if (!$this->checklist->isCompletable()) {
       $form_state->setError($form_state->getTriggeringElement(), 'The checklist cannot be completed yet.');
@@ -136,6 +142,9 @@ class ChecklistCompleteForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+    if (!$this->checklist->getEntity()->access('update')) {
+      throw new \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException();
+    }
     $type = $this->checklist->getType();
 
     if (

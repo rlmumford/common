@@ -19,14 +19,15 @@ class ServiceAccessControlHandler extends EntityAccessControlHandler {
     /** @var \Drupal\service\ServiceInterface $entity */
     $result = parent::checkAccess($entity, $operation, $account);
     $result->addCacheableDependency($entity);
+    $result->cachePerUser();
 
     return $result->orIf(AccessResult::allowedIfHasPermission($account, $operation.' any service'))
       ->orIf(
-        AccessResult::allowedIfHasPermission($account, $operation.' any managed service')
+        AccessResult::allowedIfHasPermission($account, $operation.' managed service')
           ->andIf(AccessResult::allowedIf($account->id() == $entity->getManagerId()))
       )
       ->orIf(
-        AccessResult::allowedIfHasPermission($account, $operation.' any received service')
+        AccessResult::allowedIfHasPermission($account, $operation.' received service')
           ->andIf(AccessResult::allowedIf(in_array($account->id(), $entity->getRecipientIds())))
       );
   }

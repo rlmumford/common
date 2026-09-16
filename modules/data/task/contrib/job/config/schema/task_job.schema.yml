@@ -11,6 +11,9 @@ task_job.task_job.*:
     description:
       type: text
       label: 'Description'
+    assignment:
+      type: string
+      label: 'Default assignment rule'
     context:
       type: sequence
       label: 'Task Contexts'
@@ -86,7 +89,6 @@ task_job.trigger.*:
 task_job.trigger.manual:
   type: task_job.trigger
   label: 'Manual Trigger Handler Settings'
-
 
 
 

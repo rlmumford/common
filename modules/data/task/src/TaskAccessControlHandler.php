@@ -29,7 +29,8 @@ class TaskAccessControlHandler extends EntityAccessControlHandler {
       ->orIf(
         AccessResult::allowedIfHasPermission($account, "{$operation} assigned tasks")
           ->andIf(
-            AccessResult::allowedIf($entity->assignee->target_id === $account->id())
+            AccessResult::allowedIf($account->isAuthenticated() && (string) $entity->assignee->target_id === (string) $account->id())
+              ->cachePerUser()
               ->addCacheableDependency($entity)
           )
       );

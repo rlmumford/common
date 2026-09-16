@@ -30,6 +30,7 @@ use Drupal\user\EntityOwnerTrait;
  *     "storage" = "Drupal\service\ServiceStorage",
  *     "access" = "Drupal\service\ServiceAccessControlHandler",
  *     "form" = {
+ *       "add" = "Drupal\service\Form\ServiceForm",
  *       "default" = "Drupal\service\Form\ServiceForm"
  *     },
  *     "views_data" = "Drupal\views\EntityViewsData",
@@ -54,12 +55,20 @@ use Drupal\user\EntityOwnerTrait;
  *   links = {
  *     "collection" = "/service",
  *     "canonical" = "/service/{service}",
+ *     "add-form" = "/service/add/{service_type}",
  *     "edit-form" = "/service/{service}/edit"
  *   }
  * )
  */
 class Service extends ContentEntityBase implements ServiceInterface, EntityOwnerInterface {
   use EntityOwnerTrait;
+
+  /**
+   * Supplies the current account for the creator field.
+   */
+  public static function getCurrentUserId() {
+    return [\Drupal::currentUser()->id()];
+  }
 
   /**
    * {@inheritdoc}
@@ -72,6 +81,13 @@ class Service extends ContentEntityBase implements ServiceInterface, EntityOwner
       ->setLabel(t('Title'))
       ->setRevisionable(TRUE)
       ->setDefaultValueCallback('\Drupal\service\Entity\Service::createLabel')
+      ->setDisplayOptions('form', ['type' => 'string_textfield', 'weight' => -10])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['manager']->setLabel(t('Manager'))
+      ->setDisplayOptions('form', ['type' => 'entity_reference_autocomplete'])
+      ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
     $fields['state'] = BaseFieldDefinition::create('boolean')
@@ -157,6 +173,7 @@ class Service extends ContentEntityBase implements ServiceInterface, EntityOwner
    * {@inheritdoc}
    */
   public function preSave(EntityStorageInterface $storage) {
+    parent::preSave($storage);
     $type = $this->getType();
     if ($type->get('default_label')) {
       $this->label = $this->applyTokens($type->get('default_label'));
@@ -207,7 +224,7 @@ class Service extends ContentEntityBase implements ServiceInterface, EntityOwner
    *   A list of user entities of the recipients.
    */
   public function getRecipients() {
-    return $this->recipients->getReferencedEntities();
+    return $this->recipients->referencedEntities();
   }
 
   /**
@@ -233,4 +250,3 @@ class Service extends ContentEntityBase implements ServiceInterface, EntityOwner
     return $ids;
   }
 }
-

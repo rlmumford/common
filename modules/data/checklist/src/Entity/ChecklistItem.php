@@ -67,6 +67,7 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
       ->setSetting('plugin_creation_callback', static::class . '::createChecklistItemHandlerPluginInstance');
 
     $fields['status'] = BaseFieldDefinition::create('list_string')
+      ->setDefaultValue(static::STATUS_INCOMPLETE)
       ->setSetting('allowed_values', [
         static::STATUS_COMPLETE => new TranslatableMarkup('Complete'),
         static::STATUS_INCOMPLETE => new TranslatableMarkup('Incomplete'),

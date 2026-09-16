@@ -33,6 +33,7 @@ use Drupal\typed_data\Context\ContextDefinition;
  *     "resources",
  *     "default_checklist",
  *     "triggers",
+ *     "assignment",
  *   },
  *   handlers = {
  *     "list_builder" = "Drupal\task_job\Controller\JobListBuilder",
@@ -63,6 +64,13 @@ use Drupal\typed_data\Context\ContextDefinition;
  * @package Drupal\task_job\Entity
  */
 class Job extends ConfigEntityBase implements JobInterface, EntityWithPluginCollectionInterface {
+
+  /**
+   * The default assignment rule; explicit task assignees take precedence.
+   *
+   * @var string
+   */
+  protected $assignment = 'service_manager';
 
   /**
    * The triggers configuration.

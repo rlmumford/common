@@ -6,6 +6,31 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 
 /**
+ * Implements hook_cron().
+ */
+function task_cron() {
+  // Queue due tasks so checklist processing does not hold up cron. The worker
+  // reloads the task: duplicate queue items cannot release a manual hold.
+  $storage = \Drupal::entityTypeManager()->getStorage('task');
+  $state = \Drupal::state();
+  $cursor = $state->get('task.scheduler_cursor', 0);
+  $ids = $storage->getQuery()
+    ->accessCheck(FALSE)
+    ->condition('status', 'pending')
+    ->condition('id', $cursor, '>')
+    ->condition('start', gmdate('Y-m-d\TH:i:s', \Drupal::time()->getRequestTime()), '<=')
+    ->sort('id')
+    ->range(0, 100)
+    ->execute();
+  foreach ($ids as $id) {
+    \Drupal::queue('task_scheduled')->createItem($id);
+  }
+  // Rotate through blocked tasks as well; a full first batch of dependencies
+  // must not starve later due tasks on every cron run.
+  $state->set('task.scheduler_cursor', count($ids) === 100 ? max($ids) : 0);
+}
+
+/**
  * Implements hook_entity_type_build().
  *
  * @param \Drupal\Core\Entity\EntityTypeInterface[] $entity_types

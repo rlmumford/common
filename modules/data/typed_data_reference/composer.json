@@ -1,0 +1,11 @@
+{
+    "name": "rlmumford/typed_data_reference",
+    "description": "Reusable typed data reference module extracted from rlmumford/common.",
+    "type": "drupal-module",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "drupal/core": "^10 || ^11",
+        "drupal/typed_data": "^2",
+        "php": ">=8.1"
+    }
+}

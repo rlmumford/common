@@ -18,6 +18,7 @@ class ServiceServiceProvider extends ServiceProviderBase {
         'Drupal\service\EventSubscriber\TaskAssigneeSubscriber'
       );
       $definition->addTag('event_subscriber');
+      $definition->setPublic(TRUE);
       $container->setDefinition(
         'service.task_assignee_subscriber',
         $definition

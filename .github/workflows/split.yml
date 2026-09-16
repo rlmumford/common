@@ -23,6 +23,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - directory: modules/data/task
+            repository: task
+          - directory: modules/data/checklist
+            repository: checklist
+          - directory: modules/data/plugin_reference
+            repository: plugin_reference
+          - directory: modules/data/typed_data_reference
+            repository: typed_data_reference
+          - directory: modules/util/typed_data_context_assignment
+            repository: typed_data_context_assignment
+          - directory: modules/data/service
+            repository: service
           - directory: modules/data/document
             repository: document
           - directory: modules/util/field_tools
