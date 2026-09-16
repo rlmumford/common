@@ -61,3 +61,16 @@ jobs:
           user_email: rlmumford@googlemail.com
         env:
           GITHUB_TOKEN: ${{ secrets.SPLIT_TOKEN }}
+
+      # The splitter can exit successfully after a rejected push. Verify the
+      # public output rather than trusting its exit status.
+      - name: Verify published package
+        env:
+          SPLIT_REPOSITORY: ${{ matrix.repository }}
+          PACKAGE_DIRECTORY: ${{ matrix.directory }}
+        run: |
+          git clone --quiet --single-branch --branch 2.x \
+            "https://github.com/rlmumford/${SPLIT_REPOSITORY}.git" \
+            "$RUNNER_TEMP/published-package"
+          diff --recursive --brief --exclude=.git \
+            "$PACKAGE_DIRECTORY" "$RUNNER_TEMP/published-package"
