@@ -79,8 +79,10 @@ First slice: an independently enabled `typed_data_plus` module exposes a filtere
 fetcher and definition-only API, strict quoted-argument parsing and wrapped-filter
 compatibility. It coexists with Entity Template using a separate service ID.
 See the [package guide](../modules/util/typed_data_plus/README.md). Coordinated
-Entity Template migration, filter extraction and condition evaluation remain open;
-P1 is not complete.
+Entity Template migration is merged upstream. The next development slice adds
+strict grouped parsing, data predicates, typed references, expected-definition
+validation and cacheable explanations. Filter extraction, Views, the remaining
+grammar/adapters and component conditions remain open; P1 is not complete.
 
 Deliverables:
 

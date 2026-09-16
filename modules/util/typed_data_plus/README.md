@@ -65,7 +65,8 @@ including wrapped values and output escaping. It is available without Entity
 Template. The coordinated Entity Template branch delegates its legacy service IDs,
 classes, Twig and selectors to these shared services. Existing alpha17 remains
 supported until that migration is released. Filter ownership transfer, the
-condition evaluator and Views predicates remain subsequent P1 work. This package does not yet provide a condition-string evaluator.
+remaining condition grammar and Views predicates remain subsequent P1 work. The
+development branch now includes the data-predicate subset described below.
 
 Source lives in `rlmumford/common` on `2.x`, under `modules/util/typed_data_plus`.
 The Drupal.org `typed_data_plus` project publishes this package with Composer
@@ -73,3 +74,52 @@ identity `drupal/typed_data_plus`. The old GitHub repository is being retired;
 it is no longer a split target. Remove any old root requirement for
 `rlmumford/typed_data_plus` when updating task/checklist together; the two package
 identities must not be installed alongside each other.
+
+## Condition strings (development branch)
+
+`typed_data_plus.condition_evaluator` now supports the data-predicate subset of
+CounselKit condition strings. This is unreleased work after `2.0.0-alpha1`.
+Inject `ConditionEvaluator` and call `evaluate($expression, $contexts)` with a map
+of context names to `TypedDataInterface` objects. Represent a known missing value
+as typed data containing NULL, so its expected definition remains available.
+
+```text
+count >= {{minimum}} and (name|upper == 'READY' or override notempty)
+choices contains 'approved'
+missing|default('a.b,c|d(e)') == 'a.b,c|d(e)'
+not (name empty or NEVER)
+```
+
+Supported predicates: `exists`, `empty`, `notempty`, `==`, `!=`, `<>`, `>`, `>=`,
+`<`, `<=`, `contains`, `notcontains`, `in`, `notin`. Use parentheses when mixing
+AND and OR at one level; keywords are case-insensitive except the `NEVER` literal.
+Both prefix `not (...)` and `subject not predicate` are supported. An empty top-level
+expression means no restriction; empty nested groups are invalid.
+
+`{{selector}}` on the right resolves a typed value through the data fetcher, not
+through HTML placeholder substitution. Filtered selectors work on either side.
+Arguments are literals; quote strings containing whitespace or boolean words.
+Numeric/boolean literals retain their types. Scalar comparisons follow PHP's
+comparison semantics; list membership is strict, and string membership checks
+substrings. Missing values never satisfy binary comparisons: use `empty` or
+`exists` to test availability. `empty` retains CounselKit/PHP empty-value semantics,
+including zero, false and the string `"0"`.
+
+`validate($expression, $definitions)` accepts expected data definitions and checks
+all paths/filter definitions without fetching values or executing filters. Runtime
+evaluation also validates every branch before evaluating; invalid configuration
+cannot hide in an unselected OR branch. Unknown contexts, unsupported predicates,
+invalid paths and malformed expressions throw `ConditionException`, distinct from
+a valid false result. This deliberately rejects malformed strings that CounselKit
+11.5's permissive parser could truncate.
+
+The result exposes `isMet()`, `getReasons()` and bubbleable metadata. Reasons use
+configured expressions rather than resolved values. Every branch is evaluated to
+collect metadata; nothing is cached across calls. Callers must still enforce
+context access and carry appropriate access/cache metadata on supplied values.
+
+Views, regex `matches`, Rules `passes`, `with`, checklist-specific predicates and
+bare item-completion shorthand are not implemented yet. They raise configuration
+errors. Their adapters/extension registry, semantic reference descriptions and
+Entity Template component conditions remain P1 work; do not migrate complete
+CounselKit job configurations to this subset yet.

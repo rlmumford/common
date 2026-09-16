@@ -5,3 +5,8 @@ services:
   typed_data_plus.placeholder_resolver:
     class: Drupal\typed_data_plus\PlaceholderResolver
     arguments: ['@typed_data_plus.data_fetcher', '@plugin.manager.typed_data_filter']
+  typed_data_plus.condition_parser:
+    class: Drupal\typed_data_plus\Condition\ConditionParser
+  typed_data_plus.condition_evaluator:
+    class: Drupal\typed_data_plus\Condition\ConditionEvaluator
+    arguments: ['@typed_data_plus.condition_parser', '@typed_data_plus.data_fetcher']
