@@ -28,8 +28,7 @@ only one permission:
 
 ```
 Repository access:  Only select repositories → document, field_tools, note,
-                    commerce_invoice, task, checklist, service, plugin_reference,
-                    typed_data_plus
+                    commerce_invoice, task, checklist, service, plugin_reference
 Permissions:        Contents → Read and write
 ```
 
@@ -45,3 +44,6 @@ public repositories.
 One thing that would change this: if a package directory ever contains its own
 `.github/workflows`, pushing it needs the `workflow` scope as well. None of them
 do today.
+
+Typed Data Plus is published on Drupal.org and is no longer a GitHub split target.
+See [its publication and retirement notes](../../docs/TYPED_DATA_PLUS_PUBLICATION.md).

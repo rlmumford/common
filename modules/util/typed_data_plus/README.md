@@ -68,8 +68,8 @@ supported until that migration is released. Filter ownership transfer, the
 condition evaluator and Views predicates remain subsequent P1 work. This package does not yet provide a condition-string evaluator.
 
 Source lives in `rlmumford/common` on `2.x`, under `modules/util/typed_data_plus`.
-The Drupal.org `typed_data_plus` project publishes this package; the GitHub
-`rlmumford/typed_data_plus` repository remains a split mirror. Both use the same
-Composer identity, `drupal/typed_data_plus`. Remove any old root requirement for
+The Drupal.org `typed_data_plus` project publishes this package with Composer
+identity `drupal/typed_data_plus`. The old GitHub repository is being retired;
+it is no longer a split target. Remove any old root requirement for
 `rlmumford/typed_data_plus` when updating task/checklist together; the two package
 identities must not be installed alongside each other.

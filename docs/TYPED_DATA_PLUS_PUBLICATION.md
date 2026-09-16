@@ -56,8 +56,8 @@ Only list supported Drupal/PHP versions verified by the release tests.
    should remove their root `rlmumford/typed_data_plus` requirement, if any, and
    update dependent packages together. Add a conflict with the obsolete package
    identity rather than an unbounded `replace` claiming compatibility with all
-   past/future releases. Keep the GitHub repository as a mirror, not a separately
-   versioned implementation.
+   past/future releases. Retire the GitHub repository after removing its split
+   target and migrating known consumers; Drupal.org is the publication destination.
 6. Publish the extracted package to Drupal.org and create the alpha release.
    Check its metadata through `packages.drupal.org/8` and prove that a fresh Drupal
    consumer can require Entity Template without a custom Typed Data Plus repository.
@@ -88,3 +88,14 @@ evaluator is not included. Requires Drupal 10/11, PHP 8.1+ and Typed Data 2.1+.
 Common remains the source repository. Until Drupal.org publication credentials
 are configured in CI, subsequent Drupal.org updates must be explicitly extracted,
 content-verified and pushed; the GitHub split does not update Drupal.org.
+
+## GitHub repository retirement
+
+The split target and token-access documentation are removed in Common PR #50.
+Delete `rlmumford/typed_data_plus` only after #50 and its parent #48 reach `2.x`,
+the updated task/checklist packages are split, and known consumer lockfiles no
+longer reference the GitHub source or distribution URLs. Christian Jobs currently
+has both a custom GitHub repository entry and old package references in its lock.
+Migrate them together with task/checklist; removing the repository entry alone does
+not update the lockfile. Verify a fresh Composer install before deletion. The
+repository has not yet been deleted, so existing locked installations still work.
