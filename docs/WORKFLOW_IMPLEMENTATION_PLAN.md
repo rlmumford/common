@@ -88,9 +88,13 @@ Entity Template migration is merged upstream. The next development slice adds
 strict grouped parsing, data predicates, typed references, expected-definition
 validation and cacheable explanations. It exposes `condition_string`,
 `condition_and` and `condition_or` as Drupal condition plugins, with dynamic
-context contracts and filtered local/global context assignment. The original
-context-assignment submodule provides site-wide integration. Filter extraction,
-Views, the remaining grammar/adapters and component conditions remain open; P1 is not complete.
+context contracts and filtered local/global context assignment. Binary
+`condition_xor` and `condition_xand` (XNOR) require exactly two operands; XOR
+succeeds when they differ, XAnd when they agree. Larger expressions nest groups.
+`condition_constant` provides explicit TRUE/FALSE gates without contexts.
+The original context-assignment submodule provides site-wide integration. Filter
+extraction, Views, the remaining grammar/adapters and component conditions remain
+open; P1 is not complete.
 
 Deliverables:
 
