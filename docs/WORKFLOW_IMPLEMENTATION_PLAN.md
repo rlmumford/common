@@ -75,17 +75,38 @@ Runtime integration proofs remain in their owning implementation phases.
 
 ## P1 — TypedDataPlus fetching and condition evaluation
 
+Implementation and its Coder/PHPUnit CI live in the Drupal.org
+[Typed Data Plus repository](https://git.drupalcode.org/project/typed_data_plus).
+Common owns this integration plan and currently consumes `2.0.x-dev` from the
+official Git repository through Composer;
+it does not contain or mirror Typed Data Plus source.
+
 First slice: an independently enabled `typed_data_plus` module exposes a filtered
 fetcher and definition-only API, strict quoted-argument parsing and wrapped-filter
 compatibility. It coexists with Entity Template using a separate service ID.
-See the [package guide](../modules/util/typed_data_plus/README.md). Coordinated
-Entity Template migration, filter extraction and condition evaluation remain open;
-P1 is not complete.
+See the [package guide](https://git.drupalcode.org/project/typed_data_plus/-/blob/2.0.x/README.md). Coordinated
+Entity Template migration is merged upstream. Typed Data Plus MR !1 is also merged
+into `2.0.x` (not yet released). This slice adds
+strict grouped parsing, data predicates, typed references, expected-definition
+validation and cacheable explanations. It exposes `condition_string`,
+`condition_and` and `condition_or` as Drupal condition plugins, with dynamic
+context contracts and filtered local/global context assignment. Binary
+`condition_xor` and `condition_xand` (XNOR) require exactly two operands; XOR
+succeeds when they differ, XAnd when they agree. Larger expressions nest groups.
+`condition_constant:true` and `condition_constant:false` are separately selectable
+TRUE/FALSE gates without contexts or a value setting.
+The original context-assignment submodule provides site-wide integration. Filter
+extraction, Views, the remaining grammar/adapters and component conditions remain
+open; P1 is not complete.
 
 Deliverables:
 
 - Extract/adapt the extended data fetcher and filter registry from Entity Template.
   Preserve existing filter behavior, list handling and typed-data definitions.
+- Store checklist gates as Drupal condition plugin configurations. A condition
+  string is one plugin; AND/OR groups compose ordinary core/contrib conditions.
+  Supply expected contexts during configuration and fresh contexts at runtime,
+  including global provider mappings. The containing editor owns group editing.
 - Implement the shared condition parser/evaluator, extension interfaces, validation
   and unmet-condition explanations. Inventory grammar compatibility with 11.5.
 - Integrate typed property/filter traversal, boolean composition, missing values
@@ -96,7 +117,8 @@ Deliverables:
   of the same engine.
 - Provide a compatibility path for existing Entity Template fetcher callers and
   context-assignment configuration. Document Composer repository requirements;
-  Drupal.org publication remains deferred.
+  Typed Data Plus publication on Drupal.org is required before releasing the
+Entity Template dependency; see [publication steps](TYPED_DATA_PLUS_PUBLICATION.md).
 
 Acceptance:
 

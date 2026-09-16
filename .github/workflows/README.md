@@ -28,8 +28,7 @@ only one permission:
 
 ```
 Repository access:  Only select repositories → document, field_tools, note,
-                    commerce_invoice, task, checklist, service, plugin_reference,
-                    typed_data_plus
+                    commerce_invoice, task, checklist, service, plugin_reference
 Permissions:        Contents → Read and write
 ```
 
@@ -45,3 +44,32 @@ public repositories.
 One thing that would change this: if a package directory ever contains its own
 `.github/workflows`, pushing it needs the `workflow` scope as well. None of them
 do today.
+
+Typed Data Plus is developed and published in its Drupal.org GitLab repository.
+Its Coder and module suite run there; Common consumes the released Composer
+package and tests the task/checklist integration. It is not a GitHub split target.
+See [its publication and retirement notes](../../docs/TYPED_DATA_PLUS_PUBLICATION.md).
+
+## Pull request coding standards
+
+`coder.yml` checks added and modified PHP files on every pull request, including
+PRs targeting feature branches. It uses Drupal and DrupalPractice with a locked,
+isolated Coder installation in `.github/coder`; it does not update module/runtime
+dependencies. Unchanged legacy files are outside this check.
+
+For same-repository PRs it first runs PHPCBF and commits automatic fixes back to
+the source branch. A normal push refuses to overwrite concurrent changes. PHPCS
+then fails on remaining errors or warnings. Fork PRs run PHPCS without writeback.
+Because pushes using GITHUB_TOKEN do not start another PR workflow, the fixer
+explicitly dispatches the Coder and task-package checks on its new commit. No
+personal access token or privileged `pull_request_target` workflow is used.
+
+Run the same check locally after installing the locked tool dependencies:
+
+```sh
+composer install --working-dir=.github/coder
+CODER_BASE_SHA=origin/2.x CODER_HEAD_SHA=HEAD python3 .github/coder/check.py
+```
+
+Run PHP tools through the project's PHP environment (DDEV locally). The `--fix`
+mode is for CI writeback and requires its branch/output environment variables.

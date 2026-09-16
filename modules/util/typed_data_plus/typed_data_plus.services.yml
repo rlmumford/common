@@ -1,4 +1,0 @@
-services:
-  typed_data_plus.data_fetcher:
-    class: Drupal\typed_data_plus\DataFetcher
-    arguments: ['@plugin.manager.typed_data_filter', '@typed_data_manager']

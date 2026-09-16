@@ -26,7 +26,9 @@ they must not require those integrations.
 This is the canonical architecture record for Common's checklist framework and
 its task, service and AI integrations. Application-specific integration notes
 belong in the consuming application's repository. Common remains the source of
-truth for code; split package repositories are publishing outputs.
+truth for its task/checklist/service code; their split repositories are publishing
+outputs. Typed Data Plus is maintained separately in its Drupal.org GitLab
+repository and consumed through Composer.
 
 ## Decisions and proposals
 
@@ -40,7 +42,7 @@ truth for code; split package repositories are publishing outputs.
 | Operational history | Required. Record execution identity, attempts, transitions and results. |
 | Configurable recovery framework | Out of scope; it has not proved useful in practice. Basic retry/reset behavior remains necessary. |
 | Typed-data dependencies | Preferred and agreed direction: move shared fetching/filtering and condition evaluation below Entity Template into TypedDataPlus. Verify exact extraction boundaries in code. |
-| Distribution | Keep the existing GitHub packages while APIs settle. Drupal.org publication is deferred, not a prerequisite for development. |
+| Distribution | Publish Typed Data Plus on Drupal.org before releasing the Entity Template dependency. Other Common packages remain on GitHub. See [publication steps](TYPED_DATA_PLUS_PUBLICATION.md). |
 | AI reuse | Recommended: Drupal AI provider/tool infrastructure plus our durable run and checklist integration. Validate the agent-loop boundary before adoption. |
 | Background execution | Recommended: a generic execution interface with a Messenger adapter. Prove this before replacing existing queues/runners. |
 | Deployment | Recommended: separate web and worker containers using the same application image. Co-location is also possible. |
@@ -146,7 +148,17 @@ Machine-readable configuration schemas and operation schemas are part of the
 framework. Adapt the D7 declarations to Drupal's plugin/configuration mechanisms;
 do not simply copy the D7 compatibility layer.
 
-### Conditional strings
+### Condition plugins and conditional strings
+
+Dependencies, applicability and requiredness store Drupal condition plugin
+configurations. Typed Data Plus provides a condition-string plugin and AND/OR
+plugins containing arbitrary Drupal condition configurations. Its
+`ContextAwareCondition` base accepts expected definitions during configuration
+and fresh runtime contexts during execution. Global context providers augment
+caller contexts through `@provider:context` mappings, separate from local names.
+Callers can explicitly override the same qualified provider key. Selector mappings
+use the shared data fetcher, including filters. The bundled context-assignment
+submodule extends Drupal's standard context selection and assignment APIs.
 
 The evaluator and integrations are prerequisites for checklist processing. Inventory
 11.5's grammar and integration points before implementing a subset. Required areas

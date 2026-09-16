@@ -76,7 +76,8 @@ flowchart TD
 
 New adapter/module names here are design labels, not published packages. Keep the
 existing `typed_data_reference` and `typed_data_context_assignment` module IDs
-inside the single `rlmumford/typed_data_plus` Composer package. Add the low-level
+inside the single `drupal/typed_data_plus` Composer package, maintained in its
+Drupal.org repository. Add the low-level
 fetcher/evaluator there; no dependency back to Entity Template, task or checklist.
 The task Composer package currently requires Entity Template because it ships
 `task_job`; this packaging edge is acceptable and distinct from enabling the
@@ -98,7 +99,8 @@ quoted-expression grammar without tests. Keep compatibility wrappers/deprecation
 for existing PHP consumers in a coordinated Entity Template release. Do not ship
 two classes registering the same filter ID. Root Composer repositories must list
 GitHub packages; dependent packages' repository declarations are not inherited.
-Drupal.org publication remains deferred.
+Typed Data Plus publication on Drupal.org is required before releasing the
+Entity Template dependency; see [publication steps](TYPED_DATA_PLUS_PUBLICATION.md).
 
 Condition grammar inventory: `never`, `passes`, `view`, `exists`, `empty`, `with`,
 `contains`/`notcontains`, `in`/`notin`, equality/order/`matches`, `isroot`,

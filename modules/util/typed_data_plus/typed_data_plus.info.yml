@@ -1,7 +1,0 @@
-name: Typed Data Plus
-type: module
-description: Shared filtered typed-data fetching for workflow and template consumers.
-core_version_requirement: ^10 || ^11
-package: RLMumford
-dependencies:
-  - typed_data:typed_data

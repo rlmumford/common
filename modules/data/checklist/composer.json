@@ -10,6 +10,6 @@
         "drupal/typed_data": "^2",
         "rlmumford/plugin_reference": "2.x-dev",
         "php": ">=8.1",
-        "rlmumford/typed_data_plus": "2.x-dev"
+        "drupal/typed_data_plus": "2.0.x-dev"
     }
 }
