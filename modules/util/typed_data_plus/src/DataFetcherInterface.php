@@ -31,7 +31,7 @@ interface DataFetcherInterface extends BaseDataFetcherInterface {
   public function fetchFilteredData(TypedDataInterface $data, string $expression, ?BubbleableMetadata $metadata = NULL, ?string $langcode = NULL): TypedDataInterface;
 
   /**
-   * Resolves a filtered definition without executing filters or fetching values.
+   * Resolves a filtered definition without executing filters or fetching data.
    */
   public function fetchFilteredDefinition(DataDefinitionInterface $definition, string $expression, ?string $langcode = NULL): DataDefinitionInterface;
 

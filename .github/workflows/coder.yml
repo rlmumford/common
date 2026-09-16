@@ -1,0 +1,59 @@
+name: Drupal Coder
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      base_ref:
+        description: Base branch to compare with
+        required: true
+        default: 2.x
+
+permissions:
+  contents: read
+
+concurrency:
+  group: coder-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  coder:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+          coverage: none
+      - name: Install Drupal Coder
+        run: composer install --working-dir=.github/coder --no-interaction --no-progress
+      - name: Fix coding standards on repository PR branches
+        id: fix
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          CODER_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          CODER_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          CODER_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: python3 .github/coder/check.py --fix
+      - name: Recheck the fix commit
+        if: steps.fix.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          # GITHUB_TOKEN pushes do not trigger another pull_request run.
+          gh workflow run coder.yml --ref "$PR_HEAD_REF" -f base_ref="$PR_BASE_REF"
+          gh workflow run task-packages.yml --ref "$PR_HEAD_REF"
+      - name: Check changed PHP files
+        env:
+          CODER_BASE_SHA: ${{ github.event.pull_request.base.sha || format('origin/{0}', inputs.base_ref) }}
+          CODER_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python3 .github/coder/check.py

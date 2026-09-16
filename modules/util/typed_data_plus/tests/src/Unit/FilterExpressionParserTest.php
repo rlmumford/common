@@ -15,12 +15,17 @@ use Drupal\typed_data_plus\FilterExpressionParser;
 class FilterExpressionParserTest extends UnitTestCase {
 
   /**
+   * Tests parsing of literal filter arguments.
+   *
    * @dataProvider expressions
    */
   public function testParsing(string $expression, array $expected): void {
     $this->assertSame($expected, (new FilterExpressionParser())->parse($expression));
   }
 
+  /**
+   * Provides valid property paths and filter arguments.
+   */
   public static function expressions(): array {
     return [
       ['', [[], []]],
@@ -37,6 +42,8 @@ class FilterExpressionParserTest extends UnitTestCase {
   }
 
   /**
+   * Tests rejection of malformed expressions.
+   *
    * @dataProvider invalidExpressions
    */
   public function testInvalidExpressions(string $expression): void {
@@ -44,6 +51,9 @@ class FilterExpressionParserTest extends UnitTestCase {
     (new FilterExpressionParser())->parse($expression);
   }
 
+  /**
+   * Provides malformed filter expressions.
+   */
   public static function invalidExpressions(): array {
     return array_map(static fn($expression) => [$expression], [
       'value|', 'value||trim', 'value|default(', 'value|default)',
