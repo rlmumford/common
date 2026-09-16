@@ -36,7 +36,7 @@ truth for code; split package repositories are publishing outputs.
 | Behavioral baseline | CounselKit `11.5.x`, including checklist processing, interfaces and supporting integrations. |
 | Field names | Entity-scoped, unprefixed names such as `dependencies`, `service` and `resolved`. |
 | Outcomes | Durable outcomes belong on checklist items; no duplicate task-level outcome store is required. |
-| Intermediate state | Separate mutable working state from outcomes. Retaining state on failure is the proposed improvement; detailed retry/reset rules remain to be settled. |
+| Intermediate state | Separate mutable working state from outcomes. Confirmed: retain state on failure; resume and start-fresh create separate attempts, with start-fresh clearing working state and preserving history. |
 | Operational history | Required. Record execution identity, attempts, transitions and results. |
 | Configurable recovery framework | Out of scope; it has not proved useful in practice. Basic retry/reset behavior remains necessary. |
 | Typed-data dependencies | Preferred and agreed direction: move shared fetching/filtering and condition evaluation below Entity Template into TypedDataPlus. Verify exact extraction boundaries in code. |
@@ -198,9 +198,11 @@ resource. Phone/chat-specific resources are excluded, not the generic pane contr
 | Execution history | Durable attempts, initiator/executor, timestamps, transition reasons, completion method and failure information. |
 
 CounselKit 11.5 currently clears intermediate state on **failure as well as success**.
-The proposed improvement is to retain it on failure and distinguish resuming that
-attempt from starting fresh. Reset/abandonment should explicitly clear state and
-record an audit event. Exact state retention, reopening and retry semantics are open.
+The confirmed Common behavior retains state on failure. Explicit resume creates a
+successor attempt using retained state; start-fresh creates a new attempt with empty
+working state. Both preserve history, including the failed attempt. Successful
+completion clears working state. Reset/reopening rules are specified in the
+[Phase 0 contract](WORKFLOW_PHASE_0.md).
 
 Do not automatically turn a failed state's contents into an outcome. That would mix
 working data with valid workflow results and could expose credentials, temporary

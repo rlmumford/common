@@ -114,9 +114,9 @@ from a valid false condition and must prevent automatic completion.
 
 ## Lifecycle decisions
 
-Immediate-service-only gating is confirmed by the user. Retained failure state
-remains a proposed default pending feedback; keep that distinction visible in
-implementation PRs.
+The user confirmed immediate-service-only gating and retention of intermediate
+state on failure with separate attempts for explicit resume or start-fresh.
+Start-fresh clears working state while preserving history.
 
 ### Task and service
 

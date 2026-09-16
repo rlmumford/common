@@ -166,8 +166,9 @@ Deliverables:
   turns are already supported by the D7 implementation.
 - Durable execution-attempt history: initiator, executor, status/transition times,
   action/completion method, errors and links to results. Define retention/access.
-- Proposed failure policy: retain intermediate state for an explicit resume or
-  reset; clear it on successful completion. Confirm exact cleanup/reopening rules.
+- Confirmed failure policy: retain intermediate state for explicit resume. Resume
+  creates a successor attempt using retained state; start-fresh creates a new attempt
+  and clears working state while preserving history. Clear state on success.
   Optional redacted diagnostics belong in restricted history, not normal outcomes.
 - Plugin/configuration discovery schemas and configuration-time validation.
 
