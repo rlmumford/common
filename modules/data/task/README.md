@@ -37,7 +37,7 @@ In a Drupal consumer with these modules installed on disk, plus `service`,
 
 ```sh
 SIMPLETEST_DB=mysql://user:pass@localhost/test_db vendor/bin/phpunit \
-  --bootstrap web/core/tests/bootstrap.php \
+  --bootstrap "$(pwd)/web/core/tests/bootstrap.php" \
   web/modules/contrib/task/tests/src/Kernel
 ```
 

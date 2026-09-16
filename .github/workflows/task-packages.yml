@@ -43,4 +43,4 @@ jobs:
         env:
           SIMPLETEST_DB: 'sqlite://localhost/:memory:'
           SYMFONY_DEPRECATIONS_HELPER: weak
-        run: vendor/bin/phpunit --bootstrap web/core/tests/bootstrap.php web/modules/contrib/task/tests/src/Kernel
+        run: vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/task/tests/src/Kernel

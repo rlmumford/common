@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\task\Kernel;
 
+use Drupal\Core\Entity\EntityStorageException;
+use Drupal\Component\Datetime\TimeInterface;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\task\Entity\Task;
 use Drupal\user\Entity\User;
@@ -90,7 +92,7 @@ class TaskFoundationTest extends KernelTestBase {
    * Cron releases scheduled work and duplicate queue deliveries are harmless.
    */
   public function testScheduledQueue(): void {
-    $time = $this->createMock(\Drupal\Component\Datetime\TimeInterface::class);
+    $time = $this->createMock(TimeInterface::class);
     $now = 1800000000;
     $time->method('getRequestTime')->willReturnCallback(function () use (&$now) {
       return $now;
@@ -124,7 +126,7 @@ class TaskFoundationTest extends KernelTestBase {
     $second = Task::create(['title' => 'Second', 'dependencies' => [$first]]);
     $second->save();
     $first->dependencies = [$second];
-    $this->expectException(\Drupal\Core\Entity\EntityStorageException::class);
+    $this->expectException(EntityStorageException::class);
     $this->expectExceptionMessage('Task dependencies must not contain a cycle.');
     $first->save();
   }
