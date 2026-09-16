@@ -95,9 +95,18 @@ context contracts and filtered local/global context assignment. Binary
 succeeds when they differ, XAnd when they agree. Larger expressions nest groups.
 `condition_constant:true` and `condition_constant:false` are separately selectable
 TRUE/FALSE gates without contexts or a value setting.
-The original context-assignment submodule provides site-wide integration. Filter
-extraction, Views, the remaining grammar/adapters and component conditions remain
-open; P1 is not complete.
+The original context-assignment submodule provides site-wide integration. The optional Views integration is implemented in
+[Typed Data Plus MR !2](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/2)
+(awaiting merge): `typed_data_plus_views` provides the native `view_result_count`
+condition, scalar contextual/exposed bindings through the data fetcher, full-match
+counts independent of paging, execution-user display access, fresh query results
+and configuration dependency tracking. Access/configuration failures remain errors
+under negation. Local validation: 17 new kernel tests; full suite 84 tests / 334
+assertions; Drupal/DrupalPractice Coder clean. Views is optional and the condition
+composes with the existing groups. The legacy condition-string `view` adapter,
+array-valued exposed bindings and skipped contextual slots remain open.
+Filter extraction, the remaining grammar/adapters and component conditions also
+remain open; P1 is not complete.
 
 Deliverables:
 
