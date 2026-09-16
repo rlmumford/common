@@ -1,6 +1,12 @@
 # Typed Data Plus: Drupal.org publication
 
-Publication is now required before releasing Entity Template's shared-fetcher
+Status, 16 September 2026: project created; code pushed to Drupal.org branch
+`2.0.x` at `aa33954`; tag `2.0.0-alpha1` pushed. Contents match Common `d316fb4`.
+The independent consumer CI passed with the new Composer identity. The Drupal.org
+release page and normal Composer installation proof remain pending; the package
+metadata endpoint returned 404 before the release page was created.
+
+Publication is required before releasing Entity Template's shared-fetcher
 migration. The current GitHub-only dependency works only when a consuming site's
 root Composer configuration adds its repository. That is not the intended public
 installation experience.
@@ -60,9 +66,21 @@ Only list supported Drupal/PHP versions verified by the release tests.
 
 The repository remains authored in Common. The publication mechanism must preserve
 Drupal.org history/tags and verify the published content, just as the GitHub split
-is verified. Project creation, package metadata resolution and installation proofs
-remain pending; this document is preparation, not evidence of publication.
+is verified. The Git publication is complete. Release-page publication, package metadata
+resolution and normal Composer installation proofs remain pending.
 
 References: [creating a project](https://www.drupal.org/docs/develop/managing-a-drupalorg-theme-module-or-distribution-project/creating-a-new-project),
 [project types](https://www.drupal.org/docs/develop/managing-a-drupalorg-theme-module-or-distribution-project/sandbox-projects),
 [Composer naming](https://project.pages.drupalcode.org/coding_standards/composer/package-name/).
+
+## Initial alpha release notes
+
+Initial alpha providing shared filtered typed-data fetching, placeholder
+resolution, typed-data reference fields and plugin context assignment. Includes
+quoted filter argument parsing, wrapped-value compatibility and definition-only
+fetching. Public APIs remain under development; the planned condition-string
+evaluator is not included. Requires Drupal 10/11, PHP 8.1+ and Typed Data 2.1+.
+
+Common remains the source repository. Until Drupal.org publication credentials
+are configured in CI, subsequent Drupal.org updates must be explicitly extracted,
+content-verified and pushed; the GitHub split does not update Drupal.org.
