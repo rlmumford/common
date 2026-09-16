@@ -91,7 +91,8 @@ validation and cacheable explanations. It exposes `condition_string`,
 context contracts and filtered local/global context assignment. Binary
 `condition_xor` and `condition_xand` (XNOR) require exactly two operands; XOR
 succeeds when they differ, XAnd when they agree. Larger expressions nest groups.
-`condition_constant` provides explicit TRUE/FALSE gates without contexts.
+`condition_constant:true` and `condition_constant:false` are separately selectable
+TRUE/FALSE gates without contexts or a value setting.
 The original context-assignment submodule provides site-wide integration. Filter
 extraction, Views, the remaining grammar/adapters and component conditions remain
 open; P1 is not complete.
