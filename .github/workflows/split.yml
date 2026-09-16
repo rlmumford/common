@@ -64,6 +64,7 @@ jobs:
       # public output rather than trusting its exit status.
       - name: Verify published package
         env:
+          SPLIT_TOKEN: ${{ secrets.SPLIT_TOKEN }}
           SPLIT_REPOSITORY: ${{ matrix.repository }}
           PACKAGE_DIRECTORY: ${{ matrix.directory }}
         run: |
@@ -72,3 +73,17 @@ jobs:
             "$RUNNER_TEMP/published-package"
           diff --recursive --brief --exclude=.git \
             "$PACKAGE_DIRECTORY" "$RUNNER_TEMP/published-package"
+
+          # An unchanged package skips the splitter's push. A dry run still
+          # checks receive-pack authorization without updating any refs.
+          cat > "$RUNNER_TEMP/split-askpass" <<'SH'
+          #!/bin/sh
+          case "$1" in
+            *Username*) printf '%s\n' 'x-access-token' ;;
+            *) printf '%s\n' "$SPLIT_TOKEN" ;;
+          esac
+          SH
+          chmod 700 "$RUNNER_TEMP/split-askpass"
+          GIT_TERMINAL_PROMPT=0 git -C "$RUNNER_TEMP/published-package" \
+            -c credential.helper= -c core.askPass="$RUNNER_TEMP/split-askpass" \
+            push --dry-run origin HEAD:refs/heads/2.x
