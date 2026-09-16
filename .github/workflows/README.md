@@ -8,6 +8,11 @@ Pushes each package directory out to its own repository on every push to `2.x`.
 repository, and give the module a `composer.json` naming it `rlmumford/<name>`.
 Without that composer.json the split repo is not an installable package.
 
+Add new repositories to the token's selected-repository scope before the first
+split. The split action can report success even when GitHub rejects its push;
+the verification step compares the public `2.x` contents with the package
+directory and fails the job if publication did not happen.
+
 **The split repos are outputs.** They are force-written on every push here, so a
 commit made directly to one is lost the next time this runs. Work happens in
 this repository.
