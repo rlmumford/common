@@ -45,3 +45,17 @@ Drupal's request-level caching; account switching and provider cleanup in long-l
 workers remain part of the planned execution layer. Direct calls to handler action
 methods must prepare contexts themselves. Unified form/API/action dispatch,
 intermediate state, attempts and operational history remain planned.
+
+## Created entity outcomes
+
+The `create_entity:<entity type>` handler publishes the saved entity as an outcome
+named after its entity type, on both automatic and interactive completion. Later
+items can map `item:<creator item>:<entity type>` or a property selector beneath it.
+The outcome is available in the same processing pass and after storage reload.
+
+Automatic creation uses the configured bundle. A handler configured for user
+selection requires an explicit bundle before creating an entity. Both action
+paths use `completeCreation()` to save the entity, record its outcome, and then
+complete/save the item. The supplied entity must match the handler's entity type
+and fixed bundle. Existing form validation and caller access responsibilities
+still apply; this helper does not provide worker claims or replay protection.
