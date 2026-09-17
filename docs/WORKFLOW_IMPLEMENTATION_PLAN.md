@@ -152,8 +152,13 @@ Service status storage now provides draft/active/complete/cancelled/superseded,
 with new services defaulting to draft. The old boolean field is replaced without
 legacy migration: no sites are known to use the module. Development installations
 using the old schema need a fresh installation.
-Service transition history and task gates/migrations remain open; this foundation
-does not enable new workflow processing.
+Task readiness now evaluates scheduling, strict resolved-only dependencies,
+manual holds, and only the immediate service, reporting every reason alongside
+its primary state. The checklist processor and queue worker reload current tasks;
+processing requires active readiness. Stored pending/active remains a legacy
+projection, so a separate intent model, query support and resolution history are
+still pending. Service transition APIs/history are deferred while task work takes
+priority; no state-machine dependency is introduced.
 
 ### Existing base
 

@@ -246,15 +246,11 @@ class Task extends ContentEntityBase implements TaskInterface {
     // Pending is derived from the schedule and dependencies. Waiting is an
     // explicit manual hold and must not be released by the scheduler.
     if (in_array($this->status->value, [NULL, '', 'pending', 'active'], TRUE)) {
-      $open_dependencies = FALSE;
-      foreach ($this->dependencies as $item) {
-        if (!$item->entity || !in_array($item->entity->status->value, ['closed', 'resolved'], TRUE)) {
-          $open_dependencies = TRUE;
-          break;
-        }
-      }
-
-      $this->status->value = ($open_dependencies || $this->start->value > $now) ? 'pending' : 'active';
+      // Keep the existing stored pending/active projection for queue queries.
+      // Runtime processing uses readiness, which distinguishes blocked/pending
+      // and observes referenced entities without requiring a task resave.
+      $readiness = \Drupal::service('task.readiness')->evaluate($this);
+      $this->status->value = $readiness->state === 'active' ? 'active' : 'pending';
     }
 
     // @todo Lock tokens if this is resolved.

@@ -36,7 +36,7 @@ class ScheduledTask extends QueueWorkerBase implements ContainerFactoryPluginInt
    * {@inheritdoc}
    */
   public function processItem($data) {
-    $task = $this->entityTypeManager->getStorage('task')->load($data);
+    $task = $this->entityTypeManager->getStorage('task')->loadUnchanged($data);
     if ($task && $task->status->value === 'pending') {
       $task->save();
     }

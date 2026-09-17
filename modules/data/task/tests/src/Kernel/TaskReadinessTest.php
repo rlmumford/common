@@ -1,0 +1,134 @@
+<?php
+
+namespace Drupal\Tests\task\Kernel;
+
+use Drupal\Component\Datetime\TimeInterface;
+use Drupal\KernelTests\KernelTestBase;
+use Drupal\service\Entity\Service;
+use Drupal\service\Entity\ServiceType;
+use Drupal\task\Entity\Task;
+
+/**
+ * Tests readiness precedence and fresh, immediate references.
+ *
+ * @group task
+ */
+class TaskReadinessTest extends KernelTestBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  protected static $modules = [
+    'system', 'user', 'field', 'text', 'filter', 'options', 'datetime',
+    'entity', 'task', 'views', 'service',
+  ];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    parent::setUp();
+    $this->installSchema('service', ['service_hierarchy_lock']);
+    $this->container->get('database')->insert('service_hierarchy_lock')->fields(['id' => 1])->execute();
+    foreach (['user', 'service', 'task'] as $type) {
+      $this->installEntitySchema($type);
+    }
+    $this->installConfig(['system', 'user']);
+    ServiceType::create(['id' => 'work', 'label' => 'Work'])->save();
+  }
+
+  /**
+   * All reasons remain available even when a higher-priority state wins.
+   */
+  public function testPrecedenceAndReasons(): void {
+    $service = Service::create(['type' => 'work']);
+    $service->save();
+    $dependency = Task::create(['title' => 'Prerequisite']);
+    $dependency->save();
+    $task = Task::create([
+      'title' => 'Work',
+      'status' => 'waiting',
+      'service' => $service,
+      'dependencies' => [$dependency],
+      'start' => '2099-01-01T00:00:00',
+    ]);
+    $evaluator = $this->container->get('task.readiness');
+    $result = $evaluator->evaluate($task);
+    $this->assertSame('pending', $result->state);
+    $this->assertSame(['future_start', 'manual_hold', 'dependency_unresolved', 'service_draft'], array_column($result->reasons, 'code'));
+    $task->start = '2000-01-01T00:00:00';
+    $service->set('status', 'active')->save();
+    $this->assertSame('blocked', $evaluator->evaluate($task)->state);
+    $task->status = 'resolved';
+    $this->assertSame('resolved', $evaluator->evaluate($task)->state);
+    $task->status = 'closed';
+    $this->assertSame('closed', $evaluator->evaluate($task)->state);
+  }
+
+  /**
+   * Only resolved satisfies dependencies, including on retained task objects.
+   */
+  public function testDependencies(): void {
+    $dependency = Task::create(['title' => 'Prerequisite']);
+    $dependency->save();
+    $task = Task::create(['title' => 'Work', 'dependencies' => [$dependency]]);
+    $task->save();
+    $evaluator = $this->container->get('task.readiness');
+    $this->assertSame('blocked', $evaluator->evaluate($task)->state);
+    $dependency->set('status', 'closed')->save();
+    $this->assertSame('blocked', $evaluator->evaluate($task)->state);
+    $dependency->resolve()->save();
+    $this->assertSame('active', $evaluator->evaluate($task)->state);
+    $dependency->set('status', 'waiting')->save();
+    $this->assertSame('blocked', $evaluator->evaluate($task)->state);
+    $dependency->delete();
+    $this->assertSame('dependency_missing', $evaluator->evaluate($task)->reasons[0]['code']);
+  }
+
+  /**
+   * Only the immediate service gates work, without requiring task saves.
+   */
+  public function testImmediateServiceOnly(): void {
+    $parent = Service::create(['type' => 'work']);
+    $parent->save();
+    $child = Service::create(['type' => 'work', 'status' => 'active', 'service' => $parent]);
+    $child->save();
+    $task = Task::create(['title' => 'Work', 'service' => $child]);
+    $task->save();
+    $evaluator = $this->container->get('task.readiness');
+    foreach (['draft', 'complete', 'cancelled', 'superseded'] as $status) {
+      $parent->set('status', $status)->save();
+      $this->assertSame('active', $evaluator->evaluate($task)->state);
+      $child->set('status', $status)->save();
+      $this->assertSame($status === 'draft' ? 'pending' : 'blocked', $evaluator->evaluate($task)->state);
+      $child->set('status', 'active')->save();
+    }
+    $task->set('service', 999999);
+    $this->assertSame('service_missing', $evaluator->evaluate($task)->reasons[0]['code']);
+    $task->set('service', NULL);
+    $this->assertSame('active', $evaluator->evaluate($task)->state);
+  }
+
+  /**
+   * Start time gates execution; due dates and deadlines do not.
+   */
+  public function testTimeBoundary(): void {
+    $now = 1800000000;
+    $time = $this->createMock(TimeInterface::class);
+    $time->method('getCurrentTime')->willReturnCallback(function () use (&$now) {
+      return $now;
+    });
+    $this->container->set('datetime.time', $time);
+    $task = Task::create([
+      'title' => 'Work',
+      'start' => gmdate('Y-m-d\TH:i:s', $now + 1),
+      'due' => '2000-01-01T00:00:00',
+      'deadline' => '2000-01-01T00:00:00',
+    ]);
+    $evaluator = $this->container->get('task.readiness');
+    $this->assertSame('pending', $evaluator->evaluate($task)->state);
+    $now++;
+    $this->assertSame('active', $evaluator->evaluate($task)->state);
+  }
+
+}

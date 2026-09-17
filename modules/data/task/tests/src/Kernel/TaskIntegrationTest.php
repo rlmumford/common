@@ -53,7 +53,12 @@ class TaskIntegrationTest extends KernelTestBase {
     $manager = User::create(['name' => 'manager', 'status' => 1]);
     $manager->save();
     ServiceType::create(['id' => 'recruitment', 'label' => 'Recruitment'])->save();
-    $service = Service::create(['type' => 'recruitment', 'label' => 'Recruitment support', 'manager' => $manager]);
+    $service = Service::create([
+      'type' => 'recruitment',
+      'label' => 'Recruitment support',
+      'status' => 'active',
+      'manager' => $manager,
+    ]);
     $service->save();
     $job = Job::create([
       'id' => 'review',
@@ -197,6 +202,50 @@ class TaskIntegrationTest extends KernelTestBase {
     $all = $fetcher->fetchFilteredData($task->getTypedData(), 'service.all', $metadata);
     $this->assertCount(2, $all->getValue());
     $this->assertContains('service_list', $metadata->getCacheTags());
+  }
+
+  /**
+   * Processing respects dependencies, service changes and a saved manual hold.
+   */
+  public function testChecklistReadinessGates(): void {
+    ServiceType::create(['id' => 'work', 'label' => 'Work'])->save();
+    $service = Service::create(['type' => 'work']);
+    $service->save();
+    $job = Job::create([
+      'id' => 'gated',
+      'label' => 'Gated work',
+      'default_checklist' => [
+        'review' => ['label' => 'Review', 'handler' => 'simply_checkable', 'handler_configuration' => []],
+      ],
+    ]);
+    $job->save();
+    $dependency = Task::create(['title' => 'Prerequisite']);
+    $dependency->save();
+    $task = Task::create(['title' => 'Work', 'job' => $job, 'service' => $service, 'dependencies' => [$dependency]]);
+    $task->save();
+    $task->checklist->checklist->getItem('review')->setComplete()->save();
+    $processor = $this->container->get('task_checklist.task_processor');
+    $processor->processTask($task);
+    $this->assertSame('pending', Task::load($task->id())->status->value);
+    $service->set('status', 'active')->save();
+    $processor->processTask($task);
+    $this->assertSame('pending', Task::load($task->id())->status->value);
+
+    // Keep the service draft while the prerequisite resolves.
+    $service->set('status', 'draft')->save();
+    $dependency->resolve()->save();
+    $processor->processTask($task);
+    $this->assertSame('pending', Task::load($task->id())->status->value);
+    $service->set('status', 'complete')->save();
+    $processor->processTask($task);
+    $this->assertSame('pending', Task::load($task->id())->status->value);
+    $service->set('status', 'active')->save();
+    $held = Task::load($task->id());
+    $held->set('status', 'waiting')->save();
+    $processor->processTask($task);
+    $this->assertSame('waiting', Task::load($task->id())->status->value);
+    $held->set('status', 'pending')->save();
+    $this->assertSame('resolved', Task::load($task->id())->status->value);
   }
 
 }

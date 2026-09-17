@@ -26,7 +26,7 @@ interface TaskInterface extends FieldableEntityInterface {
   /**
    * Status Waiting.
    *
-   * Tasks are waiting when they have unresolved dependencies.
+   * Waiting is an explicit manual hold, independent of computed readiness.
    */
   const STATUS_WAITING = 'waiting';
 
