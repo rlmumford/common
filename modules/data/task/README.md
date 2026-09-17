@@ -51,12 +51,27 @@ There is no manual waiting flag: setting `waiting` alone cannot hold a task;
 move `start` into the future instead. Completing a blocker cannot release work
 before that start date.
 
-Modules contribute gates through `hook_task_readiness($task)`, documented in
-`task.api.php`. Return a list of reasons, each with `state` (`active`, `pending`,
-`waiting`, or `invalid`) and a string `code`, plus optional diagnostics. Return `[]` or an `active` reason
-when ready. Gates are additive; no module can clear another gate, and terminal task status wins. The
-service module implements this hook for its immediate-service reference; task
-itself contains no service-specific gate logic.
+Modules contribute gates by subscribing to `Drupal\task\Event\TaskReadinessEvent`.
+Subscribers are services tagged `event_subscriber`, with dependencies injected
+through their constructors. Register `TaskReadinessEvent::class` in
+`getSubscribedEvents()` and contribute from a typed handler:
+
+```php
+public function onReadiness(TaskReadinessEvent $event): void {
+  if (!$this->approval->isApproved($event->getTask())) {
+    $event->addReason('waiting', 'example_approval_required');
+  }
+}
+```
+
+`addReason($state, $code, $details)` accepts active, pending, waiting, or invalid,
+a non-empty reason code, and optional diagnostics. Add nothing or an active
+reason when ready. Contributions are additive and propagation cannot be stopped;
+subscriber order does not determine the final readiness state. Do not mutate the
+task or perform side effects from a subscriber. The evaluator owns precedence.
+
+Service's `ServiceTaskReadinessSubscriber` owns the immediate-service gate and
+is registered only when Task is enabled. Task has no service-specific gate logic.
 
 An `invalid` contribution recommends resolving the task with resolution `invalid`.
 Evaluation stays read-only; task saving and the checklist processor apply this

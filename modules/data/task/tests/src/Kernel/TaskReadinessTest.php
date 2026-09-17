@@ -7,6 +7,7 @@ use Drupal\KernelTests\KernelTestBase;
 use Drupal\service\Entity\Service;
 use Drupal\service\Entity\ServiceType;
 use Drupal\task\Entity\Task;
+use Drupal\task\Event\TaskReadinessEvent;
 
 /**
  * Tests readiness precedence and fresh, immediate references.
@@ -175,7 +176,7 @@ class TaskReadinessTest extends KernelTestBase {
   }
 
   /**
-   * A malformed hook cannot silently release blocked work.
+   * An invalid subscriber contribution cannot silently release blocked work.
    */
   public function testInvalidContribution(): void {
     $this->container->get('state')->set('task_readiness_test.reasons', [
@@ -204,6 +205,41 @@ class TaskReadinessTest extends KernelTestBase {
     $task->resolve('complete')->save();
     $this->assertSame('resolved', $evaluator->evaluate($task)->state);
     $this->assertSame('complete', $task->resolution->value);
+  }
+
+  /**
+   * Listener priority cannot allow an active decision to override a blocker.
+   */
+  public function testSubscriberOrder(): void {
+    $task = Task::create(['title' => 'Work']);
+    $dispatcher = $this->container->get('event_dispatcher');
+    $ready = static function (TaskReadinessEvent $event): void {
+      $event->addReason('active', 'example_ready');
+    };
+    $blocked = static function (TaskReadinessEvent $event): void {
+      $event->addReason('waiting', 'example_approval_required');
+    };
+    $dispatcher->addListener(TaskReadinessEvent::class, $blocked);
+    foreach ([-100, 100] as $priority) {
+      $dispatcher->addListener(TaskReadinessEvent::class, $ready, $priority);
+      $result = $this->container->get('task.readiness')->evaluate($task);
+      $this->assertSame('waiting', $result->state);
+      $this->assertCount(2, $result->reasons);
+      $dispatcher->removeListener(TaskReadinessEvent::class, $ready);
+    }
+  }
+
+  /**
+   * Diagnostic values cannot replace a contribution's declared state or code.
+   */
+  public function testReasonIntegrity(): void {
+    $event = new TaskReadinessEvent(Task::create(['title' => 'Work']));
+    $event->addReason('waiting', 'example_approval_required', ['state' => 'active', 'code' => 'replacement']);
+    $reasons = $event->getReasons();
+    $this->assertSame('waiting', $reasons[0]['state']);
+    $this->assertSame('example_approval_required', $reasons[0]['code']);
+    $reasons[0]['state'] = 'active';
+    $this->assertSame('waiting', $event->getReasons()[0]['state']);
   }
 
 }

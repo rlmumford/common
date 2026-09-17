@@ -131,7 +131,7 @@ Start-fresh clears working state while preserving history.
   reasons as well as the primary state. A task without a service has no service gate.
 - Postpone a task by moving `start` into the future. There is no manual waiting
   state. Non-terminal statuses are derived from the schedule and gates; modules
-  contribute active/pending/waiting/invalid reasons through `hook_task_readiness()`,
+  contribute active/pending/waiting/invalid reasons through `TaskReadinessEvent` subscribers,
   including the
   immediate-service gate implemented by the service module. Invalid recommendations
   take precedence over pending/waiting, but never overwrite terminal outcomes.

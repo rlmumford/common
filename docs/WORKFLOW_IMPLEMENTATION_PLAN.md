@@ -155,8 +155,8 @@ using the old schema need a fresh installation.
 Task readiness now evaluates scheduling, strict resolved-only dependencies,
 and module-contributed gates, reporting every reason alongside its primary state.
 The service module contributes only the immediate-service gate through
-`hook_task_readiness()`. Postponement uses the start date, with no manual hold.
-Hooks contribute active/pending/waiting/invalid reasons. Evaluation is read-only;
+`TaskReadinessEvent` subscribers. Postponement uses the start date, with no manual hold.
+Subscribers contribute active/pending/waiting/invalid reasons. Evaluation is read-only;
 saving/processing applies invalid as resolved with an invalid resolution, while
 preserving existing terminal outcomes. Cancelled services wait by default;
 consumer policy decides which tasks should be invalidated. The checklist processor and queue worker reload current tasks;

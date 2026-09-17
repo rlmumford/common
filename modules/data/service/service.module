@@ -8,8 +8,6 @@
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
-use Drupal\service\ServiceInterface;
-use Drupal\task\TaskInterface;
 
 /**
  * Implements hook_entity_base_field_info().
@@ -112,32 +110,4 @@ function service_modules_installed($modules) {
  */
 function service_task_storage_prewrite(EntityInterface $task) {
   \Drupal::service('service.hierarchy_write_guard')->validateReference($task->get('service')->target_id);
-}
-
-/**
- * Implements hook_task_readiness().
- */
-function service_task_readiness(TaskInterface $task): array {
-  if ($task->get('service')->isEmpty()) {
-    return [];
-  }
-  $id = $task->get('service')->target_id;
-  $service = $id === NULL ? NULL : \Drupal::entityTypeManager()->getStorage('service')->loadUnchanged($id);
-  if (!$service) {
-    return [['state' => 'waiting', 'code' => 'service_missing', 'target_id' => $id]];
-  }
-  if ($service->getStatus() === ServiceInterface::STATUS_DRAFT) {
-    return [['state' => 'pending', 'code' => 'service_draft', 'target_id' => $id]];
-  }
-  if ($service->getStatus() !== ServiceInterface::STATUS_ACTIVE) {
-    return [
-      [
-        'state' => 'waiting',
-        'code' => 'service_inactive',
-        'target_id' => $id,
-        'status' => $service->getStatus(),
-      ],
-    ];
-  }
-  return [];
 }

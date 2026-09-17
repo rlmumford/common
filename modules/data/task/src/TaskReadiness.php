@@ -4,7 +4,8 @@ namespace Drupal\task;
 
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\task\Event\TaskReadinessEvent;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
 
 /**
@@ -18,7 +19,7 @@ class TaskReadiness {
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
     protected TimeInterface $time,
-    protected ModuleHandlerInterface $moduleHandler,
+    protected EventDispatcherInterface $eventDispatcher,
   ) {}
 
   /**
@@ -68,10 +69,9 @@ class TaskReadiness {
       }
     }
 
-    foreach ($this->moduleHandler->invokeAll('task_readiness', [$task]) as $reason) {
-      if (!is_array($reason) || !in_array($reason['state'] ?? NULL, ['active', 'pending', 'waiting', 'invalid'], TRUE) || !is_string($reason['code'] ?? NULL)) {
-        throw new \UnexpectedValueException('Task readiness hooks must return reasons with a valid readiness state and a string code.');
-      }
+    $event = new TaskReadinessEvent($task);
+    $this->eventDispatcher->dispatch($event);
+    foreach ($event->getReasons() as $reason) {
       $invalid = $invalid || $reason['state'] === 'invalid';
       $pending = $pending || $reason['state'] === 'pending';
       $waiting = $waiting || $reason['state'] === 'waiting';
