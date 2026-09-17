@@ -227,8 +227,11 @@ invalid mappings surface as configuration errors. A standalone checklist kernel
 suite exercises sequential outcome consumption, stale-value removal, filtered
 selectors and global providers. Persisted list outcomes require Typed Data Plus
 [MR !5](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/5).
-Shared operation dispatch, execution identities,
-attempts and intermediate-state storage remain open.
+The built-in create-entity action and form now share entity/outcome/completion
+handling. Automatic creation respects the configured bundle and publishes the
+created entity for downstream contexts, including after checklist reload.
+Shared operation dispatch, execution identities, attempts and intermediate-state
+storage remain open.
 
 Deliverables:
 

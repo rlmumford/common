@@ -60,7 +60,7 @@ class CreateEntity extends ChecklistItemHandlerBase implements ContainerFactoryP
     ContainerInterface $container,
     array $configuration,
     $plugin_id,
-    $plugin_definition
+    $plugin_definition,
   ) {
     return new static(
       $configuration,
@@ -94,7 +94,7 @@ class CreateEntity extends ChecklistItemHandlerBase implements ContainerFactoryP
     $plugin_definition,
     EntityTypeInterface $entity_type,
     EntityStorageInterface $entity_storage,
-    EntityTypeBundleInfoInterface $entity_type_bundle_info
+    EntityTypeBundleInfoInterface $entity_type_bundle_info,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
@@ -133,14 +133,32 @@ class CreateEntity extends ChecklistItemHandlerBase implements ContainerFactoryP
   public function action(): ChecklistItemHandlerInterface {
     if ($this->getMethod() == ChecklistItemInterface::METHOD_AUTO) {
       $entity = $this->doCreateEntity();
-      $entity->save();
-
-      // @todo Some approximation of outcomes.
-      $this->getItem()->setComplete(ChecklistItemInterface::METHOD_AUTO);
-      $this->getItem()->save();
+      $this->completeCreation($entity, ChecklistItemInterface::METHOD_AUTO);
     }
 
     return $this;
+  }
+
+  /**
+   * Saves the created entity and publishes its outcome before completing work.
+   *
+   * Used by both automatic actions and the validated interactive form.
+   * Callers are responsible for entity validation and access checks.
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   *   The entity to save, matching this handler's type and configured bundle.
+   * @param string $method
+   *   The checklist completion method.
+   */
+  public function completeCreation(EntityInterface $entity, string $method): void {
+    $bundle = $this->getConfiguration()['bundle'];
+    if ($entity->getEntityTypeId() !== $this->entityType->id() || ($bundle !== '__select' && $entity->bundle() !== $bundle)) {
+      throw new \InvalidArgumentException('The created entity must match the configured entity type and bundle.');
+    }
+    $entity->save();
+    $this->getItem()->setOutcome($entity->getEntityTypeId(), $entity);
+    $this->getItem()->setComplete($method);
+    $this->getItem()->save();
   }
 
   /**
@@ -174,7 +192,7 @@ class CreateEntity extends ChecklistItemHandlerBase implements ContainerFactoryP
    * Get the entity.
    *
    * @param string|null $bundle
-   *   The bundle to create.
+   *   The bundle to create, or NULL to use the configured bundle.
    *
    * @return \Drupal\Core\Entity\EntityInterface
    *   The created entity.
@@ -182,6 +200,10 @@ class CreateEntity extends ChecklistItemHandlerBase implements ContainerFactoryP
   public function doCreateEntity($bundle = NULL) : EntityInterface {
     $values = [];
     if ($this->entityType->hasKey('bundle')) {
+      $bundle ??= $this->getConfiguration()['bundle'];
+      if ($bundle === '__select') {
+        throw new \InvalidArgumentException('Select a bundle before creating the entity.');
+      }
       $values[$this->entityType->getKey('bundle')] = $bundle;
     }
     return $this->entityStorage->create($values);
