@@ -3,12 +3,15 @@
 namespace Drupal\checklist\EventSubscriber;
 
 use Drupal\checklist\Event\ChecklistCollectContextsEventInterface;
+use Drupal\checklist\Event\ChecklistCollectConfigContextsEvent;
 use Drupal\checklist\Event\ChecklistEvents;
 use Drupal\checklist\Plugin\ChecklistItemHandler\ExpectedOutcomeChecklistItemHandlerInterface;
 use Drupal\Core\Plugin\Context\Context;
 use Drupal\Core\Plugin\Context\EntityContext;
 use Drupal\Core\Plugin\Context\EntityContextDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\TypedData\DataDefinition;
+use Drupal\Core\TypedData\MapDataDefinition;
 use Drupal\typed_data_plus\Plugin\Context\DataContextDefinition;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -38,6 +41,8 @@ class ChecklistContextsEventSubscriber implements EventSubscriberInterface {
       128,
     ];
 
+    $events[ChecklistEvents::COLLECT_CONFIG_CONTEXTS][] = ['addItemsContext', 0];
+    $events[ChecklistEvents::COLLECT_RUNTIME_CONTEXTS][] = ['addItemsContext', 0];
     return $events;
   }
 
@@ -103,6 +108,36 @@ class ChecklistContextsEventSubscriber implements EventSubscriberInterface {
         $event->addContext("item:{$name}:{$outcome_name}", $context);
       }
     }
+  }
+
+  /**
+   * Exposes item statuses and outcomes as a typed tree for condition strings.
+   */
+  public function addItemsContext(ChecklistCollectContextsEventInterface $event): void {
+    $definition = MapDataDefinition::create()->setLabel('Checklist items');
+    $values = [];
+    $items = $event->getChecklist()->getItems();
+    foreach ($items as $name => $item) {
+      $outcomes = $item->get('outcomes');
+      $outcome_definition = MapDataDefinition::create();
+      foreach ($outcomes->getPropertyDefinitions() as $key => $property) {
+        $outcome_definition->setPropertyDefinition($key, $property);
+      }
+      $definition->setPropertyDefinition($name, MapDataDefinition::create()
+        ->setPropertyDefinition('status', DataDefinition::create('string'))
+        ->setPropertyDefinition('outcomes', $outcome_definition));
+      if (!$event instanceof ChecklistCollectConfigContextsEvent) {
+        $values[$name] = [
+          'status' => $item->get('status')->value,
+          'outcomes' => $outcomes->toArray(),
+        ];
+      }
+    }
+    $context = new Context(DataContextDefinition::fromDataDefinition($definition), $event instanceof ChecklistCollectConfigContextsEvent ? NULL : $values);
+    foreach ($items as $item) {
+      $context->addCacheableDependency($item);
+    }
+    $event->addContext('items', $context);
   }
 
 }

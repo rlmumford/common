@@ -3,6 +3,7 @@
 namespace Drupal\checklist\Form;
 
 use Drupal\checklist\ChecklistInterface;
+use Drupal\checklist\ChecklistContextPreparer;
 use Drupal\checklist\ChecklistTempstoreRepository;
 use Drupal\checklist\Entity\ChecklistItemInterface;
 use Drupal\checklist\PluginForm\CustomFormObjectClassInterface;
@@ -20,6 +21,7 @@ use Drupal\Core\Plugin\PluginFormFactoryInterface;
 use Drupal\Core\Render\Element;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
  * Base form class for checklist item forms.
@@ -75,7 +77,8 @@ abstract class ChecklistItemFormBase extends FormBase implements BaseFormIdInter
     return new static(
       $container->get('plugin_form.factory'),
       $container->get('checklist.tempstore_repository'),
-      $container->get('context.handler')
+      $container->get('context.handler'),
+      $container->get('checklist.context_preparer')
     );
   }
 
@@ -88,11 +91,14 @@ abstract class ChecklistItemFormBase extends FormBase implements BaseFormIdInter
    *   The tempstore repository.
    * @param \Drupal\Core\Plugin\Context\ContextHandlerInterface $context_handler
    *   The context handler service.
+   * @param \Drupal\checklist\ChecklistContextPreparer $contextPreparer
+   *   The checklist context preparer.
    */
   public function __construct(
     PluginFormFactoryInterface $plugin_form_factory,
     ChecklistTempstoreRepository $checklist_tempstore_repository,
-    ContextHandlerInterface $context_handler
+    ContextHandlerInterface $context_handler,
+    protected ChecklistContextPreparer $contextPreparer,
   ) {
     $this->pluginFormFactory = $plugin_form_factory;
     $this->checklistTempstoreRepo = $checklist_tempstore_repository;
@@ -165,7 +171,7 @@ abstract class ChecklistItemFormBase extends FormBase implements BaseFormIdInter
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     if (!$this->item->checklist->checklist->getEntity()->access('update')) {
-      throw new \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException();
+      throw new AccessDeniedHttpException();
     }
     $plugin_form = $this->pluginFormFactory->createInstance($this->item->getHandler(), $this->formClass);
     $plugin_form->validateConfigurationForm($form, $form_state);
@@ -177,11 +183,17 @@ abstract class ChecklistItemFormBase extends FormBase implements BaseFormIdInter
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $checklist = $this->item->checklist->checklist;
     if (!$checklist->getEntity()->access('update')) {
-      throw new \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException();
+      throw new AccessDeniedHttpException();
     }
     $checklist = $this->checklistTempstoreRepo->get($checklist);
     $item = $checklist->getItem($this->item->getName());
     $this->item = $item;
+    if (!$item->isComplete() && (
+      !$this->contextPreparer->prepare($checklist, $item) ||
+      $item->isApplicable() !== TRUE || !$item->isActionable()
+    )) {
+      throw new \LogicException('The checklist item is not actionable.');
+    }
 
     $plugin_form = $this->pluginFormFactory->createInstance(
       $this->item->getHandler(), $this->formClass

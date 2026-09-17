@@ -224,6 +224,9 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
    * {@inheritdoc}
    */
   public function action(): ChecklistItemInterface {
+    if ($this->isApplicable() !== TRUE || !$this->isActionable()) {
+      throw new \LogicException('The checklist item is not actionable.');
+    }
     $this->getHandler()->action();
     return $this;
   }

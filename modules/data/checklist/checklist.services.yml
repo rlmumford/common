@@ -23,3 +23,6 @@ services:
   checklist.context_preparer:
     class: Drupal\checklist\ChecklistContextPreparer
     arguments: ['@checklist.context_collector', '@typed_data_plus.context_handler']
+  checklist.condition_evaluator:
+    class: Drupal\checklist\ChecklistConditionEvaluator
+    arguments: ['@plugin.manager.condition', '@checklist.context_collector', '@typed_data_plus.context_handler']

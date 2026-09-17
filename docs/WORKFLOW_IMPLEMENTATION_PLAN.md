@@ -261,8 +261,13 @@ Completion foundation: nullable applicability is preserved from handlers through
 items. Unknown applicability blocks execution and completion. Processing reuses
 `isCompletable()` after actions, so optional manual work does not block and earlier
 items are re-evaluated against changed gates. Tests cover newly applicable earlier
-work, removed requirements, and required unfinished/failed work. Configurable
-condition gates, decision plugins, execution identity and claims remain open.
+work, removed requirements, and required unfinished/failed work.
+
+Native condition gates now cover applicability, requiredness and dependencies,
+including same-pass outcome selectors and action/form rechecks. Configuration UI,
+decision plugins, execution identity and claims remain open. The integration
+requires the Typed Data Plus discovery and missing-context fixes in
+[MR !6](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/6).
 
 Deliverables:
 

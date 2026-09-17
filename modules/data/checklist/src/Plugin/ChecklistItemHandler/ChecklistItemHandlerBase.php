@@ -46,7 +46,7 @@ abstract class ChecklistItemHandlerBase extends PluginBase implements ChecklistI
    * {@inheritdoc}
    */
   public function defaultConfiguration() {
-    return [];
+    return ['conditions' => []];
   }
 
   /**
@@ -84,25 +84,35 @@ abstract class ChecklistItemHandlerBase extends PluginBase implements ChecklistI
    * {@inheritdoc}
    */
   public function isApplicable(): ?bool {
-    // @todo Implement sensible default behaviour based on condition plugins presumably.
-    return TRUE;
+    return $this->evaluateCondition('applicability');
   }
 
   /**
    * {@inheritdoc}
    */
   public function isRequired(): bool {
-    // @todo Implement sensible default behaviour based on condition plugins presumably.
-    return TRUE;
+    return $this->evaluateCondition('required') ?? TRUE;
   }
 
   /**
    * {@inheritdoc}
    */
   public function isActionable(): bool {
-    // @todo Implement dependencies
-    // @todo Implement condition plugins.
-    return TRUE;
+    return $this->evaluateCondition('dependencies') === TRUE;
+  }
+
+  /**
+   * Evaluates one configured gate, defaulting to TRUE when omitted.
+   */
+  protected function evaluateCondition(string $gate): ?bool {
+    $conditions = $this->getConfiguration()['conditions'];
+    if (!array_key_exists($gate, $conditions)) {
+      return TRUE;
+    }
+    return \Drupal::service('checklist.condition_evaluator')->evaluate(
+      $this->getItem()->get('checklist')->checklist,
+      $conditions[$gate]
+    );
   }
 
   /**

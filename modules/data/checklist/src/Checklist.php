@@ -117,6 +117,7 @@ class Checklist implements ChecklistInterface {
         ->execute();
       /** @var \Drupal\checklist\Entity\ChecklistItemInterface $item */
       foreach ($this->getType()->itemStorage()->loadMultiple($ids_to_load) as $item) {
+        $item->get('checklist')->entity = $this->getEntity();
         $this->items[$item->getName()] = $item;
       }
     }
@@ -125,7 +126,7 @@ class Checklist implements ChecklistInterface {
     foreach ($this->getType()->getDefaultItems() as $name => $item) {
       if (!isset($this->items[$item->getName()])) {
         $item->checklist = [
-          'target_id' => $this->getEntity()->id(),
+          'entity' => $this->getEntity(),
           'checklist_key' => $this->getKey(),
         ];
 
@@ -215,7 +216,6 @@ class Checklist implements ChecklistInterface {
         continue;
       }
 
-      // @todo Bring in dependencies.
       if ($item->isActionable()) {
         try {
           $item->action();
