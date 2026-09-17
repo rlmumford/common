@@ -10,7 +10,7 @@ use Drupal\Core\Entity\ContentEntityInterface;
 /**
  * Validates final task fields immediately before storage writes them.
  *
- * Runs after entity and field presave hooks, within the SQL storage transaction.
+ * Runs after presave hooks, within the SQL storage transaction.
  * Implementations may acquire database locks and throw to abort a save.
  * Do not mutate the entity or perform external side effects. Validation
  * may run more than once if field post-save handlers request another write.
