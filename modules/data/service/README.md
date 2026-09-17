@@ -39,8 +39,8 @@ unsaved targets have max-age zero. This uses broad invalidation rather than savi
 or explicitly invalidating every descendant. It does not grant access to values.
 
 Typed Data Plus fetcher consumers need its computed-property metadata fix
-([MR !4](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/4))
-as well: collecting only the returned entity's metadata misses intermediate
+([MR !4](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/4),
+merged into `2.0.x`) as well: collecting only the returned entity's metadata misses intermediate
 ancestor changes and empty-list results. Other consumers can use Drupal's
 `CacheableMetadata::createFromObject($property)` and bubble it themselves.
 
