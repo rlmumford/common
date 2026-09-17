@@ -70,9 +70,17 @@ class TaskChecklistProcessor implements TaskChecklistProcessorInterface {
     if ($task->isNew()) {
       return;
     }
-    // Queue callers and retained task objects may predate a hold or resolution.
+    // Retained task objects may predate a postponed start or resolution.
     $task = $this->entityTypeManager->getStorage('task')->loadUnchanged($task->id());
-    if ($task && $this->readiness->evaluate($task)->state === 'active') {
+    if (!$task) {
+      return;
+    }
+    $readiness = $this->readiness->evaluate($task);
+    if ($readiness->state === 'invalid') {
+      $task->resolve(Task::RESOLUTION_INVALID)->save();
+      return;
+    }
+    if ($readiness->state === 'active') {
       if ($this->moduleHandler->moduleExists('exec_environment')) {
         $environment = new TaskChecklistEnvironmentDetectionEvent($task);
         $this->eventDispatcher->dispatch($environment, TaskChecklistEvents::DETECT_CHECKLIST_ENVIRONMENT);

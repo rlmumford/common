@@ -4,4 +4,4 @@ services:
     arguments: [ '@event_dispatcher', '@context.handler', '@current_user', '@module_handler', '@plugin.manager.block' ]
   task.readiness:
     class: Drupal\task\TaskReadiness
-    arguments: ['@entity_type.manager', '@datetime.time']
+    arguments: ['@entity_type.manager', '@datetime.time', '@module_handler']

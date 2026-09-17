@@ -126,9 +126,18 @@ Start-fresh clears working state while preserving history.
   field names `start`, `due`, `deadline`, `resolved`, `dependencies`, `service`
   where present; verify actual schema before adding or renaming any field.
 - Readiness precedence: terminal task state first; otherwise future start or a
-  draft immediate service means pending; otherwise manual hold, unresolved/missing
-  dependency or non-active immediate service means blocked; otherwise active. Return all
+  draft immediate service means pending; otherwise unresolved/missing
+  dependency or non-active immediate service means waiting; otherwise active. Return all
   reasons as well as the primary state. A task without a service has no service gate.
+- Postpone a task by moving `start` into the future. There is no manual waiting
+  state. Non-terminal statuses are derived from the schedule and gates; modules
+  contribute active/pending/waiting/invalid reasons through `hook_task_readiness()`,
+  including the
+  immediate-service gate implemented by the service module. Invalid recommendations
+  take precedence over pending/waiting, but never overwrite terminal outcomes.
+  Evaluation is read-only; saving/processing applies invalid recommendations as
+  resolved with resolution invalid. Service cancellation defaults to waiting;
+  consumers choose whether particular work should be invalidated.
 - Only `resolved` satisfies a task dependency. Existing Common also accepts
   `closed`; remove that behavior with a migration/release note, not a silent alias.
   Keep closed as a distinct terminal disposition for legacy records.

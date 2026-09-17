@@ -153,11 +153,15 @@ with new services defaulting to draft. The old boolean field is replaced without
 legacy migration: no sites are known to use the module. Development installations
 using the old schema need a fresh installation.
 Task readiness now evaluates scheduling, strict resolved-only dependencies,
-manual holds, and only the immediate service, reporting every reason alongside
-its primary state. The checklist processor and queue worker reload current tasks;
-processing requires active readiness. Stored pending/active remains a legacy
-projection, so a separate intent model, query support and resolution history are
-still pending. Service transition APIs/history are deferred while task work takes
+and module-contributed gates, reporting every reason alongside its primary state.
+The service module contributes only the immediate-service gate through
+`hook_task_readiness()`. Postponement uses the start date, with no manual hold.
+Hooks contribute active/pending/waiting/invalid reasons. Evaluation is read-only;
+saving/processing applies invalid as resolved with an invalid resolution, while
+preserving existing terminal outcomes. Cancelled services wait by default;
+consumer policy decides which tasks should be invalidated. The checklist processor and queue worker reload current tasks;
+processing requires active readiness. Stored pending/waiting/active is a projection refreshed on save and by cron;
+readiness reads current gates. Query support and resolution history remain open. Service transition APIs/history are deferred while task work takes
 priority; no state-machine dependency is introduced.
 
 ### Existing base
@@ -207,7 +211,7 @@ Acceptance: multilevel trees, independent roots, cycles, reparenting, stale root
 caches and unauthorized moves are tested. Task gates react to the chosen hierarchy
 policy, including an active immediate service beneath draft or terminal ancestors.
 Every service transition has tested task/child effects, including no-effect
-cases. Upgrade tests preserve existing references. State precedence, manual holds,
+cases. Upgrade tests preserve existing references. State precedence, postponed starts,
 closed-versus-resolved compatibility and reopening semantics are explicit.
 
 ## P3 — Checklist contracts, outcomes, state and operational history

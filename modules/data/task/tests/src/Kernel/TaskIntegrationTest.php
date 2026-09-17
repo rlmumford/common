@@ -29,7 +29,7 @@ class TaskIntegrationTest extends KernelTestBase {
     'task', 'task_context', 'task_checklist', 'task_job', 'checklist',
     'plugin_reference', 'typed_data', 'typed_data_reference',
     'typed_data_context_assignment', 'entity_template', 'typed_data_plus', 'entity_template_ui',
-    'inline_entity_form', 'views', 'service', 'note',
+    'inline_entity_form', 'views', 'service', 'note', 'task_readiness_test',
   ];
 
   /**
@@ -205,7 +205,7 @@ class TaskIntegrationTest extends KernelTestBase {
   }
 
   /**
-   * Processing respects dependencies, service changes and a saved manual hold.
+   * Processing respects dependencies, service changes and a postponed start.
    */
   public function testChecklistReadinessGates(): void {
     ServiceType::create(['id' => 'work', 'label' => 'Work'])->save();
@@ -228,8 +228,9 @@ class TaskIntegrationTest extends KernelTestBase {
     $processor->processTask($task);
     $this->assertSame('pending', Task::load($task->id())->status->value);
     $service->set('status', 'active')->save();
+    $task->save();
     $processor->processTask($task);
-    $this->assertSame('pending', Task::load($task->id())->status->value);
+    $this->assertSame('waiting', Task::load($task->id())->status->value);
 
     // Keep the service draft while the prerequisite resolves.
     $service->set('status', 'draft')->save();
@@ -241,11 +242,30 @@ class TaskIntegrationTest extends KernelTestBase {
     $this->assertSame('pending', Task::load($task->id())->status->value);
     $service->set('status', 'active')->save();
     $held = Task::load($task->id());
-    $held->set('status', 'waiting')->save();
+    $held->set('start', '2099-01-01T00:00:00')->save();
     $processor->processTask($task);
-    $this->assertSame('waiting', Task::load($task->id())->status->value);
-    $held->set('status', 'pending')->save();
+    $this->assertSame('pending', Task::load($task->id())->status->value);
+    $held->set('start', '2000-01-01T00:00:00')->save();
     $this->assertSame('resolved', Task::load($task->id())->status->value);
+  }
+
+  /**
+   * Processing applies consumer invalidation once and preserves final outcomes.
+   */
+  public function testProcessorInvalidation(): void {
+    $task = Task::create(['title' => 'No longer needed']);
+    $task->save();
+    $this->container->get('state')->set('task_readiness_test.reasons', [
+      ['state' => 'invalid', 'code' => 'example_cancelled_work'],
+    ]);
+    $processor = $this->container->get('task_checklist.task_processor');
+    $processor->processTask($task);
+    $saved = Task::load($task->id());
+    $this->assertSame('resolved', $saved->status->value);
+    $this->assertSame('invalid', $saved->resolution->value);
+    $resolved = $saved->resolved->value;
+    $processor->processTask($task);
+    $this->assertSame($resolved, Task::load($task->id())->resolved->value);
   }
 
 }

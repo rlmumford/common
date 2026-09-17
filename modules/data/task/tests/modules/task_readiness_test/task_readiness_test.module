@@ -1,0 +1,15 @@
+<?php
+
+/**
+ * @file
+ * Test contributions to task readiness.
+ */
+
+use Drupal\task\TaskInterface;
+
+/**
+ * Implements hook_task_readiness().
+ */
+function task_readiness_test_task_readiness(TaskInterface $task): array {
+  return \Drupal::state()->get('task_readiness_test.reasons', []);
+}

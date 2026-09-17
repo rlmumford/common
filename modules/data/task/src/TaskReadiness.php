@@ -4,6 +4,7 @@ namespace Drupal\task;
 
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\datetime\Plugin\Field\FieldType\DateTimeItemInterface;
 
 /**
@@ -17,6 +18,7 @@ class TaskReadiness {
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
     protected TimeInterface $time,
+    protected ModuleHandlerInterface $moduleHandler,
   ) {}
 
   /**
@@ -29,20 +31,17 @@ class TaskReadiness {
   public function evaluate(TaskInterface $task): TaskReadinessResult {
     $reasons = [];
     $pending = FALSE;
-    $blocked = FALSE;
+    $waiting = FALSE;
+    $invalid = FALSE;
     $status = $task->get('status')->value;
     $now = gmdate(DateTimeItemInterface::DATETIME_STORAGE_FORMAT, $this->time->getCurrentTime());
     if ($task->get('start')->value && $task->get('start')->value > $now) {
       $pending = TRUE;
-      $reasons[] = ['code' => 'future_start'];
+      $reasons[] = ['state' => 'pending', 'code' => 'future_start'];
     }
-    if ($status === TaskInterface::STATUS_WAITING) {
-      $blocked = TRUE;
-      $reasons[] = ['code' => 'manual_hold'];
-    }
-    elseif (!in_array($status, [NULL, '', 'active', 'pending', 'resolved', 'closed'], TRUE)) {
-      $blocked = TRUE;
-      $reasons[] = ['code' => 'invalid_task_status', 'status' => $status];
+    if (!in_array($status, [NULL, '', 'active', 'pending', 'waiting', 'resolved', 'closed'], TRUE)) {
+      $waiting = TRUE;
+      $reasons[] = ['state' => 'waiting', 'code' => 'invalid_task_status', 'status' => $status];
     }
 
     $ids = [];
@@ -60,33 +59,33 @@ class TaskReadiness {
     foreach ($task->get('dependencies') as $item) {
       $dependency = $dependencies[$item->target_id] ?? NULL;
       if (!$dependency || $dependency->get('status')->value !== TaskInterface::STATUS_RESOLVED) {
-        $blocked = TRUE;
+        $waiting = TRUE;
         $reasons[] = [
+          'state' => 'waiting',
           'code' => $dependency ? 'dependency_unresolved' : 'dependency_missing',
           'target_id' => $item->target_id,
         ];
       }
     }
 
-    if ($task->hasField('service') && !$task->get('service')->isEmpty()) {
-      $id = $task->get('service')->target_id;
-      $service = $id === NULL ? NULL : $this->entityTypeManager->getStorage('service')->loadUnchanged($id);
-      if (!$service) {
-        $blocked = TRUE;
-        $reasons[] = ['code' => 'service_missing', 'target_id' => $id];
+    foreach ($this->moduleHandler->invokeAll('task_readiness', [$task]) as $reason) {
+      if (!is_array($reason) || !in_array($reason['state'] ?? NULL, ['active', 'pending', 'waiting', 'invalid'], TRUE) || !is_string($reason['code'] ?? NULL)) {
+        throw new \UnexpectedValueException('Task readiness hooks must return reasons with a valid readiness state and a string code.');
       }
-      elseif ($service->get('status')->value === 'draft') {
-        $pending = TRUE;
-        $reasons[] = ['code' => 'service_draft', 'target_id' => $id];
-      }
-      elseif ($service->get('status')->value !== 'active') {
-        $blocked = TRUE;
-        $reasons[] = ['code' => 'service_inactive', 'target_id' => $id, 'status' => $service->get('status')->value];
-      }
+      $invalid = $invalid || $reason['state'] === 'invalid';
+      $pending = $pending || $reason['state'] === 'pending';
+      $waiting = $waiting || $reason['state'] === 'waiting';
+      $reasons[] = $reason;
     }
 
-    // Terminal disposition wins, then scheduling, then blocking reasons.
-    $state = in_array($status, ['resolved', 'closed'], TRUE) ? $status : ($pending ? 'pending' : ($blocked ? 'blocked' : 'active'));
+    // Preserve terminal outcomes; invalidation wins over ordinary readiness.
+    $state = match (TRUE) {
+      in_array($status, ['resolved', 'closed'], TRUE) => $status,
+      $invalid => 'invalid',
+      $pending => 'pending',
+      $waiting => 'waiting',
+      default => 'active',
+    };
     return new TaskReadinessResult($state, $reasons);
   }
 
