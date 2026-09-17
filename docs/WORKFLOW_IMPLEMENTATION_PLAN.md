@@ -1,6 +1,6 @@
 # Workflow framework implementation plan
 
-Status: P0 design baseline recorded; P1 development started; P2 traversal foundation started; P3–P9 not implemented. Updated 17 September 2026.
+Status: P0 design baseline recorded; P1 development started; P2 hierarchy development started; P3–P9 not implemented. Updated 17 September 2026.
 
 This plan implements the requirements in [Workflow architecture](WORKFLOW_ARCHITECTURE.md)
 within `rlmumford/common` on `2.x`. CounselKit `11.5.x` is the behavioral reference.
@@ -136,16 +136,22 @@ Traversal foundation implemented: `service.hierarchy` and lazy `service_referenc
 `all`/`root` properties share cycle-safe resolution, explicit missing-parent errors,
 and support unsaved graphs. The service kernel suite covers multilevel trees,
 empty references, cycles, missing ancestors and retained properties after saved
-moves. This does not yet enforce valid writes: serialized reparenting, access/scope
-policies, deletion refusal, render-cache invalidation and lifecycle/task gates
-remain open. See `modules/data/service/README.md` for the API and its limits.
+moves. Write protection now serializes service saves/deletes and task attachments
+through a transaction-held database mutex. Storage checks final references, scope
+policies apply to direct saves, and `service.mover` provides an authorized move API.
+Deletion refuses services with current children/tasks. Tests cover scope/access
+denial, stale opposite moves, failed-save rollback, schema updates, and competing
+connections holding the lock through outer commit. MySQL/MariaDB permission/scope
+reads require READ COMMITTED isolation. See `modules/data/service/README.md` for
+setup, supported write paths and limits. Render-cache invalidation, form feedback,
+and lifecycle/task gates remain open.
 
 ### Existing base
 
 `Service::baseFieldDefinitions()` already defines a service-to-service `service`
 reference. `ServiceReferenceItem` exposes computed `root` and `all` properties
 through the shared traversal resolver. Cycle and missing-parent detection now
-protect reads; write enforcement remains to be implemented. Do not add a second
+protect reads; transaction-held write guards protect saves and deletes. Do not add a second
 parent field without a deliberate compatibility/migration decision.
 
 ### Hierarchy contract
@@ -180,7 +186,7 @@ Hierarchy decisions and remaining implementation policies:
 | Does parent completion require children complete? | Explicit completion policy, not an accidental consequence of nesting. |
 | Are manager, recipients or permissions inherited? | No implicit inheritance. Separate optional assignment fallback from authorization. |
 | Can a service move across organization boundaries? | Validate through a scope-policy extension; a move must not silently expose its tasks, notes or descendants. Common must not hardcode CounselKit firm entities. |
-| Can a parent be deleted with children/tasks? | Prefer refusal until a defined reparent/archive policy handles dependents; decide and document. |
+| Can a parent be deleted with children/tasks? | Refuse deletion with current child-service/task references; explicitly detach/delete dependents first. |
 | How does old inactive boolean state migrate? | Establish the historical meaning before mapping it; do not invent complete/cancelled distinctions absent from stored data. |
 
 Acceptance: multilevel trees, independent roots, cycles, reparenting, stale root

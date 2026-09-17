@@ -10,12 +10,28 @@ on:
 jobs:
   kernel:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        database: [sqlite, mysql]
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: testing
+          MYSQL_DATABASE: task_consumer
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -ptesting"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: gd, pdo_sqlite
+          extensions: gd, pdo_sqlite, pdo_mysql
           tools: composer:v2
           coverage: none
       - name: Build an independent Drupal 10 consumer
@@ -43,12 +59,12 @@ jobs:
       - name: Test the installed task packages
         working-directory: /tmp/task-consumer
         env:
-          SIMPLETEST_DB: 'sqlite://localhost/:memory:'
+          SIMPLETEST_DB: ${{ matrix.database == 'mysql' && 'mysql://root:testing@127.0.0.1:3306/task_consumer' || 'sqlite://localhost/:memory:' }}
           SYMFONY_DEPRECATIONS_HELPER: weak
         run: vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/task/tests/src/Kernel
       - name: Test the service module
         working-directory: /tmp/task-consumer
         env:
-          SIMPLETEST_DB: 'sqlite://localhost/:memory:'
+          SIMPLETEST_DB: ${{ matrix.database == 'mysql' && 'mysql://root:testing@127.0.0.1:3306/task_consumer' || 'sqlite://localhost/:memory:' }}
           SYMFONY_DEPRECATIONS_HELPER: weak
         run: vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/service/tests/src/Kernel
