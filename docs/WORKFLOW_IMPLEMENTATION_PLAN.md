@@ -149,8 +149,9 @@ Computed ancestry properties carry owner and service-list cache tags so ancestor
 moves invalidate dependent output without recursive descendant saves. Fetcher
 consumers also need Typed Data Plus's computed-property metadata fix (MR !4).
 Service status storage now provides draft/active/complete/cancelled/superseded,
-with new services defaulting to draft. Update 10002 preserves legacy booleans,
-maps active rows/revisions, and leaves ambiguous inactive rows explicitly unmapped.
+with new services defaulting to draft. The old boolean field is replaced without
+legacy migration: no sites are known to use the module. Development installations
+using the old schema need a fresh installation.
 Service transition history and task gates/migrations remain open; this foundation
 does not enable new workflow processing.
 
@@ -178,7 +179,7 @@ Deliverables:
 - Define reparent/delete behavior, access validation and cache invalidation. Root
   and ancestor data must refresh for descendants after a move.
 - Add Draft, Active/In Progress, Complete, Cancelled and Superseded lifecycle values,
-  migration from the boolean `state`, history and transition events.
+  replacing the unused boolean `state`, with history and transition events.
 - Implement task readiness from schedule, strict resolved-only dependencies and
   service gates. Re-evaluate affected work on transitions without a long recursive
   save cascade. Enforce resolution timestamps across form/API/programmatic paths.
@@ -195,7 +196,7 @@ Hierarchy decisions and remaining implementation policies:
 | Are manager, recipients or permissions inherited? | No implicit inheritance. Separate optional assignment fallback from authorization. |
 | Can a service move across organization boundaries? | Validate through a scope-policy extension; a move must not silently expose its tasks, notes or descendants. Common must not hardcode CounselKit firm entities. |
 | Can a parent be deleted with children/tasks? | Refuse deletion with current child-service/task references; explicitly detach/delete dependents first. |
-| How does old inactive boolean state migrate? | Establish the historical meaning before mapping it; do not invent complete/cancelled distinctions absent from stored data. |
+| Is legacy service migration required? | No known sites use the module; replace the boolean field without preserving or mapping old services. |
 
 Acceptance: multilevel trees, independent roots, cycles, reparenting, stale root
 caches and unauthorized moves are tested. Task gates react to the chosen hierarchy

@@ -155,10 +155,9 @@ Start-fresh clears working state while preserving history.
 - No inherited manager, recipients or permissions. Optional assignment fallback
   is a separate policy. Organization boundaries are supplied by a scope policy;
   no CounselKit firm or Christian Jobs staff-role dependency belongs in Common.
-- Common's old boolean `state` means only “Active?”. True can map to active;
-  false does not distinguish draft/complete/cancelled. Preserve the original value
-  and require an explicit migration mapping for inactive records before enabling
-  new processing. Do not guess historical meaning or discard unresolved records.
+- Common's old boolean `state` is replaced by `status`. The owner confirmed no
+  known sites use the module, so legacy service preservation and migration are
+  out of scope. Development databases using the old schema need a fresh install.
 
 ### Checklist item, attempt and working state
 
@@ -234,8 +233,7 @@ The local architect review identified four design requirements now incorporated:
   access (T24).
 
 No application-specific firm, district, legal or staff-role assumptions are added.
-The remaining migration risk is inactive legacy services: resolution requires a
-consumer-supplied mapping during P2, not another framework state invented in P0.
+Legacy service migration is out of scope; no sites are known to use the module.
 
 ## Compatibility evidence and remaining proofs
 
@@ -283,6 +281,6 @@ contracts are validated. No claim of exactly-once external effects is made.
 P0 has assigned the agreed scope to packages and planned tests, specified lifecycle
 and extension boundaries, and identified the coordinated Entity Template release.
 P1 starts with the extended fetcher interface and compatibility fixtures, then the
-condition grammar/registry. P2 must resolve legacy inactive records through an
-explicit upgrade policy. Implementers must turn T01–T30 into executable coverage
+condition grammar/registry. P2 replaces the unused legacy service schema without
+a migration layer. Implementers must turn T01–T30 into executable coverage
 in their owning phases; this document does not count as that coverage.

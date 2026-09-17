@@ -116,33 +116,19 @@ Fresh installs create the same table and row through the schema/install hooks.
 After manually rolling back an outer transaction, discard/reset cached entities,
 as with other Drupal entity writes.
 
-## Service status and legacy migration
+## Service status
 
 New services start in `draft`. The revisionable `status` field accepts `draft`,
 `active`, `complete`, `cancelled`, and `superseded`; `getStatus()` returns the stored
 value. Changing a parent's status never changes child statuses. Direct saves reject
 empty/unsupported statuses, as does normal field validation.
 
-Run `drush updb` and rebuild caches when upgrading. Update `10002` adds the field
-and maps each current record and historical revision with `state = 1` to `active`.
-It preserves the original boolean and leaves other statuses NULL: an inactive
-boolean cannot tell us whether the service was draft, complete, or cancelled.
-The update reports how many current services still need explicit mapping.
+The `status` field replaces the old boolean `state`. No sites are known to use
+that service schema, so there is no legacy preservation or upgrade mapping.
+Use a fresh installation for development databases created with the old schema;
+a cache rebuild alone does not replace their installed fields.
 
-Find unmapped current services with the service entity query's
-`notExists('status')`, using the access policy appropriate to the migration user.
-Choose a status from the actual historical meaning, set it explicitly, and save
-with `setNewRevision(TRUE)` to preserve the unmapped revision as evidence. Do not
-bulk-map inactive records to a terminal status without that evidence. Historical
-NULL statuses may remain; all current services must be mapped before enabling
-new workflow processing. A NULL status must never be interpreted as active.
-
-The old `state` field remains readable for migration, is read-only in field UI,
-and is no longer displayed by default. It is not synchronized with `status`;
-new services have no legacy state. Consumers must migrate boolean filters and
-writes to `status`, including any custom form displays exposing `state`.
-
-This is storage and migration infrastructure, not yet an audited transition API.
+This is status storage infrastructure, not yet an audited transition API.
 The transition graph, explicit authorized reopening, lifecycle events/history,
 and task readiness integration are still pending. Existing task processing does
 not yet enforce service status gates; do not enable it on that assumption.

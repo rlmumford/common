@@ -16,9 +16,9 @@ interface ServiceInterface extends ContentEntityInterface {
   public const STATUS_SUPERSEDED = 'superseded';
 
   /**
-   * Gets the lifecycle status, or NULL for an unmapped legacy record.
+   * Gets the lifecycle status, or NULL if explicitly cleared before saving.
    *
-   * A missing status must never be treated as active by processing consumers.
+   * A status is required when saving.
    */
   public function getStatus(): ?string;
 

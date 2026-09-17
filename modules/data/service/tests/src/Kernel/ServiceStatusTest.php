@@ -7,7 +7,7 @@ use Drupal\service\Entity\Service;
 use Drupal\service\ServiceInterface;
 
 /**
- * Tests lifecycle storage and migration without guessing inactive history.
+ * Tests service status storage and independent child statuses.
  *
  * @group service
  */
@@ -45,54 +45,6 @@ class ServiceStatusTest extends ServiceKernelTestBase {
       }
       $this->assertSame(ServiceInterface::STATUS_DRAFT, Service::load($service->id())->getStatus());
     }
-  }
-
-  /**
-   * Current records and old revisions each migrate using their own boolean.
-   */
-  public function testLegacyMigration(): void {
-    $active = Service::create(['type' => 'work', 'state' => TRUE]);
-    $active->save();
-    $changed = Service::create(['type' => 'work', 'state' => TRUE]);
-    $changed->save();
-    $active_revision = $changed->getRevisionId();
-    $changed->setNewRevision(TRUE);
-    $changed->set('state', FALSE)->save();
-    $inactive_revision = $changed->getRevisionId();
-    $inactive = Service::create(['type' => 'work', 'state' => FALSE]);
-    $inactive->save();
-
-    // Recreate the pre-update schema, retaining the legacy records/revisions.
-    $database = $this->container->get('database');
-    foreach (['service', 'service_revision'] as $table) {
-      $database->update($table)->fields(['status' => NULL])->execute();
-    }
-    $manager = $this->container->get('entity.definition_update_manager');
-    $manager->uninstallFieldStorageDefinition($manager->getFieldStorageDefinition('status', 'service'));
-    $this->assertFalse($database->schema()->fieldExists('service', 'status'));
-    $this->disableModules(['options']);
-    $this->container->get('module_handler')->loadInclude('service', 'install');
-    $this->assertStringContainsString('2 current services', (string) service_update_10002());
-
-    $storage = $this->container->get('entity_type.manager')->getStorage('service');
-    $this->assertSame(ServiceInterface::STATUS_ACTIVE, $storage->load($active->id())->getStatus());
-    $this->assertNull($storage->load($changed->id())->getStatus());
-    $this->assertNull($storage->load($inactive->id())->getStatus());
-    $this->assertSame(ServiceInterface::STATUS_ACTIVE, $storage->loadRevision($active_revision)->getStatus());
-    $this->assertNull($storage->loadRevision($inactive_revision)->getStatus());
-    $this->assertSame('1', (string) $storage->loadRevision($active_revision)->get('state')->value);
-    $this->assertSame('0', (string) $storage->loadRevision($inactive_revision)->get('state')->value);
-
-    // Mapping a current record creates a revision; ambiguous history stays put.
-    $mapped = $storage->load($inactive->id());
-    $legacy_revision = $mapped->getRevisionId();
-    $mapped->setNewRevision(TRUE);
-    $mapped->set('status', ServiceInterface::STATUS_CANCELLED)->save();
-    $this->assertNull($storage->loadRevision($legacy_revision)->getStatus());
-    $this->assertSame('0', (string) $mapped->get('state')->value);
-    service_update_10002();
-    $this->assertSame(ServiceInterface::STATUS_CANCELLED, $storage->load($inactive->id())->getStatus());
-    $this->assertSame(ServiceInterface::STATUS_DRAFT, $this->createService()->getStatus());
   }
 
 }
