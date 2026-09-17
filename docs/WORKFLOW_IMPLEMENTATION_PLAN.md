@@ -1,6 +1,6 @@
 # Workflow framework implementation plan
 
-Status: P0 design baseline recorded; P1 development started; P2–P9 not implemented. Updated 16 September 2026.
+Status: P0 design baseline recorded; P1 development started; P2–P9 not implemented. Updated 17 September 2026.
 
 This plan implements the requirements in [Workflow architecture](WORKFLOW_ARCHITECTURE.md)
 within `rlmumford/common` on `2.x`. CounselKit `11.5.x` is the behavioral reference.
@@ -95,9 +95,38 @@ context contracts and filtered local/global context assignment. Binary
 succeeds when they differ, XAnd when they agree. Larger expressions nest groups.
 `condition_constant:true` and `condition_constant:false` are separately selectable
 TRUE/FALSE gates without contexts or a value setting.
-The original context-assignment submodule provides site-wide integration. Filter
-extraction, Views, the remaining grammar/adapters and component conditions remain
-open; P1 is not complete.
+The original context-assignment submodule provides site-wide integration.
+The optional Views integration is implemented in
+[Typed Data Plus MR !2](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/2)
+(merged into `2.0.x`). `typed_data_plus_views` adds a **Condition** display type and one
+`view_result_count:VIEW-DISPLAY` derivative per enabled display. Contextual-filter
+handlers/validators supply argument context definitions; exposed filters supply
+optional scalar contexts. The shared context handler resolves mappings, nested
+properties, filters and global providers. There is no separate binding parser or
+YAML binding form. The standard context UI also receives caller-declared source
+definitions through the shared condition base class.
+
+The condition compares full-match counts independent of paging, checks display
+access as the execution user and uses fresh queries. Configuration dependencies
+include the View; Views edits invalidate derivative discovery. Missing argument
+contexts, access failures and configuration errors cannot pass through negation.
+Kernel coverage includes discovery/invalidation, typed/entity argument contexts,
+exposed contexts, standard form/schema, condition groups, user-sensitive queries
+and changed data. See the MR for current Drupal 10/11 and Coder results.
+
+[Typed Data Plus MR !3](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/3)
+(merged into `2.0.x`) adds `matches` with configuration-time literal-pattern validation,
+filtered typed-data pattern references, and explicit errors for invalid patterns
+or PCRE execution failures, including under negation/OR. It also makes `never`
+case-insensitive and documents remaining CounselKit grammar differences. Local
+validation: evaluator suite 37 tests / 95 assertions and Coder clean; the MR owns
+full Drupal 10/11 CI evidence. No checklist predicate registry or legacy adapters
+are implied by this slice.
+
+Views stays optional. The legacy condition-string `view` adapter, array-valued
+exposed contexts and skipped contextual slots remain open. Filter extraction,
+the remaining grammar/adapters and component conditions also remain open;
+P1 is not complete.
 
 Deliverables:
 
