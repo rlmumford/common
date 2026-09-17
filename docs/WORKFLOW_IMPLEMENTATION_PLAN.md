@@ -148,7 +148,11 @@ and scope feedback before saving; save-time hierarchy errors rebuild the form.
 Computed ancestry properties carry owner and service-list cache tags so ancestor
 moves invalidate dependent output without recursive descendant saves. Fetcher
 consumers also need Typed Data Plus's computed-property metadata fix (MR !4).
-Lifecycle/task gates and their migrations/history remain open.
+Service status storage now provides draft/active/complete/cancelled/superseded,
+with new services defaulting to draft. Update 10002 preserves legacy booleans,
+maps active rows/revisions, and leaves ambiguous inactive rows explicitly unmapped.
+Service transition history and task gates/migrations remain open; this foundation
+does not enable new workflow processing.
 
 ### Existing base
 

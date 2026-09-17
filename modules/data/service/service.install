@@ -144,3 +144,38 @@ function service_update_10001() {
   }
   $database->merge('service_hierarchy_lock')->key('id', 1)->execute();
 }
+
+/**
+ * Add explicit service statuses, preserving ambiguous inactive history.
+ */
+function service_update_10002() {
+  // Older standalone service installs did not require the Options field types.
+  if (!\Drupal::moduleHandler()->moduleExists('options')) {
+    \Drupal::service('module_installer')->install(['options']);
+  }
+  $definition = BaseFieldDefinition::create('list_string')
+    ->setLabel(t('Status'))
+    ->setRevisionable(TRUE)
+    ->setRequired(TRUE)
+    ->setSetting('allowed_values_function', '\\Drupal\\service\\Entity\\Service::statusOptionsList')
+    ->setDefaultValue('draft')
+    ->setInitialValue(NULL);
+  $manager = \Drupal::entityDefinitionUpdateManager();
+  if (!$manager->getFieldStorageDefinition('status', 'service')) {
+    $manager->installFieldStorageDefinition('status', 'service', 'service', $definition);
+  }
+
+  // Update each revision from its own boolean, never from today's entity state.
+  // NULL deliberately identifies records still awaiting an explicit mapping.
+  $database = \Drupal::database();
+  foreach (['service', 'service_revision'] as $table) {
+    $database->update($table)
+      ->fields(['status' => 'active'])
+      ->condition('state', 1)
+      ->isNull('status')
+      ->execute();
+  }
+  \Drupal::entityTypeManager()->getStorage('service')->resetCache();
+  $unmapped = $database->select('service', 's')->isNull('status')->countQuery()->execute()->fetchField();
+  return t('Service status installed. @count current services still require explicit status mapping. Legacy state and unmapped revision history are preserved.', ['@count' => $unmapped]);
+}
