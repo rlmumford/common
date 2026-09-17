@@ -161,7 +161,10 @@ saving/processing applies invalid as resolved with an invalid resolution, while
 preserving existing terminal outcomes. Cancelled services wait by default;
 consumer policy decides which tasks should be invalidated. The checklist processor and queue worker reload current tasks;
 processing requires active readiness. Stored pending/waiting/active is a projection refreshed on save and by cron;
-readiness reads current gates. Query support and resolution history remain open. Service transition APIs/history are deferred while task work takes
+readiness reads current gates. Resolution timestamps now normalize on every save,
+including direct writes and presave status changes; reopening clears the timestamp
+and repeated resolution preserves it. Explicit helper times use UTC. Query support
+and durable resolution history remain open. Service transition APIs/history are deferred while task work takes
 priority; no state-machine dependency is introduced.
 
 ### Existing base
