@@ -115,7 +115,7 @@ exposed contexts, standard form/schema, condition groups, user-sensitive queries
 and changed data. See the MR for current Drupal 10/11 and Coder results.
 
 [Typed Data Plus MR !3](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/3)
-(awaiting merge) adds `matches` with configuration-time literal-pattern validation,
+(merged into `2.0.x`) adds `matches` with configuration-time literal-pattern validation,
 filtered typed-data pattern references, and explicit errors for invalid patterns
 or PCRE execution failures, including under negation/OR. It also makes `never`
 case-insensitive and documents remaining CounselKit grammar differences. Local
