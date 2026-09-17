@@ -219,6 +219,17 @@ closed-versus-resolved compatibility and reopening semantics are explicit.
 
 ## P3 — Checklist contracts, outcomes, state and operational history
 
+Outcome-context foundation: configuration contexts retain complex/list/entity
+outcome definitions, and runtime contexts retain typed values and item cache tags.
+Automatic processing and completion checks now prepare fresh handler contexts
+through Typed Data Plus before evaluation. Missing required values defer work;
+invalid mappings surface as configuration errors. A standalone checklist kernel
+suite exercises sequential outcome consumption, stale-value removal, filtered
+selectors and global providers. Persisted list outcomes require Typed Data Plus
+[MR !5](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/5).
+Shared operation dispatch, execution identities,
+attempts and intermediate-state storage remain open.
+
 Deliverables:
 
 - Shared action methods, action forms and schema-defined action operations. Keep

@@ -20,3 +20,6 @@ services:
     arguments: ['@checklist.tempstore_repository', '@entity_type.manager']
     tags:
       - { name: paramconverter, priority: 10 }
+  checklist.context_preparer:
+    class: Drupal\checklist\ChecklistContextPreparer
+    arguments: ['@checklist.context_collector', '@typed_data_plus.context_handler']
