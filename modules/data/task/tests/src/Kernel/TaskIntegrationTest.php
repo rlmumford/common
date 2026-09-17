@@ -4,6 +4,8 @@ namespace Drupal\Tests\task\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\Core\Entity\EntityStorageException;
+use Drupal\Core\Cache\Cache;
+use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\note\Entity\Note;
 use Drupal\service\Entity\Service;
 use Drupal\service\Entity\ServiceType;
@@ -137,6 +139,28 @@ class TaskIntegrationTest extends KernelTestBase {
     $this->expectException(EntityStorageException::class);
     $this->expectExceptionMessage('missing');
     $task->save();
+  }
+
+  /**
+   * Changing only a task's reference invalidates its cached hierarchy result.
+   */
+  public function testTaskServiceCacheMetadata(): void {
+    ServiceType::create(['id' => 'work', 'label' => 'Work'])->save();
+    $first = Service::create(['type' => 'work', 'label' => 'First']);
+    $first->save();
+    $second = Service::create(['type' => 'work', 'label' => 'Second']);
+    $second->save();
+    $task = Task::create(['title' => 'Work', 'service' => $first]);
+    $task->save();
+    $property = $task->get('service')->first()->get('root');
+    $metadata = CacheableMetadata::createFromObject($property);
+    $this->assertContains('task:' . $task->id(), $metadata->getCacheTags());
+    $cache = $this->container->get('cache.render');
+    $cache->set('task_root', $first->id(), Cache::PERMANENT, $metadata->getCacheTags());
+    $this->assertNotFalse($cache->get('task_root'));
+    $task->set('service', $second)->save();
+    $this->assertFalse($cache->get('task_root'));
+    $this->assertSame($second->id(), $task->get('service')->first()->get('root')->getTargetIdentifier());
   }
 
 }

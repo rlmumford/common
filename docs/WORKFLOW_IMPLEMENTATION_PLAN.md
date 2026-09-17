@@ -143,8 +143,12 @@ Deletion refuses services with current children/tasks. Tests cover scope/access
 denial, stale opposite moves, failed-save rollback, schema updates, and competing
 connections holding the lock through outer commit. MySQL/MariaDB permission/scope
 reads require READ COMMITTED isolation. See `modules/data/service/README.md` for
-setup, supported write paths and limits. Render-cache invalidation, form feedback,
-and lifecycle/task gates remain open.
+setup, supported write paths and limits. Entity constraints now provide parent
+and scope feedback before saving; save-time hierarchy errors rebuild the form.
+Computed ancestry properties carry owner and service-list cache tags so ancestor
+moves invalidate dependent output without recursive descendant saves. Fetcher
+consumers also need Typed Data Plus's computed-property metadata fix (MR !4).
+Lifecycle/task gates and their migrations/history remain open.
 
 ### Existing base
 
