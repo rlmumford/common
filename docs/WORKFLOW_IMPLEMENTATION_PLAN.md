@@ -257,6 +257,13 @@ reset and successful cleanup follow the chosen policy; history remains intact.
 
 ## P4 — Processor, conditions and decision plugins
 
+Completion foundation: nullable applicability is preserved from handlers through
+items. Unknown applicability blocks execution and completion. Processing reuses
+`isCompletable()` after actions, so optional manual work does not block and earlier
+items are re-evaluated against changed gates. Tests cover newly applicable earlier
+work, removed requirements, and required unfinished/failed work. Configurable
+condition gates, decision plugins, execution identity and claims remain open.
+
 Deliverables:
 
 - Port applicability, requiredness, actionability, item dependencies and explicit

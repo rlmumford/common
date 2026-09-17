@@ -126,13 +126,13 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
    * {@inheritdoc}
    */
   public function isApplicable(): ?bool {
-    return (
-      $this->status->value === static::STATUS_COMPLETE ||
-      (
-        $this->status->value !== static::STATUS_NA &&
-        $this->getHandler()->isApplicable()
-      )
-    );
+    if ($this->isComplete()) {
+      return TRUE;
+    }
+    if ($this->status->value === static::STATUS_NA) {
+      return FALSE;
+    }
+    return $this->getHandler()->isApplicable();
   }
 
   /**
