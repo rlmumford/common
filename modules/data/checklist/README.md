@@ -59,3 +59,18 @@ paths use `completeCreation()` to save the entity, record its outcome, and then
 complete/save the item. The supplied entity must match the handler's entity type
 and fixed bundle. Existing form validation and caller access responsibilities
 still apply; this helper does not provide worker claims or replay protection.
+
+## Completion readiness
+
+Applicability has three values: `TRUE` means applicable, `FALSE` means definitely
+not applicable, and `NULL` means not yet known. Unknown applicability prevents
+execution and completion, even for an optional item whose applicability is still
+undetermined. Completed items and explicitly not-applicable statuses keep their
+existing behavior.
+
+Processing checks completion against current item readiness after running actions,
+using the same `isCompletable()` guard as explicit completion. Optional unfinished
+manual work does not block completion. Applicable required work blocks until it
+is complete, including when it is unactionable or has failed. Changes made by a
+later action are considered when rechecking earlier items; newly applicable earlier
+work receives its execution turn on the next processing pass.

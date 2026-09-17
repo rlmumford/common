@@ -200,21 +200,18 @@ class Checklist implements ChecklistInterface {
     }
 
     $context_preparer = \Drupal::service('checklist.context_preparer');
-    $default_resolvable = TRUE;
     foreach ($items as $item) {
       if ($item->isComplete() || $item->get('status')->value === ChecklistItemInterface::STATUS_NA) {
         continue;
       }
       if (!$context_preparer->prepare($this, $item)) {
-        $default_resolvable = FALSE;
         continue;
       }
-      if (!$item->isApplicable()) {
+      if ($item->isApplicable() !== TRUE) {
         continue;
       }
 
       if ($item->getMethod() !== ChecklistItemInterface::METHOD_AUTO) {
-        $default_resolvable = FALSE;
         continue;
       }
 
@@ -222,34 +219,20 @@ class Checklist implements ChecklistInterface {
       if ($item->isActionable()) {
         try {
           $item->action();
-
           if (!$item->isComplete()) {
             $item->setAttempted();
-
-            if ($item->isRequired()) {
-              $default_resolvable = FALSE;
-            }
           }
         }
         catch (\Exception $e) {
-          if ($item->isRequired()) {
-            $default_resolvable = FALSE;
-          }
-
           $item->setFailed(ChecklistItemInterface::METHOD_AUTO);
-        }
-      }
-      else {
-        if ($item->isRequired()) {
-          $default_resolvable = FALSE;
         }
       }
 
       $item->save();
     }
 
-    // @todo Configurable completion dependencies.
-    $resolvable = $default_resolvable;
+    // Outcomes can change earlier items' gates; re-evaluate after actions.
+    $resolvable = $this->isCompletable();
     if ($resolvable) {
       $this->complete();
     }
@@ -261,7 +244,7 @@ class Checklist implements ChecklistInterface {
    */
   public function complete() {
     if (!$this->isCompletable()) {
-      throw new \LogicException('Required checklist items are not complete.');
+      throw new \LogicException('Checklist items are not ready for completion.');
     }
     $this->getType()->completeChecklist($this);
     $this->isComplete = TRUE;
@@ -291,7 +274,11 @@ class Checklist implements ChecklistInterface {
       if (!$context_preparer->prepare($this, $item)) {
         return FALSE;
       }
-      if (!$item->isApplicable()) {
+      $applicable = $item->isApplicable();
+      if ($applicable === NULL) {
+        return FALSE;
+      }
+      if ($applicable === FALSE) {
         continue;
       }
 
