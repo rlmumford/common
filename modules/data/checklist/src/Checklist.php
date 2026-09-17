@@ -66,7 +66,7 @@ class Checklist implements ChecklistInterface {
   public function __construct(
     ChecklistTypeInterface $type,
     FieldableEntityInterface $entity,
-    string $key
+    string $key,
   ) {
     // @todo Add validation that this trio is valid.
     $this->type = $type;
@@ -199,9 +199,17 @@ class Checklist implements ChecklistInterface {
       return NULL;
     }
 
+    $context_preparer = \Drupal::service('checklist.context_preparer');
     $default_resolvable = TRUE;
     foreach ($items as $item) {
-      if (!$item->isApplicable() || $item->isComplete()) {
+      if ($item->isComplete() || $item->get('status')->value === ChecklistItemInterface::STATUS_NA) {
+        continue;
+      }
+      if (!$context_preparer->prepare($this, $item)) {
+        $default_resolvable = FALSE;
+        continue;
+      }
+      if (!$item->isApplicable()) {
         continue;
       }
 
@@ -274,9 +282,16 @@ class Checklist implements ChecklistInterface {
    * {@inheritdoc}
    */
   public function isCompletable() : bool {
+    $context_preparer = \Drupal::service('checklist.context_preparer');
     $completable = TRUE;
     foreach ($this->getItems() as $item) {
-      if (!$item->isApplicable() || $item->isComplete()) {
+      if ($item->isComplete() || $item->get('status')->value === ChecklistItemInterface::STATUS_NA) {
+        continue;
+      }
+      if (!$context_preparer->prepare($this, $item)) {
+        return FALSE;
+      }
+      if (!$item->isApplicable()) {
         continue;
       }
 

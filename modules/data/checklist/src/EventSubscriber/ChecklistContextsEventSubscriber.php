@@ -9,14 +9,13 @@ use Drupal\Core\Plugin\Context\Context;
 use Drupal\Core\Plugin\Context\EntityContext;
 use Drupal\Core\Plugin\Context\EntityContextDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\typed_data_reference\TypedDataDefinitionToContextDefinitionTrait;
+use Drupal\typed_data_plus\Plugin\Context\DataContextDefinition;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Subscriber for checklist contexts.
  */
 class ChecklistContextsEventSubscriber implements EventSubscriberInterface {
-  use TypedDataDefinitionToContextDefinitionTrait;
 
   /**
    * {@inheritdoc}
@@ -76,7 +75,7 @@ class ChecklistContextsEventSubscriber implements EventSubscriberInterface {
       foreach ($handler->expectedOutcomeDefinitions() as $outcome_name => $definition) {
         $event->addContext(
           "item:{$name}:{$outcome_name}",
-          new Context($this->contextDefinitionForDataDefinition($definition))
+          new Context(DataContextDefinition::fromDataDefinition($definition))
         );
       }
     }
@@ -96,13 +95,12 @@ class ChecklistContextsEventSubscriber implements EventSubscriberInterface {
       $outcomes = $item->get('outcomes');
 
       foreach ($outcomes->getPropertyDefinitions() as $outcome_name => $definition) {
-        $event->addContext(
-          "item:{$name}:{$outcome_name}",
-          new Context(
-            $this->contextDefinitionForDataDefinition($definition),
-            $outcomes->get($outcome_name)->getValue()
-          )
+        $context = new Context(
+          DataContextDefinition::fromDataDefinition($definition),
+          $outcomes->get($outcome_name)
         );
+        $context->addCacheableDependency($item);
+        $event->addContext("item:{$name}:{$outcome_name}", $context);
       }
     }
   }

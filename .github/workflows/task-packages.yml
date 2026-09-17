@@ -68,3 +68,9 @@ jobs:
           SIMPLETEST_DB: ${{ matrix.database == 'mysql' && 'mysql://root:testing@127.0.0.1:3306/task_consumer' || 'sqlite://localhost/:memory:' }}
           SYMFONY_DEPRECATIONS_HELPER: weak
         run: vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/service/tests/src/Kernel
+      - name: Test the checklist module
+        working-directory: /tmp/task-consumer
+        env:
+          SIMPLETEST_DB: ${{ matrix.database == 'mysql' && 'mysql://root:testing@127.0.0.1:3306/task_consumer' || 'sqlite://localhost/:memory:' }}
+          SYMFONY_DEPRECATIONS_HELPER: weak
+        run: vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/checklist/tests/src/Kernel
