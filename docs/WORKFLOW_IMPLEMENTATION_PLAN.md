@@ -1,6 +1,6 @@
 # Workflow framework implementation plan
 
-Status: P0 design baseline recorded; P1 development started; P2–P9 not implemented. Updated 16 September 2026.
+Status: P0 design baseline recorded; P1 development started; P2 traversal foundation started; P3–P9 not implemented. Updated 17 September 2026.
 
 This plan implements the requirements in [Workflow architecture](WORKFLOW_ARCHITECTURE.md)
 within `rlmumford/common` on `2.x`. CounselKit `11.5.x` is the behavioral reference.
@@ -132,13 +132,21 @@ Acceptance:
 
 ## P2 — Nested services and task lifecycle
 
+Traversal foundation implemented: `service.hierarchy` and lazy `service_reference`
+`all`/`root` properties share cycle-safe resolution, explicit missing-parent errors,
+and support unsaved graphs. The service kernel suite covers multilevel trees,
+empty references, cycles, missing ancestors and retained properties after saved
+moves. This does not yet enforce valid writes: serialized reparenting, access/scope
+policies, deletion refusal, render-cache invalidation and lifecycle/task gates
+remain open. See `modules/data/service/README.md` for the API and its limits.
+
 ### Existing base
 
 `Service::baseFieldDefinitions()` already defines a service-to-service `service`
-reference. `ServiceReferenceItem` exposes computed `root` and `all` properties by
-walking that chain. This is a starting point, not a proven hierarchy implementation:
-the traversal currently has no visited-set guard. Do not add a second parent field
-without a deliberate compatibility/migration decision.
+reference. `ServiceReferenceItem` exposes computed `root` and `all` properties
+through the shared traversal resolver. Cycle and missing-parent detection now
+protect reads; write enforcement remains to be implemented. Do not add a second
+parent field without a deliberate compatibility/migration decision.
 
 ### Hierarchy contract
 
