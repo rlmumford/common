@@ -87,6 +87,25 @@ class TaskReadinessTest extends KernelTestBase {
   }
 
   /**
+   * Tasks without a recorded service remain active and receive no service gate.
+   */
+  public function testTaskWithoutService(): void {
+    $task = Task::create(['title' => 'Independent work']);
+    $evaluator = $this->container->get('task.readiness');
+    $this->assertSame('active', $evaluator->evaluate($task)->state);
+    $this->assertSame([], $evaluator->evaluate($task)->reasons);
+    $task->save();
+    $task = $this->container->get('entity_type.manager')->getStorage('task')->loadUnchanged($task->id());
+    $this->assertSame('active', $task->status->value);
+    $this->assertSame('active', $evaluator->evaluate($task)->state);
+    $this->assertSame([], $evaluator->evaluate($task)->reasons);
+    $task->set('service', ['target_id' => NULL]);
+    $task->save();
+    $this->assertSame('active', $evaluator->evaluate($task)->state);
+    $this->assertSame([], $evaluator->evaluate($task)->reasons);
+  }
+
+  /**
    * Only the immediate service gates work, without requiring task saves.
    */
   public function testImmediateServiceOnly(): void {
