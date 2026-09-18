@@ -98,6 +98,20 @@ mutation authority. Shared read/access policy applies to UI, HTTP and AI results
 
 ## Shared workspace and user ownership
 
+Workspace addressing uses host entity type, host UUID and checklist field/delta
+key, never the numeric host ID. A UUID assigned when an entity is created permits
+cross-request tempstore storage before the host is saved. Saving the host keeps
+that address stable, and distinct unsaved hosts must remain isolated. The existing
+repository already uses this UUID key; regression coverage proves pre-save storage,
+isolation and retrieval/deletion through the same address after saving.
+
+Stable addressing does not update serialized snapshots automatically. After saving
+a host, the workspace coordinator must update/rebind the stored graph explicitly;
+it must not later treat an old unsaved snapshot as a new host to insert again.
+Tempstore remains subject to its lifetime policy; durable attempt/state storage is
+still required for long-running work. Stable checklist identity across delta moves
+remains separate from stable host identity.
+
 There is one authoritative interaction workspace per checklist, shared across UI,
 API and AI. Do not create separate per-channel or per-user copies of checklist item
 working state. Access alone permits observation; mutation additionally requires the

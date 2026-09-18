@@ -284,6 +284,49 @@ class ChecklistResolverTest extends KernelTestBase {
   }
 
   /**
+   * UUID-keyed tempstore works before save and keeps its address afterwards.
+   */
+  public function testUnsavedTempstoreIdentity(): void {
+    $host = User::create([
+      'name' => 'Draft host',
+      'work' => $this->value('context_test', 'Draft checklist'),
+    ]);
+    $other = User::create([
+      'name' => 'Other draft',
+      'work' => $this->value('context_test', 'Other checklist'),
+    ]);
+    $resolver = $this->container->get('checklist.resolver');
+    $repository = $this->container->get('checklist.tempstore_repository');
+    $checklist = $resolver->resolve($host, 'work', 0, 'update');
+    $checklist->getItem('decision')->setFailed();
+    $uuid = $host->uuid();
+    $this->assertNotEmpty($uuid);
+    $this->assertNotSame($uuid, $other->uuid());
+    $this->assertNull($host->id());
+    $repository->set($checklist);
+    $this->assertTrue($repository->has($checklist));
+    $this->assertFalse($repository->has($resolver->resolve($other, 'work')));
+    $restored = $repository->get($checklist);
+    $this->assertNull($restored->getEntity()->id());
+    $this->assertTrue($restored->getEntity()->isNew());
+    $this->assertSame($uuid, $restored->getEntity()->uuid());
+    $this->assertTrue($restored->getItem('decision')->isFailed());
+
+    $host->save();
+    $this->assertSame($uuid, $host->uuid());
+    $fresh = $this->container->get('entity_type.manager')->getStorage('user')->loadUnchanged($host->id());
+    $saved_checklist = $resolver->resolve($fresh, 'work');
+    $this->assertTrue($repository->has($saved_checklist));
+    $this->assertTrue($repository->get($saved_checklist)->getItem('decision')->isFailed());
+    // Stable addressing does not rewrite an already serialized host snapshot.
+    $this->assertNull($repository->get($saved_checklist)->getEntity()->id());
+    $repository->set($checklist);
+    $this->assertEquals($host->id(), $repository->get($saved_checklist)->getEntity()->id());
+    $repository->delete($saved_checklist);
+    $this->assertFalse($repository->has($checklist));
+  }
+
+  /**
    * Unsaved hosts require creation access, not an assumed edit permission.
    */
   public function testDeniedCreation(): void {

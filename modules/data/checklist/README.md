@@ -278,3 +278,10 @@ until the identity policy in the
 [interaction contract](https://github.com/rlmumford/common/blob/2.x/docs/CHECKLIST_INTERACTION_CONTRACT.md)
 is implemented. HTTP adapters must define their revision/translation targeting;
 the resolver makes no implicit choice on their behalf.
+
+The existing checklist tempstore is scoped by host entity type and keyed by host
+UUID plus checklist field/delta key. It can hold an unsaved host/checklist across
+requests; saving the host does not change that key. Separate unsaved hosts have
+separate UUIDs. After saving, explicitly update the stored graph: the unchanged key
+does not rewrite its serialized unsaved host snapshot. Tempstore expiration still
+applies; this is not a replacement for durable attempt/state storage.
