@@ -285,3 +285,48 @@ requests; saving the host does not change that key. Separate unsaved hosts have
 separate UUIDs. After saving, explicitly update the stored graph: the unchanged key
 does not rewrite its serialized unsaved host snapshot. Tempstore expiration still
 applies; this is not a replacement for durable attempt/state storage.
+
+## Item reads and action progress
+
+`checklist.item_reader` provides transport-independent read snapshots:
+
+```php
+$reader = \Drupal::service('checklist.item_reader');
+$items = $reader->readItems($entity, 'checklist', 0);
+$item = $reader->read($entity, 'checklist', 0, 'review');
+```
+
+Both use the entity-based resolver and preserve the supplied workspace. Item reads
+contain `name`, `title`, durable `status`, `contexts_available`, `applicable`,
+`required`, `actionable` and optional `action_state`. They do not call actions,
+process/complete the checklist, save entities or acquire ownership. `actionable`
+describes workflow readiness, not permission to execute. Missing required runtime
+contexts suppress plugin progress, make applicability unknown, and conservatively
+report required/non-actionable work. Invalid configuration remains an error.
+
+Handlers can implement `ActionStateChecklistItemHandlerInterface::getActionState()`
+to return a `ChecklistActionState` or NULL. The progress object allows only stage,
+plain-text message, completed/total counts, underlying update timestamp and an
+input-required flag. Unavailable counts/timestamps remain NULL; polling must not
+invent activity timestamps or percentages. Progress providers read stored state;
+they must not poll external services, execute work or expose raw state/prompts/error
+payloads. Plugins remain responsible for the suitability of their text for the
+current viewer. Adapters must escape text when rendering HTML.
+
+The reader checks the dedicated Drupal entity access operation `view action state`
+before preparing contexts or invoking the progress provider. Item lists omit hidden
+items; direct reads return the same not-found error for hidden and unknown names.
+Host/field access denial is reported by the resolver. The action-operation dispatcher
+also requires `view action state` and `execute action operation`. These inherit host
+view/update and checklist field view/edit access (create access for unsaved hosts).
+Modules can restrict items using `hook_checklist_item_access()` or
+`hook_entity_access()` for those operation names. An item grant cannot override a
+host/field denial. This does not grant ordinary entity `view` access or expose the
+whole item through another serializer.
+
+Snapshots are request-local. HTTP adapters must disable caching until cache metadata
+is aggregated across access, contexts, conditions and progress providers. Do not
+cache across users or changes. No HTTP routes or existing UI replacement ship in
+this slice. Outcomes, resources, attempt identity, workspace ownership/version and
+safe blocked-reason descriptions remain later read-model additions. The automatic
+processor continues to inspect the full checklist; visibility is not applicability.

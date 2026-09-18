@@ -78,12 +78,16 @@ An item read distinguishes these concepts:
 - Workspace ownership/version and permitted next actions, subject to access.
 - Outcomes and resource references that the caller is authorized to see.
 
-An optional handler capability should provide a structured action-state/progress
-projection (working name `ActionStateChecklistItemHandlerInterface`). A shared item
-reader supplies generic status and attempt information and asks the handler only
-for plugin-specific presentation. Final method names and result schema belong in
-that implementation slice. Handlers without this capability still have useful GET
-responses from the generic reader.
+The first read-model slice is implemented by `checklist.item_reader`: individual
+reads and visible-item lists expose identity, status, current gates and optional
+progress. `ActionStateChecklistItemHandlerInterface::getActionState()` returns a
+`ChecklistActionState` with stage, plain-text message, counts, update timestamp and
+input-required flag. Handlers without the capability still expose generic item
+status. Dedicated `view action state` and `execute action operation` entity access
+operations inherit host/field restrictions and allow item-specific hook denials.
+They do not grant full entity-view access. Reads are currently uncacheable snapshots.
+HTTP routes, UI integration, attempt/ownership details, safe outcomes/resources and
+blocked-reason descriptions remain future work.
 
 The projection reads stored working state and attempt/run records. It does not
 serialize the entire state bag or expose raw prompts, credentials, internal tool
@@ -206,7 +210,8 @@ Implement in this order:
    resolution is available through `checklist.resolver::resolve()`: host/field access,
    type checks, field/delta isolation, unsaved entities and in-memory state are
    covered. Callers own loading/workspace selection; shared workspace composition
-   and the item read model remain open.
+   remains open. The initial item reader and optional action-progress projection
+   now have access-filtered kernel coverage; HTTP adapters remain open.
 3. Implement durable state/attempt storage, ownership leases, atomic takeover,
    version checks and operational history; integrate all mutating paths.
 4. Add `checklist_api` discovery, reads and invocation, then AI tool adapters using

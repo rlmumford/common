@@ -1,0 +1,23 @@
+<?php
+
+/**
+ * @file
+ * Item access fixtures for checklist reads.
+ */
+
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Session\AccountInterface;
+
+/**
+ * Implements hook_checklist_item_access().
+ */
+function checklist_reader_test_checklist_item_access(EntityInterface $entity, $operation, AccountInterface $account) {
+  if ($entity->getName() === 'hidden') {
+    return AccessResult::forbidden()->setCacheMaxAge(0);
+  }
+  if (in_array($operation, ['view action state', 'execute action operation'], TRUE) && \Drupal::state()->get('checklist_reader_test.grant_item_access')) {
+    return AccessResult::allowed()->setCacheMaxAge(0);
+  }
+  return AccessResult::neutral();
+}

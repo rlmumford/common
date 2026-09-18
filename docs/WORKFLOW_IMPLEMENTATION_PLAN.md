@@ -338,6 +338,16 @@ reset existing work; invalid/missing templates cannot silently complete the task
 
 ## P6 — Resource workspace and interaction parity
 
+Initial item reader implemented: `checklist.item_reader` returns authorized item
+snapshots and visible-item lists without executing work. Optional handler progress
+uses `ActionStateChecklistItemHandlerInterface` and `ChecklistActionState`. Dedicated
+entity access operations inherit host/field permissions and support item visibility
+denials without granting full entity-view access. The action-operation dispatcher
+uses these checks too. Tests cover read-only viewers, hidden items, denied field
+access, missing contexts, safe progress, no execution/persistence and unsaved hosts.
+HTTP routes, UI integration, resources, attempts/ownership and cache aggregation
+remain open; read snapshots must not be cached across users or changes.
+
 Deliverables:
 
 - Generic split checklist/action and resource-pane layout in reusable modules.
