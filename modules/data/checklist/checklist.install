@@ -36,3 +36,63 @@ function checklist_update_10001() {
     $manager->installFieldStorageDefinition('state', 'checklist_item', 'checklist', $definition);
   }
 }
+
+/**
+ * Implements hook_schema().
+ */
+function checklist_schema() {
+  $uuid = ['type' => 'varchar_ascii', 'length' => 36, 'not null' => TRUE];
+  $number = ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE];
+  $timestamp = ['type' => 'int', 'size' => 'big', 'not null' => TRUE];
+  $status = ['type' => 'varchar_ascii', 'length' => 16, 'not null' => TRUE];
+  $schema['checklist_attempt'] = [
+    'description' => 'Current metadata for each execution attempt; terminal attempts remain immutable.',
+    'fields' => [
+      'id' => $uuid,
+      'item_uuid' => $uuid,
+      'previous' => ['not null' => FALSE] + $uuid,
+      'mode' => $status,
+      'status' => $status,
+      'version' => $number,
+      'initiator' => $number,
+      'executor' => $number,
+      'path' => $status,
+      'operation' => ['type' => 'varchar', 'length' => 128, 'not null' => FALSE],
+      'created' => $timestamp,
+      'changed' => $timestamp,
+    ],
+    'primary key' => ['id'],
+    'indexes' => ['item_uuid' => ['item_uuid']],
+  ];
+  $schema['checklist_attempt_head'] = [
+    'description' => 'Atomically replaced latest-attempt pointer per checklist item UUID.',
+    'fields' => ['item_uuid' => $uuid, 'attempt' => $uuid],
+    'primary key' => ['item_uuid'],
+  ];
+  $schema['checklist_attempt_event'] = [
+    'description' => 'Append-only attempt transition metadata, without raw working state.',
+    'fields' => [
+      'attempt' => $uuid,
+      'version' => $number,
+      'from_status' => ['not null' => FALSE] + $status,
+      'to_status' => $status,
+      'actor' => $number,
+      'created' => $timestamp,
+      'reason' => ['type' => 'varchar', 'length' => 512, 'not null' => TRUE, 'default' => ''],
+    ],
+    'primary key' => ['attempt', 'version'],
+  ];
+  return $schema;
+}
+
+/**
+ * Adds attempt storage without inventing history for existing items.
+ */
+function checklist_update_10002() {
+  $schema = \Drupal::database()->schema();
+  foreach (checklist_schema() as $table => $definition) {
+    if (!$schema->tableExists($table)) {
+      $schema->createTable($table, $definition);
+    }
+  }
+}

@@ -370,3 +370,77 @@ This slice supplies the state model and lifecycle cleanup. Versioned attempts,
 operational history, ownership/claims and late-result rejection remain required
 before external concurrent writes or user-facing resume/start-fresh/takeover actions.
 There is no implicit per-viewer state fork and no automatic state dump into outcomes.
+
+## Attempt journal
+
+`checklist.attempt_journal` is an internal persistence service for durable attempt
+metadata and append-only transition events. It is not yet an execution coordinator:
+existing forms, operations and automatic processing do not call it automatically.
+No HTTP route or public retry/reset action is introduced.
+
+Each attempt has its own UUID and retains the item UUID, predecessor, initial /
+resume / fresh intent, entry path (action, action form or action operation), optional
+operation name, initiating and intended executing user IDs, timestamps, status and
+version. User IDs record attribution; they do not switch accounts or grant access.
+The item UUID works before saving the item or host, provided the workspace retains
+that same item instance/UUID. Rebuilding an unsaved item with a new UUID creates a
+new stream. Saving an item does not change its UUID. Raw state, operation parameters,
+provider payloads and exception dumps are not copied into the journal.
+
+```php
+use Drupal\checklist\Attempt\ChecklistAttempt;
+
+$attempt = $journal->create(
+  $item, $initiator_id, $executor_id,
+  ChecklistAttempt::ACTION_OPERATION, 'choose',
+);
+$running = $journal->transition($attempt, ChecklistAttempt::RUNNING, $executor_id);
+$failed = $journal->transition($running, ChecklistAttempt::FAILED, $executor_id, 'Provider unavailable');
+$resume = $journal->create(
+  $item, $initiator_id, $executor_id,
+  ChecklistAttempt::ACTION_OPERATION, 'choose',
+  mode: ChecklistAttempt::RESUME,
+  previous: $failed->id,
+);
+```
+
+The example records history only; it does not execute `choose`, mark the item
+failed, reopen it or modify working state. The execution coordinator must apply
+item changes and attempt transitions together, enforce current access and ownership,
+and check current gates before invoking a handler. A fresh-intent record is not
+permission to repeat an external effect. Retained-state resume and fresh-state reset
+remain coordinator work; this service does not implement either state mutation.
+
+| Current attempt status | Allowed next statuses |
+| --- | --- |
+| queued | running, cancelled, superseded |
+| running | waiting, succeeded, failed, cancelled, superseded |
+| waiting | running, failed, cancelled, superseded |
+| succeeded, failed, cancelled, superseded | None; terminal records are immutable. |
+
+Only one nonterminal attempt exists per item through this API. A successor must
+name the exact latest predecessor. Resume requires a failed predecessor; fresh
+permits failed, cancelled or superseded. Success is not implicitly reopened.
+Cancelled/superseded records preserve history without implying external work has
+stopped. Waiting-to-running continues the same attempt; resuming after failure
+creates a new one.
+
+Each transition compares the expected version in the database and atomically
+appends an event containing old/new status, actor, timestamp and optional safe
+reason. Stale or duplicate submissions throw `ChecklistAttemptConflictException`;
+invalid transitions throw `DomainException`. This fences journal writes only; it
+is not a worker claim, lease, idempotency key or fence on entity/provider writes.
+No database transaction remains open across provider calls.
+
+`load()`, `latest()` and `history()` are internal reads without access checks.
+Adapters must resolve and authorize the item/host before exposing any projection,
+including historical reasons. History is bounded to 1–100 events per call, ordered
+by version, with an exclusive `after_version` cursor. Follow predecessor IDs to
+inspect earlier attempts rather than loading an unbounded item history.
+
+Run database updates: `checklist_update_10002()` adds the three journal tables.
+Existing items retain their state/outcomes and receive no fabricated past attempts.
+Records are retained independently of item deletion or tempstore expiry; deployment
+retention/purge policy and access-filtered history UI are follow-up work. Unsaved
+work may leave orphaned attempt metadata if its workspace expires; the journal does
+not preserve the host graph or replace durable working-state storage.

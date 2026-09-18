@@ -35,3 +35,6 @@ services:
   checklist.item_reader:
     class: Drupal\checklist\ChecklistItemReader
     arguments: ['@checklist.resolver', '@checklist.context_preparer']
+  checklist.attempt_journal:
+    class: Drupal\checklist\Attempt\ChecklistAttemptJournal
+    arguments: ['@database', '@uuid', '@datetime.time']

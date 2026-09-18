@@ -258,6 +258,15 @@ and upgrades from the previous schema have kernel coverage. Ordinary field acces
 does not expose raw state. This is not yet a versioned attempt or public reset API;
 operational history, ownership and stale-result protection remain open.
 
+The internal `checklist.attempt_journal` now stores distinct attempts and append-only
+transition metadata, with item UUID identity, entry path/operation, initiator and
+executor, successor links and timestamps. A unique item head plus conditional
+version writes reject stale starts/transitions. Resume and fresh are recorded
+intents only: the journal does not reset item state or coordinate execution. Tests
+cover lifecycle, successor history, SQL conflict paths, rollback and installation /
+upgrade. Execution-path integration, ownership/claims, atomic item-state application,
+access-filtered history and retention policy remain open.
+
 Deliverables:
 
 - Shared action methods, action forms and schema-defined action operations. Keep
