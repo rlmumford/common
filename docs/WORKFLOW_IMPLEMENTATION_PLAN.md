@@ -345,9 +345,20 @@ or due times. Local result writes and history commit together; stale/expired wor
 cannot apply results through this API. Expired running work is not automatically
 re-executed. Kernel coverage exercises repeated iterations, item-state persistence,
 late writes, independent items, transaction rollback and the schema upgrade.
-Handler invocation, execution-user restoration, queue delivery, workspace ownership
-and integrating existing mutating paths remain open. This is not yet an end-to-end
-worker runner.
+The initial handler runner is described below. Queue delivery, workspace ownership
+and integration across existing interactive paths remain open.
+
+The initial automatic handler runner now invokes an opt-in `actionIteration()`
+under the stored active executor and restores caller identity on every exit path.
+It reloads and rechecks host/field/item access, conditions and mapped contexts before
+execution and result application. Typed result changes, item disposition and attempt
+history commit under the claim. Waiting preserves state and the attempt identity;
+success clears state; failure retains it. Legacy processing excludes iterative
+handlers. This first adapter supports saved autonomous items on single-value,
+untranslatable fields of non-revisionable hosts and initial action attempts only.
+Scheduling/queue delivery, authorized retry resets, unsaved workspaces and interactive
+ownership remain open. Kernel tests exercise cross-request continuation, failure,
+identity restoration and in-flight changes to permissions, contexts and state.
 
 ## P5 — Templates, providers and derivative items
 

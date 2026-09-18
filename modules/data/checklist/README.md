@@ -506,16 +506,93 @@ Direct journal transitions cannot bypass an active claim or start waiting work
 before its due time. Legacy unclaimed running attempts remain unclaimed on upgrade;
 there is no invented lease or automatic recovery.
 
-This is the worker coordination primitive, not the handler runner or scheduler.
-Callers still establish the executor account, enforce current access and gates,
+This is the worker coordination primitive. The automatic runner below uses it;
+a scheduler is still required. Other callers establish the executor account,
+enforce current access and gates,
 select an authoritative saved item or unsaved workspace, and apply the appropriate
 item disposition/state/outcome changes. `due()` has no access/path filtering; a
 scheduler must select its supported execution paths and authorize each target.
 Workspace editing ownership and worker claims are separate. Existing forms,
 operations and automatic processing are not yet wired to claims, so out-of-band
 entity saves and external effects are not fenced by this service. Queue/cron or
-Messenger delivery, handler iteration results, identity restoration and shared
-workspace integration remain the next steps.
+Messenger delivery and shared workspace integration remain follow-up work. The
+automatic runner below supplies iteration results and identity restoration for
+its supported bindings.
 
 Run database updates: `checklist_update_10003()` adds claim/expiry/due columns and a
 due-work index, preserving existing attempt metadata and transition history.
+
+## Automatic iteration runner
+
+`checklist.iteration_runner::run($attempt, $lease_seconds = 300)` executes one
+bounded iteration for an explicitly authorized automatic attempt. A scheduler can
+call it again when a waiting attempt becomes due. The attempt UUID stays the same
+across these calls; each call obtains its own worker claim.
+
+Automatic handlers opt in through `IterativeChecklistItemHandlerInterface` and
+implement `actionIteration(ChecklistAttempt $attempt): ChecklistIterationResult`.
+The attempt snapshot supplies a stable ID for provider idempotency; it contains
+no claim token. They read their prepared
+contexts and stored working state, perform one bounded unit of provider/batch work,
+and return named state/outcome changes rather than saving the item themselves:
+
+```php
+return new ChecklistIterationResult(
+  ChecklistAttempt::WAITING,
+  state: ['run_id' => $run_id, 'cursor' => $next_cursor],
+  delay: 10,
+);
+```
+
+Waiting preserves incomplete item status and working state. Success publishes the
+returned outcomes, completes the item and clears working state. The normal checklist
+completion rules still govern resolving the containing task; the runner does not
+complete the host checklist automatically. Explicit failure
+can return diagnostic working values, which are retained while the item and attempt
+are marked failed. Omitted state/outcome names are preserved; every supplied name
+must be declared by the handler and its value must pass typed-data validation.
+An unexpected handler exception retains previously committed state, records a generic
+failure reason and marks the item failed if result-time checks still pass, then
+rethrows the original exception. Raw exception messages are not copied into history.
+
+The runner reloads the attempt's executor and switches to that active user before
+checking host/field/item access and preparing contexts. It restores the caller even
+on exceptions. The new `execute iteration` item access operation inherits host
+view/update and checklist-field view/edit restrictions, independently of viewer
+visibility. Providers and handlers therefore see the executor, not the cron user.
+Initial submission must separately authorize the chosen executor and target; this
+internal service is not a public impersonation API.
+
+Provider work runs outside a database transaction. Before saving results, the
+runner reloads the account, host, executing item and sibling outcome sources,
+rechecks permissions and native applicability/actionability gates, and compares
+item/host data and mapped context values with the inputs used for execution.
+Changed inputs or revoked access reject the result. A still-live rejected claim is
+closed with a safe failure record, leaving item data unchanged; expired claims are
+left for explicit supervisor reconciliation. Result application, item writes and
+history share the claim transaction. Discard entity objects after rollback.
+Mapped contexts must contain comparable scalar/array/typed/entity values; arbitrary
+service/resource objects are rejected. Host comparison is deliberately conservative:
+even unrelated host edits can reject an in-flight result.
+
+This first runner is for **persisted autonomous items** on single-value,
+untranslatable checklist fields of non-revisionable hosts. It accepts initial
+`action` attempts only; it does not perform resume/fresh resets. Interactive/form
+and action-operation handlers are excluded until workspace ownership is integrated.
+Unsaved workspaces, multivalue checklist identity, translated/revision-specific
+bindings and retry authorization need explicit adapters. These restrictions are
+checked before handler invocation, rather than inferring a draft or delta binding.
+The UUID-based journal/claims themselves still support unsaved item identities.
+
+The existing synchronous processor skips iterative handlers, and the item's
+`action()` method refuses to execute them directly. Existing non-iterative handlers
+continue through the previous path. Plugins must not save or mutate the item during
+`actionIteration()`; return changes for claim-protected application instead. Claims
+cannot undo external effects or fence arbitrary programmatic entity writes outside
+this protocol. Use provider idempotency and reconcile uncertain external effects;
+expired work is never automatically rerun.
+
+There is no queue/cron/Messenger adapter in this slice, no automatic attempt creation
+on task save, and no public retry or takeover route. The next integration is durable
+scheduling and invoking this runner from workers. Blocking calls must fit within
+the supplied lease; this runner does not heartbeat a blocked PHP thread.

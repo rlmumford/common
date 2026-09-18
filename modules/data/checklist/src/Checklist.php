@@ -3,6 +3,7 @@
 namespace Drupal\checklist;
 
 use Drupal\checklist\Entity\ChecklistItemInterface;
+use Drupal\checklist\Plugin\ChecklistItemHandler\IterativeChecklistItemHandlerInterface;
 use Drupal\checklist\Plugin\ChecklistType\ChecklistTypeInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
 
@@ -204,6 +205,9 @@ class Checklist implements ChecklistInterface {
     $context_preparer = \Drupal::service('checklist.context_preparer');
     foreach ($items as $item) {
       if ($item->isComplete() || $item->get('status')->value === ChecklistItemInterface::STATUS_NA) {
+        continue;
+      }
+      if ($item->getHandler() instanceof IterativeChecklistItemHandlerInterface) {
         continue;
       }
       if (!$context_preparer->prepare($this, $item)) {

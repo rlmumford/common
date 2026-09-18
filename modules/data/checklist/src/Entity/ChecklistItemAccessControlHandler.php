@@ -17,7 +17,7 @@ class ChecklistItemAccessControlHandler extends EntityAccessControlHandler {
    * {@inheritdoc}
    */
   protected function checkAccess(EntityInterface $entity, $operation, AccountInterface $account) {
-    if (!in_array($operation, ['view action state', 'execute action operation'], TRUE)) {
+    if (!in_array($operation, ['view action state', 'execute action operation', 'execute iteration'], TRUE)) {
       return parent::checkAccess($entity, $operation, $account);
     }
     $reference = $entity->get('checklist');
@@ -32,7 +32,7 @@ class ChecklistItemAccessControlHandler extends EntityAccessControlHandler {
     }
     $access = $host->access($host->isNew() ? 'create' : 'view', $account, TRUE)
       ->andIf($field->access('view', $account, TRUE));
-    if ($operation === 'execute action operation') {
+    if (in_array($operation, ['execute action operation', 'execute iteration'], TRUE)) {
       $access = $access->andIf($host->access($host->isNew() ? 'create' : 'update', $account, TRUE))
         ->andIf($field->access('edit', $account, TRUE));
     }
