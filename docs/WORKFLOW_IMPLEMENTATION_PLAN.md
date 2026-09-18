@@ -249,6 +249,12 @@ and conflicting tempstore.
 Adapters still supply the current checklist/account; shared workspace composition,
 claims, execution identities and attempts remain open.
 
+The first workspace slice now provides `checklist.workspace_storage`, with a
+stable host UUID/field/delta/checklist-key address, durable user leases, expiry,
+renewal, release and fencing generations. It deliberately has no HTTP adapter,
+takeover policy or mutation integration yet; those consumers must check the
+lease before writing and remain future work.
+
 Opt-in working-state storage is now implemented through
 `StatefulChecklistItemHandlerInterface::stateDefinitions()` and the item's separate
 internal `state` field. State is retained on failure and cleared by completion
