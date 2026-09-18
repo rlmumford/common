@@ -360,7 +360,7 @@ Authorized retry resets, unsaved workspaces and interactive ownership remain ope
 identity restoration and in-flight changes to permissions, contexts and state.
 
 Queue API delivery now schedules already-authorized initial action attempts from
-cron through `checklist.iteration_scheduler`. Selection/reservation is behind
+cron through `checklist.item_iteration_scheduler`. Selection/reservation is behind
 `ChecklistAttemptDispatchStorageInterface`, with a default SQL implementation; the
 scheduler depends only on that contract and the queue transport. Journal/claim
 persistence still requires coordinated backend work before an all-Redis attempt
@@ -373,12 +373,15 @@ failed/expired-running work is never automatically replayed. Scans prioritize wo
 least recently dispatched. Kernel coverage includes delayed continuation, duplicates,
 lost delivery, competing dispatch, blocked executors, fairness, safe logging, schema
 upgrade and rejection of dispatch within an open transaction. Caller-authorized
-submission now records initial attempts for supported saved iterative items through
-`checklist.iteration_submitter`, also called by `Checklist::process()`. Shared
-preparation enforces the same account, binding, access, context and gate checks as
-the worker. Repeated/competing submissions retain the existing attempt and executor;
-failures are not implicitly retried. Submission is journal-only and rolls back with
-an outer save transaction. Generated-item materialization, automatic evaluation on
+submission and execution now share `checklist.item_executor`. `Checklist::process()`
+delegates to the checklist-wide `checklist.processor`, which runs short items inline,
+refreshes outcomes and revisits newly ready items within a request budget. Explicit
+background work, transaction-bound submissions and yielded continuations use workers.
+Single-step handlers need only return a result, with optional state capability.
+Inline work has audit/claims but no queue or dispatch reservation. Shared preparation
+enforces the same account, binding, access, context and gate checks as the worker. Repeated/competing submissions retain the existing attempt and executor;
+failures are not implicitly retried. Submission inside an outer transaction is journal-only and rolls back with it;
+standalone submission can finish inline. Generated-item materialization, automatic evaluation on
 task save/result changes, alternate executor policies, Messenger deployment, workspace
 ownership and retry/reset remain open.
 

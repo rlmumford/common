@@ -8,7 +8,7 @@ use Drupal\checklist\Attempt\ChecklistAttempt;
 use Drupal\checklist\Attempt\ChecklistAttemptConflictException;
 use Drupal\checklist\Attempt\ChecklistAttemptDispatchStorageInterface;
 use Drupal\checklist\Entity\ChecklistItem;
-use Drupal\checklist\Execution\ChecklistIterationScheduler;
+use Drupal\checklist\Execution\ChecklistItemIterationScheduler;
 use Drupal\checklist_state_test\Plugin\ChecklistItemHandler\Iteration;
 use Drupal\user\Entity\User;
 use Psr\Log\LoggerInterface;
@@ -19,14 +19,14 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
  *
  * @group checklist
  */
-class ChecklistIterationRunnerTest extends ChecklistIterationTestBase {
+class ChecklistItemExecutorTest extends ChecklistItemExecutionTestBase {
 
   /**
    * Two requests share an attempt and restore state, contexts and identity.
    */
   public function testContinuation(): void {
     [$host, $item, $attempt] = $this->work();
-    $runner = $this->container->get('checklist.iteration_runner');
+    $runner = $this->container->get('checklist.item_executor');
     $waiting = $runner->run($attempt);
     $this->assertSame(ChecklistAttempt::WAITING, $waiting->status);
     $this->assertSame($attempt->id, $waiting->id);
@@ -53,7 +53,7 @@ class ChecklistIterationRunnerTest extends ChecklistIterationTestBase {
    */
   public function testFailure(): void {
     [, $item, $attempt] = $this->work(['fail' => TRUE]);
-    $failed = $this->container->get('checklist.iteration_runner')->run($attempt);
+    $failed = $this->container->get('checklist.item_executor')->run($attempt);
     $this->assertSame(ChecklistAttempt::FAILED, $failed->status);
     $saved = $this->reload($item);
     $this->assertTrue($saved->isFailed());
@@ -68,7 +68,7 @@ class ChecklistIterationRunnerTest extends ChecklistIterationTestBase {
     [, $item, $attempt] = $this->work(['throw' => TRUE]);
     $item->setWorkingState('run_id', 'retained')->save();
     try {
-      $this->container->get('checklist.iteration_runner')->run($attempt);
+      $this->container->get('checklist.item_executor')->run($attempt);
       $this->fail('The original handler exception must propagate.');
     }
     catch (\RuntimeException $exception) {
@@ -106,7 +106,7 @@ class ChecklistIterationRunnerTest extends ChecklistIterationTestBase {
       }
     };
     try {
-      $this->container->get('checklist.iteration_runner')->run($attempt);
+      $this->container->get('checklist.item_executor')->run($attempt);
       $this->fail('An in-flight change must prevent applying the result.');
     }
     catch (\Exception $exception) {
@@ -149,7 +149,7 @@ class ChecklistIterationRunnerTest extends ChecklistIterationTestBase {
         ->condition('entity_id', $source->id())->execute();
     };
     try {
-      $this->container->get('checklist.iteration_runner')->run($attempt);
+      $this->container->get('checklist.item_executor')->run($attempt);
       $this->fail('Changed outcome inputs must reject the result.');
     }
     catch (ChecklistAttemptConflictException) {
@@ -167,7 +167,7 @@ class ChecklistIterationRunnerTest extends ChecklistIterationTestBase {
     [, , $attempt] = $this->work();
     $this->container->get('state')->set('checklist_resolver_test.denied_field_operations', ['work' => ['edit']]);
     try {
-      $this->container->get('checklist.iteration_runner')->run($attempt);
+      $this->container->get('checklist.item_executor')->run($attempt);
       $this->fail('Denied work must not run.');
     }
     catch (AccessDeniedHttpException) {
@@ -185,7 +185,7 @@ class ChecklistIterationRunnerTest extends ChecklistIterationTestBase {
   public function testInvalidOutput(string $mode): void {
     [, $item, $attempt] = $this->work([$mode => TRUE]);
     try {
-      $this->container->get('checklist.iteration_runner')->run($attempt);
+      $this->container->get('checklist.item_executor')->run($attempt);
       $this->fail('Undeclared state must be rejected.');
     }
     catch (\InvalidArgumentException) {
@@ -210,7 +210,7 @@ class ChecklistIterationRunnerTest extends ChecklistIterationTestBase {
   public function testGates(array $configuration): void {
     [, , $attempt] = $this->work($configuration);
     try {
-      $this->container->get('checklist.iteration_runner')->run($attempt);
+      $this->container->get('checklist.item_executor')->run($attempt);
       $this->fail('Blocked work must not run.');
     }
     catch (\DomainException) {
@@ -239,7 +239,7 @@ class ChecklistIterationRunnerTest extends ChecklistIterationTestBase {
     $executor->save();
     [, , $attempt] = $this->work(executor: (int) $executor->id());
     try {
-      $this->container->get('checklist.iteration_runner')->run($attempt);
+      $this->container->get('checklist.item_executor')->run($attempt);
       $this->fail("The executor cannot edit somebody else's profile.");
     }
     catch (AccessDeniedHttpException) {
@@ -265,9 +265,9 @@ class ChecklistIterationRunnerTest extends ChecklistIterationTestBase {
    */
   public function testQueueContinuation(): void {
     [, $item, $attempt] = $this->work();
-    $scheduler = $this->container->get('checklist.iteration_scheduler');
-    $queue = $this->container->get('queue')->get(ChecklistIterationScheduler::QUEUE);
-    $worker = $this->container->get('plugin.manager.queue_worker')->createInstance(ChecklistIterationScheduler::QUEUE);
+    $scheduler = $this->container->get('checklist.item_iteration_scheduler');
+    $queue = $this->container->get('queue')->get(ChecklistItemIterationScheduler::QUEUE);
+    $worker = $this->container->get('plugin.manager.queue_worker')->createInstance(ChecklistItemIterationScheduler::QUEUE);
     checklist_cron();
     $this->assertSame(1, $queue->numberOfItems());
     $this->assertSame(0, $scheduler->dispatch());
@@ -297,8 +297,8 @@ class ChecklistIterationRunnerTest extends ChecklistIterationTestBase {
    */
   public function testLostDelivery(): void {
     [, , $attempt] = $this->work();
-    $scheduler = $this->container->get('checklist.iteration_scheduler');
-    $queue = $this->container->get('queue')->get(ChecklistIterationScheduler::QUEUE);
+    $scheduler = $this->container->get('checklist.item_iteration_scheduler');
+    $queue = $this->container->get('queue')->get(ChecklistItemIterationScheduler::QUEUE);
     $this->assertSame(1, $scheduler->dispatch());
     $message = $queue->claimItem();
     $queue->deleteItem($message);
@@ -320,9 +320,9 @@ class ChecklistIterationRunnerTest extends ChecklistIterationTestBase {
     $host->block()->save();
     $this->now++;
     [, , $other] = $this->work(name: 'Other');
-    $scheduler = $this->container->get('checklist.iteration_scheduler');
-    $queue = $this->container->get('queue')->get(ChecklistIterationScheduler::QUEUE);
-    $worker = $this->container->get('plugin.manager.queue_worker')->createInstance(ChecklistIterationScheduler::QUEUE);
+    $scheduler = $this->container->get('checklist.item_iteration_scheduler');
+    $queue = $this->container->get('queue')->get(ChecklistItemIterationScheduler::QUEUE);
+    $worker = $this->container->get('plugin.manager.queue_worker')->createInstance(ChecklistItemIterationScheduler::QUEUE);
     $this->assertSame(1, $scheduler->dispatch(1));
     $message = $queue->claimItem();
     $this->assertSame($blocked->id, $message->data['attempt']);
@@ -358,13 +358,13 @@ class ChecklistIterationRunnerTest extends ChecklistIterationTestBase {
       $create->willReturn(FALSE);
     }
     $factory = $this->createMock(QueueFactory::class);
-    $factory->method('get')->with(ChecklistIterationScheduler::QUEUE)->willReturn($queue);
+    $factory->method('get')->with(ChecklistItemIterationScheduler::QUEUE)->willReturn($queue);
     $logger = $this->createMock(LoggerInterface::class);
     $logger->expects($this->exactly(2))->method('error')->with(
       'Checklist iteration delivery failed for attempt {attempt}; scheduling will retry.',
       ['attempt' => $attempt->id],
     );
-    $scheduler = new ChecklistIterationScheduler($this->container->get('checklist.attempt_dispatch_storage'), $factory, $logger);
+    $scheduler = new ChecklistItemIterationScheduler($this->container->get('checklist.attempt_dispatch_storage'), $factory, $logger);
     $this->assertSame(0, $scheduler->dispatch());
     $this->assertSame(0, $scheduler->dispatch());
     $this->now += 300;
@@ -397,9 +397,9 @@ class ChecklistIterationRunnerTest extends ChecklistIterationTestBase {
       ['attempt' => $attempt->id],
     );
     $this->container->set('logger.channel.checklist', $logger);
-    $scheduler = $this->container->get('checklist.iteration_scheduler');
-    $queue = $this->container->get('queue')->get(ChecklistIterationScheduler::QUEUE);
-    $worker = $this->container->get('plugin.manager.queue_worker')->createInstance(ChecklistIterationScheduler::QUEUE);
+    $scheduler = $this->container->get('checklist.item_iteration_scheduler');
+    $queue = $this->container->get('queue')->get(ChecklistItemIterationScheduler::QUEUE);
+    $worker = $this->container->get('plugin.manager.queue_worker')->createInstance(ChecklistItemIterationScheduler::QUEUE);
     $this->assertSame(1, $scheduler->dispatch());
     $message = $queue->claimItem();
     $worker->processItem($message->data);
@@ -427,7 +427,7 @@ class ChecklistIterationRunnerTest extends ChecklistIterationTestBase {
     $transaction = $this->container->get('database')->startTransaction();
     $this->work();
     try {
-      $this->container->get('checklist.iteration_scheduler')->dispatch();
+      $this->container->get('checklist.item_iteration_scheduler')->dispatch();
       $this->fail('Uncommitted work must not be dispatched.');
     }
     catch (\LogicException) {
@@ -436,7 +436,7 @@ class ChecklistIterationRunnerTest extends ChecklistIterationTestBase {
     finally {
       $transaction->rollBack();
     }
-    $this->assertSame(0, $this->container->get('checklist.iteration_scheduler')->dispatch());
+    $this->assertSame(0, $this->container->get('checklist.item_iteration_scheduler')->dispatch());
   }
 
   /**
@@ -453,7 +453,7 @@ class ChecklistIterationRunnerTest extends ChecklistIterationTestBase {
     checklist_update_10004();
     $this->assertEquals($attempt, $journal->load($attempt->id));
     $this->assertSame($history, $journal->history($attempt->id));
-    $this->assertSame(1, $this->container->get('checklist.iteration_scheduler')->dispatch());
+    $this->assertSame(1, $this->container->get('checklist.item_iteration_scheduler')->dispatch());
   }
 
   /**
@@ -464,7 +464,7 @@ class ChecklistIterationRunnerTest extends ChecklistIterationTestBase {
     $factory = $this->createMock(QueueFactory::class);
     $queue = $this->createMock(QueueInterface::class);
     $factory->method('get')->willReturn($queue);
-    $scheduler = new ChecklistIterationScheduler($this->container->get('checklist.attempt_dispatch_storage'), $factory, $this->createMock(LoggerInterface::class));
+    $scheduler = new ChecklistItemIterationScheduler($this->container->get('checklist.attempt_dispatch_storage'), $factory, $this->createMock(LoggerInterface::class));
     $queue->expects($this->once())->method('createItem')->willReturnCallback(function ($data) use ($scheduler, $attempt) {
       $this->assertSame(['attempt' => $attempt->id, 'version' => 1], $data);
       $this->assertFalse($this->container->get('database')->inTransaction());
@@ -479,8 +479,8 @@ class ChecklistIterationRunnerTest extends ChecklistIterationTestBase {
    */
   public function testInfrequentDispatchFairness(): void {
     [, , $first] = $this->work();
-    $scheduler = $this->container->get('checklist.iteration_scheduler');
-    $queue = $this->container->get('queue')->get(ChecklistIterationScheduler::QUEUE);
+    $scheduler = $this->container->get('checklist.item_iteration_scheduler');
+    $queue = $this->container->get('queue')->get(ChecklistItemIterationScheduler::QUEUE);
     $this->assertSame(1, $scheduler->dispatch(1));
     $message = $queue->claimItem();
     $this->assertSame($first->id, $message->data['attempt']);
@@ -498,7 +498,7 @@ class ChecklistIterationRunnerTest extends ChecklistIterationTestBase {
     [, $item, $attempt] = $this->work();
     $journal = $this->container->get('checklist.attempt_journal');
     $cancelled = $journal->transition($attempt, ChecklistAttempt::CANCELLED, 1);
-    $scheduler = $this->container->get('checklist.iteration_scheduler');
+    $scheduler = $this->container->get('checklist.item_iteration_scheduler');
     $this->assertSame(0, $scheduler->dispatch());
     $journal->create($item, 1, 1, ChecklistAttempt::ACTION, mode: ChecklistAttempt::FRESH, previous: $cancelled->id);
     $this->assertSame(0, $scheduler->dispatch());
@@ -507,7 +507,7 @@ class ChecklistIterationRunnerTest extends ChecklistIterationTestBase {
       $journal->create($other, 1, 1, $path, $path === ChecklistAttempt::ACTION_OPERATION ? 'choose' : NULL);
     }
     $this->assertSame(0, $scheduler->dispatch());
-    $worker = $this->container->get('plugin.manager.queue_worker')->createInstance(ChecklistIterationScheduler::QUEUE);
+    $worker = $this->container->get('plugin.manager.queue_worker')->createInstance(ChecklistItemIterationScheduler::QUEUE);
     $worker->processItem(['attempt' => $attempt->id, 'version' => $attempt->version]);
     $worker->processItem(['attempt' => 'missing', 'version' => 1]);
     $worker->processItem(['attempt' => $attempt->id, 'version' => '1']);
@@ -525,11 +525,11 @@ class ChecklistIterationRunnerTest extends ChecklistIterationTestBase {
       ['attempt' => $attempt->id, 'version' => $attempt->version],
     ]);
     $this->container->set('checklist.attempt_dispatch_storage', $storage);
-    $this->assertSame(1, $this->container->get('checklist.iteration_scheduler')->dispatch(7));
-    $queue = $this->container->get('queue')->get(ChecklistIterationScheduler::QUEUE);
+    $this->assertSame(1, $this->container->get('checklist.item_iteration_scheduler')->dispatch(7));
+    $queue = $this->container->get('queue')->get(ChecklistItemIterationScheduler::QUEUE);
     $message = $queue->claimItem();
     $this->assertSame(['attempt' => $attempt->id, 'version' => 1], $message->data);
-    $worker = $this->container->get('plugin.manager.queue_worker')->createInstance(ChecklistIterationScheduler::QUEUE);
+    $worker = $this->container->get('plugin.manager.queue_worker')->createInstance(ChecklistItemIterationScheduler::QUEUE);
     $worker->processItem($message->data);
     $this->assertCount(1, Iteration::$calls);
     $this->assertSame(ChecklistAttempt::WAITING, $this->container->get('checklist.attempt_journal')->load($attempt->id)->status);

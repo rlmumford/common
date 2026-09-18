@@ -7,7 +7,7 @@ use Drupal\checklist\Attempt\ChecklistAttempt;
 /**
  * Local changes to apply after one bounded automatic action iteration.
  */
-final class ChecklistIterationResult {
+final class ChecklistItemResult {
 
   /**
    * Constructs the iteration result.

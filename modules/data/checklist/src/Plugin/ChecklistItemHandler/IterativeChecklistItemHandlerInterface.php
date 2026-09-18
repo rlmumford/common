@@ -2,13 +2,13 @@
 
 namespace Drupal\checklist\Plugin\ChecklistItemHandler;
 
-use Drupal\checklist\Execution\ChecklistIterationResult;
+use Drupal\checklist\Execution\ChecklistItemResult;
 use Drupal\checklist\Attempt\ChecklistAttempt;
 
 /**
- * Opts automatic action execution into bounded, repeatable iterations.
+ * Returns an audited item result, completing now or yielding a continuation.
  */
-interface IterativeChecklistItemHandlerInterface extends StatefulChecklistItemHandlerInterface {
+interface IterativeChecklistItemHandlerInterface extends ChecklistItemHandlerInterface {
 
   /**
    * Performs one iteration using the prepared contexts and stored item state.
@@ -19,11 +19,11 @@ interface IterativeChecklistItemHandlerInterface extends StatefulChecklistItemHa
    * and persist run IDs through results to avoid repeating external effects.
    * The attempt ID is stable across iterations and can scope provider
    * idempotency keys. The snapshot deliberately contains no claim token.
-   * Do not call this directly: use checklist.iteration_runner.
+   * Do not call this directly: use checklist.item_executor.
    *
    * @param \Drupal\checklist\Attempt\ChecklistAttempt $attempt
    *   The running attempt snapshot for this iteration.
    */
-  public function actionIteration(ChecklistAttempt $attempt): ChecklistIterationResult;
+  public function actionIteration(ChecklistAttempt $attempt): ChecklistItemResult;
 
 }

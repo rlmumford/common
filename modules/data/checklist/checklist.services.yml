@@ -41,17 +41,17 @@ services:
   checklist.attempt_claims:
     class: Drupal\checklist\Attempt\ChecklistAttemptClaims
     arguments: ['@database', '@checklist.attempt_journal', '@uuid', '@datetime.time']
-  checklist.iteration_runner:
-    class: Drupal\checklist\Execution\ChecklistIterationRunner
-    arguments: ['@checklist.iteration_preparer', '@account_switcher', '@checklist.attempt_journal', '@checklist.attempt_claims']
-  checklist.iteration_preparer:
-    class: Drupal\checklist\Execution\ChecklistIterationPreparer
+  checklist.item_executor:
+    class: Drupal\checklist\Execution\ChecklistItemExecutor
+    arguments: ['@checklist.item_execution_preparer', '@account_switcher', '@checklist.attempt_journal', '@checklist.attempt_claims', '@current_user']
+  checklist.item_execution_preparer:
+    class: Drupal\checklist\Execution\ChecklistItemExecutionPreparer
     arguments: ['@entity_type.manager', '@checklist.resolver', '@checklist.context_preparer']
-  checklist.iteration_submitter:
-    class: Drupal\checklist\Execution\ChecklistIterationSubmitter
-    arguments: ['@checklist.iteration_preparer', '@checklist.attempt_journal', '@current_user', '@account_switcher']
-  checklist.iteration_scheduler:
-    class: Drupal\checklist\Execution\ChecklistIterationScheduler
+  checklist.processor:
+    class: Drupal\checklist\ChecklistProcessor
+    arguments: ['@checklist.context_preparer', '@checklist.item_executor', '@entity_type.manager', '@datetime.time']
+  checklist.item_iteration_scheduler:
+    class: Drupal\checklist\Execution\ChecklistItemIterationScheduler
     arguments: ['@checklist.attempt_dispatch_storage', '@queue', '@logger.channel.checklist']
   checklist.attempt_dispatch_storage:
     class: Drupal\checklist\Attempt\DatabaseChecklistAttemptDispatchStorage

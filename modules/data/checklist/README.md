@@ -522,22 +522,22 @@ its supported bindings.
 Run database updates: `checklist_update_10003()` adds claim/expiry/due columns and a
 due-work index, preserving existing attempt metadata and transition history.
 
-## Automatic iteration runner
+## Individual item execution
 
-`checklist.iteration_runner::run($attempt, $lease_seconds = 300)` executes one
-bounded iteration for an explicitly authorized automatic attempt. A scheduler can
+`checklist.item_executor::run($attempt, $lease_seconds = 300)` executes one
+bounded iteration of **one item**, for an explicitly authorized automatic attempt. A scheduler can
 call it again when a waiting attempt becomes due. The attempt UUID stays the same
 across these calls; each call obtains its own worker claim.
 
 Automatic handlers opt in through `IterativeChecklistItemHandlerInterface` and
-implement `actionIteration(ChecklistAttempt $attempt): ChecklistIterationResult`.
+implement `actionIteration(ChecklistAttempt $attempt): ChecklistItemResult`.
 The attempt snapshot supplies a stable ID for provider idempotency; it contains
 no claim token. They read their prepared
 contexts and stored working state, perform one bounded unit of provider/batch work,
 and return named state/outcome changes rather than saving the item themselves:
 
 ```php
-return new ChecklistIterationResult(
+return new ChecklistItemResult(
   ChecklistAttempt::WAITING,
   state: ['run_id' => $run_id, 'cursor' => $next_cursor],
   delay: 10,
@@ -584,8 +584,8 @@ bindings and retry authorization need explicit adapters. These restrictions are
 checked before handler invocation, rather than inferring a draft or delta binding.
 The UUID-based journal/claims themselves still support unsaved item identities.
 
-The existing processor submits saved iterative items through the caller-authorized
-submitter below, and the item's `action()` method refuses to execute them directly. Existing non-iterative handlers
+The checklist processor starts saved result-based items through the caller-authorized
+item executor below, and the item's `action()` method refuses direct execution. Existing non-iterative handlers
 continue through the previous path. Plugins must not save or mutate the item during
 `actionIteration()`; return changes for claim-protected application instead. Claims
 cannot undo external effects or fence arbitrary programmatic entity writes outside
@@ -593,55 +593,75 @@ this protocol. Use provider idempotency and reconcile uncertain external effects
 expired work is never automatically rerun.
 
 There is no automatic attempt creation on task save or public retry/takeover route.
-Calling `process()` now submits supported saved iterative items. The Queue API
-adapter below invokes the runner after those attempts commit.
+Calling `process()` runs supported short items inline. The Queue API adapter
+invokes the same item executor for deferred work and yielded continuations.
 Blocking calls must fit within the supplied lease; this runner does not heartbeat
 a blocked PHP thread.
 
 
-## Authorized iteration submission
+## Checklist processing and inline item execution
 
-`checklist.iteration_submitter::submit($item)` records initial automatic work for a
-saved item, running as the current authenticated caller. It reloads the account,
-host, field and item, checks `execute iteration` access, and uses the same binding,
-context, applicability and actionability preparation as the worker. The caller is
-recorded as both initiator and executor; no alternate user ID can be supplied to
-this entry point. Account switching uses fresh account data and always restores the
-original caller. Anonymous, blocked and unauthorized callers are rejected.
+`Checklist::process()` delegates to `checklist.processor`, a `ChecklistProcessor`
+that operates on the whole checklist. `checklist.item_executor` operates on one
+item. `checklist.item_iteration_scheduler` selects individual due attempts for the
+`checklist_item_iteration` queue. These are separate scopes; an item iteration is
+not a pass over the checklist.
 
-The passed entity is an identity handle. Save any edits before submission: persisted
-configuration controls execution. The service returns a queued attempt when ready,
-`NULL` when current state/contexts/gates prevent new work, and propagates access or
-configuration errors. After checking current access, repeated submissions return the
-existing attempt unchanged, including its original executor and terminal status.
-Competing initial submissions converge on the journal's winning attempt. Neither
-submission nor `process()` implicitly retries failures, clears state or reopens work.
+The processor runs ready short work inline, refreshes the checklist's item/context
+graph after results, and revisits blocked items while progress is being made. An
+entire checklist can finish in one request, including a dependent item listed before
+the item that produces its required outcome. Each item runs at most once per call;
+there is no tight polling loop for waiting items. Completion uses the refreshed graph.
 
-`Checklist::process()` submits supported saved iterative items without executing
-handlers inline. Existing non-iterative processing remains unchanged. New generated
-items and unsaved hosts remain unsubmitted: consumers must persist their authoritative
-items first. Safe concurrent materialization of default/provider items needs a separate
-coordinator. There is no blanket entity-save hook or assignee/automation-account policy
-in this slice. Explicitly processing as the caller is the initial execution policy;
-unattended submission under another identity requires a deliberate policy adapter.
+Use `checklist.processor::process($checklist, $budget_seconds = 10)` to choose the
+inline budget. Zero records ready result-based work for workers without executing
+it. Once the budget expires, remaining ready result-based items are deferred. The
+budget controls starting another item, not interrupting a running function. Handlers
+that can block for a long time implement `BackgroundChecklistItemHandlerInterface`
+to require a worker from the outset. Existing legacy synchronous handlers retain
+their action contract and are left for a later call if the budget is exhausted;
+they are not silently placed on the result-based worker path.
 
-Submission writes only the attempt journal and may participate in the caller's save
-transaction. Rollback removes the attempt; no queue message is sent during submission.
-After commit, cron discovers the attempt through dispatch storage. Temporary gate
-blocks create no attempt, so call `process()` or `submit()` again when inputs change.
-New sibling outcomes are reloaded on that later call. Automatically scheduling a
-whole-checklist re-evaluation after every input/result change remains follow-up work.
+`checklist.item_executor::submit($item, $defer = FALSE)` is the shared starting point:
 
-Worker completion updates the item, not the containing task. Reload the checklist
-before processing again to evaluate its latest completion conditions. Kernel coverage
-follows submission through delayed worker continuation and later checklist completion,
-and checks permission changes, duplicate/competing submissions, preserved failures,
-transaction rollback, persisted configuration and outcome-driven readiness.
+- Reload and authorize the saved item as the current authenticated caller, recording
+  that user as initiator and executor. No arbitrary executor ID is accepted.
+- Prepare persisted contexts and gates once, record/claim the attempt, invoke the
+  handler inline, and recheck fresh access/inputs when committing its result.
+- Use the same private execution path from `run()` in a queue worker. Inline work
+  needs no queue message, dispatch reservation or additional submission service.
+- Return a waiting attempt when the handler yields; cron dispatches its continuation
+  when due. Explicit deferral, background-only handlers and calls inside an outer
+  transaction return a queued attempt instead of invoking a handler.
+- Check current access before returning an existing attempt unchanged. Repeated or
+  competing submissions never rebind its executor, retry a failure, or poll waiting
+  work inline. Access/configuration errors propagate; temporary gates return NULL.
+
+For a simple handler, extend `AutomaticChecklistItemHandlerBase` and implement
+`actionIteration()` to return a `ChecklistItemResult`. Returning `SUCCEEDED` records
+the audit, applies declared outcomes and completes the item in that request. There
+is no required working-state definition: implement `StatefulChecklistItemHandlerInterface`
+only when the item needs state across requests. The same result contract supports
+waiting or failure, and the same attempt/claim rules protect both inline and worker
+execution. Legacy action plugins are not automatically converted to this contract.
+
+Save edits before submission: the passed item is an identity handle and stored
+configuration governs execution. The existing saved autonomous-item restrictions
+still apply. Generated items must be persisted by the consumer first; no blanket
+entity-save hook, concurrent materialization, alternate executor policy or public
+retry/takeover is introduced. Inside an outer transaction, journal submission rolls
+back with the caller and provider execution is deferred until after commit.
+
+The checklist processor can also be called from a PHP worker with a freshly loaded
+checklist and explicitly established execution identity. A whole-checklist message
+adapter still needs coalescing, identity/access policy and result/progress reads;
+the current queue carries individual item attempts. Results are persisted, rather
+than returned across threads into a live original PHP request.
 
 ## Queue and cron scheduling
 
-`checklist.iteration_scheduler::dispatch($limit = 50)` sends due initial `action`
-attempts to the `checklist_iteration` Queue API queue. `checklist_cron()` dispatches
+`checklist.item_iteration_scheduler::dispatch($limit = 50)` sends due initial `action`
+attempts to the `checklist_item_iteration` Queue API queue. `checklist_cron()` dispatches
 one batch; Drupal cron then runs the queue worker with a 15-second queue budget.
 Each message contains only the attempt UUID and expected journal version. Handlers,
 entities, account objects, credentials, working state and outcomes are not serialized
@@ -694,13 +714,13 @@ is moved to a separate worker: this recovers missed deliveries and schedules del
 continuations. A five-second item delay means *eligible after five seconds*; actual
 latency depends on the dispatch/worker cadence.
 
-For CLI consumption, run `drush queue:run checklist_iteration` after dispatching due
+For CLI consumption, run `drush queue:run checklist_item_iteration` after dispatching due
 work. Separate processes provide parallel execution; installing this code does not
 provision or supervise them. Configure the Queue API backend through Drupal's queue
 settings; database queue storage is the default. Use one consumer route per queue.
 A dedicated Messenger adapter and deployment validation are still follow-up work.
 Cron's 15-second budget controls starting further items; it cannot interrupt a single
-blocking provider call. Each iteration currently uses the runner's 300-second claim.
+blocking provider call. Each item iteration currently uses the executor's 300-second claim.
 Provider timeouts must fit that lease and the PHP worker limit. Long calls should run
 in CLI workers with appropriate limits, not web cron subject to PHP-FPM timeouts.
 

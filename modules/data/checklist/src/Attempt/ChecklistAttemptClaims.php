@@ -262,6 +262,13 @@ class ChecklistAttemptClaims {
   }
 
   /**
+   * Whether inline work can commit a claim before calling a handler.
+   */
+  public function canRunInline(): bool {
+    return !$this->database->inTransaction();
+  }
+
+  /**
    * Prevents returning uncommitted claims to workers doing external work.
    */
   protected function assertStandalone(): void {

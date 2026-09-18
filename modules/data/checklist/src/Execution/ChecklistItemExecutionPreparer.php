@@ -3,6 +3,7 @@
 namespace Drupal\checklist\Execution;
 
 use Drupal\checklist\ChecklistContextPreparer;
+use Drupal\checklist\ChecklistInterface;
 use Drupal\checklist\ChecklistResolver;
 use Drupal\checklist\Entity\ChecklistItemInterface;
 use Drupal\checklist\Plugin\ChecklistItemHandler\ActionOperationsChecklistItemHandlerInterface;
@@ -17,7 +18,7 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 /**
  * Shared authoritative account, binding, access and gate checks for iterations.
  */
-class ChecklistIterationPreparer {
+class ChecklistItemExecutionPreparer {
 
   /**
    * Constructs the iteration preparer.
@@ -101,15 +102,24 @@ class ChecklistIterationPreparer {
    * @return array
    *   The fresh item and a comparable execution-input snapshot.
    *
-   * @throws \Drupal\checklist\Execution\ChecklistIterationNotReadyException
+   * @throws \Drupal\checklist\Execution\ChecklistItemNotReadyException
    *   If incomplete state, required context or item conditions prevent work.
    */
   public function prepare(string $item_uuid): array {
     [$checklist, $item] = $this->load($item_uuid);
+    return $this->prepareItem($checklist, $item);
+  }
+
+  /**
+   * Prepares an already loaded/authorized binding without reloading it again.
+   *
+   * Internal execution helper; callers must first use load() for authorization.
+   */
+  public function prepareItem(ChecklistInterface $checklist, ChecklistItemInterface $item): array {
     $host = $checklist->getEntity();
     $handler = $item->getHandler();
     if (!$item->isIncomplete() || !$this->contextPreparer->prepare($checklist, $item) || $item->isApplicable() !== TRUE || !$item->isActionable()) {
-      throw new ChecklistIterationNotReadyException('The checklist item is not ready for an iteration.');
+      throw new ChecklistItemNotReadyException('The checklist item is not ready for an iteration.');
     }
     $contexts = [];
     if ($handler instanceof ContextAwarePluginInterface) {

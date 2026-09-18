@@ -3,7 +3,6 @@
 namespace Drupal\checklist;
 
 use Drupal\checklist\Entity\ChecklistItemInterface;
-use Drupal\checklist\Plugin\ChecklistItemHandler\IterativeChecklistItemHandlerInterface;
 use Drupal\checklist\Plugin\ChecklistType\ChecklistTypeInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
 
@@ -196,55 +195,7 @@ class Checklist implements ChecklistInterface {
    * {@inheritdoc}
    */
   public function process(): ?bool {
-    $items = $this->getOrderedItems();
-
-    if (empty($items)) {
-      return NULL;
-    }
-
-    $context_preparer = \Drupal::service('checklist.context_preparer');
-    foreach ($items as $item) {
-      if ($item->isComplete() || $item->get('status')->value === ChecklistItemInterface::STATUS_NA) {
-        continue;
-      }
-      if ($item->getHandler() instanceof IterativeChecklistItemHandlerInterface) {
-        if (!$this->getEntity()->isNew() && !$item->isNew()) {
-          \Drupal::service('checklist.iteration_submitter')->submit($item);
-        }
-        continue;
-      }
-      if (!$context_preparer->prepare($this, $item)) {
-        continue;
-      }
-      if ($item->isApplicable() !== TRUE) {
-        continue;
-      }
-
-      if ($item->getMethod() !== ChecklistItemInterface::METHOD_AUTO) {
-        continue;
-      }
-
-      if ($item->isActionable()) {
-        try {
-          $item->action();
-          if (!$item->isComplete()) {
-            $item->setAttempted();
-          }
-        }
-        catch (\Exception $e) {
-          $item->setFailed(ChecklistItemInterface::METHOD_AUTO);
-        }
-      }
-
-      $item->save();
-    }
-
-    // Outcomes can change earlier items' gates; re-evaluate after actions.
-    $resolvable = $this->isCompletable();
-    if ($resolvable) {
-      $this->complete();
-    }
-    return $resolvable;
+    return \Drupal::service('checklist.processor')->process($this);
   }
 
   /**

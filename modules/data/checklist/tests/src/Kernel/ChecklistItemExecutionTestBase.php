@@ -13,7 +13,7 @@ use Drupal\user\Entity\User;
 /**
  * Shared persisted-item fixtures for iteration submission and execution tests.
  */
-abstract class ChecklistIterationTestBase extends KernelTestBase {
+abstract class ChecklistItemExecutionTestBase extends KernelTestBase {
 
   /**
    * {@inheritdoc}
@@ -50,6 +50,7 @@ abstract class ChecklistIterationTestBase extends KernelTestBase {
     $time = $this->createMock(TimeInterface::class);
     $time->method('getCurrentTime')->willReturnCallback(fn() => $this->now);
     $time->method('getRequestTime')->willReturn(1000);
+    $time->method('getCurrentMicroTime')->willReturnCallback(fn() => (float) $this->now);
     $this->container->set('datetime.time', $time);
     $caller = User::create(['name' => 'Caller', 'status' => 1]);
     $caller->save();

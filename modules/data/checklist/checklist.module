@@ -17,7 +17,7 @@ use Drupal\typed_data_reference\TypedDataReferenceItemList;
  * Implements hook_cron().
  */
 function checklist_cron() {
-  \Drupal::service('checklist.iteration_scheduler')->dispatch();
+  \Drupal::service('checklist.item_iteration_scheduler')->dispatch();
 }
 
 /**

@@ -6,7 +6,7 @@ use Drupal\checklist\Attempt\ChecklistAttempt;
 use Drupal\checklist\Attempt\ChecklistAttemptConflictException;
 use Drupal\checklist\Attempt\ChecklistAttemptJournal;
 use Drupal\checklist\Entity\ChecklistItem;
-use Drupal\checklist\Execution\ChecklistIterationScheduler;
+use Drupal\checklist\Execution\ChecklistItemIterationScheduler;
 use Drupal\checklist_state_test\Plugin\ChecklistItemHandler\Iteration;
 use Drupal\Core\Session\UserSession;
 use Drupal\user\Entity\User;
@@ -17,10 +17,10 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
  *
  * @group checklist
  */
-class ChecklistIterationSubmissionTest extends ChecklistIterationTestBase {
+class ChecklistItemSubmissionTest extends ChecklistItemExecutionTestBase {
 
   /**
-   * Processing submits once, with execution and completion in later requests.
+   * Processing starts inline and a yielded continuation finishes in a worker.
    */
   public function testProcessToCompletion(): void {
     [$host, $item] = $this->work(record_attempt: FALSE);
@@ -28,27 +28,26 @@ class ChecklistIterationSubmissionTest extends ChecklistIterationTestBase {
     $this->assertFalse($host->work->checklist->process());
     $journal = $this->container->get('checklist.attempt_journal');
     $attempt = $journal->latest($item);
-    $this->assertSame(ChecklistAttempt::QUEUED, $attempt->status);
+    $this->assertSame(ChecklistAttempt::WAITING, $attempt->status);
     $this->assertSame((int) $host->id(), $attempt->initiator);
     $this->assertSame((int) $host->id(), $attempt->executor);
-    $this->assertSame([], Iteration::$calls);
+    $this->assertCount(1, Iteration::$calls);
     $this->assertFalse($host->work->checklist->process());
     $this->assertEquals($attempt, $journal->latest($item));
-    $this->assertCount(1, $journal->history($attempt->id));
-    $queue = $this->container->get('queue')->get(ChecklistIterationScheduler::QUEUE);
+    $this->assertCount(3, $journal->history($attempt->id));
+    $queue = $this->container->get('queue')->get(ChecklistItemIterationScheduler::QUEUE);
     $this->assertSame(0, $queue->numberOfItems());
     // The scheduler's ambient account never becomes the recorded executor.
     $this->container->get('current_user')->setAccount(User::load(1));
-    $worker = $this->container->get('plugin.manager.queue_worker')->createInstance(ChecklistIterationScheduler::QUEUE);
-    foreach ([ChecklistAttempt::WAITING, ChecklistAttempt::SUCCEEDED] as $status) {
-      checklist_cron();
-      $message = $queue->claimItem();
-      $worker->processItem($message->data);
-      $queue->deleteItem($message);
-      $this->assertSame($status, $journal->latest($item)->status);
-      $this->assertSame('1', (string) $this->container->get('current_user')->id());
-      $this->now += 5;
-    }
+    $worker = $this->container->get('plugin.manager.queue_worker')->createInstance(ChecklistItemIterationScheduler::QUEUE);
+    $this->now += 5;
+    checklist_cron();
+    $message = $queue->claimItem();
+    $worker->processItem($message->data);
+    $queue->deleteItem($message);
+    $this->assertSame(ChecklistAttempt::SUCCEEDED, $journal->latest($item)->status);
+    $this->assertSame('1', (string) $this->container->get('current_user')->id());
+
     $this->assertCount(2, Iteration::$calls);
     $this->assertSame((int) $host->id(), Iteration::$calls[0][0]);
     $this->assertSame((int) $host->id(), Iteration::$calls[1][0]);
@@ -65,7 +64,7 @@ class ChecklistIterationSubmissionTest extends ChecklistIterationTestBase {
    */
   public function testBlockedSubmission(array $configuration): void {
     [, $item] = $this->work($configuration, record_attempt: FALSE);
-    $this->assertNull($this->container->get('checklist.iteration_submitter')->submit($item));
+    $this->assertNull($this->container->get('checklist.item_executor')->submit($item, TRUE));
     $this->assertNull($this->container->get('checklist.attempt_journal')->latest($item));
     $this->assertSame([], Iteration::$calls);
     $this->assertSame('1', (string) $this->container->get('current_user')->id());
@@ -73,7 +72,7 @@ class ChecklistIterationSubmissionTest extends ChecklistIterationTestBase {
       'id' => 'iteration_test',
       'configuration' => ['context_mapping' => ['value' => 'checklist:entity.name.value']],
     ])->save();
-    $this->assertSame(ChecklistAttempt::QUEUED, $this->container->get('checklist.iteration_submitter')->submit($item)->status);
+    $this->assertSame(ChecklistAttempt::QUEUED, $this->container->get('checklist.item_executor')->submit($item, TRUE)->status);
   }
 
   /**
@@ -92,12 +91,12 @@ class ChecklistIterationSubmissionTest extends ChecklistIterationTestBase {
    */
   public function testExistingFailure(): void {
     [$host, $item, $attempt] = $this->work(['fail' => TRUE]);
-    $submitter = $this->container->get('checklist.iteration_submitter');
-    $this->assertEquals($attempt, $submitter->submit($item));
+    $submitter = $this->container->get('checklist.item_executor');
+    $this->assertEquals($attempt, $submitter->submit($item, TRUE));
     $this->assertSame((int) $host->id(), $attempt->executor);
-    $failed = $this->container->get('checklist.iteration_runner')->run($attempt);
+    $failed = $this->container->get('checklist.item_executor')->run($attempt);
     $history = $this->container->get('checklist.attempt_journal')->history($attempt->id);
-    $this->assertEquals($failed, $submitter->submit($item));
+    $this->assertEquals($failed, $submitter->submit($item, TRUE));
     $fresh_host = $this->container->get('entity_type.manager')->getStorage('user')->loadUnchanged($host->id());
     $this->assertFalse($fresh_host->work->checklist->process());
     $this->assertSame($history, $this->container->get('checklist.attempt_journal')->history($attempt->id));
@@ -105,7 +104,7 @@ class ChecklistIterationSubmissionTest extends ChecklistIterationTestBase {
     $this->assertCount(1, Iteration::$calls);
     $this->container->get('state')->set('checklist_resolver_test.denied_field_operations', ['work' => ['edit']]);
     $this->expectException(AccessDeniedHttpException::class);
-    $submitter->submit($item);
+    $submitter->submit($item, TRUE);
   }
 
   /**
@@ -134,7 +133,7 @@ class ChecklistIterationSubmissionTest extends ChecklistIterationTestBase {
     }
     $uid = $current->id();
     try {
-      $this->container->get('checklist.iteration_submitter')->submit($item);
+      $this->container->get('checklist.item_executor')->submit($item, TRUE);
       $this->fail('Unauthorized work must not be submitted.');
     }
     catch (AccessDeniedHttpException) {
@@ -158,16 +157,17 @@ class ChecklistIterationSubmissionTest extends ChecklistIterationTestBase {
     [, $item] = $this->work(record_attempt: FALSE);
     $journal = $this->container->get('checklist.attempt_journal');
     $transaction = $this->container->get('database')->startTransaction();
-    $attempt = $this->container->get('checklist.iteration_submitter')->submit($item);
+    $attempt = $this->container->get('checklist.item_executor')->submit($item);
+    $this->assertSame([], Iteration::$calls);
     $this->assertEquals($attempt, $journal->latest($item));
     $transaction->rollBack();
     unset($transaction);
     $this->assertNull($journal->latest($item));
     $this->assertNull($journal->load($attempt->id));
-    $this->assertSame(0, $this->container->get('checklist.iteration_scheduler')->dispatch());
-    $new = $this->container->get('checklist.iteration_submitter')->submit($item);
+    $this->assertSame(0, $this->container->get('checklist.item_iteration_scheduler')->dispatch());
+    $new = $this->container->get('checklist.item_executor')->submit($item, TRUE);
     $this->assertNotSame($attempt->id, $new->id);
-    $this->assertSame(1, $this->container->get('checklist.iteration_scheduler')->dispatch());
+    $this->assertSame(1, $this->container->get('checklist.item_iteration_scheduler')->dispatch());
   }
 
   /**
@@ -184,7 +184,7 @@ class ChecklistIterationSubmissionTest extends ChecklistIterationTestBase {
       throw new ChecklistAttemptConflictException('Competing submission won.');
     });
     $this->container->set('checklist.attempt_journal', $competing);
-    $attempt = $this->container->get('checklist.iteration_submitter')->submit($item);
+    $attempt = $this->container->get('checklist.item_executor')->submit($item, TRUE);
     $this->assertEquals($journal->latest($item), $attempt);
     $this->assertSame((int) $host->id(), $attempt->executor);
     $this->assertCount(1, $journal->history($attempt->id));
@@ -210,7 +210,7 @@ class ChecklistIterationSubmissionTest extends ChecklistIterationTestBase {
     $this->assertTrue($item->isNew());
     $this->assertNull($this->container->get('checklist.attempt_journal')->latest($item));
     $this->expectException(\DomainException::class);
-    $this->container->get('checklist.iteration_submitter')->submit($item);
+    $this->container->get('checklist.item_executor')->submit($item, TRUE);
   }
 
   /**
@@ -226,12 +226,12 @@ class ChecklistIterationSubmissionTest extends ChecklistIterationTestBase {
       'checklist' => ['entity' => $host, 'checklist_key' => 'work'],
     ]);
     $source->save();
-    $submitter = $this->container->get('checklist.iteration_submitter');
-    $this->assertNull($submitter->submit($item));
+    $submitter = $this->container->get('checklist.item_executor');
+    $this->assertNull($submitter->submit($item, TRUE));
     $source->setOutcome('result', 'Published')->setComplete()->save();
-    $attempt = $submitter->submit($item);
+    $attempt = $submitter->submit($item, TRUE);
     $this->assertSame(ChecklistAttempt::QUEUED, $attempt->status);
-    $this->container->get('checklist.iteration_runner')->run($attempt);
+    $this->container->get('checklist.item_executor')->run($attempt);
     $this->assertSame('Published', Iteration::$calls[0][3]);
   }
 
@@ -244,7 +244,7 @@ class ChecklistIterationSubmissionTest extends ChecklistIterationTestBase {
       'id' => 'iteration_test',
       'configuration' => ['context_mapping' => ['value' => 'checklist:entity.name.value']],
     ]);
-    $this->assertNull($this->container->get('checklist.iteration_submitter')->submit($item));
+    $this->assertNull($this->container->get('checklist.item_executor')->submit($item, TRUE));
     $this->assertNull($this->container->get('checklist.attempt_journal')->latest($item));
   }
 
