@@ -2,14 +2,17 @@
 
 namespace Drupal\checklist\Plugin\ChecklistItemHandler;
 
+use Drupal\checklist\ChecklistConditionEvaluator;
 use Drupal\checklist\Entity\ChecklistItemInterface;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Plugin\PluginBase;
 use Drupal\Core\Plugin\PluginWithFormsTrait;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Base class for checklist item handlers.
  */
-abstract class ChecklistItemHandlerBase extends PluginBase implements ChecklistItemHandlerInterface {
+abstract class ChecklistItemHandlerBase extends PluginBase implements ChecklistItemHandlerInterface, ContainerFactoryPluginInterface {
   use PluginWithFormsTrait;
 
   /**
@@ -29,6 +32,29 @@ abstract class ChecklistItemHandlerBase extends PluginBase implements ChecklistI
   protected $item;
 
   /**
+   * Constructs a checklist item handler.
+   *
+   * @param array $configuration
+   *   The plugin configuration.
+   * @param string $plugin_id
+   *   The plugin ID.
+   * @param mixed $plugin_definition
+   *   The plugin definition.
+   * @param \Drupal\checklist\ChecklistConditionEvaluator $conditionEvaluator
+   *   The condition evaluator.
+   */
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, protected ChecklistConditionEvaluator $conditionEvaluator) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    return new static($configuration, $plugin_id, $plugin_definition, $container->get('checklist.condition_evaluator'));
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function getConfiguration() {
@@ -46,7 +72,7 @@ abstract class ChecklistItemHandlerBase extends PluginBase implements ChecklistI
    * {@inheritdoc}
    */
   public function defaultConfiguration() {
-    return [];
+    return ['conditions' => []];
   }
 
   /**
@@ -84,25 +110,35 @@ abstract class ChecklistItemHandlerBase extends PluginBase implements ChecklistI
    * {@inheritdoc}
    */
   public function isApplicable(): ?bool {
-    // @todo Implement sensible default behaviour based on condition plugins presumably.
-    return TRUE;
+    return $this->evaluateCondition('applicability');
   }
 
   /**
    * {@inheritdoc}
    */
   public function isRequired(): bool {
-    // @todo Implement sensible default behaviour based on condition plugins presumably.
-    return TRUE;
+    return $this->evaluateCondition('required') ?? TRUE;
   }
 
   /**
    * {@inheritdoc}
    */
   public function isActionable(): bool {
-    // @todo Implement dependencies
-    // @todo Implement condition plugins.
-    return TRUE;
+    return $this->evaluateCondition('actionability') === TRUE;
+  }
+
+  /**
+   * Evaluates one configured gate, defaulting to TRUE when omitted.
+   */
+  protected function evaluateCondition(string $gate): ?bool {
+    $conditions = $this->getConfiguration()['conditions'];
+    if (!array_key_exists($gate, $conditions)) {
+      return TRUE;
+    }
+    return $this->conditionEvaluator->evaluate(
+      $this->getItem()->get('checklist')->checklist,
+      $conditions[$gate]
+    );
   }
 
   /**

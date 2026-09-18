@@ -2,6 +2,7 @@
 
 namespace Drupal\checklist_webform\Plugin\ChecklistItemHandler;
 
+use Drupal\checklist\ChecklistConditionEvaluator;
 use Drupal\checklist\Entity\ChecklistItemInterface;
 use Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerBase;
 use Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerInterface;
@@ -57,9 +58,11 @@ class Webform extends ChecklistItemHandlerBase implements ContainerFactoryPlugin
    *   The plugin implementation definition.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager service.
+   * @param \Drupal\checklist\ChecklistConditionEvaluator $condition_evaluator
+   *   The condition evaluator.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityTypeManagerInterface $entity_type_manager) {
-    parent::__construct($configuration, $plugin_id, $plugin_definition);
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityTypeManagerInterface $entity_type_manager, ChecklistConditionEvaluator $condition_evaluator) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition, $condition_evaluator);
 
     $this->entityTypeManager = $entity_type_manager;
   }
@@ -72,7 +75,8 @@ class Webform extends ChecklistItemHandlerBase implements ContainerFactoryPlugin
       $configuration,
       $plugin_id,
       $plugin_definition,
-      $container->get('entity_type.manager')
+      $container->get('entity_type.manager'),
+      $container->get('checklist.condition_evaluator')
     );
   }
 

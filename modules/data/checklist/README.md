@@ -74,3 +74,52 @@ manual work does not block completion. Applicable required work blocks until it
 is complete, including when it is unactionable or has failed. Changes made by a
 later action are considered when rechecking earlier items; newly applicable earlier
 work receives its execution turn on the next processing pass.
+
+## Condition gates
+
+Handler configuration accepts ordinary Drupal condition plugin configurations.
+`actionability` determines whether an applicable item can run; dependencies on
+other items are one use of that gate:
+
+```yaml
+conditions:
+  applicability:
+    id: user_role
+    roles: [authenticated]
+    context_mapping:
+      user: '@user.current_user_context:current_user'
+  required:
+    id: 'condition_constant:true'
+  actionability:
+    id: condition_and
+    conditions:
+      - id: condition_string
+        condition_string: "items.source.status == 'complete'"
+      - id: condition_string
+        condition_string: "items.source.outcomes.value|upper == 'APPROVED'"
+```
+
+Omitted gates default to TRUE. Missing required condition contexts yield unknown
+applicability, blocked actionability or conservative requiredness. Condition strings
+can explicitly test optional missing outcomes with `exists`/`empty`; malformed
+configuration raises an error. Native condition plugins retain their own required
+context definitions, mappings and negation semantics. Handlers overriding the base
+readiness methods must call the parent implementation to retain configured gates.
+
+The collector exposes `items.<name>.status` and `items.<name>.outcomes.<outcome>`
+as a typed tree at configuration time and runtime. Condition evaluation also aliases
+`checklist:entity` to `checklist` for property traversal. Each evaluation uses fresh
+plugin instances and current outcomes, including those produced earlier in the same
+processing pass. Qualified global providers retain their request-level behavior.
+
+Item actions and unfinished-item form submissions recheck the gates. These checks
+do not add authorization, worker claims or cross-request concurrency protection.
+Direct handler calls remain internal and require caller preparation and gating.
+Interactive checklist output is uncacheable until gate cache metadata is aggregated.
+Configuration is currently programmatic/exported; a condition selection UI is not
+included. This integration requires the Typed Data Plus condition discovery and
+missing-context fixes in [MR !6](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/6).
+
+The base handler receives `checklist.condition_evaluator` through Drupal's
+`ContainerFactoryPluginInterface::create()` factory. Handlers with custom factories
+and constructors must pass that service to the base constructor.

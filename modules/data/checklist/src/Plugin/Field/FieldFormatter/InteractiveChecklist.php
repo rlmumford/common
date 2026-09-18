@@ -135,7 +135,7 @@ class InteractiveChecklist extends FormatterBase {
     ClassResolverInterface $class_resolver,
     FormBuilderInterface $form_builder,
     ContextHandlerInterface $context_handler,
-    ChecklistContextCollectorInterface $context_collector
+    ChecklistContextCollectorInterface $context_collector,
   ) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings);
 
@@ -170,6 +170,8 @@ class InteractiveChecklist extends FormatterBase {
    */
   public function viewElements(FieldItemListInterface $items, $langcode) {
     $elements = [
+      // Gates can depend on users, missing outcomes and global providers.
+      '#cache' => ['max-age' => 0],
       '#attached' => [
         'library' => [
           'checklist/interactive_checklist',

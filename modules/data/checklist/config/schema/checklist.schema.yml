@@ -2,6 +2,19 @@ checklist_item_handler:
   type: mapping
   label: 'Checklist Item Handler Configuration'
   mapping:
+    conditions:
+      type: mapping
+      label: 'Checklist conditions'
+      mapping:
+        applicability:
+          type: condition.plugin.[id]
+          label: 'Applicability'
+        required:
+          type: condition.plugin.[id]
+          label: 'Requiredness'
+        actionability:
+          type: condition.plugin.[id]
+          label: 'Actionability'
 checklist_item_handler.*:
   type: checklist_item_handler
 checklist_item_handler.simply_checkable:
@@ -25,3 +38,10 @@ checklist_item_hander.create_entity:
       type: 'string'
       label: 'Form Mode to show'
 
+field.storage_settings.checklist:
+  type: mapping
+  label: 'Checklist field storage settings'
+  mapping:
+    plugin_type:
+      type: string
+      label: 'Checklist plugin type'

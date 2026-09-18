@@ -6,6 +6,7 @@ use Drupal\checklist\Ajax\EnsureItemCompleteCommand;
 use Drupal\checklist\Ajax\StartNextItemCommand;
 use Drupal\checklist\ChecklistContextCollectorInterface;
 use Drupal\checklist\ChecklistTempstoreRepository;
+use Drupal\checklist\ChecklistContextPreparer;
 use Drupal\Component\Plugin\Exception\ContextException;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\InsertCommand;
@@ -67,7 +68,8 @@ class ChecklistItemActionForm extends ChecklistItemFormBase {
       $container->get('form_builder'),
       $container->get('renderer'),
       $container->get('context.handler'),
-      $container->get('checklist.context_collector')
+      $container->get('checklist.context_collector'),
+      $container->get('checklist.context_preparer')
     );
   }
 
@@ -88,6 +90,8 @@ class ChecklistItemActionForm extends ChecklistItemFormBase {
    *   The context handler service.
    * @param \Drupal\checklist\ChecklistContextCollectorInterface $context_collector
    *   The context collector service.
+   * @param \Drupal\checklist\ChecklistContextPreparer $context_preparer
+   *   The checklist context preparer.
    */
   public function __construct(
     PluginFormFactoryInterface $plugin_form_factory,
@@ -96,9 +100,10 @@ class ChecklistItemActionForm extends ChecklistItemFormBase {
     FormBuilderInterface $form_builder,
     RendererInterface $renderer,
     ContextHandlerInterface $context_handler,
-    ChecklistContextCollectorInterface $context_collector
+    ChecklistContextCollectorInterface $context_collector,
+    ChecklistContextPreparer $context_preparer,
   ) {
-    parent::__construct($plugin_form_factory, $checklist_tempstore_repository, $context_handler);
+    parent::__construct($plugin_form_factory, $checklist_tempstore_repository, $context_handler, $context_preparer);
     $this->classResolver = $class_resolver;
     $this->formBuilder = $form_builder;
     $this->renderer = $renderer;
