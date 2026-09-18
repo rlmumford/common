@@ -1,0 +1,27 @@
+<?php
+
+/**
+ * @file
+ * Working state storage and upgrade fixtures.
+ */
+
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
+
+/**
+ * Implements hook_entity_base_field_info_alter().
+ */
+function checklist_state_test_entity_base_field_info_alter(&$fields, EntityTypeInterface $entity_type) {
+  if ($entity_type->id() === 'checklist_item' && \Drupal::state()->get('checklist_state_test.old_schema')) {
+    unset($fields['state']);
+  }
+}
+
+/**
+ * Implements hook_checklist_item_presave().
+ */
+function checklist_state_test_checklist_item_presave(EntityInterface $entity) {
+  if (\Drupal::state()->get('checklist_state_test.complete_in_presave')) {
+    $entity->set('status', 'complete');
+  }
+}

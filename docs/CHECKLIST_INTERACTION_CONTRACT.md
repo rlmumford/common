@@ -149,6 +149,13 @@ long-running operation or failed state needed for explicit resume. Preserve the
 agreed failure policy: retain working state on failure, clear it on success, and
 create separate attempts for resume/start-fresh.
 
+The initial state model is implemented: stateful handlers declare typed working
+values stored in a separate internal item field. Failure preserves them; completion
+clears them in memory and at the storage boundary, including presave-hook status
+changes. Raw field view/edit access is denied, and state is not added to outcome
+contexts; safe handler progress remains the viewer-facing projection. Attempt
+versioning, ownership and public resume/reset/takeover enforcement are still open.
+
 Proposed takeover default, following the user's latest direction: start fresh rather
 than inherit the previous owner's partial interaction. Atomically supersede the old
 interactive attempt(s), revoke their write authority, clear uncommitted form/editing

@@ -330,3 +330,43 @@ cache across users or changes. No HTTP routes or existing UI replacement ship in
 this slice. Outcomes, resources, attempt identity, workspace ownership/version and
 safe blocked-reason descriptions remain later read-model additions. The automatic
 processor continues to inspect the full checklist; visibility is not applicability.
+
+## Intermediate working state
+
+Handlers opt into item-scoped working state with
+`StatefulChecklistItemHandlerInterface::stateDefinitions()`. Return named Drupal
+typed-data definitions reconstructed from the saved handler configuration. State
+uses its own internal `state` typed-reference field; definitions are not copied into
+every stored value. Outcomes continue to be the published results for later items.
+
+```php
+$item->setWorkingState('run_id', $run_id);
+$item->save();
+$run_id = $item->get('state')->get('run_id')->getValue();
+```
+
+`setWorkingState()` accepts only declared names on incomplete items and does not
+save automatically. Scalar, list, map and entity values use the existing Typed Data
+Plus reference storage. As with outcomes, typed-data validation is explicit; this
+internal setter is not an input-validation or authorization boundary.
+
+Failure retains state across reloads. `setComplete()` clears state in memory,
+including for an unsaved item held in tempstore. Item storage also clears state on
+completion after all presave hooks, covering direct status writes. Cleanup removes
+backing rows and clears retained typed property objects while preserving outcomes.
+`clearWorkingState()` is an internal primitive, not a public reset or retry action.
+
+Raw state is internal and denied through normal field view/edit access, including
+for administrators. It is not added to item outcome contexts or the `items` typed
+context tree. Trusted handlers can read it directly and expose an appropriate
+`ChecklistActionState` projection to authorized viewers. This is access separation,
+not encryption; raw state may contain sensitive data and needs a retention policy.
+
+Run database updates on existing installations: `checklist_update_10001()` installs
+the new field while retaining existing item data/outcomes. Fresh installs include
+the field automatically. Kernel coverage includes a pre-state-schema upgrade.
+
+This slice supplies the state model and lifecycle cleanup. Versioned attempts,
+operational history, ownership/claims and late-result rejection remain required
+before external concurrent writes or user-facing resume/start-fresh/takeover actions.
+There is no implicit per-viewer state fork and no automatic state dump into outcomes.

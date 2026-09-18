@@ -25,7 +25,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
  *     plural = "@count checklist items"
  *   ),
  *   handlers = {
- *     "storage" = "Drupal\Core\Entity\Sql\SqlContentEntityStorage",
+ *     "storage" = "Drupal\checklist\Entity\ChecklistItemStorage",
  *     "access" = "Drupal\checklist\Entity\ChecklistItemAccessControlHandler",
  *     "views_data" = "Drupal\views\EntityViewsData",
  *   },
@@ -104,6 +104,12 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
       ->setLabel(new TranslatableMarkup('Contexts'))
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED);
 
+    $fields['state'] = BaseFieldDefinition::create('typed_data_reference')
+      ->setLabel(new TranslatableMarkup('Working state'))
+      ->setDescription(new TranslatableMarkup('Internal intermediate values retained on failure and cleared on completion.'))
+      ->setInternal(TRUE)
+      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED);
+
     return $fields;
   }
 
@@ -156,6 +162,7 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
     $this->status = static::STATUS_COMPLETE;
     $this->completion_method = $method;
     $this->finalizePlaceholders();
+    $this->clearWorkingState();
     return $this;
   }
 
@@ -301,6 +308,34 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
     /** @var \Drupal\typed_data_reference\TypedDataReferenceItemList $outcome_list */
     $outcome_list = $this->get('outcomes');
     $outcome_list->set($name, $value);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setWorkingState(string $name, $value): ChecklistItemInterface {
+    if (!$this->isIncomplete()) {
+      throw new \LogicException('Working state can only be changed on incomplete items.');
+    }
+    $state = $this->get('state');
+    if (!array_key_exists($name, $state->getPropertyDefinitions())) {
+      throw new \InvalidArgumentException('The checklist handler does not define this state value.');
+    }
+    $state->set($name, $value);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function clearWorkingState(): ChecklistItemInterface {
+    $state = $this->get('state');
+    // Clear retained typed property objects as well as the backing field rows.
+    foreach ($state->getProperties() as $property) {
+      $property->setValue(NULL, FALSE);
+    }
+    $state->setValue([]);
     return $this;
   }
 

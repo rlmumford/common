@@ -177,4 +177,30 @@ interface ChecklistItemInterface extends EntityInterface {
    */
   public function setOutcome(string $name, $value) : ChecklistItemInterface;
 
+  /**
+   * Sets a handler-defined intermediate value without saving the item.
+   *
+   * This internal API is not an authorization, retry or concurrency boundary.
+   *
+   * @param string $name
+   *   The state name declared by a stateful handler.
+   * @param mixed $value
+   *   The typed value to store.
+   *
+   * @return $this
+   *   The item. Only incomplete items accept new working values.
+   */
+  public function setWorkingState(string $name, $value): ChecklistItemInterface;
+
+  /**
+   * Clears intermediate values without changing outcomes or saving the item.
+   *
+   * Called by storage on successful completion. User-requested resets must
+   * additionally use the future attempt/history/ownership services.
+   *
+   * @return $this
+   *   The item.
+   */
+  public function clearWorkingState(): ChecklistItemInterface;
+
 }
