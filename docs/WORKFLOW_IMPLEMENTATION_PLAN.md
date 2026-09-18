@@ -360,7 +360,11 @@ Authorized retry resets, unsaved workspaces and interactive ownership remain ope
 identity restoration and in-flight changes to permissions, contexts and state.
 
 Queue API delivery now schedules already-authorized initial action attempts from
-cron through `checklist.iteration_scheduler`. Atomic five-minute dispatch reservations
+cron through `checklist.iteration_scheduler`. Selection/reservation is behind
+`ChecklistAttemptDispatchStorageInterface`, with a default SQL implementation; the
+scheduler depends only on that contract and the queue transport. Journal/claim
+persistence still requires coordinated backend work before an all-Redis attempt
+backend can be supported. Atomic five-minute dispatch reservations
 suppress duplicates and allow lost/enqueue-failed messages to be delivered again.
 Messages contain only attempt ID/version; the queue worker invokes the existing
 executor-aware runner. Waiting commits release the reservation for the next due

@@ -608,7 +608,25 @@ entities, account objects, credentials, working state and outcomes are not seria
 into messages. Queue delivery grants no access: the runner reloads the executor,
 checks permissions and gates, and claims the iteration before calling the handler.
 
-The attempt table is the durable scheduling source. Dispatch must run outside any
+The scheduler depends on `ChecklistAttemptDispatchStorageInterface`, supplied by
+`checklist.attempt_dispatch_storage`. Its `reserveDue($limit)` operation selects
+and atomically reserves a bounded batch, returning only attempt IDs and versions.
+The scheduler has no database or clock dependency. The default
+`DatabaseChecklistAttemptDispatchStorage` uses the attempt table as the durable
+scheduling source. Replace the service to supply a different dispatch backend.
+
+This is a dispatch-storage boundary, not a complete pluggable attempt backend.
+Journal and execution claims still use SQL, and waiting commits clear the dispatch
+reservation atomically with result writes. A Redis implementation must coordinate
+with those operations; merely maintaining a separate Redis index would not preserve
+the commit/version guarantees. Moving the whole attempt system needs corresponding
+journal, claim and result-persistence integration.
+
+The default storage preserves the existing selection policy: initial automatic
+action attempts, queued/waiting, due, unclaimed and without a live dispatch
+reservation. Ordering is dispatch expiry (zero first), due time, creation time,
+then attempt UUID. This is not strict FIFO; newly yielded continuations reset their
+reservation to zero. Selection does not evaluate permissions or checklist gates. Dispatch must run outside any
 open database transaction, after authorized submission commits. A single conditional
 update reserves a delivery for five minutes without changing the journal version or
 adding a history event. Queue writes happen outside transactions. A failed enqueue,

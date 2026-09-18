@@ -8,6 +8,7 @@ use Drupal\Core\Queue\QueueInterface;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\checklist\Attempt\ChecklistAttempt;
 use Drupal\checklist\Attempt\ChecklistAttemptConflictException;
+use Drupal\checklist\Attempt\ChecklistAttemptDispatchStorageInterface;
 use Drupal\checklist\Entity\ChecklistItem;
 use Drupal\checklist\Execution\ChecklistIterationScheduler;
 use Drupal\checklist_state_test\Plugin\ChecklistItemHandler\Iteration;
@@ -437,7 +438,7 @@ class ChecklistIterationRunnerTest extends KernelTestBase {
       'Checklist iteration delivery failed for attempt {attempt}; scheduling will retry.',
       ['attempt' => $attempt->id],
     );
-    $scheduler = new ChecklistIterationScheduler($this->container->get('database'), $this->container->get('datetime.time'), $factory, $logger);
+    $scheduler = new ChecklistIterationScheduler($this->container->get('checklist.attempt_dispatch_storage'), $factory, $logger);
     $this->assertSame(0, $scheduler->dispatch());
     $this->assertSame(0, $scheduler->dispatch());
     $this->now += 300;
@@ -537,7 +538,7 @@ class ChecklistIterationRunnerTest extends KernelTestBase {
     $factory = $this->createMock(QueueFactory::class);
     $queue = $this->createMock(QueueInterface::class);
     $factory->method('get')->willReturn($queue);
-    $scheduler = new ChecklistIterationScheduler($this->container->get('database'), $this->container->get('datetime.time'), $factory, $this->createMock(LoggerInterface::class));
+    $scheduler = new ChecklistIterationScheduler($this->container->get('checklist.attempt_dispatch_storage'), $factory, $this->createMock(LoggerInterface::class));
     $queue->expects($this->once())->method('createItem')->willReturnCallback(function ($data) use ($scheduler, $attempt) {
       $this->assertSame(['attempt' => $attempt->id, 'version' => 1], $data);
       $this->assertFalse($this->container->get('database')->inTransaction());
@@ -586,6 +587,45 @@ class ChecklistIterationRunnerTest extends KernelTestBase {
     $worker->processItem(['attempt' => $attempt->id, 'version' => '1']);
     $worker->processItem(NULL);
     $this->assertSame([], Iteration::$calls);
+  }
+
+  /**
+   * Replacing dispatch storage does not require changing scheduler or worker.
+   */
+  public function testReplaceDispatchStorage(): void {
+    [, , $attempt] = $this->work();
+    $storage = $this->createMock(ChecklistAttemptDispatchStorageInterface::class);
+    $storage->expects($this->once())->method('reserveDue')->with(7)->willReturn([
+      ['attempt' => $attempt->id, 'version' => $attempt->version],
+    ]);
+    $this->container->set('checklist.attempt_dispatch_storage', $storage);
+    $this->assertSame(1, $this->container->get('checklist.iteration_scheduler')->dispatch(7));
+    $queue = $this->container->get('queue')->get(ChecklistIterationScheduler::QUEUE);
+    $message = $queue->claimItem();
+    $this->assertSame(['attempt' => $attempt->id, 'version' => 1], $message->data);
+    $worker = $this->container->get('plugin.manager.queue_worker')->createInstance(ChecklistIterationScheduler::QUEUE);
+    $worker->processItem($message->data);
+    $this->assertCount(1, Iteration::$calls);
+    $this->assertSame(ChecklistAttempt::WAITING, $this->container->get('checklist.attempt_journal')->load($attempt->id)->status);
+  }
+
+  /**
+   * Storage rejects unbounded scans before making any delivery reservations.
+   */
+  public function testDispatchStorageLimits(): void {
+    [, , $attempt] = $this->work();
+    $storage = $this->container->get('checklist.attempt_dispatch_storage');
+    foreach ([0, 101] as $limit) {
+      try {
+        $storage->reserveDue($limit);
+        $this->fail('Invalid batch limits must be rejected.');
+      }
+      catch (\InvalidArgumentException) {
+        $this->addToAssertionCount(1);
+      }
+    }
+    $this->assertSame([['attempt' => $attempt->id, 'version' => 1]], $storage->reserveDue(1));
+    $this->assertSame([], $storage->reserveDue(1));
   }
 
   /**

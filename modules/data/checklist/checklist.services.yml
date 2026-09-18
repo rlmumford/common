@@ -46,7 +46,10 @@ services:
     arguments: ['@entity_type.manager', '@account_switcher', '@checklist.resolver', '@checklist.context_preparer', '@checklist.attempt_journal', '@checklist.attempt_claims']
   checklist.iteration_scheduler:
     class: Drupal\checklist\Execution\ChecklistIterationScheduler
-    arguments: ['@database', '@datetime.time', '@queue', '@logger.channel.checklist']
+    arguments: ['@checklist.attempt_dispatch_storage', '@queue', '@logger.channel.checklist']
+  checklist.attempt_dispatch_storage:
+    class: Drupal\checklist\Attempt\DatabaseChecklistAttemptDispatchStorage
+    arguments: ['@database', '@datetime.time']
   logger.channel.checklist:
     parent: logger.channel_base
     arguments: ['checklist']
