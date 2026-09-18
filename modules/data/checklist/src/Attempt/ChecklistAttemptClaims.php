@@ -149,6 +149,7 @@ class ChecklistAttemptClaims {
         'claim_token' => NULL,
         'claim_expires' => 0,
         'available' => $status === ChecklistAttempt::WAITING ? $now + $delay : 0,
+        'dispatch_expires' => 0,
       ])->execute();
       if (!$updated) {
         throw new ChecklistAttemptConflictException('The iteration claim has changed or expired.');

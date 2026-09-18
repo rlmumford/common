@@ -196,9 +196,12 @@ explicit expiry/reconciliation rather than automatic reacquisition. The journal
 rejects direct transitions that would bypass claims or continuation due times.
 The initial autonomous iteration runner now supplies handler invocation and account
 restoration for a restricted saved-item binding. It rechecks access and execution
-inputs before applying typed result changes. Scheduling, workspace ownership,
-retry/reset authorization and integration across interactive paths remain open
-before external clients can mutate work safely.
+inputs before applying typed result changes. Queue API delivery now scans due
+initial action attempts, reserving dispatch for five minutes and sending only ID
+and version. This reservation is separate from worker claims and workspace locks.
+Lost delivery is retried after expiry; failed or expired-running execution is not.
+Workspace ownership, retry/reset authorization and integration across interactive
+paths remain open before external clients can mutate work safely.
 
 Interactive AI work binds its checklist/item reference, owning user, ownership
 generation, attempt and expected version server-side. The model receives the
