@@ -1,0 +1,7 @@
+name: Checklist state test
+description: Tests working state lifecycle and schema upgrades.
+type: module
+package: Testing
+core_version_requirement: ^10 || ^11
+dependencies:
+  - checklist:checklist

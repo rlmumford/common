@@ -247,7 +247,16 @@ Item queries are scoped by checklist type to isolate matching IDs on different h
 types. Tests cover multiple fields/deltas, access denial, unsaved hosts and state,
 and conflicting tempstore.
 Adapters still supply the current checklist/account; shared workspace composition,
-claims, execution identities, attempts and intermediate-state storage remain open.
+claims, execution identities and attempts remain open.
+
+Opt-in working-state storage is now implemented through
+`StatefulChecklistItemHandlerInterface::stateDefinitions()` and the item's separate
+internal `state` field. State is retained on failure and cleared by completion
+helpers and storage after presave hooks, preserving outcomes. Scalar/list/map/entity
+state, unsaved-host tempstore, safe progress projection, excluded outcome contexts
+and upgrades from the previous schema have kernel coverage. Ordinary field access
+does not expose raw state. This is not yet a versioned attempt or public reset API;
+operational history, ownership and stale-result protection remain open.
 
 Deliverables:
 

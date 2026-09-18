@@ -1,14 +1,24 @@
 <?php
 
+/**
+ * @file
+ * Typed checklist values and field access integration.
+ */
+
 use Drupal\checklist\Plugin\ChecklistItemHandler\ExpectedOutcomeChecklistItemHandlerInterface;
+use Drupal\checklist\Plugin\ChecklistItemHandler\StatefulChecklistItemHandlerInterface;
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\Field\FieldItemListInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\typed_data_reference\TypedDataReferenceItemList;
 
 /**
- * Implements hook_typed_data_reference_property_definitions.
+ * Implements hook_typed_data_reference_property_definitions().
  */
 function checklist_typed_data_reference_property_definitions(TypedDataReferenceItemList $item_list) {
   if (
-    $item_list->getFieldDefinition()->getName() !== 'outcomes' ||
+    !in_array($item_list->getFieldDefinition()->getName(), ['outcomes', 'state'], TRUE) ||
     $item_list->getFieldDefinition()->getTargetEntityTypeId() !== 'checklist_item'
   ) {
     return [];
@@ -16,9 +26,19 @@ function checklist_typed_data_reference_property_definitions(TypedDataReferenceI
 
   /** @var \Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerInterface $handler */
   $handler = $item_list->getEntity()->getHandler();
-  if (!($handler instanceof ExpectedOutcomeChecklistItemHandlerInterface)) {
-    return [];
+  if ($item_list->getFieldDefinition()->getName() === 'state') {
+    return $handler instanceof StatefulChecklistItemHandlerInterface ? $handler->stateDefinitions() : [];
   }
+  return $handler instanceof ExpectedOutcomeChecklistItemHandlerInterface ? $handler->expectedOutcomeDefinitions() : [];
+}
 
-  return $handler->expectedOutcomeDefinitions();
+/**
+ * Implements hook_entity_field_access().
+ */
+function checklist_entity_field_access($operation, FieldDefinitionInterface $field_definition, AccountInterface $account, ?FieldItemListInterface $items = NULL) {
+  if ($field_definition->getTargetEntityTypeId() === 'checklist_item' && $field_definition->getName() === 'state') {
+    // Handlers use typed data internally; viewers receive safe projections.
+    return AccessResult::forbidden();
+  }
+  return AccessResult::neutral();
 }

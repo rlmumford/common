@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * @file
+ * Installs and updates checklist storage.
+ */
+
+use Drupal\checklist\Entity\ChecklistItem;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -16,4 +22,17 @@ function checklist_update_8100() {
       ->setLabel(new TranslatableMarkup('Contexts'))
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
   );
+}
+
+/**
+ * Adds opt-in working state without changing existing item outcomes.
+ */
+function checklist_update_10001() {
+  $manager = \Drupal::entityDefinitionUpdateManager();
+  if (!$manager->getFieldStorageDefinition('state', 'checklist_item')) {
+    $definition = ChecklistItem::baseFieldDefinitions(
+      \Drupal::entityTypeManager()->getDefinition('checklist_item')
+    )['state'];
+    $manager->installFieldStorageDefinition('state', 'checklist_item', 'checklist', $definition);
+  }
 }
