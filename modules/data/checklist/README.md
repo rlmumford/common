@@ -123,3 +123,74 @@ missing-context fixes in [MR !6](https://git.drupalcode.org/project/typed_data_p
 The base handler receives `checklist.condition_evaluator` through Drupal's
 `ContainerFactoryPluginInterface::create()` factory. Handlers with custom factories
 and constructors must pass that service to the base constructor.
+
+## Decisions
+
+The `decision` handler presents named choices. Each option can require a reason
+and have an `available` condition using the same Drupal condition plugins as item
+gates. Configuration is currently exported/programmatic:
+
+```yaml
+question: 'Approve this work?'
+presentation: buttons
+options:
+  approve:
+    label: 'Approve'
+    require_reason: true
+    available:
+      id: condition_string
+      condition_string: "items.review.status == 'complete'"
+  decline:
+    label: 'Decline'
+```
+
+Decisions default to one submit button per available choice, labelled with the
+option's human-readable label. Each button submits its machine name through the
+existing AJAX completion path. Set `presentation: radios` or `presentation: select`
+for a selector followed by a Choose button. Reasons are entered before submitting;
+only choices configured with `require_reason` demand a non-empty reason. All
+presentations recheck availability and use the same validation.
+
+Forms and `choose($choice, $reason)` share validation and persistence. A successful
+choice writes `decision` as a labelled string enum and `reason` as free text,
+completes the item and
+saves it once. Later items can map `item:review_decision:decision` or test
+`items.review_decision.outcomes.decision`. Expected definitions exist before a
+choice is made. These are interactive decisions; `action()` does not guess a
+choice, and automatic processing leaves them for a caller.
+
+`ActionOperationsChecklistItemHandlerInterface` introduces operation discovery and
+execution for tool/API adapters. `actionOperations()` describes `choose` with a
+JSON Schema containing the currently available choice names and conditional reason
+requirements. `executeActionOperation('choose', ['choice' => 'approve', 'reason' =>
+'Reviewed'])` returns the saved `decision`/`reason` values. The implementation
+validates payloads itself; adapters must not treat discovery as authorization.
+
+Every submission checks the containing entity's update access, incomplete item
+status, applicability, actionability and the selected option's current availability.
+Unavailable or unknown choices, missing reasons and malformed operation parameters
+leave outcomes and completion unchanged. Completed/failed items cannot be chosen
+again through this handler. Discovery returns no operations when access or item
+gates prevent a choice. Invalid configuration remains an error.
+
+HTTP routes, authentication adapters, AI selection, execution identity switching,
+concurrent submission claims, attempt history and decision-generated checklist
+items remain planned. This API uses the current Drupal account and the loaded
+checklist; it does not reload stale copies or make concurrent submissions safe.
+
+The decision outcome uses Typed Data Plus's `StringEnumDefinition`. Its machine
+value is still stored and compared as a string; `getValueLabel()` exposes the
+display label and `getPossibleOptions()` exposes all configured choices, including
+options that are unavailable now. The persisted item already contains a snapshot
+of its handler configuration, including names and labels. The handler reconstructs
+the enum from that configuration on reload; no definition dump is stored with the
+outcome. Changing job/template defaults does not rewrite persisted item options.
+String context mappings and condition comparisons continue to use machine values.
+
+Labelled decision outcomes require [Typed Data Plus !7](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/7).
+
+Changes to the item's own configuration or to plugin code can still change the
+reconstructed definition. Typed references retain readable stored values even when
+current constraints reject them; explicit validation reports the violations.
+Versioning checklist plugin implementations is deferred. Plugin changes must
+preserve compatibility with existing outcome definitions in the meantime.
