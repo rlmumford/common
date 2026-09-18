@@ -24,7 +24,7 @@ final class DatabaseChecklistWorkspaceStorage implements ChecklistWorkspaceStora
     $now = $this->time->getCurrentTime();
     $transaction = $this->database->startTransaction();
     try {
-      $current = $this->load($address, TRUE);
+      $current = $this->loadRow($address, TRUE);
       if ($current && $current->isActive($now) && $current->owner !== $owner) {
         throw new ChecklistAttemptConflictException('The checklist workspace is owned by another user.');
       }
@@ -89,13 +89,13 @@ final class DatabaseChecklistWorkspaceStorage implements ChecklistWorkspaceStora
    * {@inheritdoc}
    */
   public function load(ChecklistWorkspaceAddress $address): ?ChecklistWorkspaceLease {
-    return $this->load($address, FALSE);
+    return $this->loadRow($address, FALSE);
   }
 
   /**
    * Loads a workspace, optionally locking its row in the current transaction.
    */
-  protected function load(ChecklistWorkspaceAddress $address, bool $for_update): ?ChecklistWorkspaceLease {
+  protected function loadRow(ChecklistWorkspaceAddress $address, bool $for_update): ?ChecklistWorkspaceLease {
     $query = $this->database->select('checklist_workspace', 'w')->fields('w');
     $query->condition('id', $address->id());
     if ($for_update) {
