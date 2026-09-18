@@ -230,8 +230,13 @@ selectors and global providers. Persisted list outcomes require Typed Data Plus
 The built-in create-entity action and form now share entity/outcome/completion
 handling. Automatic creation respects the configured bundle and publishes the
 created entity for downstream contexts, including after checklist reload.
-Shared operation dispatch, execution identities, attempts and intermediate-state
-storage remain open.
+Shared operation dispatch now checks host update access, refreshes runtime
+contexts, enforces incomplete status and item gates, and checks current operation
+discovery before delegating validation/persistence to the handler. Kernel coverage
+includes missing/changed contexts, changed users/gates, unsupported and terminal
+items, hidden operations, configuration errors and persisted decision outcomes.
+Adapters supply the current checklist and current account; reload/claims, execution
+identities, attempts and intermediate-state storage remain open.
 
 Deliverables:
 
@@ -265,7 +270,7 @@ work, removed requirements, and required unfinished/failed work.
 
 Native condition gates now cover applicability, requiredness and actionability,
 including same-pass outcome selectors and action/form rechecks. Configuration UI,
-decision plugins, execution identity and claims remain open. The integration
+execution identity and claims remain open. The integration
 requires the Typed Data Plus discovery and missing-context fixes in
 [MR !6](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/6).
 
