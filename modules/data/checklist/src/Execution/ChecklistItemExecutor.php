@@ -82,7 +82,7 @@ class ChecklistItemExecutor {
         }
         return $existing;
       }
-      if ($defer || $fresh->getHandler() instanceof BackgroundChecklistItemHandlerInterface || !$this->claims->canRunInline()) {
+      if ($defer || $fresh->getHandler() instanceof BackgroundChecklistItemHandlerInterface || !$this->claims->canAcquireCommittedClaim()) {
         return $attempt;
       }
       return $this->execute($attempt, $fresh, $snapshot);

@@ -262,9 +262,16 @@ class ChecklistAttemptClaims {
   }
 
   /**
-   * Whether inline work can commit a claim before calling a handler.
+   * Whether a claim can be committed before invoking external work.
+   *
+   * Inline execution requires the claim to be durable before the handler runs.
+   * If the caller already owns an outer database transaction, the claim could
+   * be rolled back after the handler has performed an external side effect.
+   * The executor therefore defers the attempt in that situation; this method
+   * describes that transaction safety check and does not decide whether an
+   * item is otherwise suitable for inline execution.
    */
-  public function canRunInline(): bool {
+  public function canAcquireCommittedClaim(): bool {
     return !$this->database->inTransaction();
   }
 
