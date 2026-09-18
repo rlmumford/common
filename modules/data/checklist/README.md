@@ -194,3 +194,45 @@ reconstructed definition. Typed references retain readable stored values even wh
 current constraints reject them; explicit validation reports the violations.
 Versioning checklist plugin implementations is deferred. Plugin changes must
 preserve compatibility with existing outcome definitions in the meantime.
+
+## Operation dispatch
+
+API and tool adapters use `checklist.action_operation_dispatcher` for all item handlers
+implementing `ActionOperationsChecklistItemHandlerInterface`:
+
+```php
+$dispatcher = \Drupal::service('checklist.action_operation_dispatcher');
+$operations = $dispatcher->discover($checklist, 'review_decision');
+$result = $dispatcher->execute($checklist, 'review_decision', 'choose', [
+  'choice' => 'approve',
+  'reason' => 'Reviewed',
+]);
+```
+
+Both methods check the containing entity's update access for the current account,
+prepare fresh handler contexts from the supplied checklist, and require incomplete
+status, known-true applicability and actionability. Missing required contexts defer
+execution; invalid mappings or condition configurations remain errors. Completed,
+failed and not-applicable items cannot execute normal operations; this is not a
+retry/reset API. A handler without the operations interface exposes no operations.
+
+Discovery returns an empty array for inaccessible, blocked or unsupported work.
+Execution throws `AccessDeniedHttpException` for denied host access,
+`DomainException` for blocked/unsupported work and `InvalidArgumentException` for
+unknown item names or operations not currently advertised by the handler. Execution
+repeats preparation and discovery, so an earlier operation list is never permission
+to invoke an operation that has since become unavailable. Handler validation errors
+and execution exceptions propagate to the adapter.
+
+Handlers own input validation, operation-specific access, domain effects and
+persistence. The dispatcher neither saves again nor completes items automatically.
+Parameter schemas describe the API; each handler must enforce its inputs. Use the
+same domain method from forms and operations, as the decision handler does.
+
+Adapters establish the current account and perform transport authentication and
+CSRF checks. Supply the current checklist, including any current in-memory outcomes;
+the dispatcher does not reload persisted entities or merge form tempstore changes.
+It uses no privileged-user fallback and performs no account switching. Discovery
+results are request-local snapshots; do not cache them across users or changes.
+Task-level execution policies, durable claims, cross-request stale-write protection
+and HTTP/AI adapters remain separate implementation work.

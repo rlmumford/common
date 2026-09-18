@@ -367,6 +367,13 @@ Intercepted queues are then consumed by Messenger, not Drupal cron or `drush
 queue:run`. System cron can launch a bounded Messenger consumer if always-running
 workers are unavailable. Choose one execution route per queue.
 
+## Shared interaction contract
+
+See the [checklist interaction contract](CHECKLIST_INTERACTION_CONTRACT.md) for the
+HTTP read/discovery/invocation shape, safe item progress, shared working state and
+user-owned workspaces with explicit takeover. It refines the execution boundaries
+below; durable claims remain separate from editing ownership.
+
 ## Implementation sequence and proof requirements
 
 1. Inventory 11.5 contracts and map dependencies. Extract the shared typed-data

@@ -5,7 +5,9 @@ namespace Drupal\checklist\Plugin\ChecklistItemHandler;
 /**
  * Exposes structured operations for API and tool adapters.
  *
- * Implementations validate inputs and recheck access and gates on execution.
+ * Adapters use checklist.action_operation_dispatcher for runtime contexts,
+ * shared access and item gates. Implementations validate inputs and
+ * recheck operation-specific permissions and availability on execution.
  * Transport authentication, CSRF protection and identity belong to the
  * adapter. Discovery is a snapshot, never authorization to execute.
  */
