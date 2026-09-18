@@ -144,7 +144,8 @@ options:
 ```
 
 Forms and `choose($choice, $reason)` share validation and persistence. A successful
-choice writes the string outcomes `decision` and `reason`, completes the item and
+choice writes `decision` as a labelled string enum and `reason` as free text,
+completes the item and
 saves it once. Later items can map `item:review_decision:decision` or test
 `items.review_decision.outcomes.decision`. Expected definitions exist before a
 choice is made. These are interactive decisions; `action()` does not guess a
@@ -168,3 +169,12 @@ HTTP routes, authentication adapters, AI selection, execution identity switching
 concurrent submission claims, attempt history and decision-generated checklist
 items remain planned. This API uses the current Drupal account and the loaded
 checklist; it does not reload stale copies or make concurrent submissions safe.
+
+The decision outcome uses Typed Data Plus's `StringEnumDefinition`. Its machine
+value is still stored and compared as a string; `getValueLabel()` exposes the
+current display label and `getPossibleOptions()` exposes all configured choices,
+including options that are unavailable now. Labels survive outcome reload because
+the handler supplies the enum definition; they are not historical snapshots.
+String context mappings and condition comparisons continue to use machine values.
+
+Labelled decision outcomes require [Typed Data Plus !7](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/7).

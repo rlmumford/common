@@ -103,6 +103,7 @@ class ChecklistDecisionTest extends KernelTestBase {
     $contexts = $this->container->get('checklist.context_collector')->collectConfigContexts($checklist);
     $this->assertSame('string', $contexts['item:decision:decision']->getContextDefinition()->getDataType());
     $this->assertFalse($contexts['item:decision:decision']->hasContextValue());
+    $this->assertSame(['approve' => 'Approve', 'decline' => 'Decline', 'hidden' => 'Hidden'], $contexts['item:decision:decision']->getContextData()->getPossibleOptions());
     $this->assertSame(['approve', 'decline'], $handler->actionOperations()['choose']['parameters_schema']['properties']['choice']['enum']);
     $this->assertFalse($checklist->process());
     $this->assertFalse($item->isComplete());
@@ -118,6 +119,9 @@ class ChecklistDecisionTest extends KernelTestBase {
     $reloaded = $storage->load($id)->work->checklist;
     $outcomes = $reloaded->getItem('decision')->get('outcomes');
     $this->assertSame('approve', $outcomes->get('decision')->getValue());
+    $this->assertSame('Approve', $outcomes->get('decision')->getValueLabel());
+    $this->assertSame(['approve', 'decline', 'hidden'], $outcomes->get('decision')->getPossibleValues());
+    $this->assertCount(0, $outcomes->get('decision')->validate());
     $this->assertSame('Reviewed', $outcomes->get('reason')->getValue());
     $this->assertTrue($reloaded->process());
     $this->assertSame([['approve', NULL]], $this->container->get('state')->get('checklist_context_test.runs'));

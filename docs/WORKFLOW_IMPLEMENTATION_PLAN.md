@@ -270,7 +270,10 @@ requires the Typed Data Plus discovery and missing-context fixes in
 [MR !6](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/6).
 
 Decision foundation: the `decision` handler now supports named choices, per-option
-condition plugins, required reasons and persisted typed outcomes. The action form
+condition plugins, required reasons and persisted typed outcomes. Decision values
+use the labelled string enum in
+[Typed Data Plus !7](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/7);
+the machine string remains the stored value and context value. The action form
 and schema-described `choose` operation share validation and completion, including
 host update access and gate rechecks. Kernel tests cover denied/stale choices,
 invalid inputs, reason validation and downstream outcome use after reload.

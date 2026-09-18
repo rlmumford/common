@@ -5,6 +5,7 @@ namespace Drupal\checklist\Plugin\ChecklistItemHandler;
 use Drupal\checklist\Entity\ChecklistItemInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\TypedData\DataDefinition;
+use Drupal\typed_data_plus\TypedData\StringEnumDefinition;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
@@ -56,7 +57,9 @@ class Decision extends ChecklistItemHandlerBase implements InteractiveChecklistI
    */
   public function expectedOutcomeDefinitions(): array {
     return [
-      'decision' => DataDefinition::create('string')->setLabel(new TranslatableMarkup('Decision')),
+      'decision' => StringEnumDefinition::create()
+        ->setOptions(array_map(static fn(array $option) => $option['label'], $this->options()))
+        ->setLabel(new TranslatableMarkup('Decision')),
       'reason' => DataDefinition::create('string')->setLabel(new TranslatableMarkup('Reason')),
     ];
   }
