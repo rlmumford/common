@@ -29,3 +29,6 @@ services:
   checklist.action_operation_dispatcher:
     class: Drupal\checklist\ChecklistActionOperationDispatcher
     arguments: ['@checklist.context_preparer']
+  checklist.resolver:
+    class: Drupal\checklist\ChecklistResolver
+    arguments: ['@current_user']

@@ -112,6 +112,7 @@ class Checklist implements ChecklistInterface {
         // Completion must inspect every item, including during cron. Access
         // to the checklist is checked against its containing entity.
         ->accessCheck(FALSE)
+        ->condition('checklist_type', $this->getType()->getPluginId())
         ->condition('checklist.target_id', $this->getEntity()->id())
         ->condition('checklist.checklist_key', $this->getKey())
         ->execute();

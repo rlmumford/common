@@ -48,10 +48,13 @@ capabilities, not the item operation catalogue. See
 GET, including progress polling, must not acquire ownership, execute an action,
 advance a continuation, or complete an item.
 
-The shared resolver lives in Checklist so HTTP and AI adapters resolve identical
-references. It validates host type, field type, delta, checklist and item membership.
-Resolve persisted state plus the authoritative shared workspace; do not silently
-substitute an arbitrary user's cached entity/form snapshot. Scope persisted item
+The shared resolver lives in Checklist. It accepts the entity object (including
+unsaved entities) and field/delta; route upcasting or worker loading happens in the
+adapter. It preserves supplied revision/translation and in-memory state rather than
+reloading the host. Saved hosts use view/update access; new hosts use create access.
+Field access still applies. Workspace adapters select and attach the authoritative
+shared checklist graph; resolution must not silently fetch a different tempstore
+snapshot. Item membership checks belong to the item reader/dispatcher. Scope persisted item
 queries by checklist type as well as host ID and checklist key to prevent collisions
 between host entity types using the same numeric ID and field name.
 
@@ -94,6 +97,20 @@ execution. Reads can be permitted to a viewer who cannot edit; that viewer gets 
 mutation authority. Shared read/access policy applies to UI, HTTP and AI results.
 
 ## Shared workspace and user ownership
+
+Workspace addressing uses host entity type, host UUID and checklist field/delta
+key, never the numeric host ID. A UUID assigned when an entity is created permits
+cross-request tempstore storage before the host is saved. Saving the host keeps
+that address stable, and distinct unsaved hosts must remain isolated. The existing
+repository already uses this UUID key; regression coverage proves pre-save storage,
+isolation and retrieval/deletion through the same address after saving.
+
+Stable addressing does not update serialized snapshots automatically. After saving
+a host, the workspace coordinator must update/rebind the stored graph explicitly;
+it must not later treat an old unsaved snapshot as a new host to insert again.
+Tempstore remains subject to its lifetime policy; durable attempt/state storage is
+still required for long-running work. Stable checklist identity across delta moves
+remains separate from stable host identity.
 
 There is one authoritative interaction workspace per checklist, shared across UI,
 API and AI. Do not create separate per-channel or per-user copies of checklist item
@@ -185,7 +202,11 @@ Implement in this order:
 1. Rename the shared dispatcher to `ChecklistActionOperationDispatcher`, service
    `checklist.action_operation_dispatcher`, matching handler terminology.
 2. Implement shared reference resolution and item reads, with field access, host
-   isolation, multiple fields/deltas and explicit workspace semantics.
+   isolation, multiple fields/deltas and explicit workspace semantics. Entity-based
+   resolution is available through `checklist.resolver::resolve()`: host/field access,
+   type checks, field/delta isolation, unsaved entities and in-memory state are
+   covered. Callers own loading/workspace selection; shared workspace composition
+   and the item read model remain open.
 3. Implement durable state/attempt storage, ownership leases, atomic takeover,
    version checks and operational history; integrate all mutating paths.
 4. Add `checklist_api` discovery, reads and invocation, then AI tool adapters using
