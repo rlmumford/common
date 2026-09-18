@@ -45,3 +45,26 @@ field.storage_settings.checklist:
     plugin_type:
       type: string
       label: 'Checklist plugin type'
+
+checklist_item_handler.decision:
+  type: checklist_item_handler
+  label: 'Decision checklist item'
+  mapping:
+    question:
+      type: label
+      label: 'Question'
+    options:
+      type: sequence
+      label: 'Named options'
+      sequence:
+        type: mapping
+        mapping:
+          label:
+            type: label
+            label: 'Label'
+          require_reason:
+            type: boolean
+            label: 'Require a reason'
+          available:
+            type: condition.plugin.[id]
+            label: 'Availability condition'

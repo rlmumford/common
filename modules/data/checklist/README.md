@@ -123,3 +123,48 @@ missing-context fixes in [MR !6](https://git.drupalcode.org/project/typed_data_p
 The base handler receives `checklist.condition_evaluator` through Drupal's
 `ContainerFactoryPluginInterface::create()` factory. Handlers with custom factories
 and constructors must pass that service to the base constructor.
+
+## Decisions
+
+The `decision` handler presents named choices. Each option can require a reason
+and have an `available` condition using the same Drupal condition plugins as item
+gates. Configuration is currently exported/programmatic:
+
+```yaml
+question: 'Approve this work?'
+options:
+  approve:
+    label: 'Approve'
+    require_reason: true
+    available:
+      id: condition_string
+      condition_string: "items.review.status == 'complete'"
+  decline:
+    label: 'Decline'
+```
+
+Forms and `choose($choice, $reason)` share validation and persistence. A successful
+choice writes the string outcomes `decision` and `reason`, completes the item and
+saves it once. Later items can map `item:review_decision:decision` or test
+`items.review_decision.outcomes.decision`. Expected definitions exist before a
+choice is made. These are interactive decisions; `action()` does not guess a
+choice, and automatic processing leaves them for a caller.
+
+`ActionOperationsChecklistItemHandlerInterface` introduces operation discovery and
+execution for tool/API adapters. `actionOperations()` describes `choose` with a
+JSON Schema containing the currently available choice names and conditional reason
+requirements. `executeActionOperation('choose', ['choice' => 'approve', 'reason' =>
+'Reviewed'])` returns the saved `decision`/`reason` values. The implementation
+validates payloads itself; adapters must not treat discovery as authorization.
+
+Every submission checks the containing entity's update access, incomplete item
+status, applicability, actionability and the selected option's current availability.
+Unavailable or unknown choices, missing reasons and malformed operation parameters
+leave outcomes and completion unchanged. Completed/failed items cannot be chosen
+again through this handler. Discovery returns no operations when access or item
+gates prevent a choice. Invalid configuration remains an error.
+
+HTTP routes, authentication adapters, AI selection, execution identity switching,
+concurrent submission claims, attempt history and decision-generated checklist
+items remain planned. This API uses the current Drupal account and the loaded
+checklist; it does not reload stale copies or make concurrent submissions safe.

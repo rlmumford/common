@@ -1,6 +1,6 @@
 # Workflow framework implementation plan
 
-Status: P0 design baseline recorded; P1 development started; P2 hierarchy development started; P3–P9 not implemented. Updated 17 September 2026.
+Status: P0 design baseline recorded; P1–P4 development in progress; P5–P9 planned. Updated 18 September 2026.
 
 This plan implements the requirements in [Workflow architecture](WORKFLOW_ARCHITECTURE.md)
 within `rlmumford/common` on `2.x`. CounselKit `11.5.x` is the behavioral reference.
@@ -268,6 +268,13 @@ including same-pass outcome selectors and action/form rechecks. Configuration UI
 decision plugins, execution identity and claims remain open. The integration
 requires the Typed Data Plus discovery and missing-context fixes in
 [MR !6](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/6).
+
+Decision foundation: the `decision` handler now supports named choices, per-option
+condition plugins, required reasons and persisted typed outcomes. The action form
+and schema-described `choose` operation share validation and completion, including
+host update access and gate rechecks. Kernel tests cover denied/stale choices,
+invalid inputs, reason validation and downstream outcome use after reload.
+AI choice, HTTP/tool adapters, generated items and concurrent execution remain open.
 
 Deliverables:
 
