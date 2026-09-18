@@ -507,15 +507,15 @@ before its due time. Legacy unclaimed running attempts remain unclaimed on upgra
 there is no invented lease or automatic recovery.
 
 This is the worker coordination primitive. The automatic runner below uses it;
-a scheduler is still required. Other callers establish the executor account,
+the Queue API scheduler is described below. Other callers establish the executor account,
 enforce current access and gates,
 select an authoritative saved item or unsaved workspace, and apply the appropriate
 item disposition/state/outcome changes. `due()` has no access/path filtering; a
 scheduler must select its supported execution paths and authorize each target.
 Workspace editing ownership and worker claims are separate. Existing forms,
 operations and automatic processing are not yet wired to claims, so out-of-band
-entity saves and external effects are not fenced by this service. Queue/cron or
-Messenger delivery and shared workspace integration remain follow-up work. The
+entity saves and external effects are not fenced by this service. Messenger and
+shared workspace integration remain follow-up work. The
 automatic runner below supplies iteration results and identity restoration for
 its supported bindings.
 
@@ -592,7 +592,60 @@ cannot undo external effects or fence arbitrary programmatic entity writes outsi
 this protocol. Use provider idempotency and reconcile uncertain external effects;
 expired work is never automatically rerun.
 
-There is no queue/cron/Messenger adapter in this slice, no automatic attempt creation
-on task save, and no public retry or takeover route. The next integration is durable
-scheduling and invoking this runner from workers. Blocking calls must fit within
-the supplied lease; this runner does not heartbeat a blocked PHP thread.
+There is no automatic attempt creation on task save or public retry/takeover route.
+The Queue API adapter below invokes this runner for existing authorized attempts.
+Blocking calls must fit within the supplied lease; this runner does not heartbeat
+a blocked PHP thread.
+
+
+## Queue and cron scheduling
+
+`checklist.iteration_scheduler::dispatch($limit = 50)` sends due initial `action`
+attempts to the `checklist_iteration` Queue API queue. `checklist_cron()` dispatches
+one batch; Drupal cron then runs the queue worker with a 15-second queue budget.
+Each message contains only the attempt UUID and expected journal version. Handlers,
+entities, account objects, credentials, working state and outcomes are not serialized
+into messages. Queue delivery grants no access: the runner reloads the executor,
+checks permissions and gates, and claims the iteration before calling the handler.
+
+The attempt table is the durable scheduling source. Dispatch must run outside any
+open database transaction, after authorized submission commits. A single conditional
+update reserves a delivery for five minutes without changing the journal version or
+adding a history event. Queue writes happen outside transactions. A failed enqueue,
+a crash before enqueue, or a lost message is retried by a later scan after reservation
+expiry. Delivery is at least once: duplicate or stale messages are harmless through
+the runner's version/claim checks, but external effects still need idempotency.
+Reservations reduce duplicate delivery; they do not guarantee one physical queue
+message or replace execution claims or user workspace ownership.
+
+Waiting results atomically clear the dispatch reservation and set the next due time.
+The next scan can then enqueue the new version when that time arrives. Terminal
+attempts and running attempts (including expired claims) are excluded. A pre-claim
+access/gate rejection leaves the attempt queued or waiting and retains its delivery
+reservation, so it is reconsidered after five minutes rather than retried in a tight
+loop. A handler failure remains failed; uncertain expired executions require explicit
+reconciliation. The worker acknowledges rejected messages and logs only safe attempt
+identifiers, never raw provider exceptions. Scan order prioritizes never-dispatched
+and least-recently-dispatched work so blocked items cannot monopolize every batch.
+
+The scheduler does not create attempts, choose executors, reset failed work, or
+resolve the containing task. Consumers must authorize initial submissions and use
+the runner's supported saved autonomous bindings. Unsupported paths and successor
+modes are not dispatched. Continue running the scheduler even when queue consumption
+is moved to a separate worker: this recovers missed deliveries and schedules delayed
+continuations. A five-second item delay means *eligible after five seconds*; actual
+latency depends on the dispatch/worker cadence.
+
+For CLI consumption, run `drush queue:run checklist_iteration` after dispatching due
+work. Separate processes provide parallel execution; installing this code does not
+provision or supervise them. Configure the Queue API backend through Drupal's queue
+settings; database queue storage is the default. Use one consumer route per queue.
+A dedicated Messenger adapter and deployment validation are still follow-up work.
+Cron's 15-second budget controls starting further items; it cannot interrupt a single
+blocking provider call. Each iteration currently uses the runner's 300-second claim.
+Provider timeouts must fit that lease and the PHP worker limit. Long calls should run
+in CLI workers with appropriate limits, not web cron subject to PHP-FPM timeouts.
+
+Run database updates: `checklist_update_10004()` adds `dispatch_expires`, defaulting
+to zero so existing due attempts can be dispatched. It preserves all attempt versions,
+working state and history, and does not invent delivery or execution events.

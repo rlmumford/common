@@ -2,15 +2,19 @@
 
 namespace Drupal\Tests\checklist\Kernel;
 
+use Drupal\Component\Datetime\TimeInterface;
+use Drupal\Core\Queue\QueueFactory;
+use Drupal\Core\Queue\QueueInterface;
+use Drupal\KernelTests\KernelTestBase;
 use Drupal\checklist\Attempt\ChecklistAttempt;
 use Drupal\checklist\Attempt\ChecklistAttemptConflictException;
 use Drupal\checklist\Entity\ChecklistItem;
+use Drupal\checklist\Execution\ChecklistIterationScheduler;
 use Drupal\checklist_state_test\Plugin\ChecklistItemHandler\Iteration;
-use Drupal\Component\Datetime\TimeInterface;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
-use Drupal\KernelTests\KernelTestBase;
 use Drupal\user\Entity\User;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
@@ -66,9 +70,9 @@ class ChecklistIterationRunnerTest extends KernelTestBase {
   /**
    * Creates a saved autonomous item, owned/executed by a non-admin user.
    */
-  protected function work(array $configuration = [], ?int $executor = NULL): array {
+  protected function work(array $configuration = [], ?int $executor = NULL, string $name = 'Target'): array {
     $host = User::create([
-      'name' => 'Target',
+      'name' => $name,
       'status' => 1,
       'work' => [
         'id' => 'context_test',
@@ -327,6 +331,261 @@ class ChecklistIterationRunnerTest extends KernelTestBase {
     $this->assertSame([], Iteration::$calls);
     $this->expectException(\LogicException::class);
     $item->action();
+  }
+
+  /**
+   * Cron dispatches bounded iterations with delay and duplicate suppression.
+   */
+  public function testQueueContinuation(): void {
+    [, $item, $attempt] = $this->work();
+    $scheduler = $this->container->get('checklist.iteration_scheduler');
+    $queue = $this->container->get('queue')->get(ChecklistIterationScheduler::QUEUE);
+    $worker = $this->container->get('plugin.manager.queue_worker')->createInstance(ChecklistIterationScheduler::QUEUE);
+    checklist_cron();
+    $this->assertSame(1, $queue->numberOfItems());
+    $this->assertSame(0, $scheduler->dispatch());
+    $message = $queue->claimItem();
+    $this->assertSame(['attempt' => $attempt->id, 'version' => 1], $message->data);
+    $worker->processItem($message->data);
+    $worker->processItem($message->data);
+    $queue->deleteItem($message);
+    $this->assertCount(1, Iteration::$calls);
+    $this->assertSame(0, $scheduler->dispatch());
+    $this->now += 5;
+    $this->assertSame(1, $scheduler->dispatch());
+    $next = $queue->claimItem();
+    $this->assertSame(['attempt' => $attempt->id, 'version' => 3], $next->data);
+    $worker->processItem($next->data);
+    $queue->deleteItem($next);
+    $worker->processItem($message->data);
+    $worker->processItem($next->data);
+    $this->assertCount(2, Iteration::$calls);
+    $this->assertTrue($this->reload($item)->isComplete());
+    $this->assertSame(0, $scheduler->dispatch());
+    $this->assertSame('1', (string) $this->container->get('current_user')->id());
+  }
+
+  /**
+   * Lost messages are redelivered after expiry within the same attempt.
+   */
+  public function testLostDelivery(): void {
+    [, , $attempt] = $this->work();
+    $scheduler = $this->container->get('checklist.iteration_scheduler');
+    $queue = $this->container->get('queue')->get(ChecklistIterationScheduler::QUEUE);
+    $this->assertSame(1, $scheduler->dispatch());
+    $message = $queue->claimItem();
+    $queue->deleteItem($message);
+    $this->now += 299;
+    $this->assertSame(0, $scheduler->dispatch());
+    $this->now++;
+    $this->assertSame(1, $scheduler->dispatch());
+    $this->assertSame($message->data, $queue->claimItem()->data);
+    $this->assertEquals($attempt, $this->container->get('checklist.attempt_journal')->load($attempt->id));
+    $this->assertCount(1, $this->container->get('checklist.attempt_journal')->history($attempt->id));
+    $this->assertSame([], Iteration::$calls);
+  }
+
+  /**
+   * Blocked executors do not starve other work and can become eligible later.
+   */
+  public function testQueueAccessAndFairness(): void {
+    [$host, , $blocked] = $this->work();
+    $host->block()->save();
+    $this->now++;
+    [, , $other] = $this->work(name: 'Other');
+    $scheduler = $this->container->get('checklist.iteration_scheduler');
+    $queue = $this->container->get('queue')->get(ChecklistIterationScheduler::QUEUE);
+    $worker = $this->container->get('plugin.manager.queue_worker')->createInstance(ChecklistIterationScheduler::QUEUE);
+    $this->assertSame(1, $scheduler->dispatch(1));
+    $message = $queue->claimItem();
+    $this->assertSame($blocked->id, $message->data['attempt']);
+    $worker->processItem($message->data);
+    $queue->deleteItem($message);
+    $this->assertSame([], Iteration::$calls);
+    $this->assertEquals($blocked, $this->container->get('checklist.attempt_journal')->load($blocked->id));
+    $this->assertSame(1, $scheduler->dispatch(1));
+    $this->assertSame($other->id, $queue->claimItem()->data['attempt']);
+    $this->assertSame(0, $scheduler->dispatch());
+    $host->activate()->save();
+    $this->now += 300;
+    $this->assertSame(1, $scheduler->dispatch(1));
+    // Run the new delivery; the old payload is also safe at this same version.
+    $worker->processItem($message->data);
+    $this->assertCount(1, Iteration::$calls);
+    $this->assertSame('1', (string) $this->container->get('current_user')->id());
+  }
+
+  /**
+   * Transport rejection is retried later without exposing raw error data.
+   *
+   * @dataProvider transportFailures
+   */
+  public function testTransportFailure(bool $throws): void {
+    [, , $attempt] = $this->work();
+    $queue = $this->createMock(QueueInterface::class);
+    $create = $queue->expects($this->exactly(2))->method('createItem');
+    if ($throws) {
+      $create->willThrowException(new \RuntimeException('Secret transport payload'));
+    }
+    else {
+      $create->willReturn(FALSE);
+    }
+    $factory = $this->createMock(QueueFactory::class);
+    $factory->method('get')->with(ChecklistIterationScheduler::QUEUE)->willReturn($queue);
+    $logger = $this->createMock(LoggerInterface::class);
+    $logger->expects($this->exactly(2))->method('error')->with(
+      'Checklist iteration delivery failed for attempt {attempt}; scheduling will retry.',
+      ['attempt' => $attempt->id],
+    );
+    $scheduler = new ChecklistIterationScheduler($this->container->get('database'), $this->container->get('datetime.time'), $factory, $logger);
+    $this->assertSame(0, $scheduler->dispatch());
+    $this->assertSame(0, $scheduler->dispatch());
+    $this->now += 300;
+    $this->assertSame(0, $scheduler->dispatch());
+    $this->assertEquals($attempt, $this->container->get('checklist.attempt_journal')->load($attempt->id));
+  }
+
+  /**
+   * Provides Queue API failure modes.
+   */
+  public static function transportFailures(): array {
+    return [[FALSE], [TRUE]];
+  }
+
+  /**
+   * Failed and expired running executions are never automatically replayed.
+   *
+   * @dataProvider executionFailures
+   */
+  public function testQueueExecutionFailure(bool $expired): void {
+    [, , $attempt] = $this->work($expired ? [] : ['throw' => TRUE]);
+    if ($expired) {
+      Iteration::$during = function (): void {
+        $this->now += 300;
+      };
+    }
+    $logger = $this->createMock(LoggerInterface::class);
+    $logger->expects($expired ? $this->never() : $this->once())->method('warning')->with(
+      'Checklist iteration could not complete for attempt {attempt}; inspect its current status before retrying.',
+      ['attempt' => $attempt->id],
+    );
+    $this->container->set('logger.channel.checklist', $logger);
+    $scheduler = $this->container->get('checklist.iteration_scheduler');
+    $queue = $this->container->get('queue')->get(ChecklistIterationScheduler::QUEUE);
+    $worker = $this->container->get('plugin.manager.queue_worker')->createInstance(ChecklistIterationScheduler::QUEUE);
+    $this->assertSame(1, $scheduler->dispatch());
+    $message = $queue->claimItem();
+    $worker->processItem($message->data);
+    $queue->deleteItem($message);
+    $worker->processItem($message->data);
+    $this->now += 600;
+    $this->assertSame(0, $scheduler->dispatch());
+    $this->assertCount(1, Iteration::$calls);
+    $current = $this->container->get('checklist.attempt_journal')->load($attempt->id);
+    $this->assertSame($expired ? ChecklistAttempt::RUNNING : ChecklistAttempt::FAILED, $current->status);
+    $this->assertSame('1', (string) $this->container->get('current_user')->id());
+  }
+
+  /**
+   * Provides handler failure and claim expiry cases.
+   */
+  public static function executionFailures(): array {
+    return [[FALSE], [TRUE]];
+  }
+
+  /**
+   * A scan cannot send work from an uncommitted transaction.
+   */
+  public function testDispatchTransaction(): void {
+    $transaction = $this->container->get('database')->startTransaction();
+    $this->work();
+    try {
+      $this->container->get('checklist.iteration_scheduler')->dispatch();
+      $this->fail('Uncommitted work must not be dispatched.');
+    }
+    catch (\LogicException) {
+      $this->assertSame([], Iteration::$calls);
+    }
+    finally {
+      $transaction->rollBack();
+    }
+    $this->assertSame(0, $this->container->get('checklist.iteration_scheduler')->dispatch());
+  }
+
+  /**
+   * An upgrade preserves attempt history and makes old due work dispatchable.
+   */
+  public function testDeliveryUpgrade(): void {
+    [, , $attempt] = $this->work();
+    $database = $this->container->get('database');
+    $journal = $this->container->get('checklist.attempt_journal');
+    $history = $journal->history($attempt->id);
+    $database->schema()->dropField('checklist_attempt', 'dispatch_expires');
+    $this->container->get('module_handler')->loadInclude('checklist', 'install');
+    checklist_update_10004();
+    checklist_update_10004();
+    $this->assertEquals($attempt, $journal->load($attempt->id));
+    $this->assertSame($history, $journal->history($attempt->id));
+    $this->assertSame(1, $this->container->get('checklist.iteration_scheduler')->dispatch());
+  }
+
+  /**
+   * Another scheduler observes the reservation before enqueue finishes.
+   */
+  public function testCompetingDispatch(): void {
+    [, , $attempt] = $this->work();
+    $factory = $this->createMock(QueueFactory::class);
+    $queue = $this->createMock(QueueInterface::class);
+    $factory->method('get')->willReturn($queue);
+    $scheduler = new ChecklistIterationScheduler($this->container->get('database'), $this->container->get('datetime.time'), $factory, $this->createMock(LoggerInterface::class));
+    $queue->expects($this->once())->method('createItem')->willReturnCallback(function ($data) use ($scheduler, $attempt) {
+      $this->assertSame(['attempt' => $attempt->id, 'version' => 1], $data);
+      $this->assertFalse($this->container->get('database')->inTransaction());
+      $this->assertSame(0, $scheduler->dispatch());
+      return 1;
+    });
+    $this->assertSame(1, $scheduler->dispatch());
+  }
+
+  /**
+   * Even infrequent cron scans move past previously dispatched blocked work.
+   */
+  public function testInfrequentDispatchFairness(): void {
+    [, , $first] = $this->work();
+    $scheduler = $this->container->get('checklist.iteration_scheduler');
+    $queue = $this->container->get('queue')->get(ChecklistIterationScheduler::QUEUE);
+    $this->assertSame(1, $scheduler->dispatch(1));
+    $message = $queue->claimItem();
+    $this->assertSame($first->id, $message->data['attempt']);
+    $queue->deleteItem($message);
+    $this->now += 600;
+    [, , $second] = $this->work(name: 'Second');
+    $this->assertSame(1, $scheduler->dispatch(1));
+    $this->assertSame($second->id, $queue->claimItem()->data['attempt']);
+  }
+
+  /**
+   * Cancellation, other paths and successor intents prevent dispatch.
+   */
+  public function testDispatchScope(): void {
+    [, $item, $attempt] = $this->work();
+    $journal = $this->container->get('checklist.attempt_journal');
+    $cancelled = $journal->transition($attempt, ChecklistAttempt::CANCELLED, 1);
+    $scheduler = $this->container->get('checklist.iteration_scheduler');
+    $this->assertSame(0, $scheduler->dispatch());
+    $journal->create($item, 1, 1, ChecklistAttempt::ACTION, mode: ChecklistAttempt::FRESH, previous: $cancelled->id);
+    $this->assertSame(0, $scheduler->dispatch());
+    foreach ([ChecklistAttempt::ACTION_FORM, ChecklistAttempt::ACTION_OPERATION] as $path) {
+      $other = ChecklistItem::create(['checklist_type' => 'context_test']);
+      $journal->create($other, 1, 1, $path, $path === ChecklistAttempt::ACTION_OPERATION ? 'choose' : NULL);
+    }
+    $this->assertSame(0, $scheduler->dispatch());
+    $worker = $this->container->get('plugin.manager.queue_worker')->createInstance(ChecklistIterationScheduler::QUEUE);
+    $worker->processItem(['attempt' => $attempt->id, 'version' => $attempt->version]);
+    $worker->processItem(['attempt' => 'missing', 'version' => 1]);
+    $worker->processItem(['attempt' => $attempt->id, 'version' => '1']);
+    $worker->processItem(NULL);
+    $this->assertSame([], Iteration::$calls);
   }
 
   /**

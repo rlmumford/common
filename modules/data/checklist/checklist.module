@@ -14,6 +14,13 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\typed_data_reference\TypedDataReferenceItemList;
 
 /**
+ * Implements hook_cron().
+ */
+function checklist_cron() {
+  \Drupal::service('checklist.iteration_scheduler')->dispatch();
+}
+
+/**
  * Implements hook_typed_data_reference_property_definitions().
  */
 function checklist_typed_data_reference_property_definitions(TypedDataReferenceItemList $item_list) {

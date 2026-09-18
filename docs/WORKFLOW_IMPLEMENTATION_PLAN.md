@@ -345,8 +345,8 @@ or due times. Local result writes and history commit together; stale/expired wor
 cannot apply results through this API. Expired running work is not automatically
 re-executed. Kernel coverage exercises repeated iterations, item-state persistence,
 late writes, independent items, transaction rollback and the schema upgrade.
-The initial handler runner is described below. Queue delivery, workspace ownership
-and integration across existing interactive paths remain open.
+The initial handler runner and Queue API scheduler are described below. Workspace
+ownership and integration across existing interactive paths remain open.
 
 The initial automatic handler runner now invokes an opt-in `actionIteration()`
 under the stored active executor and restores caller identity on every exit path.
@@ -356,9 +356,20 @@ history commit under the claim. Waiting preserves state and the attempt identity
 success clears state; failure retains it. Legacy processing excludes iterative
 handlers. This first adapter supports saved autonomous items on single-value,
 untranslatable fields of non-revisionable hosts and initial action attempts only.
-Scheduling/queue delivery, authorized retry resets, unsaved workspaces and interactive
-ownership remain open. Kernel tests exercise cross-request continuation, failure,
+Authorized retry resets, unsaved workspaces and interactive ownership remain open. Kernel tests exercise cross-request continuation, failure,
 identity restoration and in-flight changes to permissions, contexts and state.
+
+Queue API delivery now schedules already-authorized initial action attempts from
+cron through `checklist.iteration_scheduler`. Atomic five-minute dispatch reservations
+suppress duplicates and allow lost/enqueue-failed messages to be delivered again.
+Messages contain only attempt ID/version; the queue worker invokes the existing
+executor-aware runner. Waiting commits release the reservation for the next due
+iteration. Pre-claim rejections are reconsidered after the reservation expires;
+failed/expired-running work is never automatically replayed. Scans prioritize work
+least recently dispatched. Kernel coverage includes delayed continuation, duplicates,
+lost delivery, competing dispatch, blocked executors, fairness, safe logging, schema
+upgrade and rejection of dispatch within an open transaction. Automatic submission
+on task save, Messenger deployment, workspace ownership and retry/reset remain open.
 
 ## P5 — Templates, providers and derivative items
 

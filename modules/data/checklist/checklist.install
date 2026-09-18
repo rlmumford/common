@@ -63,6 +63,7 @@ function checklist_schema() {
       'claim_token' => ['not null' => FALSE] + $uuid,
       'claim_expires' => ['default' => 0] + $timestamp,
       'available' => ['default' => 0] + $timestamp,
+      'dispatch_expires' => ['default' => 0] + $timestamp,
     ],
     'primary key' => ['id'],
     'indexes' => [
@@ -116,5 +117,16 @@ function checklist_update_10003() {
   }
   if (!$schema->indexExists('checklist_attempt', 'due')) {
     $schema->addIndex('checklist_attempt', 'due', $definition['indexes']['due'], $definition);
+  }
+}
+
+/**
+ * Adds expiring delivery reservations without changing execution history.
+ */
+function checklist_update_10004() {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->fieldExists('checklist_attempt', 'dispatch_expires')) {
+    $definition = checklist_schema()['checklist_attempt']['fields']['dispatch_expires'];
+    $schema->addField('checklist_attempt', 'dispatch_expires', $definition);
   }
 }

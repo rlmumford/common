@@ -44,3 +44,9 @@ services:
   checklist.iteration_runner:
     class: Drupal\checklist\Execution\ChecklistIterationRunner
     arguments: ['@entity_type.manager', '@account_switcher', '@checklist.resolver', '@checklist.context_preparer', '@checklist.attempt_journal', '@checklist.attempt_claims']
+  checklist.iteration_scheduler:
+    class: Drupal\checklist\Execution\ChecklistIterationScheduler
+    arguments: ['@database', '@datetime.time', '@queue', '@logger.channel.checklist']
+  logger.channel.checklist:
+    parent: logger.channel_base
+    arguments: ['checklist']
