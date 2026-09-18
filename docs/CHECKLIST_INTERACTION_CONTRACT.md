@@ -200,6 +200,14 @@ inputs before applying typed result changes. Queue API delivery now scans due
 initial action attempts, reserving dispatch for five minutes and sending only ID
 and version. This reservation is separate from worker claims and workspace locks.
 Lost delivery is retried after expiry; failed or expired-running execution is not.
+The item executor authorizes saved autonomous items as the authenticated caller and
+records that user as initiator/executor. The checklist-wide processor uses it to run
+short ready items inline, then refreshes contexts and re-evaluates blocked items.
+Background-only work, exhausted inline budgets and waiting continuations use workers.
+Inline work and queue delivery share item claims, audit and result application. Submission checks access before returning an existing
+attempt, never changes its executor, and never implicitly retries terminal work.
+Calls inside an outer transaction record only the journal, which rolls back with
+the caller; handler execution is deferred until after commit. Generated-item persistence and alternate execution policies remain separate.
 Workspace ownership, retry/reset authorization and integration across interactive
 paths remain open before external clients can mutate work safely.
 

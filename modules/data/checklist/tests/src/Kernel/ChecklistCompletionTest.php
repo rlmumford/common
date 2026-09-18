@@ -129,17 +129,33 @@ class ChecklistCompletionTest extends KernelTestBase {
   }
 
   /**
-   * A newly applicable earlier item blocks until it gets its own turn.
+   * Newly applicable automatic work runs before completing in this request.
    */
-  public function testNewRequirementDoesNotCompleteEarly(): void {
+  public function testNewRequirementRunsBeforeCompletion(): void {
     $checklist = $this->checklist([
       'earlier' => ['applicable' => FALSE],
       'later' => ['applicability_updates' => ['earlier' => TRUE]],
     ]);
-    $this->assertFalse($checklist->process());
-    $this->assertSame(['later'], $this->container->get('state')->get('checklist_completion_test.runs'));
+    $this->assertTrue($checklist->process());
+    $this->assertTrue($checklist->getItem('earlier')->isComplete());
+    $this->assertTrue($checklist->getItem('later')->isComplete());
+    $this->assertSame(['later', 'earlier'], $this->container->get('state')->get('checklist_completion_test.runs'));
     $this->assertTrue($checklist->process());
     $this->assertSame(['later', 'earlier'], $this->container->get('state')->get('checklist_completion_test.runs'));
+  }
+
+  /**
+   * Newly required manual work still prevents premature completion.
+   */
+  public function testNewManualRequirementBlocksCompletion(): void {
+    $checklist = $this->checklist([
+      'earlier' => ['applicable' => FALSE, 'method' => 'manual'],
+      'later' => ['applicability_updates' => ['earlier' => TRUE]],
+    ]);
+    $this->assertFalse($checklist->process());
+    $this->assertTrue($checklist->getItem('earlier')->isIncomplete());
+    $this->assertFalse($checklist->isCompletable());
+    $this->assertSame(['later'], $this->container->get('state')->get('checklist_completion_test.runs'));
   }
 
 }

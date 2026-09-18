@@ -5,7 +5,7 @@ namespace Drupal\checklist\Plugin\QueueWorker;
 use Drupal\checklist\Attempt\ChecklistAttempt;
 use Drupal\checklist\Attempt\ChecklistAttemptConflictException;
 use Drupal\checklist\Attempt\ChecklistAttemptJournal;
-use Drupal\checklist\Execution\ChecklistIterationRunner;
+use Drupal\checklist\Execution\ChecklistItemExecutor;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Queue\QueueWorkerBase;
 use Psr\Log\LoggerInterface;
@@ -15,17 +15,17 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Runs one automatic checklist iteration per message.
  *
  * @QueueWorker(
- *   id = "checklist_iteration",
+ *   id = "checklist_item_iteration",
  *   title = @Translation("Run checklist iterations"),
  *   cron = {"time" = 15}
  * )
  */
-class ChecklistIteration extends QueueWorkerBase implements ContainerFactoryPluginInterface {
+class ChecklistItemIteration extends QueueWorkerBase implements ContainerFactoryPluginInterface {
 
   /**
    * Constructs the iteration worker.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, protected ChecklistAttemptJournal $journal, protected ChecklistIterationRunner $runner, protected LoggerInterface $logger) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, protected ChecklistAttemptJournal $journal, protected ChecklistItemExecutor $executor, protected LoggerInterface $logger) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
   }
 
@@ -33,7 +33,7 @@ class ChecklistIteration extends QueueWorkerBase implements ContainerFactoryPlug
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static($configuration, $plugin_id, $plugin_definition, $container->get('checklist.attempt_journal'), $container->get('checklist.iteration_runner'), $container->get('logger.channel.checklist'));
+    return new static($configuration, $plugin_id, $plugin_definition, $container->get('checklist.attempt_journal'), $container->get('checklist.item_executor'), $container->get('logger.channel.checklist'));
   }
 
   /**
@@ -56,7 +56,7 @@ class ChecklistIteration extends QueueWorkerBase implements ContainerFactoryPlug
       return;
     }
     try {
-      $this->runner->run($attempt);
+      $this->executor->run($attempt);
     }
     catch (ChecklistAttemptConflictException) {
       // Duplicate deliveries and stale results cannot apply through the runner.

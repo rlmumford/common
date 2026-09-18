@@ -9,9 +9,9 @@ use Psr\Log\LoggerInterface;
 /**
  * Delivers due automatic attempts to the Queue API without executing handlers.
  */
-class ChecklistIterationScheduler {
+class ChecklistItemIterationScheduler {
 
-  public const QUEUE = 'checklist_iteration';
+  public const QUEUE = 'checklist_item_iteration';
 
   /**
    * Constructs the scheduler.

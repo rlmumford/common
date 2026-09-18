@@ -4,12 +4,13 @@ namespace Drupal\checklist_state_test\Plugin\ChecklistItemHandler;
 
 use Drupal\checklist\Attempt\ChecklistAttempt;
 use Drupal\checklist\Entity\ChecklistItemInterface;
-use Drupal\checklist\Execution\ChecklistIterationResult;
+use Drupal\checklist\Execution\ChecklistItemResult;
 use Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerInterface;
 use Drupal\checklist\Plugin\ChecklistItemHandler\ContextAwareChecklistItemHandlerBase;
 use Drupal\checklist\Plugin\ChecklistItemHandler\ExpectedOutcomeChecklistItemHandlerInterface;
 use Drupal\checklist\Plugin\ChecklistItemHandler\IterativeChecklistItemHandlerInterface;
 use Drupal\Core\TypedData\DataDefinition;
+use Drupal\checklist\Plugin\ChecklistItemHandler\StatefulChecklistItemHandlerInterface;
 
 /**
  * Runs two iterations and exposes an in-flight change seam for kernel tests.
@@ -22,7 +23,7 @@ use Drupal\Core\TypedData\DataDefinition;
  *   }
  * )
  */
-class Iteration extends ContextAwareChecklistItemHandlerBase implements IterativeChecklistItemHandlerInterface, ExpectedOutcomeChecklistItemHandlerInterface {
+class Iteration extends ContextAwareChecklistItemHandlerBase implements IterativeChecklistItemHandlerInterface, ExpectedOutcomeChecklistItemHandlerInterface, StatefulChecklistItemHandlerInterface {
 
   /**
    * Calls observed outside the result transaction.
@@ -72,7 +73,7 @@ class Iteration extends ContextAwareChecklistItemHandlerBase implements Iterativ
   /**
    * {@inheritdoc}
    */
-  public function actionIteration(ChecklistAttempt $attempt): ChecklistIterationResult {
+  public function actionIteration(ChecklistAttempt $attempt): ChecklistItemResult {
     $completed = $this->item->get('state')->get('completed')->getCastedValue() ?? 0;
     static::$calls[] = [
       (int) \Drupal::currentUser()->id(),
@@ -88,21 +89,21 @@ class Iteration extends ContextAwareChecklistItemHandlerBase implements Iterativ
       throw new \RuntimeException('Secret provider payload');
     }
     if (!empty($this->configuration['fail'])) {
-      return new ChecklistIterationResult(ChecklistAttempt::FAILED, ['run_id' => 'failed-run'], reason: 'Provider declined');
+      return new ChecklistItemResult(ChecklistAttempt::FAILED, ['run_id' => 'failed-run'], reason: 'Provider declined');
     }
     if (!empty($this->configuration['invalid_value'])) {
-      return new ChecklistIterationResult(ChecklistAttempt::WAITING, [
+      return new ChecklistItemResult(ChecklistAttempt::WAITING, [
         'run_id' => 'must-not-save',
         'completed' => 'not an integer',
       ]);
     }
     if (!empty($this->configuration['invalid'])) {
-      return new ChecklistIterationResult(ChecklistAttempt::WAITING, ['unknown' => 'bad']);
+      return new ChecklistItemResult(ChecklistAttempt::WAITING, ['unknown' => 'bad']);
     }
     if (!$completed) {
-      return new ChecklistIterationResult(ChecklistAttempt::WAITING, ['run_id' => 'provider-123', 'completed' => 1], delay: 5);
+      return new ChecklistItemResult(ChecklistAttempt::WAITING, ['run_id' => 'provider-123', 'completed' => 1], delay: 5);
     }
-    return new ChecklistIterationResult(ChecklistAttempt::SUCCEEDED, outcomes: ['result' => $this->getContextValue('value')]);
+    return new ChecklistItemResult(ChecklistAttempt::SUCCEEDED, outcomes: ['result' => $this->getContextValue('value')]);
   }
 
 }
