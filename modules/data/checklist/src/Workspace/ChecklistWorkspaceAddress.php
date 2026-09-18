@@ -32,7 +32,13 @@ final class ChecklistWorkspaceAddress {
    * Returns a collision-resistant database key for this address.
    */
   public function id(): string {
-    return hash('sha256', implode("\0", [$this->hostType, $this->hostUuid, $this->fieldName, $this->delta, $this->checklistKey]));
+    return hash('sha256', implode("\0", [
+      $this->hostType,
+      $this->hostUuid,
+      $this->fieldName,
+      $this->delta,
+      $this->checklistKey,
+    ]));
   }
 
 }
