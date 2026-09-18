@@ -26,6 +26,6 @@ services:
   checklist.condition_evaluator:
     class: Drupal\checklist\ChecklistConditionEvaluator
     arguments: ['@plugin.manager.condition', '@checklist.context_collector', '@typed_data_plus.context_handler']
-  checklist.operation_dispatcher:
-    class: Drupal\checklist\ChecklistOperationDispatcher
+  checklist.action_operation_dispatcher:
+    class: Drupal\checklist\ChecklistActionOperationDispatcher
     arguments: ['@checklist.context_preparer']

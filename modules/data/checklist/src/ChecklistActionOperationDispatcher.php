@@ -12,7 +12,7 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
  * It does not reload entities, switch accounts, claim work or save results.
  * Handlers own parameter validation, domain effects and persistence.
  */
-class ChecklistOperationDispatcher {
+class ChecklistActionOperationDispatcher {
 
   /**
    * Constructs the operation dispatcher.

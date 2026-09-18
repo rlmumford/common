@@ -197,11 +197,11 @@ preserve compatibility with existing outcome definitions in the meantime.
 
 ## Operation dispatch
 
-API and tool adapters use `checklist.operation_dispatcher` for all item handlers
+API and tool adapters use `checklist.action_operation_dispatcher` for all item handlers
 implementing `ActionOperationsChecklistItemHandlerInterface`:
 
 ```php
-$dispatcher = \Drupal::service('checklist.operation_dispatcher');
+$dispatcher = \Drupal::service('checklist.action_operation_dispatcher');
 $operations = $dispatcher->discover($checklist, 'review_decision');
 $result = $dispatcher->execute($checklist, 'review_decision', 'choose', [
   'choice' => 'approve',

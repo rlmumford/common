@@ -81,7 +81,7 @@ class ChecklistOperationTest extends KernelTestBase {
    */
   public function testFreshContexts(): void {
     $checklist = $this->checklist();
-    $dispatcher = $this->container->get('checklist.operation_dispatcher');
+    $dispatcher = $this->container->get('checklist.action_operation_dispatcher');
     $source = $checklist->getItem('source');
     $source->setOutcome('value', 'First');
     $source->setOutcome('details', ['label' => 'Optional']);
@@ -111,7 +111,7 @@ class ChecklistOperationTest extends KernelTestBase {
       'conditions' => [$gate => ['id' => 'condition_string', 'condition_string' => "checklist.name.value == 'Owner'"]],
     ]);
     $checklist->getItem('source')->setOutcome('value', 'Ready');
-    $dispatcher = $this->container->get('checklist.operation_dispatcher');
+    $dispatcher = $this->container->get('checklist.action_operation_dispatcher');
     $this->assertArrayHasKey('read', $dispatcher->discover($checklist, 'operation'));
     $checklist->getEntity()->set('name', 'Changed');
     $this->assertSame([], $dispatcher->discover($checklist, 'operation'));
@@ -146,7 +146,7 @@ class ChecklistOperationTest extends KernelTestBase {
     ]);
     $checklist->getItem('source')->setOutcome('value', 'Ready');
     $this->assertNull($checklist->getItem('operation')->isApplicable());
-    $dispatcher = $this->container->get('checklist.operation_dispatcher');
+    $dispatcher = $this->container->get('checklist.action_operation_dispatcher');
     $this->assertSame([], $dispatcher->discover($checklist, 'operation'));
     $this->expectException(\DomainException::class);
     $dispatcher->execute($checklist, 'operation', 'read', []);
@@ -158,7 +158,7 @@ class ChecklistOperationTest extends KernelTestBase {
   public function testChangedAccount(): void {
     $checklist = $this->checklist();
     $checklist->getItem('source')->setOutcome('value', 'Ready');
-    $dispatcher = $this->container->get('checklist.operation_dispatcher');
+    $dispatcher = $this->container->get('checklist.action_operation_dispatcher');
     $this->assertNotEmpty($dispatcher->discover($checklist, 'operation'));
     $other = User::create(['name' => 'Other']);
     $other->save();
@@ -185,7 +185,7 @@ class ChecklistOperationTest extends KernelTestBase {
     $checklist = $this->checklist();
     $checklist->getItem('source')->setOutcome('value', 'Ready');
     $checklist->getItem('operation')->set('status', $status);
-    $dispatcher = $this->container->get('checklist.operation_dispatcher');
+    $dispatcher = $this->container->get('checklist.action_operation_dispatcher');
     $this->assertSame([], $dispatcher->discover($checklist, 'operation'));
     $this->expectException(\DomainException::class);
     $dispatcher->execute($checklist, 'operation', 'read', []);
@@ -209,7 +209,7 @@ class ChecklistOperationTest extends KernelTestBase {
     $checklist = $this->checklist();
     $source = $checklist->getItem('source');
     $source->setOutcome('value', 'Ready');
-    $dispatcher = $this->container->get('checklist.operation_dispatcher');
+    $dispatcher = $this->container->get('checklist.action_operation_dispatcher');
     $this->assertNotEmpty($dispatcher->discover($checklist, 'operation'));
     $source->setOutcome('value', 'Hidden');
     foreach ([['missing', 'read'], ['operation', 'missing'], ['operation', 'read']] as [$item, $operation]) {
@@ -232,7 +232,7 @@ class ChecklistOperationTest extends KernelTestBase {
   public function testInvalidMapping(): void {
     $checklist = $this->checklist(['context_mapping' => ['value' => 'missing:source']]);
     $this->expectException(ContextException::class);
-    $this->container->get('checklist.operation_dispatcher')->discover($checklist, 'operation');
+    $this->container->get('checklist.action_operation_dispatcher')->discover($checklist, 'operation');
   }
 
   /**
@@ -243,7 +243,7 @@ class ChecklistOperationTest extends KernelTestBase {
       'question' => 'Approve?',
       'options' => ['approve' => ['label' => 'Approve', 'require_reason' => TRUE]],
     ], 'decision');
-    $dispatcher = $this->container->get('checklist.operation_dispatcher');
+    $dispatcher = $this->container->get('checklist.action_operation_dispatcher');
     try {
       $dispatcher->execute($checklist, 'operation', 'choose', ['choice' => 'approve']);
       $this->fail('The dispatcher must retain handler validation.');

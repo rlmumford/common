@@ -6,6 +6,10 @@ This plan implements the requirements in [Workflow architecture](WORKFLOW_ARCHIT
 within `rlmumford/common` on `2.x`. CounselKit `11.5.x` is the behavioral reference.
 The current split packages are a foundation, not completion of this plan.
 
+The [interaction contract](CHECKLIST_INTERACTION_CONTRACT.md) specifies item reads,
+action progress, shared UI/API/AI workspaces, user ownership and explicit takeover.
+Its locks, state projection and HTTP endpoints remain implementation work.
+
 Application integration, including further Christian Jobs UI work, follows the
 reusable framework. No production deployment or CounselKit data migration is
 implied by this plan. Each phase should produce independently reviewable changes,
