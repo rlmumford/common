@@ -2,6 +2,7 @@
 
 namespace Drupal\checklist\Plugin\ChecklistItemHandler;
 
+use Drupal\checklist\ChecklistConditionEvaluator;
 use Drupal\checklist\Entity\ChecklistItemInterface;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
 use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
@@ -65,7 +66,8 @@ class UpdateEntity extends ContextAwareChecklistItemHandlerBase implements Conta
       $plugin_id,
       $plugin_definition,
       $container->get('entity_type.manager'),
-      $container->get('entity_display.repository')
+      $container->get('entity_display.repository'),
+      $container->get('checklist.condition_evaluator')
     );
   }
 
@@ -82,11 +84,13 @@ class UpdateEntity extends ContextAwareChecklistItemHandlerBase implements Conta
    *   The entity type manager service.
    * @param \Drupal\Core\Entity\EntityDisplayRepositoryInterface $entity_display_repository
    *   The entity display repository.
+   * @param \Drupal\checklist\ChecklistConditionEvaluator $condition_evaluator
+   *   The condition evaluator.
    *
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  public function __construct(array $configuration, string $plugin_id, $plugin_definition, EntityTypeManagerInterface $entity_type_manager, EntityDisplayRepositoryInterface $entity_display_repository) {
-    parent::__construct($configuration, $plugin_id, $plugin_definition);
+  public function __construct(array $configuration, string $plugin_id, $plugin_definition, EntityTypeManagerInterface $entity_type_manager, EntityDisplayRepositoryInterface $entity_display_repository, ChecklistConditionEvaluator $condition_evaluator) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition, $condition_evaluator);
 
     $this->entityDisplayRepository = $entity_display_repository;
     $this->entityTypeManager = $entity_type_manager;

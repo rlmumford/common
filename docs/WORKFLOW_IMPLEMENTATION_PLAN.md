@@ -263,7 +263,7 @@ items. Unknown applicability blocks execution and completion. Processing reuses
 items are re-evaluated against changed gates. Tests cover newly applicable earlier
 work, removed requirements, and required unfinished/failed work.
 
-Native condition gates now cover applicability, requiredness and dependencies,
+Native condition gates now cover applicability, requiredness and actionability,
 including same-pass outcome selectors and action/form rechecks. Configuration UI,
 decision plugins, execution identity and claims remain open. The integration
 requires the Typed Data Plus discovery and missing-context fixes in

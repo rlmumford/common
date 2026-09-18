@@ -77,7 +77,9 @@ work receives its execution turn on the next processing pass.
 
 ## Condition gates
 
-Handler configuration accepts ordinary Drupal condition plugin configurations:
+Handler configuration accepts ordinary Drupal condition plugin configurations.
+`actionability` determines whether an applicable item can run; dependencies on
+other items are one use of that gate:
 
 ```yaml
 conditions:
@@ -88,7 +90,7 @@ conditions:
       user: '@user.current_user_context:current_user'
   required:
     id: 'condition_constant:true'
-  dependencies:
+  actionability:
     id: condition_and
     conditions:
       - id: condition_string
@@ -98,7 +100,7 @@ conditions:
 ```
 
 Omitted gates default to TRUE. Missing required condition contexts yield unknown
-applicability, blocked dependencies or conservative requiredness. Condition strings
+applicability, blocked actionability or conservative requiredness. Condition strings
 can explicitly test optional missing outcomes with `exists`/`empty`; malformed
 configuration raises an error. Native condition plugins retain their own required
 context definitions, mappings and negation semantics. Handlers overriding the base
@@ -117,3 +119,7 @@ Interactive checklist output is uncacheable until gate cache metadata is aggrega
 Configuration is currently programmatic/exported; a condition selection UI is not
 included. This integration requires the Typed Data Plus condition discovery and
 missing-context fixes in [MR !6](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/6).
+
+The base handler receives `checklist.condition_evaluator` through Drupal's
+`ContainerFactoryPluginInterface::create()` factory. Handlers with custom factories
+and constructors must pass that service to the base constructor.

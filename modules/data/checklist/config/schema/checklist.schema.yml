@@ -12,9 +12,9 @@ checklist_item_handler:
         required:
           type: condition.plugin.[id]
           label: 'Requiredness'
-        dependencies:
+        actionability:
           type: condition.plugin.[id]
-          label: 'Dependencies'
+          label: 'Actionability'
 checklist_item_handler.*:
   type: checklist_item_handler
 checklist_item_handler.simply_checkable:

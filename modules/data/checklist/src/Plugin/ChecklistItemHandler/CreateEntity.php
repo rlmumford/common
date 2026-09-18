@@ -2,6 +2,7 @@
 
 namespace Drupal\checklist\Plugin\ChecklistItemHandler;
 
+use Drupal\checklist\ChecklistConditionEvaluator;
 use Drupal\checklist\Entity\ChecklistItemInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
@@ -68,7 +69,8 @@ class CreateEntity extends ChecklistItemHandlerBase implements ContainerFactoryP
       $plugin_definition,
       $container->get('entity_type.manager')->getDefinition($plugin_definition['entity_type']),
       $container->get('entity_type.manager')->getStorage($plugin_definition['entity_type']),
-      $container->get('entity_type.bundle.info')
+      $container->get('entity_type.bundle.info'),
+      $container->get('checklist.condition_evaluator')
     );
   }
 
@@ -87,6 +89,8 @@ class CreateEntity extends ChecklistItemHandlerBase implements ContainerFactoryP
    *   The entity type storage.
    * @param \Drupal\Core\Entity\EntityTypeBundleInfoInterface $entity_type_bundle_info
    *   The entity type bundle info service.
+   * @param \Drupal\checklist\ChecklistConditionEvaluator $condition_evaluator
+   *   The condition evaluator.
    */
   public function __construct(
     array $configuration,
@@ -95,8 +99,9 @@ class CreateEntity extends ChecklistItemHandlerBase implements ContainerFactoryP
     EntityTypeInterface $entity_type,
     EntityStorageInterface $entity_storage,
     EntityTypeBundleInfoInterface $entity_type_bundle_info,
+    ChecklistConditionEvaluator $condition_evaluator,
   ) {
-    parent::__construct($configuration, $plugin_id, $plugin_definition);
+    parent::__construct($configuration, $plugin_id, $plugin_definition, $condition_evaluator);
 
     $this->entityType = $entity_type;
     $this->entityStorage = $entity_storage;

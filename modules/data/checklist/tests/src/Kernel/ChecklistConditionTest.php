@@ -82,7 +82,7 @@ class ChecklistConditionTest extends KernelTestBase {
    */
   public function testOutcomeDependencies(): void {
     $checklist = $this->checklist([
-      'dependencies' => [
+      'actionability' => [
         'id' => 'condition_and',
         'conditions' => [
           ['id' => 'condition_constant:true'],
@@ -125,7 +125,7 @@ class ChecklistConditionTest extends KernelTestBase {
         'roles' => ['authenticated'],
         'context_mapping' => ['user' => 'checklist:entity'],
       ],
-      'dependencies' => ['id' => 'condition_string', 'condition_string' => "items.source.outcomes.value == 'Ready'"],
+      'actionability' => ['id' => 'condition_string', 'condition_string' => "items.source.outcomes.value == 'Ready'"],
     ]);
     $target = $checklist->getItem('target');
     $this->assertTrue($target->isApplicable());
@@ -156,10 +156,10 @@ class ChecklistConditionTest extends KernelTestBase {
   }
 
   /**
-   * Direct item action cannot bypass a configured dependency gate.
+   * Direct item action cannot bypass a configured actionability gate.
    */
   public function testDirectActionBlocked(): void {
-    $item = $this->checklist(['dependencies' => ['id' => 'condition_constant:false']])->getItem('target');
+    $item = $this->checklist(['actionability' => ['id' => 'condition_constant:false']])->getItem('target');
     $this->expectException(\LogicException::class);
     $this->expectExceptionMessage('not actionable');
     $item->action();
@@ -169,7 +169,7 @@ class ChecklistConditionTest extends KernelTestBase {
    * Form submissions recheck gates before invoking the plugin submit method.
    */
   public function testFormSubmissionBlocked(): void {
-    $checklist = $this->checklist(['dependencies' => ['id' => 'condition_constant:false']]);
+    $checklist = $this->checklist(['actionability' => ['id' => 'condition_constant:false']]);
     $this->container->get('current_user')->setAccount($checklist->getEntity());
     $item = $checklist->getItem('target');
     $this->assertInstanceOf(ChecklistItemActionForm::class, ChecklistItemActionForm::create($this->container));
@@ -185,6 +185,21 @@ class ChecklistConditionTest extends KernelTestBase {
     }
     $this->assertTrue($item->isIncomplete());
     $this->assertTrue($item->isNew());
+  }
+
+  /**
+   * Custom entity handler factories inject the shared evaluator as well.
+   */
+  public function testEntityHandlerFactories(): void {
+    $item = $this->checklist()->getItem('target');
+    $manager = $this->container->get('plugin.manager.checklist_item_handler');
+    foreach (['create_entity:user', 'update_entity:user'] as $id) {
+      $handler = $manager->createInstance($id, [
+        'conditions' => ['required' => ['id' => 'condition_constant:false']],
+      ]);
+      $handler->setItem($item);
+      $this->assertFalse($handler->isRequired());
+    }
   }
 
   /**
