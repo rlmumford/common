@@ -1,0 +1,8 @@
+name: Checklist resolver test
+description: Tests checklist host isolation and field access.
+type: module
+package: Testing
+core_version_requirement: ^10 || ^11
+dependencies:
+  - checklist:checklist
+  - drupal:entity_test

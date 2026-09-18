@@ -185,7 +185,10 @@ Implement in this order:
 1. Rename the shared dispatcher to `ChecklistActionOperationDispatcher`, service
    `checklist.action_operation_dispatcher`, matching handler terminology.
 2. Implement shared reference resolution and item reads, with field access, host
-   isolation, multiple fields/deltas and explicit workspace semantics.
+   isolation, multiple fields/deltas and explicit workspace semantics. The persisted
+   base is now available through `checklist.resolver::resolveStored()`: host/field
+   access, type checks, field/delta isolation and deliberate tempstore bypass are
+   covered. Shared workspace composition and the item read model remain open.
 3. Implement durable state/attempt storage, ownership leases, atomic takeover,
    version checks and operational history; integrate all mutating paths.
 4. Add `checklist_api` discovery, reads and invocation, then AI tool adapters using

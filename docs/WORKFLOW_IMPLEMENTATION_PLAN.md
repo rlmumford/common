@@ -239,8 +239,12 @@ contexts, enforces incomplete status and item gates, and checks current operatio
 discovery before delegating validation/persistence to the handler. Kernel coverage
 includes missing/changed contexts, changed users/gates, unsupported and terminal
 items, hidden operations, configuration errors and persisted decision outcomes.
-Adapters supply the current checklist and current account; reload/claims, execution
-identities, attempts and intermediate-state storage remain open.
+The persisted-base resolver now loads a host field/delta with entity and field
+access checks, verifies the checklist's host type, and bypasses stale form tempstore.
+Item queries are scoped by checklist type to isolate matching IDs on different host
+types. Tests cover multiple fields/deltas, access denial and conflicting tempstore.
+Adapters still supply the current checklist/account; shared workspace composition,
+claims, execution identities, attempts and intermediate-state storage remain open.
 
 Deliverables:
 

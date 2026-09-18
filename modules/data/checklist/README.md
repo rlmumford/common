@@ -236,3 +236,35 @@ It uses no privileged-user fallback and performs no account switching. Discovery
 results are request-local snapshots; do not cache them across users or changes.
 Task-level execution policies, durable claims, cross-request stale-write protection
 and HTTP/AI adapters remain separate implementation work.
+
+## Persisted checklist resolution
+
+`checklist.resolver` supplies an explicit persisted base for future shared workspace
+resolution. It accepts host entity type/ID, checklist field name and delta:
+
+```php
+$checklist = \Drupal::service('checklist.resolver')->resolveStored(
+  'task', $task_id, 'checklist', 0, 'update'
+);
+```
+
+Use the actual checklist field name on the host. `view` is the default operation;
+`update` additionally requires host update and field edit access. Both require host
+and field view access for the current account. Invalid addresses, empty field
+items, non-checklist fields and checklist types intended for another host type
+raise `NotFoundHttpException`; denied access raises `AccessDeniedHttpException`.
+Malformed plugin configuration remains a configuration error.
+
+The resolver reloads the host's default revision/default translation and clears
+checklist-item entity caches before constructing the checklist. The resolved graph
+and its item back-references bypass form tempstore, so callers cannot accidentally
+execute against a stale cached form snapshot. Existing form routes retain their
+current tempstore behavior. Persisted item loading now scopes queries to checklist
+type as well as host ID and field/delta key, isolating host types with matching IDs.
+
+This method does not merge shared working state, acquire ownership, validate a
+workspace version or protect concurrent writes. It is not a replacement for the
+planned shared workspace service. Delta addresses are locations and must not be
+stored as durable tool identities until the identity policy in the
+[interaction contract](https://github.com/rlmumford/common/blob/2.x/docs/CHECKLIST_INTERACTION_CONTRACT.md) is implemented.
+No historical revision or translated checklist targeting is provided yet.
