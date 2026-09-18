@@ -264,8 +264,9 @@ executor, successor links and timestamps. A unique item head plus conditional
 version writes reject stale starts/transitions. Resume and fresh are recorded
 intents only: the journal does not reset item state or coordinate execution. Tests
 cover lifecycle, successor history, SQL conflict paths, rollback and installation /
-upgrade. Execution-path integration, ownership/claims, atomic item-state application,
-access-filtered history and retention policy remain open.
+upgrade. Execution-path integration, workspace ownership, coordinated item-state
+application, access-filtered history and retention policy remain open. Worker
+claim primitives are described under P4.
 
 Deliverables:
 
@@ -299,7 +300,7 @@ work, removed requirements, and required unfinished/failed work.
 
 Native condition gates now cover applicability, requiredness and actionability,
 including same-pass outcome selectors and action/form rechecks. Configuration UI,
-execution identity and claims remain open. The integration
+execution identity and claim integration remain open. The integration
 requires the Typed Data Plus discovery and missing-context fixes in
 [MR !6](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/6).
 
@@ -336,6 +337,17 @@ Acceptance: no resolution while required work is running, queued, failed or
 lock-contested unless an explicitly designed completion policy permits it; changing
 an outcome refreshes downstream gates; inaccessible/hidden options cannot be invoked
 through APIs; all three action paths use the same identity and condition semantics.
+
+Worker iteration coordination is now available through
+`checklist.attempt_claims`: claim, token-rotating renewal, delayed yield via commit,
+terminal commit and explicit expiry. The journal prevents bypassing active claims
+or due times. Local result writes and history commit together; stale/expired workers
+cannot apply results through this API. Expired running work is not automatically
+re-executed. Kernel coverage exercises repeated iterations, item-state persistence,
+late writes, independent items, transaction rollback and the schema upgrade.
+Handler invocation, execution-user restoration, queue delivery, workspace ownership
+and integrating existing mutating paths remain open. This is not yet an end-to-end
+worker runner.
 
 ## P5 — Templates, providers and derivative items
 

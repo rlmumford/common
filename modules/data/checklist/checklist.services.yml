@@ -38,3 +38,6 @@ services:
   checklist.attempt_journal:
     class: Drupal\checklist\Attempt\ChecklistAttemptJournal
     arguments: ['@database', '@uuid', '@datetime.time']
+  checklist.attempt_claims:
+    class: Drupal\checklist\Attempt\ChecklistAttemptClaims
+    arguments: ['@database', '@checklist.attempt_journal', '@uuid', '@datetime.time']
