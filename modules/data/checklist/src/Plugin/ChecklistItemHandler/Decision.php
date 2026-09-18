@@ -27,7 +27,7 @@ class Decision extends ChecklistItemHandlerBase implements InteractiveChecklistI
    * {@inheritdoc}
    */
   public function defaultConfiguration() {
-    return ['question' => '', 'options' => []] + parent::defaultConfiguration();
+    return ['question' => '', 'presentation' => 'buttons', 'options' => []] + parent::defaultConfiguration();
   }
 
   /**

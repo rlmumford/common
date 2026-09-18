@@ -281,6 +281,8 @@ values and validating them against current constraints are separate operations. 
 and schema-described `choose` operation share validation and completion, including
 host update access and gate rechecks. Kernel tests cover denied/stale choices,
 invalid inputs, reason validation and downstream outcome use after reload.
+Action forms default to separate choice buttons, with radios/select alternatives.
+All presentations preserve the shared validation and AJAX completion path.
 AI choice, HTTP/tool adapters, generated items and concurrent execution remain open.
 
 Deliverables:

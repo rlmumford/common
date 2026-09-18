@@ -53,6 +53,9 @@ checklist_item_handler.decision:
     question:
       type: label
       label: 'Question'
+    presentation:
+      type: string
+      label: 'Presentation (buttons, radios or select)'
     options:
       type: sequence
       label: 'Named options'

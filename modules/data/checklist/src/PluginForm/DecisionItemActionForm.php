@@ -30,12 +30,43 @@ class DecisionItemActionForm extends PluginFormBase {
         $reason_options[] = $option['label'];
       }
     }
-    $form['choice'] = [
-      '#type' => 'radios',
-      '#title' => $this->plugin->getConfiguration()['question'],
-      '#options' => $options,
-      '#required' => TRUE,
-    ];
+    $configuration = $this->plugin->getConfiguration();
+    $presentation = $configuration['presentation'];
+    if (!in_array($presentation, ['buttons', 'radios', 'select'], TRUE)) {
+      throw new \InvalidArgumentException('Unknown decision presentation.');
+    }
+    if ($presentation === 'buttons') {
+      $form['choice'] = [
+        '#type' => 'item',
+        '#title' => $configuration['question'],
+      ];
+      // Reuse the wrapper's AJAX callback and submit handler for every choice.
+      $submit = $form['actions']['complete'] ?? ['#type' => 'submit'];
+      unset($form['actions']['complete']);
+      foreach ($options as $name => $label) {
+        $form['actions']['choose_' . $name] = array_replace($submit, [
+          '#value' => $label,
+          '#name' => 'decision_choose_' . $name,
+          '#decision_choice' => $name,
+        ]);
+      }
+      if (!$options) {
+        $form['choice']['#markup'] = new TranslatableMarkup('No choices are currently available.');
+      }
+    }
+    else {
+      $form['choice'] = [
+        '#type' => $presentation,
+        '#title' => $configuration['question'],
+        '#options' => $options,
+        '#required' => TRUE,
+      ];
+      if ($presentation === 'select') {
+        $form['choice']['#empty_option'] = new TranslatableMarkup('- Choose -');
+      }
+      $form['actions']['complete']['#value'] = new TranslatableMarkup('Choose');
+      $form['actions']['complete']['#disabled'] = !$options;
+    }
     $form['reason'] = [
       '#type' => 'textarea',
       '#title' => new TranslatableMarkup('Reason'),
@@ -43,8 +74,6 @@ class DecisionItemActionForm extends PluginFormBase {
         ? new TranslatableMarkup('A reason is required for: @options.', ['@options' => implode(', ', $reason_options)])
         : new TranslatableMarkup('Optional explanation.'),
     ];
-    $form['actions']['complete']['#value'] = new TranslatableMarkup('Choose');
-    $form['actions']['complete']['#disabled'] = !$options;
     return $form;
   }
 
@@ -53,7 +82,7 @@ class DecisionItemActionForm extends PluginFormBase {
    */
   public function validateConfigurationForm(array &$form, FormStateInterface $form_state) {
     try {
-      $this->plugin->validateChoice($form_state->getValue('choice') ?? '', $form_state->getValue('reason') ?? '');
+      $this->plugin->validateChoice($this->selectedChoice($form_state), $form_state->getValue('reason') ?? '');
     }
     catch (\InvalidArgumentException | \DomainException $exception) {
       $form_state->setErrorByName('choice', $exception->getMessage());
@@ -64,7 +93,17 @@ class DecisionItemActionForm extends PluginFormBase {
    * {@inheritdoc}
    */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
-    $this->plugin->choose($form_state->getValue('choice') ?? '', $form_state->getValue('reason') ?? '');
+    $this->plugin->choose($this->selectedChoice($form_state), $form_state->getValue('reason') ?? '');
+  }
+
+  /**
+   * Reads a button's machine name or the selected radio/select value.
+   */
+  protected function selectedChoice(FormStateInterface $form_state): string {
+    if ($this->plugin->getConfiguration()['presentation'] === 'buttons') {
+      return $form_state->getTriggeringElement()['#decision_choice'] ?? '';
+    }
+    return $form_state->getValue('choice') ?? '';
   }
 
 }

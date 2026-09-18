@@ -158,23 +158,47 @@ class ChecklistDecisionTest extends KernelTestBase {
 
   /**
    * Forms use the same save path as the choose operation.
+   *
+   * @dataProvider presentations
    */
-  public function testFormChoice(): void {
-    $item = $this->checklist()->getItem('decision');
+  public function testFormChoice(string $presentation): void {
+    $item = $this->checklist(['presentation' => $presentation])->getItem('decision');
     $plugin_form = $this->container->get('plugin_form.factory')->createInstance($item->getHandler(), 'action');
     $state = new FormState();
     $wrapper = ChecklistItemActionForm::create($this->container);
     $wrapper->setChecklistItem($item);
     $form = $wrapper->buildForm([], $state);
-    $this->assertSame('submit', $form['actions']['complete']['#type']);
-    $this->assertSame('::onCompleteAjaxCallback', $form['actions']['complete']['#ajax']['callback']);
-    $this->assertSame(['approve' => 'Approve', 'decline' => 'Decline'], $form['choice']['#options']);
-    $state->setValues(['choice' => 'decline', 'reason' => '']);
+    if ($presentation === 'buttons') {
+      $this->assertArrayNotHasKey('complete', $form['actions']);
+      $this->assertArrayNotHasKey('choose_hidden', $form['actions']);
+      $button = $form['actions']['choose_decline'];
+      $this->assertSame('Decline', $button['#value']);
+      $this->assertSame('decline', $button['#decision_choice']);
+      $this->assertSame('::onCompleteAjaxCallback', $button['#ajax']['callback']);
+      $this->assertSame(['::submitForm'], $button['#submit']);
+      $state->setTriggeringElement($button);
+      // Posted choice input cannot override the button's machine name.
+      $state->setValues(['choice' => 'approve', 'reason' => '']);
+    }
+    else {
+      $this->assertSame('submit', $form['actions']['complete']['#type']);
+      $this->assertSame('::onCompleteAjaxCallback', $form['actions']['complete']['#ajax']['callback']);
+      $this->assertSame($presentation, $form['choice']['#type']);
+      $this->assertSame(['approve' => 'Approve', 'decline' => 'Decline'], $form['choice']['#options']);
+      $state->setValues(['choice' => 'decline', 'reason' => '']);
+    }
     $plugin_form->validateConfigurationForm($form, $state);
     $this->assertFalse($state->hasAnyErrors());
     $plugin_form->submitConfigurationForm($form, $state);
     $this->assertTrue($item->isComplete());
     $this->assertSame('decline', $item->get('outcomes')->get('decision')->getValue());
+  }
+
+  /**
+   * Provides supported form presentations.
+   */
+  public static function presentations(): array {
+    return [['buttons'], ['radios'], ['select']];
   }
 
   /**
@@ -185,8 +209,10 @@ class ChecklistDecisionTest extends KernelTestBase {
     $plugin_form = $this->container->get('plugin_form.factory')->createInstance($item->getHandler(), 'action');
     $state = (new FormState())->setValues(['choice' => 'approve', 'reason' => '']);
     $form = $plugin_form->buildConfigurationForm([], $state);
+    $state->setTriggeringElement($form['actions']['choose_approve']);
     $plugin_form->validateConfigurationForm($form, $state);
     $this->assertArrayHasKey('choice', $state->getErrors());
+    $this->assertStringContainsString('reason', $state->getErrors()['choice']);
     $this->assertTrue($item->isIncomplete());
     $this->assertTrue($item->isNew());
     $state->clearErrors();
@@ -237,7 +263,8 @@ class ChecklistDecisionTest extends KernelTestBase {
     $plugin_form = $this->container->get('plugin_form.factory')->createInstance($item->getHandler(), 'action');
     $state = (new FormState())->setValues(['choice' => 'approve']);
     $form = $plugin_form->buildConfigurationForm([], $state);
-    $this->assertArrayHasKey('approve', $form['choice']['#options']);
+    $this->assertArrayHasKey('choose_approve', $form['actions']);
+    $state->setTriggeringElement($form['actions']['choose_approve']);
     $checklist->getEntity()->set('name', 'Ineligible');
     try {
       $plugin_form->submitConfigurationForm($form, $state);

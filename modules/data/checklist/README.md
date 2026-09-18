@@ -132,6 +132,7 @@ gates. Configuration is currently exported/programmatic:
 
 ```yaml
 question: 'Approve this work?'
+presentation: buttons
 options:
   approve:
     label: 'Approve'
@@ -142,6 +143,13 @@ options:
   decline:
     label: 'Decline'
 ```
+
+Decisions default to one submit button per available choice, labelled with the
+option's human-readable label. Each button submits its machine name through the
+existing AJAX completion path. Set `presentation: radios` or `presentation: select`
+for a selector followed by a Choose button. Reasons are entered before submitting;
+only choices configured with `require_reason` demand a non-empty reason. All
+presentations recheck availability and use the same validation.
 
 Forms and `choose($choice, $reason)` share validation and persistence. A successful
 choice writes `decision` as a labelled string enum and `reason` as free text,
