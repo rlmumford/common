@@ -95,6 +95,9 @@ class ChecklistActionOperationDispatcher {
     if (!$handler instanceof ActionOperationsChecklistItemHandlerInterface || !$item->isIncomplete()) {
       return NULL;
     }
+    if (!$item->access('view action state') || !$item->access('execute action operation')) {
+      return NULL;
+    }
     if (!$this->contextPreparer->prepare($checklist, $item) || $item->isApplicable() !== TRUE || !$item->isActionable()) {
       return NULL;
     }

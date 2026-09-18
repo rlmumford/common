@@ -1,0 +1,7 @@
+name: Checklist reader test
+description: Tests safe item progress and item visibility.
+type: module
+package: Testing
+core_version_requirement: ^10 || ^11
+dependencies:
+  - checklist:checklist

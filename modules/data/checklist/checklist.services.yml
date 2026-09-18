@@ -32,3 +32,6 @@ services:
   checklist.resolver:
     class: Drupal\checklist\ChecklistResolver
     arguments: ['@current_user']
+  checklist.item_reader:
+    class: Drupal\checklist\ChecklistItemReader
+    arguments: ['@checklist.resolver', '@checklist.context_preparer']
