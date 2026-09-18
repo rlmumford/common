@@ -3,6 +3,7 @@
 namespace Drupal\checklist\Entity;
 
 use Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerInterface;
+use Drupal\checklist\Plugin\ChecklistItemHandler\IterativeChecklistItemHandlerInterface;
 use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\Plugin\DataType\EntityAdapter;
@@ -231,6 +232,9 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
    * {@inheritdoc}
    */
   public function action(): ChecklistItemInterface {
+    if ($this->getHandler() instanceof IterativeChecklistItemHandlerInterface) {
+      throw new \LogicException('Iterative items must execute through the iteration runner.');
+    }
     if ($this->isApplicable() !== TRUE || !$this->isActionable()) {
       throw new \LogicException('The checklist item is not actionable.');
     }

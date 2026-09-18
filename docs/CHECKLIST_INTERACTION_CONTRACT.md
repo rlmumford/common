@@ -4,9 +4,10 @@ Status: agreed direction; implementation remains staged. Updated 18 September 20
 
 UI forms, HTTP clients and AI tools interact with the same checklist, working state
 and ownership rules. This document extends the [workflow architecture](WORKFLOW_ARCHITECTURE.md)
-and [implementation plan](WORKFLOW_IMPLEMENTATION_PLAN.md). The existing action
-operation dispatcher is only the preparation/gating layer; it does not yet implement
-this workspace, read model, locking or HTTP contract.
+and [implementation plan](WORKFLOW_IMPLEMENTATION_PLAN.md). The action operation
+dispatcher supplies preparation/gating. Implemented readers, attempt history, worker
+claims and the initial automatic runner are described below; shared editing
+ownership and HTTP adapters remain staged.
 
 ## Addressing and HTTP surface
 
@@ -193,9 +194,11 @@ releases it while retaining the attempt UUID. Conditional claim/version writes
 fence short local result-application transactions. Expired running work requires
 explicit expiry/reconciliation rather than automatic reacquisition. The journal
 rejects direct transitions that would bypass claims or continuation due times.
-These are internal operations: handler invocation, account restoration, workspace
-ownership and all-path integration still need to be built before external clients
-can mutate work safely.
+The initial autonomous iteration runner now supplies handler invocation and account
+restoration for a restricted saved-item binding. It rechecks access and execution
+inputs before applying typed result changes. Scheduling, workspace ownership,
+retry/reset authorization and integration across interactive paths remain open
+before external clients can mutate work safely.
 
 Interactive AI work binds its checklist/item reference, owning user, ownership
 generation, attempt and expected version server-side. The model receives the

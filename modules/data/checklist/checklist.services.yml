@@ -41,3 +41,6 @@ services:
   checklist.attempt_claims:
     class: Drupal\checklist\Attempt\ChecklistAttemptClaims
     arguments: ['@database', '@checklist.attempt_journal', '@uuid', '@datetime.time']
+  checklist.iteration_runner:
+    class: Drupal\checklist\Execution\ChecklistIterationRunner
+    arguments: ['@entity_type.manager', '@account_switcher', '@checklist.resolver', '@checklist.context_preparer', '@checklist.attempt_journal', '@checklist.attempt_claims']
