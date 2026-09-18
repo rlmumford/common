@@ -156,6 +156,13 @@ changes. Raw field view/edit access is denied, and state is not added to outcome
 contexts; safe handler progress remains the viewer-facing projection. Attempt
 versioning, ownership and public resume/reset/takeover enforcement are still open.
 
+The internal attempt journal now persists per-item attempt streams and transition
+history. It records resume/fresh intent and rejects stale journal versions without
+changing working state, outcomes or item disposition. Attempt status and history
+are not yet exposed in the item reader. Execution coordination, worker claims,
+workspace leases and takeover remain separate implementation steps; existing
+mutating paths are not yet journalled or fenced by this service.
+
 Proposed takeover default, following the user's latest direction: start fresh rather
 than inherit the previous owner's partial interaction. Atomically supersede the old
 interactive attempt(s), revoke their write authority, clear uncommitted form/editing
