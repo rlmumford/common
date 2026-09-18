@@ -264,10 +264,11 @@ class ChecklistAttemptClaims {
   /**
    * Whether a claim can be committed before invoking external work.
    *
-   * Inline execution requires the claim to be durable before the handler runs.
-   * If the caller already owns an outer database transaction, the claim could
-   * be rolled back after the handler has performed an external side effect.
-   * The executor therefore defers the attempt in that situation; this method
+   * Inline execution requires the claim and action record to be durable before
+   * the handler runs. If the caller already owns an outer database
+   * transaction, a rollback could erase the record of an action that the
+   * handler has already taken, including an external side effect. The
+   * executor therefore defers the attempt in that situation; this method
    * describes that transaction safety check and does not decide whether an
    * item is otherwise suitable for inline execution.
    */
