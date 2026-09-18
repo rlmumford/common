@@ -128,6 +128,35 @@ class ChecklistDecisionTest extends KernelTestBase {
   }
 
   /**
+   * Persisted item configuration supplies definitions after defaults change.
+   */
+  public function testPersistedConfigurationOwnsOutcomeDefinition(): void {
+    $checklist = $this->checklist();
+    $item = $checklist->getItem('decision');
+    $item->getHandler()->choose('approve', 'Reviewed');
+    $owner = $checklist->getEntity();
+    $configuration = $owner->work->configuration;
+    $configuration['default_items']['decision']['handler_configuration']['options'] = [
+      'decline' => ['label' => 'New default label'],
+    ];
+    $owner->work->plugin->setConfiguration($configuration);
+    $owner->save();
+
+    $manager = $this->container->get('entity_type.manager');
+    $manager->getStorage('checklist_item')->resetCache();
+    $owner = $manager->getStorage('user')->loadUnchanged($owner->id());
+    $this->assertSame(['decline' => ['label' => 'New default label']], $owner->work->configuration['default_items']['decision']['handler_configuration']['options']);
+    $item = $owner->work->checklist->getItem('decision');
+    $decision = $item->get('outcomes')->get('decision');
+    $this->assertSame('approve', $decision->getValue());
+    $this->assertSame('Approve', $decision->getValueLabel());
+    $this->assertSame('Approve', $item->getHandler()->getConfiguration()['options']['approve']['label']);
+    $this->assertCount(0, $decision->validate());
+    $this->assertSame('approve', $item->get('outcomes')->first()->value);
+    $this->assertNull($item->get('outcomes')->first()->blob);
+  }
+
+  /**
    * Forms use the same save path as the choose operation.
    */
   public function testFormChoice(): void {

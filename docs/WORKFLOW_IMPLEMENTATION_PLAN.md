@@ -273,7 +273,11 @@ Decision foundation: the `decision` handler now supports named choices, per-opti
 condition plugins, required reasons and persisted typed outcomes. Decision values
 use the labelled string enum in
 [Typed Data Plus !7](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/7);
-the machine string remains the stored value and context value. The action form
+the machine string remains the stored value and context value. Definitions are
+reconstructed from each persisted item's handler configuration snapshot, without
+per-outcome definition copies. Versioning plugin implementations is deferred; code
+changes must preserve compatibility with persisted outcomes. Loading retained
+values and validating them against current constraints are separate operations. The action form
 and schema-described `choose` operation share validation and completion, including
 host update access and gate rechecks. Kernel tests cover denied/stale choices,
 invalid inputs, reason validation and downstream outcome use after reload.

@@ -172,9 +172,17 @@ checklist; it does not reload stale copies or make concurrent submissions safe.
 
 The decision outcome uses Typed Data Plus's `StringEnumDefinition`. Its machine
 value is still stored and compared as a string; `getValueLabel()` exposes the
-current display label and `getPossibleOptions()` exposes all configured choices,
-including options that are unavailable now. Labels survive outcome reload because
-the handler supplies the enum definition; they are not historical snapshots.
+display label and `getPossibleOptions()` exposes all configured choices, including
+options that are unavailable now. The persisted item already contains a snapshot
+of its handler configuration, including names and labels. The handler reconstructs
+the enum from that configuration on reload; no definition dump is stored with the
+outcome. Changing job/template defaults does not rewrite persisted item options.
 String context mappings and condition comparisons continue to use machine values.
 
 Labelled decision outcomes require [Typed Data Plus !7](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/7).
+
+Changes to the item's own configuration or to plugin code can still change the
+reconstructed definition. Typed references retain readable stored values even when
+current constraints reject them; explicit validation reports the violations.
+Versioning checklist plugin implementations is deferred. Plugin changes must
+preserve compatibility with existing outcome definitions in the meantime.
