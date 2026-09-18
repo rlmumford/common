@@ -48,10 +48,13 @@ capabilities, not the item operation catalogue. See
 GET, including progress polling, must not acquire ownership, execute an action,
 advance a continuation, or complete an item.
 
-The shared resolver lives in Checklist so HTTP and AI adapters resolve identical
-references. It validates host type, field type, delta, checklist and item membership.
-Resolve persisted state plus the authoritative shared workspace; do not silently
-substitute an arbitrary user's cached entity/form snapshot. Scope persisted item
+The shared resolver lives in Checklist. It accepts the entity object (including
+unsaved entities) and field/delta; route upcasting or worker loading happens in the
+adapter. It preserves supplied revision/translation and in-memory state rather than
+reloading the host. Saved hosts use view/update access; new hosts use create access.
+Field access still applies. Workspace adapters select and attach the authoritative
+shared checklist graph; resolution must not silently fetch a different tempstore
+snapshot. Item membership checks belong to the item reader/dispatcher. Scope persisted item
 queries by checklist type as well as host ID and checklist key to prevent collisions
 between host entity types using the same numeric ID and field name.
 
@@ -185,10 +188,11 @@ Implement in this order:
 1. Rename the shared dispatcher to `ChecklistActionOperationDispatcher`, service
    `checklist.action_operation_dispatcher`, matching handler terminology.
 2. Implement shared reference resolution and item reads, with field access, host
-   isolation, multiple fields/deltas and explicit workspace semantics. The persisted
-   base is now available through `checklist.resolver::resolveStored()`: host/field
-   access, type checks, field/delta isolation and deliberate tempstore bypass are
-   covered. Shared workspace composition and the item read model remain open.
+   isolation, multiple fields/deltas and explicit workspace semantics. Entity-based
+   resolution is available through `checklist.resolver::resolve()`: host/field access,
+   type checks, field/delta isolation, unsaved entities and in-memory state are
+   covered. Callers own loading/workspace selection; shared workspace composition
+   and the item read model remain open.
 3. Implement durable state/attempt storage, ownership leases, atomic takeover,
    version checks and operational history; integrate all mutating paths.
 4. Add `checklist_api` discovery, reads and invocation, then AI tool adapters using

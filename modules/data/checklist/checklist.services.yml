@@ -31,4 +31,4 @@ services:
     arguments: ['@checklist.context_preparer']
   checklist.resolver:
     class: Drupal\checklist\ChecklistResolver
-    arguments: ['@entity_type.manager', '@current_user']
+    arguments: ['@current_user']

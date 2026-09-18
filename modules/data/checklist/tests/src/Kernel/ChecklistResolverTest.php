@@ -12,7 +12,7 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
- * Tests persisted checklist addressing, host isolation and field access.
+ * Tests entity-based checklist resolution, host isolation and field access.
  *
  * @group checklist
  */
@@ -103,16 +103,18 @@ class ChecklistResolverTest extends KernelTestBase {
       ['multiple', 1, 'multiple:1', 'Second'],
     ];
     foreach ($locations as [$field, $delta, $key, $title]) {
-      $checklist = $resolver->resolveStored('user', $host->id(), $field, $delta, 'update');
+      $checklist = $resolver->resolve($host, $field, $delta, 'update');
       $this->assertSame($key, $checklist->getKey());
       $item = $checklist->getItem('decision');
       $this->assertSame($title, $item->get('title')->value);
       $this->assertSame($checklist, $item->get('checklist')->checklist);
       $item->getHandler()->choose('yes');
     }
+    $this->container->get('entity_type.manager')->getStorage('checklist_item')->resetCache();
+    $host = $this->container->get('entity_type.manager')->getStorage('user')->loadUnchanged($host->id());
     $ids = [];
     foreach ([['work', 0], ['multiple', 0], ['multiple', 1]] as [$field, $delta]) {
-      $checklist = $resolver->resolveStored('user', $host->id(), $field, $delta);
+      $checklist = $resolver->resolve($host, $field, $delta);
       $item = $checklist->getItem('decision');
       $ids[] = $item->id();
       $this->assertTrue($item->isComplete());
@@ -140,8 +142,8 @@ class ChecklistResolverTest extends KernelTestBase {
     $this->assertTrue($second->getItem('decision')->isNew());
     $second->getItem('decision')->getHandler()->choose('no');
     $resolver = $this->container->get('checklist.resolver');
-    $first = $resolver->resolveStored('user', $host->id(), 'work');
-    $second = $resolver->resolveStored('entity_test', $other->id(), 'work');
+    $first = $resolver->resolve($host, 'work');
+    $second = $resolver->resolve($other, 'work');
     $this->assertSame('yes', $first->getItem('decision')->get('outcomes')->get('decision')->getValue());
     $this->assertSame('no', $second->getItem('decision')->get('outcomes')->get('decision')->getValue());
     $this->assertNotEquals($first->getItem('decision')->id(), $second->getItem('decision')->id());
@@ -154,16 +156,14 @@ class ChecklistResolverTest extends KernelTestBase {
     $host = $this->host();
     $resolver = $this->container->get('checklist.resolver');
     foreach ([
-      ['missing_type', $host->id(), 'work', 0],
-      ['user', '99999', 'work', 0],
-      ['user', $host->id(), 'missing_field', 0],
-      ['user', $host->id(), 'name', 0],
-      ['user', $host->id(), 'work', -1],
-      ['user', $host->id(), 'work', 1],
-      ['user', $host->id(), 'multiple', 2],
+      [$host, 'missing_field', 0],
+      [$host, 'name', 0],
+      [$host, 'work', -1],
+      [$host, 'work', 1],
+      [$host, 'multiple', 2],
     ] as $address) {
       try {
-        $resolver->resolveStored(...$address);
+        $resolver->resolve(...$address);
         $this->fail('An invalid checklist address must be rejected.');
       }
       catch (NotFoundHttpException) {
@@ -173,7 +173,7 @@ class ChecklistResolverTest extends KernelTestBase {
     $host->work = $this->value('entity_context_test', 'Wrong host type');
     $host->save();
     $this->expectException(NotFoundHttpException::class);
-    $resolver->resolveStored('user', $host->id(), 'work');
+    $resolver->resolve($host, 'work');
   }
 
   /**
@@ -186,10 +186,10 @@ class ChecklistResolverTest extends KernelTestBase {
     $this->container->get('state')->set('checklist_resolver_test.denied_field_operations', ['work' => [$denied]]);
     $resolver = $this->container->get('checklist.resolver');
     if ($denied === 'edit') {
-      $this->assertSame('work', $resolver->resolveStored('user', $host->id(), 'work')->getKey());
+      $this->assertSame('work', $resolver->resolve($host, 'work')->getKey());
     }
     $this->expectException(AccessDeniedHttpException::class);
-    $resolver->resolveStored('user', $host->id(), 'work', 0, $operation);
+    $resolver->resolve($host, 'work', 0, $operation);
   }
 
   /**
@@ -208,27 +208,91 @@ class ChecklistResolverTest extends KernelTestBase {
     $other->save();
     $this->container->get('current_user')->setAccount($other);
     $this->expectException(AccessDeniedHttpException::class);
-    $this->container->get('checklist.resolver')->resolveStored('user', $host->id(), 'work', 0, 'update');
+    $this->container->get('checklist.resolver')->resolve($host, 'work', 0, 'update');
   }
 
   /**
-   * Stored resolution does not inherit stale in-memory or form tempstore state.
+   * The supplied object and its unsaved checklist edits remain authoritative.
    */
-  public function testStoredState(): void {
+  public function testSuppliedState(): void {
+    $host = $this->host();
+    $resolver = $this->container->get('checklist.resolver');
+    $checklist = $resolver->resolve($host, 'work');
+    $item = $checklist->getItem('decision');
+    $item->setFailed();
+    $host->set('name', 'Unsaved name');
+    $this->assertSame($checklist, $resolver->resolve($host, 'work'));
+    $this->assertSame($host, $checklist->getEntity());
+    $this->assertSame('Unsaved name', $checklist->getEntity()->get('name')->value);
+    $this->assertTrue($checklist->getItem('decision')->isFailed());
+    $this->assertSame($checklist, $item->get('checklist')->checklist);
+    $this->assertTrue($item->isNew());
+  }
+
+  /**
+   * A fresh entity graph is not silently replaced with a tempstore snapshot.
+   */
+  public function testNoImplicitTempstore(): void {
     $host = $this->host();
     $checklist = $host->work->checklist;
-    $item = $checklist->getItem('decision');
-    $item->save();
-    $item->setFailed();
-    $this->container->get('checklist.tempstore_repository')->set($checklist);
-    $host->set('name', 'Unsaved name');
+    $checklist->getItem('decision')->setFailed();
+    $repository = $this->container->get('checklist.tempstore_repository');
+    $repository->set($checklist);
+    $fresh = $this->container->get('entity_type.manager')->getStorage('user')->loadUnchanged($host->id());
+    $resolved = $this->container->get('checklist.resolver')->resolve($fresh, 'work');
+    $this->assertSame($fresh, $resolved->getEntity());
+    $this->assertTrue($resolved->getItem('decision')->isIncomplete());
+    $this->assertSame($resolved, $resolved->getItem('decision')->get('checklist')->checklist);
+    $this->assertTrue($repository->get($resolved)->getItem('decision')->isFailed());
+    // Serialization drops computed fields. A workspace adapter attaches its
+    // restored checklist before supplying the entity to resolve().
+    $workspace = $repository->get($resolved);
+    $workspace->getEntity()->get('work')->first()->get('checklist')->setValue($workspace, FALSE);
+    $this->assertSame($workspace, $this->container->get('checklist.resolver')->resolve($workspace->getEntity(), 'work'));
+  }
+
+  /**
+   * Host access cannot authorize a checklist attached from another graph.
+   */
+  public function testMismatchedAttachedHost(): void {
+    $host = $this->host();
     $resolver = $this->container->get('checklist.resolver');
-    $stored = $resolver->resolveStored('user', $host->id(), 'work');
-    $this->assertSame('Host', $stored->getEntity()->get('name')->value);
-    $stored_item = $stored->getItem('decision');
-    $this->assertTrue($stored_item->isIncomplete());
-    $this->assertSame($stored, $stored_item->get('checklist')->checklist);
-    $this->assertTrue($this->container->get('checklist.tempstore_repository')->get($stored)->getItem('decision')->isFailed());
+    $original = $resolver->resolve($host, 'work');
+    $copy = $this->container->get('entity_type.manager')->getStorage('user')->loadUnchanged($host->id());
+    $copy->get('work')->first()->get('checklist')->setValue($original, FALSE);
+    $this->expectException(\InvalidArgumentException::class);
+    $resolver->resolve($copy, 'work');
+  }
+
+  /**
+   * Unsaved hosts are resolvable without creating entities or checklist items.
+   */
+  public function testUnsavedEntity(): void {
+    $host = User::create([
+      'name' => 'Unsaved host',
+      'work' => $this->value('context_test', 'Draft checklist'),
+    ]);
+    $checklist = $this->container->get('checklist.resolver')->resolve($host, 'work', 0, 'update');
+    $this->assertSame($host, $checklist->getEntity());
+    $this->assertNull($host->id());
+    $this->assertTrue($host->isNew());
+    $item = $checklist->getItem('decision');
+    $this->assertSame('Draft checklist', $item->get('title')->value);
+    $this->assertTrue($item->isNew());
+    $this->assertSame($host, $item->get('checklist')->entity);
+    $this->assertSame($checklist, $item->get('checklist')->checklist);
+  }
+
+  /**
+   * Unsaved hosts require creation access, not an assumed edit permission.
+   */
+  public function testDeniedCreation(): void {
+    $other = User::create(['name' => 'Unprivileged']);
+    $other->save();
+    $this->container->get('current_user')->setAccount($other);
+    $host = EntityTest::create(['name' => 'Unsaved', 'work' => $this->value('entity_context_test', 'Draft')]);
+    $this->expectException(AccessDeniedHttpException::class);
+    $this->container->get('checklist.resolver')->resolve($host, 'work', 0, 'update');
   }
 
 }

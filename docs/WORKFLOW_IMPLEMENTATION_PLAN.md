@@ -239,10 +239,13 @@ contexts, enforces incomplete status and item gates, and checks current operatio
 discovery before delegating validation/persistence to the handler. Kernel coverage
 includes missing/changed contexts, changed users/gates, unsupported and terminal
 items, hidden operations, configuration errors and persisted decision outcomes.
-The persisted-base resolver now loads a host field/delta with entity and field
-access checks, verifies the checklist's host type, and bypasses stale form tempstore.
+The entity-based resolver now accepts a host object and field/delta with entity
+and field access checks, verifies the checklist's host type, preserves unsaved
+state, and avoids implicit reloads or tempstore substitution. New hosts use create
+access; callers own entity loading and workspace selection.
 Item queries are scoped by checklist type to isolate matching IDs on different host
-types. Tests cover multiple fields/deltas, access denial and conflicting tempstore.
+types. Tests cover multiple fields/deltas, access denial, unsaved hosts and state,
+and conflicting tempstore.
 Adapters still supply the current checklist/account; shared workspace composition,
 claims, execution identities, attempts and intermediate-state storage remain open.
 

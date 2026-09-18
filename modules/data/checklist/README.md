@@ -237,34 +237,44 @@ results are request-local snapshots; do not cache them across users or changes.
 Task-level execution policies, durable claims, cross-request stale-write protection
 and HTTP/AI adapters remain separate implementation work.
 
-## Persisted checklist resolution
+## Checklist resolution
 
-`checklist.resolver` supplies an explicit persisted base for future shared workspace
-resolution. It accepts host entity type/ID, checklist field name and delta:
+`checklist.resolver` accepts the entity supplied by the caller, including an unsaved
+entity or current form-state edits:
 
 ```php
-$checklist = \Drupal::service('checklist.resolver')->resolveStored(
-  'task', $task_id, 'checklist', 0, 'update'
+$checklist = \Drupal::service('checklist.resolver')->resolve(
+  $entity, 'checklist', 0, 'update'
 );
 ```
 
 Use the actual checklist field name on the host. `view` is the default operation;
 `update` additionally requires host update and field edit access. Both require host
-and field view access for the current account. Invalid addresses, empty field
-items, non-checklist fields and checklist types intended for another host type
-raise `NotFoundHttpException`; denied access raises `AccessDeniedHttpException`.
-Malformed plugin configuration remains a configuration error.
+and field view access for saved hosts. Unsaved hosts require Drupal create access
+instead of host view/update access; field view/edit checks still apply. Invalid
+fields/deltas, empty field items, non-checklist fields and checklist types intended
+for another host type raise `NotFoundHttpException`; denied access raises
+`AccessDeniedHttpException`. Malformed plugin configuration remains an error.
 
-The resolver reloads the host's default revision/default translation and clears
-checklist-item entity caches before constructing the checklist. The resolved graph
-and its item back-references bypass form tempstore, so callers cannot accidentally
-execute against a stale cached form snapshot. Existing form routes retain their
-current tempstore behavior. Persisted item loading now scopes queries to checklist
-type as well as host ID and field/delta key, isolating host types with matching IDs.
+The resolver preserves the supplied entity and its attached checklist, including
+unsaved item state. It does not reload the host, clear entity caches, change the
+translation/revision, save anything or fetch another tempstore snapshot. A caller
+that needs current persisted data must load it before resolving. Existing form
+routes retain their current tempstore behavior. Persisted item loading scopes queries
+to checklist type as well as host ID and field/delta key, isolating host types with
+matching IDs.
 
-This method does not merge shared working state, acquire ownership, validate a
-workspace version or protect concurrent writes. It is not a replacement for the
-planned shared workspace service. Delta addresses are locations and must not be
-stored as durable tool identities until the identity policy in the
-[interaction contract](https://github.com/rlmumford/common/blob/2.x/docs/CHECKLIST_INTERACTION_CONTRACT.md) is implemented.
-No historical revision or translated checklist targeting is provided yet.
+The field adapter's `getLocalValue()` reuses the attached checklist or constructs
+one on that entity. Workspace adapters restoring a separately serialized checklist
+must attach it to the entity's computed `checklist` property; entity serialization
+does not preserve computed field values. An attached checklist whose host is a
+different entity instance is rejected: supply its actual host so access checks and
+handler contexts operate on the same object. Shared workspace composition, ownership
+and version checks remain planned. Resolving an unsaved host does not imply its
+handlers can persist item results before the host has been saved.
+
+Delta addresses are locations and must not be stored as durable tool identities
+until the identity policy in the
+[interaction contract](https://github.com/rlmumford/common/blob/2.x/docs/CHECKLIST_INTERACTION_CONTRACT.md)
+is implemented. HTTP adapters must define their revision/translation targeting;
+the resolver makes no implicit choice on their behalf.

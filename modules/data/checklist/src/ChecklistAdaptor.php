@@ -24,6 +24,33 @@ class ChecklistAdaptor extends TypedData {
       return $this->checklist;
     }
 
+    $checklist = $this->getLocalValue();
+    if (!$checklist) {
+      return NULL;
+    }
+
+    /** @var \Drupal\checklist\ChecklistTempstoreRepository $checklist_repo */
+    $checklist_repo = \Drupal::service('checklist.tempstore_repository');
+    if ($checklist_repo->has($checklist)) {
+      $this->checklist = $checklist_repo->get($checklist);
+    }
+    return $this->checklist;
+  }
+
+  /**
+   * Gets the attached checklist, constructing it locally when not yet present.
+   *
+   * Unlike legacy getValue(), this never fetches another tempstore snapshot.
+   * An already attached checklist is preserved, including unsaved item state.
+   *
+   * @return \Drupal\checklist\ChecklistInterface|null
+   *   The checklist on this field item, or NULL without a checklist plugin.
+   */
+  public function getLocalValue(): ?ChecklistInterface {
+    if ($this->checklist !== NULL) {
+      return $this->checklist;
+    }
+
     /** @var \Drupal\Core\Field\FieldItemInterface $item */
     $item = $this->getParent();
 
@@ -38,18 +65,10 @@ class ChecklistAdaptor extends TypedData {
       $key .= ':' . $item->getName();
     }
 
-    $checklist = $checklist_type->getChecklist(
+    $this->checklist = $checklist_type->getChecklist(
       $item->getEntity(),
       $key
     );
-
-    /** @var \Drupal\checklist\ChecklistTempstoreRepository $checklist_repo */
-    $checklist_repo = \Drupal::service('checklist.tempstore_repository');
-    if ($checklist_repo->has($checklist)) {
-      $checklist = $checklist_repo->get($checklist);
-    }
-
-    $this->checklist = $checklist;
 
     return $this->checklist;
   }
