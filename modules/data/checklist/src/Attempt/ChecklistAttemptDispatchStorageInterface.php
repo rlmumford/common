@@ -35,7 +35,7 @@ interface ChecklistAttemptDispatchStorageInterface {
    *   Maximum deliveries, from one to 100. Contention may return fewer.
    *
    * @return array
-   *   Deliveries containing only 'attempt' (UUID string) and 'version' (integer).
+   *   Deliveries with 'attempt' (UUID string) and 'version' (integer).
    *
    * @throws \InvalidArgumentException
    *   If the batch limit is outside the supported range.
