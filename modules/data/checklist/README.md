@@ -444,3 +444,78 @@ Records are retained independently of item deletion or tempstore expiry; deploym
 retention/purge policy and access-filtered history UI are follow-up work. Unsaved
 work may leave orphaned attempt metadata if its workspace expires; the journal does
 not preserve the host graph or replace durable working-state storage.
+
+## Worker iteration claims
+
+`checklist.attempt_claims` coordinates iterations within an attempt. A worker claims
+queued work, performs a bounded unit of work, then commits either `waiting` with a
+continuation delay or a terminal status. Waiting-to-running keeps the attempt UUID;
+a retry after failure still creates a successor attempt. This supports polling an
+existing provider run and processing successive batches without starting the work
+again on every request.
+
+```php
+$claim = $claims->claim($attempt, lease_seconds: 300);
+// Run the bounded handler/provider step here, outside a database transaction.
+$waiting = $claims->commit(
+  $claim,
+  ChecklistAttempt::WAITING,
+  apply: function () use ($storage, $item_id, $cursor) {
+    // Recheck access and relevant gates when applying the result.
+    $item = $storage->loadUnchanged($item_id);
+    $item->setWorkingState('cursor', $cursor)->save();
+  },
+  delay: 15,
+);
+```
+
+The callback runs inside a short transaction after reserving the live claim. It
+must only revalidate and apply local writes on the same database connection.
+Provider calls, handler execution, messages and other external effects belong
+outside it. A callback exception rolls back the item writes, attempt transition,
+history event, claim release and due time together. Discard mutated PHP objects and
+reload after rollback; database rollback cannot restore those objects or undo
+external effects. The service also rejects expiry during the callback.
+
+| Operation | Behaviour |
+| --- | --- |
+| `claim($attempt, $lease_seconds)` | Atomically records running and grants a token for due queued/waiting work. |
+| `renew($claim, $lease_seconds)` | Extends a live lease and replaces its token; retain the returned handle. |
+| `commit($claim, $status, ...)` | Applies local results and releases the claim atomically. Waiting permits a delay; terminal statuses do not. |
+| `expire($attempt, $actor)` | Marks a matching expired running claim failed, retaining working state and recording the supervisor. |
+| `due($limit)` | Returns at most 100 queued/waiting attempt IDs whose delay has elapsed; this read grants no execution authority. |
+
+Claim tokens and journal versions are checked in conditional database writes.
+Replayed handles, old handles after renewal, and late writes after expiry are
+rejected before result application. Tokens are internal bearer credentials and
+must not be exposed in the item reader, API responses, logs or AI prompts. The
+expiry carried by a PHP handle is informational; the stored expiry is authoritative.
+Heartbeat renewal does not create another attempt or append a status event.
+
+Claim duration defaults to five minutes and can be 1–86,400 seconds. Workers should
+choose a duration that covers one bounded iteration and renew before expiry when
+needed. A blocking provider call cannot heartbeat on the same PHP thread; use a
+suitable lease or a provider request/poll pattern. Claim methods reject an existing
+outer transaction so a caller cannot keep a grant uncommitted across external work.
+
+Expired running work is excluded from `due()` and is never automatically reclaimed.
+The supervisor explicitly records expiry and reconciles possible external effects
+before authorizing a retry. Merely expiring a claim changes attempt history, not
+the item's disposition or state. No state dump is copied to outcomes or history.
+Direct journal transitions cannot bypass an active claim or start waiting work
+before its due time. Legacy unclaimed running attempts remain unclaimed on upgrade;
+there is no invented lease or automatic recovery.
+
+This is the worker coordination primitive, not the handler runner or scheduler.
+Callers still establish the executor account, enforce current access and gates,
+select an authoritative saved item or unsaved workspace, and apply the appropriate
+item disposition/state/outcome changes. `due()` has no access/path filtering; a
+scheduler must select its supported execution paths and authorize each target.
+Workspace editing ownership and worker claims are separate. Existing forms,
+operations and automatic processing are not yet wired to claims, so out-of-band
+entity saves and external effects are not fenced by this service. Queue/cron or
+Messenger delivery, handler iteration results, identity restoration and shared
+workspace integration remain the next steps.
+
+Run database updates: `checklist_update_10003()` adds claim/expiry/due columns and a
+due-work index, preserving existing attempt metadata and transition history.

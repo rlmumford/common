@@ -124,6 +124,7 @@ class ChecklistAttemptJournal {
         'operation' => $operation,
         'created' => $now,
         'changed' => $now,
+        'available' => $now,
       ])->execute();
       $this->appendEvent($id, 1, NULL, ChecklistAttempt::QUEUED, $initiator, $now, '');
       return $this->load($id);
@@ -142,7 +143,8 @@ class ChecklistAttemptJournal {
    *
    * Terminal attempts are immutable. Delayed or duplicate transitions conflict;
    * they never update a successor. This version fences journal writes only,
-   * not item writes or external effects. There is no worker lease in this API.
+   * not item writes or external effects. Claimed attempts transition through
+   * the claim service; direct writes cannot bypass its lease.
    *
    * @param \Drupal\checklist\Attempt\ChecklistAttempt $expected
    *   Previously read attempt snapshot.
@@ -177,13 +179,16 @@ class ChecklistAttemptJournal {
       }
       $now = $this->time->getCurrentTime();
       $version = $current->version + 1;
-      $updated = $this->database->update('checklist_attempt')
+      $update = $this->database->update('checklist_attempt')
         ->fields(['status' => $status, 'version' => $version, 'changed' => $now])
         ->condition('id', $current->id)
         ->condition('version', $current->version)
-        ->execute();
-      if (!$updated) {
-        throw new ChecklistAttemptConflictException('The attempt version has changed.');
+        ->isNull('claim_token');
+      if ($status === ChecklistAttempt::RUNNING) {
+        $update->condition('available', $now, '<=');
+      }
+      if (!$update->execute()) {
+        throw new ChecklistAttemptConflictException('The attempt is stale, claimed or not yet due.');
       }
       $this->appendEvent($current->id, $version, $current->status, $status, $actor, $now, $reason);
       return $this->load($current->id);

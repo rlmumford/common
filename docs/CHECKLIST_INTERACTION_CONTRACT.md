@@ -159,8 +159,8 @@ versioning, ownership and public resume/reset/takeover enforcement are still ope
 The internal attempt journal now persists per-item attempt streams and transition
 history. It records resume/fresh intent and rejects stale journal versions without
 changing working state, outcomes or item disposition. Attempt status and history
-are not yet exposed in the item reader. Execution coordination, worker claims,
-workspace leases and takeover remain separate implementation steps; existing
+are not yet exposed in the item reader. Worker claim primitives are described
+below; handler execution, workspace leases and takeover remain separate steps; existing
 mutating paths are not yet journalled or fenced by this service.
 
 Proposed takeover default, following the user's latest direction: start fresh rather
@@ -186,6 +186,16 @@ coordinates human/agent editing of a checklist. Per-item attempt claims prevent
 concurrent execution of the same work and allow independent items to run in
 parallel. Neither lock substitutes for the other; long network calls must not hold
 a database transaction open.
+
+The worker claim primitive is implemented as `checklist.attempt_claims`. Each
+iteration has an expiring token; renewal rotates it, and a delayed waiting result
+releases it while retaining the attempt UUID. Conditional claim/version writes
+fence short local result-application transactions. Expired running work requires
+explicit expiry/reconciliation rather than automatic reacquisition. The journal
+rejects direct transitions that would bypass claims or continuation due times.
+These are internal operations: handler invocation, account restoration, workspace
+ownership and all-path integration still need to be built before external clients
+can mutate work safely.
 
 Interactive AI work binds its checklist/item reference, owning user, ownership
 generation, attempt and expected version server-side. The model receives the
