@@ -6,18 +6,8 @@ use Drupal\checklist\Attempt\ChecklistAttempt;
 use Drupal\checklist\Attempt\ChecklistAttemptClaims;
 use Drupal\checklist\Attempt\ChecklistAttemptConflictException;
 use Drupal\checklist\Attempt\ChecklistAttemptJournal;
-use Drupal\checklist\ChecklistContextPreparer;
-use Drupal\checklist\ChecklistResolver;
 use Drupal\checklist\Entity\ChecklistItemInterface;
-use Drupal\checklist\Plugin\ChecklistItemHandler\ActionOperationsChecklistItemHandlerInterface;
-use Drupal\checklist\Plugin\ChecklistItemHandler\InteractiveChecklistItemHandlerInterface;
-use Drupal\checklist\Plugin\ChecklistItemHandler\IterativeChecklistItemHandlerInterface;
-use Drupal\Core\Entity\EntityInterface;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Plugin\ContextAwarePluginInterface;
 use Drupal\Core\Session\AccountSwitcherInterface;
-use Drupal\Core\TypedData\TypedDataInterface;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
  * Runs one claimed automatic iteration, then atomically applies local results.
@@ -27,24 +17,18 @@ class ChecklistIterationRunner {
   /**
    * Constructs the automatic iteration runner.
    *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
-   *   Entity storage and access handlers.
+   * @param \Drupal\checklist\Execution\ChecklistIterationPreparer $preparer
+   *   Shared account, binding, access and gate preparation.
    * @param \Drupal\Core\Session\AccountSwitcherInterface $accountSwitcher
    *   Switches executor identity and restores the caller in finally blocks.
-   * @param \Drupal\checklist\ChecklistResolver $resolver
-   *   Resolves accessible checklist fields.
-   * @param \Drupal\checklist\ChecklistContextPreparer $contextPreparer
-   *   Refreshes typed handler contexts.
    * @param \Drupal\checklist\Attempt\ChecklistAttemptJournal $journal
    *   The attempt journal.
    * @param \Drupal\checklist\Attempt\ChecklistAttemptClaims $claims
    *   The iteration claim coordinator.
    */
   public function __construct(
-    protected EntityTypeManagerInterface $entityTypeManager,
+    protected ChecklistIterationPreparer $preparer,
     protected AccountSwitcherInterface $accountSwitcher,
-    protected ChecklistResolver $resolver,
-    protected ChecklistContextPreparer $contextPreparer,
     protected ChecklistAttemptJournal $journal,
     protected ChecklistAttemptClaims $claims,
   ) {}
@@ -78,9 +62,9 @@ class ChecklistIterationRunner {
     if ($attempt->path !== ChecklistAttempt::ACTION || $attempt->mode !== ChecklistAttempt::INITIAL) {
       throw new \DomainException('This runner supports initial automatic action attempts only.');
     }
-    $this->accountSwitcher->switchTo($this->executor($attempt));
+    $this->accountSwitcher->switchTo($this->preparer->executor($attempt->executor));
     try {
-      [$item, $snapshot] = $this->prepare($attempt);
+      [$item, $snapshot] = $this->preparer->prepare($attempt->itemUuid);
       $claim = $this->claims->claim($attempt, $lease_seconds);
       $failure = NULL;
       try {
@@ -93,9 +77,9 @@ class ChecklistIterationRunner {
       try {
         $finished = $this->claims->commit($claim, $result->status, function () use ($attempt, $snapshot, $result): void {
           // Account changes during the provider call must affect result access.
-          $this->accountSwitcher->switchTo($this->executor($attempt));
+          $this->accountSwitcher->switchTo($this->preparer->executor($attempt->executor));
           try {
-            [$fresh, $current] = $this->prepare($attempt);
+            [$fresh, $current] = $this->preparer->prepare($attempt->itemUuid);
             if ($current !== $snapshot) {
               throw new ChecklistAttemptConflictException('The item or its execution inputs changed.');
             }
@@ -125,91 +109,6 @@ class ChecklistIterationRunner {
     finally {
       $this->accountSwitcher->switchBack();
     }
-  }
-
-  /**
-   * Loads an active non-anonymous executor, discarding cached user/role data.
-   */
-  protected function executor(ChecklistAttempt $attempt) {
-    $this->entityTypeManager->getStorage('user_role')->resetCache();
-    $account = $this->entityTypeManager->getStorage('user')->loadUnchanged($attempt->executor);
-    if (!$account || $account->isAnonymous() || !$account->isActive()) {
-      throw new AccessDeniedHttpException('The execution account is unavailable.');
-    }
-    return $account;
-  }
-
-  /**
-   * Reloads the target, checks gates and fingerprints its execution inputs.
-   */
-  protected function prepare(ChecklistAttempt $attempt): array {
-    $storage = $this->entityTypeManager->getStorage('checklist_item');
-    // Other items may supply outcomes changed by another worker/request.
-    $storage->resetCache();
-    $ids = $storage->getQuery()->accessCheck(FALSE)->condition('uuid', $attempt->itemUuid)->execute();
-    if (count($ids) !== 1) {
-      throw new \DomainException('The iteration requires a persisted checklist item.');
-    }
-    $item = $storage->loadUnchanged(reset($ids));
-    $reference = $item->get('checklist');
-    $host_type = $reference->getFieldDefinition()->getSetting('target_type');
-    $host = $this->entityTypeManager->getStorage($host_type)->loadUnchanged($reference->target_id);
-    if (!$host || $host->getEntityType()->isRevisionable()) {
-      throw new \DomainException('The runner requires an existing non-revisionable host.');
-    }
-    $key = $reference->checklist_key;
-    [$field, $delta] = array_pad(explode(':', $key, 2), 2, '0');
-    if ($delta !== '0' || !$host->hasField($field)) {
-      throw new \DomainException('The runner requires a single-value checklist field.');
-    }
-    $definition = $host->get($field)->getFieldDefinition();
-    if ($definition->isTranslatable() || $definition->getFieldStorageDefinition()->getCardinality() !== 1) {
-      throw new \DomainException('Multivalue and translated checklist bindings need a workspace adapter.');
-    }
-    $this->entityTypeManager->getAccessControlHandler($host_type)->resetCache();
-    $this->entityTypeManager->getAccessControlHandler('checklist_item')->resetCache();
-    $checklist = $this->resolver->resolve($host, $field, 0, 'update');
-    if ($checklist->getType()->getPluginId() !== $item->bundle() || !$checklist->hasItem($item->getName()) || $checklist->getItem($item->getName())->uuid() !== $item->uuid()) {
-      throw new \DomainException('The item no longer belongs to the addressed checklist.');
-    }
-    $reference->entity = $host;
-    $checklist->setItem($item->getName(), $item);
-    if (!$item->access('execute iteration')) {
-      throw new AccessDeniedHttpException('The item cannot be executed.');
-    }
-    $handler = $item->getHandler();
-    if (!$handler instanceof IterativeChecklistItemHandlerInterface || $handler instanceof ActionOperationsChecklistItemHandlerInterface || $handler instanceof InteractiveChecklistItemHandlerInterface || $item->getMethod() !== ChecklistItemInterface::METHOD_AUTO) {
-      throw new \DomainException('The handler must support autonomous action iterations.');
-    }
-    if (!$item->isIncomplete() || !$this->contextPreparer->prepare($checklist, $item) || $item->isApplicable() !== TRUE || !$item->isActionable()) {
-      throw new \DomainException('The checklist item is not ready for an iteration.');
-    }
-    $contexts = [];
-    if ($handler instanceof ContextAwarePluginInterface) {
-      foreach ($handler->getContexts() as $name => $context) {
-        $contexts[$name] = $context->hasContextValue() ? $this->normalize($context->getContextValue()) : NULL;
-      }
-    }
-    return [$item, [$item->toArray(), $host->toArray(), $contexts]];
-  }
-
-  /**
-   * Normalizes entity/typed context values without serializing service caches.
-   */
-  protected function normalize($value) {
-    if ($value instanceof EntityInterface) {
-      return [$value->getEntityTypeId(), $value->uuid(), $this->normalize($value->toArray())];
-    }
-    if ($value instanceof TypedDataInterface) {
-      return $this->normalize($value->getValue());
-    }
-    if (is_array($value)) {
-      return array_map(fn($entry) => $this->normalize($entry), $value);
-    }
-    if (is_object($value) || is_resource($value)) {
-      throw new \DomainException('Iteration contexts must have comparable typed values.');
-    }
-    return $value;
   }
 
   /**

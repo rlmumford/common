@@ -208,6 +208,9 @@ class Checklist implements ChecklistInterface {
         continue;
       }
       if ($item->getHandler() instanceof IterativeChecklistItemHandlerInterface) {
+        if (!$this->getEntity()->isNew() && !$item->isNew()) {
+          \Drupal::service('checklist.iteration_submitter')->submit($item);
+        }
         continue;
       }
       if (!$context_preparer->prepare($this, $item)) {

@@ -200,6 +200,12 @@ inputs before applying typed result changes. Queue API delivery now scans due
 initial action attempts, reserving dispatch for five minutes and sending only ID
 and version. This reservation is separate from worker claims and workspace locks.
 Lost delivery is retried after expiry; failed or expired-running execution is not.
+The initial submission service authorizes saved autonomous items as the authenticated
+caller and records that user as initiator/executor. `Checklist::process()` uses it
+for saved iterative items. Submission checks access before returning an existing
+attempt, never changes its executor, and never implicitly retries terminal work.
+Journal writes can roll back with the caller's transaction; delivery starts after
+commit. Generated-item persistence and alternate execution policies remain separate.
 Workspace ownership, retry/reset authorization and integration across interactive
 paths remain open before external clients can mutate work safely.
 

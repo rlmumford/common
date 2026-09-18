@@ -584,8 +584,8 @@ bindings and retry authorization need explicit adapters. These restrictions are
 checked before handler invocation, rather than inferring a draft or delta binding.
 The UUID-based journal/claims themselves still support unsaved item identities.
 
-The existing synchronous processor skips iterative handlers, and the item's
-`action()` method refuses to execute them directly. Existing non-iterative handlers
+The existing processor submits saved iterative items through the caller-authorized
+submitter below, and the item's `action()` method refuses to execute them directly. Existing non-iterative handlers
 continue through the previous path. Plugins must not save or mutate the item during
 `actionIteration()`; return changes for claim-protected application instead. Claims
 cannot undo external effects or fence arbitrary programmatic entity writes outside
@@ -593,10 +593,50 @@ this protocol. Use provider idempotency and reconcile uncertain external effects
 expired work is never automatically rerun.
 
 There is no automatic attempt creation on task save or public retry/takeover route.
-The Queue API adapter below invokes this runner for existing authorized attempts.
+Calling `process()` now submits supported saved iterative items. The Queue API
+adapter below invokes the runner after those attempts commit.
 Blocking calls must fit within the supplied lease; this runner does not heartbeat
 a blocked PHP thread.
 
+
+## Authorized iteration submission
+
+`checklist.iteration_submitter::submit($item)` records initial automatic work for a
+saved item, running as the current authenticated caller. It reloads the account,
+host, field and item, checks `execute iteration` access, and uses the same binding,
+context, applicability and actionability preparation as the worker. The caller is
+recorded as both initiator and executor; no alternate user ID can be supplied to
+this entry point. Account switching uses fresh account data and always restores the
+original caller. Anonymous, blocked and unauthorized callers are rejected.
+
+The passed entity is an identity handle. Save any edits before submission: persisted
+configuration controls execution. The service returns a queued attempt when ready,
+`NULL` when current state/contexts/gates prevent new work, and propagates access or
+configuration errors. After checking current access, repeated submissions return the
+existing attempt unchanged, including its original executor and terminal status.
+Competing initial submissions converge on the journal's winning attempt. Neither
+submission nor `process()` implicitly retries failures, clears state or reopens work.
+
+`Checklist::process()` submits supported saved iterative items without executing
+handlers inline. Existing non-iterative processing remains unchanged. New generated
+items and unsaved hosts remain unsubmitted: consumers must persist their authoritative
+items first. Safe concurrent materialization of default/provider items needs a separate
+coordinator. There is no blanket entity-save hook or assignee/automation-account policy
+in this slice. Explicitly processing as the caller is the initial execution policy;
+unattended submission under another identity requires a deliberate policy adapter.
+
+Submission writes only the attempt journal and may participate in the caller's save
+transaction. Rollback removes the attempt; no queue message is sent during submission.
+After commit, cron discovers the attempt through dispatch storage. Temporary gate
+blocks create no attempt, so call `process()` or `submit()` again when inputs change.
+New sibling outcomes are reloaded on that later call. Automatically scheduling a
+whole-checklist re-evaluation after every input/result change remains follow-up work.
+
+Worker completion updates the item, not the containing task. Reload the checklist
+before processing again to evaluate its latest completion conditions. Kernel coverage
+follows submission through delayed worker continuation and later checklist completion,
+and checks permission changes, duplicate/competing submissions, preserved failures,
+transaction rollback, persisted configuration and outcome-driven readiness.
 
 ## Queue and cron scheduling
 

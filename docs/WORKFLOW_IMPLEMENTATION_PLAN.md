@@ -372,8 +372,15 @@ iteration. Pre-claim rejections are reconsidered after the reservation expires;
 failed/expired-running work is never automatically replayed. Scans prioritize work
 least recently dispatched. Kernel coverage includes delayed continuation, duplicates,
 lost delivery, competing dispatch, blocked executors, fairness, safe logging, schema
-upgrade and rejection of dispatch within an open transaction. Automatic submission
-on task save, Messenger deployment, workspace ownership and retry/reset remain open.
+upgrade and rejection of dispatch within an open transaction. Caller-authorized
+submission now records initial attempts for supported saved iterative items through
+`checklist.iteration_submitter`, also called by `Checklist::process()`. Shared
+preparation enforces the same account, binding, access, context and gate checks as
+the worker. Repeated/competing submissions retain the existing attempt and executor;
+failures are not implicitly retried. Submission is journal-only and rolls back with
+an outer save transaction. Generated-item materialization, automatic evaluation on
+task save/result changes, alternate executor policies, Messenger deployment, workspace
+ownership and retry/reset remain open.
 
 ## P5 — Templates, providers and derivative items
 
