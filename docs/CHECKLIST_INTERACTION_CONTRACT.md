@@ -141,7 +141,8 @@ workspace by host entity type/UUID, checklist field and delta, and checklist key
 it persists the owner, expiry, workspace version and fencing generation. Acquire,
 renew, release and current-generation checks are durable and atomic. HTTP, UI and
 AI adapters, takeover, and enforcement in every mutating path remain follow-up
-work.
+work. Mutating adapters can advance the version only with the active owner,
+generation and expected version, so stale tabs and delayed calls fail atomically.
 
 Acquiring or taking over ownership is atomic. Each new ownership grant increments
 a generation/fencing token. Every mutating path checks the active owner, generation

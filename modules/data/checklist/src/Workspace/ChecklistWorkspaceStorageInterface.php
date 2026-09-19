@@ -35,4 +35,12 @@ interface ChecklistWorkspaceStorageInterface {
    */
   public function isCurrent(ChecklistWorkspaceLease $lease): bool;
 
+  /**
+   * Advances the workspace version under the current owner and generation.
+   *
+   * @throws \Drupal\checklist\Attempt\ChecklistAttemptConflictException
+   *   If the lease has expired, been replaced, or the version is stale.
+   */
+  public function advanceVersion(ChecklistWorkspaceLease $lease, int $expected_version): ChecklistWorkspaceLease;
+
 }
