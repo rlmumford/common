@@ -5,7 +5,10 @@ namespace Drupal\Tests\checklist\Kernel;
 use Drupal\checklist\Attempt\ChecklistAttemptConflictException;
 use Drupal\checklist\Workspace\ChecklistWorkspaceAddress;
 use Drupal\Component\Datetime\TimeInterface;
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\KernelTests\KernelTestBase;
+use Drupal\user\Entity\User;
 
 /**
  * Tests durable checklist workspace ownership and fencing generations.
@@ -17,7 +20,7 @@ class ChecklistWorkspaceStorageTest extends KernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['system', 'checklist', 'typed_data', 'typed_data_plus'];
+  protected static $modules = ['system', 'user', 'field', 'options', 'checklist', 'typed_data', 'typed_data_plus'];
 
   /**
    * A deterministic worker clock.
@@ -32,6 +35,14 @@ class ChecklistWorkspaceStorageTest extends KernelTestBase {
   protected function setUp(): void {
     parent::setUp();
     $this->installSchema('checklist', ['checklist_workspace']);
+    $this->installEntitySchema('user');
+    $this->installConfig(['system', 'user']);
+    FieldStorageConfig::create([
+      'field_name' => 'work',
+      'entity_type' => 'user',
+      'type' => 'checklist',
+    ])->save();
+    FieldConfig::create(['field_name' => 'work', 'entity_type' => 'user', 'bundle' => 'user'])->save();
     $time = $this->createMock(TimeInterface::class);
     $time->method('getCurrentTime')->willReturnCallback(fn() => $this->now);
     $this->container->set('datetime.time', $time);
@@ -84,6 +95,20 @@ class ChecklistWorkspaceStorageTest extends KernelTestBase {
     $this->assertConflict(fn() => $storage->advanceVersion($lease, 0));
     $this->now = 1030;
     $this->assertConflict(fn() => $storage->advanceVersion($next, 1));
+  }
+
+  /**
+   * The manager preserves the explicit field and delta in the address.
+   */
+  public function testExplicitAddressing(): void {
+    $host = User::create(['name' => 'Host']);
+    $manager = $this->container->get('checklist.workspace');
+    $address = $manager->address($host, 'work', 0, 'main');
+    $this->assertSame('user', $address->hostType);
+    $this->assertSame($host->uuid(), $address->hostUuid);
+    $this->assertSame('work', $address->fieldName);
+    $this->assertSame(0, $address->delta);
+    $this->assertSame('main', $address->checklistKey);
   }
 
   /**

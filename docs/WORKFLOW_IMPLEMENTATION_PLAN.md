@@ -256,6 +256,9 @@ takeover policy or mutation integration yet; those consumers must check the
 lease before writing and remain future work. `advanceVersion()` now conditionally
 increments the workspace version under the active owner and generation, rejecting
 stale tabs and expired leases.
+`checklist.workspace` now provides the adapter-facing facade and requires callers
+to supply the explicit host field and delta rather than inferring them from a
+checklist object.
 
 Opt-in working-state storage is now implemented through
 `StatefulChecklistItemHandlerInterface::stateDefinitions()` and the item's separate

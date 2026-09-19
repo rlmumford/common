@@ -59,6 +59,9 @@ services:
   checklist.workspace_storage:
     class: Drupal\checklist\Workspace\DatabaseChecklistWorkspaceStorage
     arguments: ['@database', '@datetime.time']
+  checklist.workspace:
+    class: Drupal\checklist\Workspace\ChecklistWorkspaceManager
+    arguments: ['@checklist.workspace_storage']
   logger.channel.checklist:
     parent: logger.channel_base
     arguments: ['checklist']
