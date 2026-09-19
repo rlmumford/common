@@ -143,6 +143,9 @@ renew, release and current-generation checks are durable and atomic. HTTP, UI an
 AI adapters, takeover, and enforcement in every mutating path remain follow-up
 work. Mutating adapters can advance the version only with the active owner,
 generation and expected version, so stale tabs and delayed calls fail atomically.
+The `checklist.workspace` facade is the adapter entry point and requires the
+host field and delta explicitly; a checklist object alone is not sufficient to
+identify a workspace when a host contains multiple checklist fields.
 
 Acquiring or taking over ownership is atomic. Each new ownership grant increments
 a generation/fencing token. Every mutating path checks the active owner, generation
