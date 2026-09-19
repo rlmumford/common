@@ -20,7 +20,7 @@ class ChecklistWorkspaceStorageTest extends KernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['system', 'user', 'field', 'checklist', 'typed_data', 'typed_data_plus'];
+  protected static $modules = ['system', 'user', 'field', 'options', 'checklist', 'typed_data', 'typed_data_plus'];
 
   /**
    * A deterministic worker clock.
