@@ -56,6 +56,9 @@ services:
   checklist.attempt_dispatch_storage:
     class: Drupal\checklist\Attempt\DatabaseChecklistAttemptDispatchStorage
     arguments: ['@database', '@datetime.time']
+  checklist.workspace_storage:
+    class: Drupal\checklist\Workspace\DatabaseChecklistWorkspaceStorage
+    arguments: ['@database', '@datetime.time']
   logger.channel.checklist:
     parent: logger.channel_base
     arguments: ['checklist']

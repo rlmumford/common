@@ -136,6 +136,13 @@ why. Ordinary host update access must not implicitly grant force-takeover access
 The UI presents an explicit takeover action when allowed. Lease duration, renewal
 interval and takeover permission defaults will be chosen during implementation.
 
+The initial storage contract is `checklist.workspace_storage`. It addresses a
+workspace by host entity type/UUID, checklist field and delta, and checklist key;
+it persists the owner, expiry, workspace version and fencing generation. Acquire,
+renew, release and current-generation checks are durable and atomic. HTTP, UI and
+AI adapters, takeover, and enforcement in every mutating path remain follow-up
+work.
+
 Acquiring or taking over ownership is atomic. Each new ownership grant increments
 a generation/fencing token. Every mutating path checks the active owner, generation
 and workspace/item version at commit time, not only when rendering a form or
