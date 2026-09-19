@@ -253,7 +253,9 @@ The first workspace slice now provides `checklist.workspace_storage`, with a
 stable host UUID/field/delta/checklist-key address, durable user leases, expiry,
 renewal, release and fencing generations. It deliberately has no HTTP adapter,
 takeover policy or mutation integration yet; those consumers must check the
-lease before writing and remain future work.
+lease before writing and remain future work. `advanceVersion()` now conditionally
+increments the workspace version under the active owner and generation, rejecting
+stale tabs and expired leases.
 
 Opt-in working-state storage is now implemented through
 `StatefulChecklistItemHandlerInterface::stateDefinitions()` and the item's separate

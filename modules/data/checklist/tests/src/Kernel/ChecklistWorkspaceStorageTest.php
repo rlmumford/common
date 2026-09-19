@@ -73,6 +73,20 @@ class ChecklistWorkspaceStorageTest extends KernelTestBase {
   }
 
   /**
+   * Version advancement rejects stale tabs and expired owners atomically.
+   */
+  public function testVersionFence(): void {
+    $storage = $this->container->get('checklist.workspace_storage');
+    $address = new ChecklistWorkspaceAddress('user', 'host-uuid', 'work', 0, 'main');
+    $lease = $storage->acquire($address, 11, 30);
+    $next = $storage->advanceVersion($lease, 0);
+    $this->assertSame(1, $next->version);
+    $this->assertConflict(fn() => $storage->advanceVersion($lease, 0));
+    $this->now = 1030;
+    $this->assertConflict(fn() => $storage->advanceVersion($next, 1));
+  }
+
+  /**
    * Asserts a workspace conflict without depending on PHPUnit's closure text.
    */
   protected function assertConflict(callable $operation): void {

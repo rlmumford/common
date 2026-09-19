@@ -127,6 +127,26 @@ final class DatabaseChecklistWorkspaceStorage implements ChecklistWorkspaceStora
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function advanceVersion(ChecklistWorkspaceLease $lease, int $expected_version): ChecklistWorkspaceLease {
+    if ($expected_version < 0) {
+      throw new \InvalidArgumentException('The expected workspace version cannot be negative.');
+    }
+    $now = $this->time->getCurrentTime();
+    $updated = $this->database->update('checklist_workspace')->fields([
+      'version' => $expected_version + 1,
+      'changed' => $now,
+    ])->condition('id', $lease->address->id())->condition('owner', $lease->owner)
+      ->condition('generation', $lease->generation)->condition('version', $expected_version)
+      ->condition('expires', $now, '>')->execute();
+    if (!$updated) {
+      throw new ChecklistAttemptConflictException('The checklist workspace version or lease has changed.');
+    }
+    return new ChecklistWorkspaceLease($lease->address, $lease->owner, $lease->generation, $expected_version + 1, $lease->expires, $lease->created, $now);
+  }
+
+  /**
    * Validates ownership and lease duration inputs.
    */
   protected function validate(int $owner, int $lease_seconds): void {
