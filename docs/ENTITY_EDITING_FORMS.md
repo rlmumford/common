@@ -1,7 +1,7 @@
 # Entity editing for checklist items
 
-Status: source investigation and recommended implementation sequence, 19 September
-2026. Runtime integration is not yet proven. This extends the
+Status: source investigation and revised design, 20 September 2026.
+Runtime integration is not yet proven. This extends the
 [workflow implementation plan](WORKFLOW_IMPLEMENTATION_PLAN.md) and
 [checklist interaction contract](CHECKLIST_INTERACTION_CONTRACT.md).
 
@@ -32,6 +32,120 @@ saved submission. There are two supported extension approaches in its source:
 The second approach is the promising integration point for Flexiform. It does not
 automatically provide the whole Webform builder, wizard, token, handler or file
 lifecycle. Compatibility must be established for each supported element family.
+
+## Required changes to Flexiform's approach
+
+The existing modern implementation is a starting point. The required design goes
+beyond its current bundle-specific form displays:
+
+1. **Shared context selection.** The form entity manager must use TypedDataPlus's
+   context handler for both configuration-time selection and runtime assignment.
+   This includes related entities, local contexts and global provider contexts.
+2. **Bundle-independent displays.** A reusable display may specify any bundle of
+   its base entity type. Editing a related contact must not require duplicating
+   the form for every bundle of the task or service providing that contact.
+3. **Embedded configuration.** Other configuration entities and checklist item
+   plugins can own the entire form definition, including entity mappings,
+   components, layout and presentation settings. No separate saved form is needed.
+4. **Custom elements.** Forms may mix field widgets and additional elements, with
+   optional Webform integration where its element APIs fit.
+
+### Context values and write-back locations
+
+Prefer an optional write-back capability on context classes, retaining ordinary
+typed-data definitions such as `entity:communication` and `string`. A context's
+value type describes the data; its ability to write back describes how the value
+is bound to a source. Do not invent separate saveable variants of every data type.
+Exact interface and method names should be settled by the first implementation.
+
+Distinguish these operations:
+
+- Editing and saving an existing entity obtained from a context does not normally
+  require changing the relationship through which it was found.
+- Creating or replacing a related entity requires writing it back to the selected
+  source reference, then persisting the affected owner as well as the target.
+- Editing a scalar requires a writable source property and a known persistence
+  owner; a copied or computed value alone is insufficient.
+
+TypedDataPlus currently creates a fresh ordinary `Context` in
+`ContextHandler::applyContextMapping()`, including for direct root assignments.
+Adding a Flexiform context subclass alone would therefore lose its capability at
+the assignment boundary. Extend assignment so an explicitly supported source
+binding survives direct assignment and supported property traversal, alongside
+the resulting definition and cache metadata. Keep ordinary read-only consumers
+unchanged and preserve core's required/optional and type checks.
+
+The narrow shared capability belongs in TypedDataPlus. Flexiform owns editability
+configuration, entity access, validation and coordination of persistence. Writing
+an edited value back into its source graph must be explicit; context selection,
+form building and ordinary `setContextValue()` must not trigger database writes.
+The form entity manager collects the affected entities and controls their saves.
+
+A source binding must identify the root and the actual property/reference location,
+including the list item and revision/translation where relevant. It must survive
+the supported form-state/workspace round trip without a serialized closure or an
+implicit reload by numeric ID. A replaced reference or reordered list must be
+detected before a stale edit is applied to a different target. Two bindings that
+resolve to the same entity share the working entity and do not independently save
+conflicting copies. Missing required sources and getter cycles are visible errors.
+
+Filters are not implicitly reversible. A computed string has no default write-back
+operation. A filter that selects an existing entity can still yield an editable
+entity, subject to access, without granting permission to replace the source
+relationship. Only explicit source-preserving behavior can retain a write-back
+binding. Global context providers likewise do not gain write capability merely
+because their values are discoverable.
+
+### Wildcard and embedded form definitions
+
+Use one form-definition shape for reusable configuration and inline configuration.
+It describes the base entity type, an exact bundle or wildcard, named contexts,
+components and layout. A saved reusable definition has its own machine name;
+an inline definition is stored inside the owning configuration/plugin and has no
+independent configuration identity.
+
+Core's display storage is not a transparent home for a literal wildcard:
+`EntityDisplayBase::id()` includes the bundle, configuration names forbid `*`, and
+display dependency/field discovery assumes a real bundle. The recommended approach
+is a Flexiform-owned reusable configuration entity whose definition can contain
+`bundle: '*'`, plus the identical definition embedded in consumer configuration.
+Continue accepting existing core form-display references. Render using the existing
+display/component machinery with the supplied entities' concrete runtime definitions.
+Do not save per-bundle copies or alter the shared definition while binding it.
+
+Selection must be deterministic. An explicitly chosen definition or core display
+is authoritative; a missing or incompatible explicit selection is an error. If a
+consumer uses form-mode lookup, prefer exact bundle/requested mode, then
+wildcard/requested mode, then exact bundle/default and wildcard/default. Cover this
+order in tests rather than relying on incidental configuration load order.
+
+The wildcard relaxes the base bundle constraint, not the base entity type or the
+constraints of related contexts. Configuration-time discovery must not pretend all
+bundle-specific fields exist on every bundle. Expose known/common definitions and
+explicitly constrained related entities; validate components against the actual
+entity definitions when binding. Missing required components fail before writes.
+Runtime widget caches must be scoped to the concrete definitions, so rendering a
+second bundle in the same request cannot reuse the first bundle's widgets.
+
+Reuse the embedded definition's configuration schema and editing form in the
+owning checklist plugin. Propagate component/plugin/configuration dependencies
+and translatable labels to the owning config entity. Preserve the embedded form
+in the checklist item's existing configuration snapshot; changing job defaults
+must not silently replace an in-progress item's form. Runtime entity values and
+write-back bindings belong to working state, not exported configuration.
+
+Custom components must declare where entered values go: an explicit writable
+binding, declared transient working data, or an outcome produced on successful
+completion. They must not quietly invent Webform submissions to store those values.
+
+### Architectural review
+
+- `[GOOD]` One context selection system covers related entities and global providers.
+- `[GOOD]` Wildcard and embedded definitions remove configuration duplication.
+- `[FLAG]` Source bindings must survive context assignment; a subclass alone is insufficient.
+- `[FLAG]` Core display identity and dependency handling require explicit wildcard adaptation.
+- `[FLAG]` Write-back capability does not confer entity or field access.
+- `[FLAG]` Keep definition storage separate from per-attempt entities and source locations.
 
 ## What D7 Flexiform contributes
 
@@ -97,9 +211,10 @@ exercise and fix before integration are:
 7. Flexiform changes the entity-form-display class site-wide. Preserve ordinary
    form behavior and check coexistence with other display integrations.
 
-An embedded definition should instantiate an in-memory display using the same
-component model. Existing UI routes assume a saved display; embedded configuration
-editing and dependency/schema reporting remain implementation work.
+An embedded or wildcard definition should instantiate a runtime display using the
+same component model. Existing UI routes assume a saved, concrete-bundle display;
+reusable definition storage, embedded configuration editing and dependency/schema
+reporting remain implementation work as specified above.
 
 ## Where Webform fits
 
@@ -148,23 +263,32 @@ was runtime-tested in this investigation.
 
 ## Reviewable implementation sequence
 
-1. **Prove the editor boundary.** In the Flexiform repository, establish Composer
-   and Drupal test compatibility and prove a supplied unsaved entity can be built,
-   edited, rebuilt and extracted without saving. Exercise a referenced display and
-   an embedded display definition. Add a two-entity case and fix validation/access
-   and persistence gaps revealed by it. A rejected/cancelled form saves neither
-   target nor submission; successful submission saves only the declared targets.
-2. **Integrate the real template handlers.** In Entity Template, support inline
+1. **Establish compatibility and context bindings.** In the Flexiform repository,
+   establish Composer and Drupal test compatibility. In TypedDataPlus, prove
+   source-bound context assignment and supported write-back without adding implicit
+   saving. In Flexiform, replace direct context wiring with the shared handler.
+   Test local/global selection, direct and nested bindings, missing related entities,
+   new-reference attachment, scalar updates, non-reversible filters and stale targets.
+2. **Prove wildcard and embedded editing.** Add a common definition schema and
+   reusable Flexiform definition storage, retaining core display references.
+   Use one wildcard definition from two different base bundles to edit a related
+   entity. Prove the equivalent definition works inside a checklist configuration
+   without creating a standalone config entity, including export/import dependencies.
+   Verify a supplied unsaved entity can be built, edited, rebuilt and extracted
+   without saving. Add a two-entity case and fix validation/access and persistence
+   gaps revealed by it. A rejected/cancelled form saves neither target nor
+   submission; successful submission saves only the declared targets.
+3. **Integrate the real template handlers.** In Entity Template, support inline
    definitions, conditional components and applying to an existing target. In
    Common, add `entity_template__create` and `entity_template__apply_to`, with
    automatic execution and optional editing using the proven display path.
    Prove later checklist items can use their entity outcomes as contexts.
-3. **Add selected Webform elements.** Implement an optional `flexiform_webform`
+4. **Add selected Webform elements.** Implement an optional `flexiform_webform`
    integration in the Flexiform project, starting with a simple value and a
    composite. Prove defaults, extraction, validation, access and AJAX behavior
    without constructing or saving a Webform submission. Extend the supported set
-   based on actual form requirements. This is not a dependency of step 2.
-4. **Exercise job and task authoring.** Test saved job configuration, including
+   based on actual form requirements. This is not a dependency of step 3.
+5. **Exercise job and task authoring.** Test saved job configuration, including
    triggers, assignment rules and checklist handlers, through the task UI and
    resource pane. Keep this generic rather than tied to Christian Jobs roles.
 
@@ -189,6 +313,12 @@ No host PHP/Composer executable was available for a local compatibility probe.
   source evidence, not a claim of byte-for-byte 11.5 dependency verification.
 - [Modern Flexiform source](https://git.drupalcode.org/project/flexiform/-/tree/2.0.x),
   at the revision above, inspected from the Credit Composer checkout.
+- TypedDataPlus checkout at `e10ae7701dd58a7840c45729b7576de909e93bca`:
+  `src/Plugin/Context/ContextHandler.php`, `DataContextDefinition.php`,
+  `src/DataFetcher.php`, and the context-assignment submodule's selector UI.
+  These establish the current read/selection behavior; write-back is proposed work.
+- Local Drupal core `EntityDisplayBase.php` and `ConfigBase.php`: bundle-specific
+  display identity/dependencies and the restriction on `*` in configuration names.
 - Webform `6.3.0-beta6`, inspected from the CMS checkout:
   `src/Plugin/WebformElementManager.php`, `src/Plugin/WebformElementBase.php`,
   `src/WebformSubmissionStorage.php`, `src/Plugin/WebformElement/WebformManagedFileBase.php`

@@ -15,7 +15,10 @@ The next functional-handler work is guided by the
 the existing modern Flexiform/form-display editor before integrating Entity
 Template handlers, with optional reuse of Webform elements and no required Webform
 submission record. It covers referenced and embedded display configuration,
-multi-entity editing, context resolution and the save/validation boundary.
+wildcard base bundles, multi-entity editing, TypedDataPlus context selection and
+explicit write-back bindings, and the save/validation boundary. Embedded form
+definitions belong to their owning config entity/checklist item plugin; standalone
+definitions are optional reusable configuration, never required per-item records.
 
 Application integration, including further Christian Jobs UI work, follows the
 reusable framework. No production deployment or CounselKit data migration is
