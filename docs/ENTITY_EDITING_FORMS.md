@@ -325,10 +325,15 @@ source-bound write-back, reusable definition storage or a configuration editor.
 Nested entity-reference selectors require
 [Typed Data Plus !8](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/8),
 which makes context discovery and assignment expose the reference target's type.
-Merge that fix before Flexiform !3. It resolves entity values only and does not
-introduce writable source contexts. Flexiform's draft MR includes the dependent
+That fix is merged, with Drupal 10/11 CI passing. It resolves entity values only
+and does not introduce writable source contexts. Flexiform !3 includes the
 regression test and Drupal GitLab CI; both changes have been tested together
 locally on Drupal 10.6.16/PHP 8.3.
+
+Development consumers need the explicit Typed Data Plus Git repository in their
+root Composer configuration until Drupal.org indexes `2.0.x-dev`. Common already
+has that repository; Flexiform's CI now does too. Refresh the dependency lock
+when updating: an existing `2.0.x-dev` lock can still point to an older commit.
 
 1. **Establish compatibility and context bindings.** In the Flexiform repository,
    establish Composer and Drupal test compatibility. In TypedDataPlus, prove
