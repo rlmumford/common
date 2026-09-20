@@ -159,6 +159,11 @@ must not restrict the other inputs. Explicitly selected reusable and embedded
 definitions work without a primary entity. The checklist host remains the owner
 of its workspace and is not implicitly an entity that this form edits.
 
+Core entity-form-display overriding is an optional adapter to this general
+system. Enabling the embedded-form engine alone must leave core's display class
+and administration routes unchanged. Existing installations retain the adapter
+through an update; new checklist consumers can enable only the general engine.
+
 For example, a relation-creation form receives `person` and `organisation` as
 independent contexts and prepares a new `relation` with a concrete bundle. The
 relation's two references bind to those inputs. Its widgets may expose role and
@@ -307,6 +312,23 @@ was runtime-tested in this investigation.
   retain failed-attempt state and separate fresh attempts as already agreed.
 
 ## Reviewable implementation sequence
+
+The initial runtime slice is proposed in
+[Flexiform !3](https://git.drupalcode.org/project/flexiform/-/merge_requests/3),
+against `2.0.x`. It adds an embeddable definition, independent named inputs,
+native widget editing, lazy context mapping, access/constraint checks and an
+explicit save boundary. Core display integration becomes the optional
+`flexiform_entity_form_display` adapter. The first relation example uses two
+saved endpoints; it does not yet promise ordered saves of new endpoints,
+source-bound write-back, reusable definition storage or a configuration editor.
+
+Nested entity-reference selectors require
+[Typed Data Plus !8](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/8),
+which makes context discovery and assignment expose the reference target's type.
+Merge that fix before Flexiform !3. It resolves entity values only and does not
+introduce writable source contexts. Flexiform's draft MR includes the dependent
+regression test and Drupal GitLab CI; both changes have been tested together
+locally on Drupal 10.6.16/PHP 8.3.
 
 1. **Establish compatibility and context bindings.** In the Flexiform repository,
    establish Composer and Drupal test compatibility. In TypedDataPlus, prove
