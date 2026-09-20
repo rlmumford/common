@@ -99,7 +99,7 @@ because their values are discoverable.
 ### Wildcard and embedded form definitions
 
 Use one form-definition shape for reusable configuration and inline configuration.
-It describes the base entity type, an exact bundle or wildcard, named contexts,
+It describes named entity contexts, exact bundles or editing wildcards,
 components and layout. A saved reusable definition has its own machine name;
 an inline definition is stored inside the owning configuration/plugin and has no
 independent configuration identity.
@@ -117,7 +117,19 @@ Selection must be deterministic. An explicitly chosen definition or core display
 is authoritative; a missing or incompatible explicit selection is an error. If a
 consumer uses form-mode lookup, prefer exact bundle/requested mode, then
 wildcard/requested mode, then exact bundle/default and wildcard/default. Cover this
-order in tests rather than relying on incidental configuration load order.
+order in tests rather than relying on incidental configuration load order. This
+wildcard fallback is for editing, not for choosing a creation bundle.
+
+Creation requires a concrete bundle for each new entity of a bundled type, before
+constructing that entity and its widgets. Resolve it from configuration, caller
+contexts, an explicit user selection or a preparation hook. Preparation must run
+through the shared execution path, not exclusively a browser pre-render hook, so
+API and automated actions have the same behavior. Check the resulting bundle,
+expected type and create access before proceeding. Missing or invalid bundles are
+an explicit input requirement or configuration error; never choose the first
+available bundle. Retain the resolved bundle with the working entity across
+rebuilds. An explicit later bundle change requires rebuilding the affected entity
+and its widgets rather than carrying incompatible values forward silently.
 
 The wildcard relaxes the base bundle constraint, not the base entity type or the
 constraints of related contexts. Configuration-time discovery must not pretend all
@@ -138,10 +150,43 @@ Custom components must declare where entered values go: an explicit writable
 binding, declared transient working data, or an outcome produced on successful
 completion. They must not quietly invent Webform submissions to store those values.
 
+### Multiple input entities
+
+The general form accepts named entity contexts without requiring one privileged
+base entity. Single-entity/core-display integration is a convenient specialization;
+an optional primary entity can supply routing, titles and form-mode lookup, but
+must not restrict the other inputs. Explicitly selected reusable and embedded
+definitions work without a primary entity. The checklist host remains the owner
+of its workspace and is not implicitly an entity that this form edits.
+
+For example, a relation-creation form receives `person` and `organisation` as
+independent contexts and prepares a new `relation` with a concrete bundle. The
+relation's two references bind to those inputs. Its widgets may expose role and
+dates, and optionally selected fields from either endpoint. There is no need to
+pretend the organisation is reachable through a relationship that does not exist
+yet, or introduce a dummy base entity to carry the two inputs.
+
+Each named entity has its own type/bundle definition, access checks and explicit
+editing/persistence policy. Selecting an existing endpoint does not by itself
+schedule that endpoint for saving. Check reference validity and applicable access
+even when the endpoint is read-only. Save new endpoints before a relation that
+needs their IDs; existing endpoints are saved only when the form declares edits
+to persist. Validate the complete intended change before starting those saves,
+and complete the checklist item only after successful persistence. Preserve
+existing attempt/retry rules to avoid creating a second relation after a retried
+submission. Publish the relation as an outcome, with additional entity outcomes
+only when declared by the handler.
+
+This extends the existing `buildAdvancedForm(array $provided, ...)` approach,
+whose documentation already permits a form without a single base entity. The
+configuration editor, source-binding lifecycle and save coordination must support
+it as a first-class case rather than relying on that method signature alone.
+
 ### Architectural review
 
 - `[GOOD]` One context selection system covers related entities and global providers.
 - `[GOOD]` Wildcard and embedded definitions remove configuration duplication.
+- `[GOOD]` Multiple named roots support relation creation without a fabricated base entity.
 - `[FLAG]` Source bindings must survive context assignment; a subclass alone is insufficient.
 - `[FLAG]` Core display identity and dependency handling require explicit wildcard adaptation.
 - `[FLAG]` Write-back capability does not confer entity or field access.
@@ -278,6 +323,10 @@ was runtime-tested in this investigation.
    without saving. Add a two-entity case and fix validation/access and persistence
    gaps revealed by it. A rejected/cancelled form saves neither target nor
    submission; successful submission saves only the declared targets.
+   Cover independently supplied roots, relation creation with existing and new
+   endpoints, unchanged endpoints not being saved, and a retry not duplicating the
+   relation. Verify creation rejects an unresolved bundle and that hook/context
+   bundle resolution behaves identically through form and non-form entry points.
 3. **Integrate the real template handlers.** In Entity Template, support inline
    definitions, conditional components and applying to an existing target. In
    Common, add `entity_template__create` and `entity_template__apply_to`, with
