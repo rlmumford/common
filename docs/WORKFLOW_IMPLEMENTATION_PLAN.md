@@ -10,6 +10,16 @@ The [interaction contract](CHECKLIST_INTERACTION_CONTRACT.md) specifies item rea
 action progress, shared UI/API/AI workspaces, user ownership and explicit takeover.
 Its locks, state projection and HTTP endpoints remain implementation work.
 
+The next functional-handler work is guided by the
+[entity editing investigation](ENTITY_EDITING_FORMS.md). It recommends proving
+the existing modern Flexiform/form-display editor before integrating Entity
+Template handlers, with optional reuse of Webform elements and no required Webform
+submission record. It covers referenced and embedded display configuration,
+wildcard base bundles, multi-entity editing, TypedDataPlus context selection and
+explicit write-back bindings, and the save/validation boundary. Embedded form
+definitions belong to their owning config entity/checklist item plugin; standalone
+definitions are optional reusable configuration, never required per-item records.
+
 Application integration, including further Christian Jobs UI work, follows the
 reusable framework. No production deployment or CounselKit data migration is
 implied by this plan. Each phase should produce independently reviewable changes,
@@ -397,6 +407,9 @@ ownership and retry/reset remain open.
 
 Deliverables:
 
+- Entity Template handlers `entity_template__create` and `entity_template__apply_to`,
+  including inline template definitions, conditional components and optional
+  editing before save; follow the editor proof in the entity editing investigation.
 - Named job checklist templates, static inclusion and decision-driven expansion.
 - Provider assembly/alteration, nested scopes, collision-free names and dependency
   rewriting. Avoid arbitrary string substitution that corrupts condition syntax.
