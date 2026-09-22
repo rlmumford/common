@@ -184,6 +184,9 @@ class ChecklistItemExecutor {
    * Validates and saves declared result values under the claim transaction.
    */
   protected function apply(ChecklistItemInterface $item, ChecklistItemResult $result): void {
+    if ($result->persist) {
+      ($result->persist)();
+    }
     foreach (['state' => $result->state, 'outcomes' => $result->outcomes] as $field => $values) {
       $list = $item->get($field);
       foreach ($values as $name => $value) {

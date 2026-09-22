@@ -1,0 +1,18 @@
+checklist_item_handler.entity_template__create:
+  type: checklist_item_handler
+  label: Create an entity from a template
+  mapping:
+    blueprint:
+      type: string
+      label: Reusable blueprint ID
+    template_id:
+      type: string
+      label: Template within the blueprint
+    template:
+      type: entity_template.template.[id]
+      label: Embedded template
+    context_mapping:
+      type: sequence
+      label: Template input mappings
+      sequence:
+        type: string

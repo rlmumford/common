@@ -10,6 +10,13 @@ use Drupal\Core\TypedData\TypedData;
 class ChecklistReferenceChecklistAdaptor extends TypedData {
 
   /**
+   * Raw value assigned by core while hydrating the computed property.
+   *
+   * @var mixed
+   */
+  protected $value;
+
+  /**
    * The checklist.
    *
    * @var \Drupal\checklist\ChecklistInterface

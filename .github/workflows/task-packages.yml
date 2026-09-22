@@ -40,6 +40,7 @@ jobs:
           cd /tmp/task-consumer
           composer config minimum-stability dev
           composer config repositories.typed-data-plus vcs https://git.drupalcode.org/project/typed_data_plus.git
+          composer config repositories.entity-template vcs https://git.drupalcode.org/project/entity_template.git
           composer config repositories.common-data path "$GITHUB_WORKSPACE/modules/data/*"
           composer config repositories.common-util path "$GITHUB_WORKSPACE/modules/util/*"
           python3 - <<'PY'
@@ -55,7 +56,7 @@ jobs:
                   repo['options'] = {'versions': versions}
           path.write_text(json.dumps(data, indent=2))
           PY
-          composer require rlmumford/task:2.x-dev rlmumford/service:2.x-dev rlmumford/note:2.x-dev drupal/core-dev:^10 --with-all-dependencies --no-interaction
+          composer require rlmumford/task:2.x-dev rlmumford/service:2.x-dev rlmumford/note:2.x-dev drupal/entity_template:1.0.x-dev drupal/core-dev:^10 --with-all-dependencies --no-interaction
       - name: Test the installed task packages
         working-directory: /tmp/task-consumer
         env:
@@ -74,3 +75,10 @@ jobs:
           SIMPLETEST_DB: ${{ matrix.database == 'mysql' && 'mysql://root:testing@127.0.0.1:3306/task_consumer' || 'sqlite://localhost/:memory:' }}
           SYMFONY_DEPRECATIONS_HELPER: weak
         run: vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/checklist/tests/src/Kernel
+
+      - name: Test the checklist Entity Template integration
+        working-directory: /tmp/task-consumer
+        env:
+          SIMPLETEST_DB: ${{ matrix.database == 'mysql' && 'mysql://root:testing@127.0.0.1:3306/task_consumer' || 'sqlite://localhost/:memory:' }}
+          SYMFONY_DEPRECATIONS_HELPER: weak
+        run: vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/checklist/contrib/entity_template/tests/src/Kernel

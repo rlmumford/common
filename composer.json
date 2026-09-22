@@ -16,6 +16,7 @@
     "suggest": {
         "aws/aws-sdk-php": "Required by the aws and ebids modules.",
         "drupal/block_class": "Required by the layout modules.",
+        "drupal/entity_template": "Required by checklist_entity_template; use 1.0.x-dev for resumable execution.",
         "drupal/ctools": "Required by the relationship and plugin_reference modules.",
         "drupal/mini_layouts": "Required by the layout modules.",
         "drupal/name": "Required by the identity module.",

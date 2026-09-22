@@ -1,0 +1,21 @@
+<?php
+
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Session\AccountInterface;
+
+/**
+ * Implements hook_entity_create_access().
+ */
+function checklist_template_test_entity_create_access(AccountInterface $account, array $context, $entity_bundle) {
+  return AccessResult::forbiddenIf($context['entity_type_id'] === 'entity_test' && \Drupal::state()->get('checklist_template_test.deny_create', FALSE));
+}
+
+/**
+ * Implements hook_entity_insert().
+ */
+function checklist_template_test_entity_insert(EntityInterface $entity) {
+  if ($entity->getEntityTypeId() === 'entity_test' && \Drupal::state()->get('checklist_template_test.fail_save', FALSE)) {
+    throw new \RuntimeException('The target save failed.');
+  }
+}
