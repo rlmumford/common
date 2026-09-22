@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Access changes and transactional save failures for template integration tests.
+ * Access and save-failure fixtures for template integration tests.
  */
 
 use Drupal\Core\Access\AccessResult;
