@@ -2,6 +2,19 @@ checklist_item_handler.entity_template__create:
   type: checklist_item_handler
   label: Create an entity from a template
   mapping:
+    editor:
+      type: mapping
+      label: Optional shared editor
+      mapping:
+        form_id:
+          type: string
+          label: Reusable Flexiform ID
+        plugin:
+          type: string
+          label: Embedded form plugin
+        configuration:
+          type: flexiform.form_plugin.[%parent.plugin]
+          label: Embedded form configuration
     blueprint:
       type: string
       label: Reusable blueprint ID

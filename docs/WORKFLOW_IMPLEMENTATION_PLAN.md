@@ -282,8 +282,11 @@ blueprint template. It reuses Entity Template's resumable engine and the checkli
 item scheduler, retains private preparation on failure, and commits the new entity
 and its published outcome under the existing claim checks. Later items can use the
 entity outcome as context. See the [integration README](../modules/data/checklist/contrib/entity_template/README.md).
-Interactive Flexiform editing, its shared HTML/API working session, an apply-to
-handler, and the configuration editor remain subsequent integration slices.
+An optional embedded/reusable Flexiform editor now retains one private working
+session for both HTML and action operations, with revision checks, one owner,
+preparation polling and Finish-only persistence. The automatic scheduler does not
+claim interactive attempts. The apply-to handler, configuration editor,
+unsaved/revisionable-host adapter and explicit recovery/takeover remain follow-ups.
 
 Deliverables:
 

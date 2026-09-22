@@ -182,8 +182,11 @@ class ChecklistItemExecutor {
 
   /**
    * Validates and saves declared result values under the claim transaction.
+   *
+   * Internal coordinator API: call only within claims->commit(), after fresh
+   * authorization and input checks. This does not acquire a claim itself.
    */
-  protected function apply(ChecklistItemInterface $item, ChecklistItemResult $result): void {
+  public function apply(ChecklistItemInterface $item, ChecklistItemResult $result, string $method = ChecklistItemInterface::METHOD_AUTO): void {
     if ($result->persist) {
       ($result->persist)();
     }
@@ -201,10 +204,10 @@ class ChecklistItemExecutor {
     }
     $item->setAttempted();
     if ($result->status === ChecklistAttempt::SUCCEEDED) {
-      $item->setComplete(ChecklistItemInterface::METHOD_AUTO);
+      $item->setComplete($method);
     }
     elseif ($result->status === ChecklistAttempt::FAILED) {
-      $item->setFailed(ChecklistItemInterface::METHOD_AUTO);
+      $item->setFailed($method);
     }
     $item->save();
   }

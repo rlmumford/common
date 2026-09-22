@@ -3,6 +3,8 @@
 namespace Drupal\checklist;
 
 use Drupal\Core\TempStore\SharedTempStore;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\checklist\Plugin\ChecklistItemHandler\IterativeChecklistItemHandlerInterface;
 use Drupal\Core\TempStore\SharedTempStoreFactory;
 
 /**
@@ -22,8 +24,10 @@ class ChecklistTempstoreRepository {
    *
    * @param \Drupal\Core\TempStore\SharedTempStoreFactory $temp_store_factory
    *   The shared tempstore factory.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   Loads the authoritative values of saved audited items.
    */
-  public function __construct(SharedTempStoreFactory $temp_store_factory) {
+  public function __construct(SharedTempStoreFactory $temp_store_factory, protected EntityTypeManagerInterface $entityTypeManager) {
     $this->tempStoreFactory = $temp_store_factory;
   }
 
@@ -41,6 +45,23 @@ class ChecklistTempstoreRepository {
     $tempstore = $this->getTempstore($checklist)->get($key);
     if (!empty($tempstore['checklist'])) {
       $checklist = $tempstore['checklist'];
+      // Iterative items commit through their claim coordinator. A legacy
+      // tempstore copy cannot replace their authoritative working state or
+      // completion. Keep unrelated unsaved item/host edits in this workspace.
+      $ids = [];
+      foreach ($checklist->getItems() as $item) {
+        if (!$item->isNew() && $item->getHandler() instanceof IterativeChecklistItemHandlerInterface) {
+          $ids[] = $item->id();
+        }
+      }
+      if ($ids) {
+        $storage = $this->entityTypeManager->getStorage('checklist_item');
+        $storage->resetCache($ids);
+        foreach ($storage->loadMultiple($ids) as $item) {
+          $item->get('checklist')->entity = $checklist->getEntity();
+          $checklist->setItem($item->getName(), $item);
+        }
+      }
     }
     return $checklist;
   }

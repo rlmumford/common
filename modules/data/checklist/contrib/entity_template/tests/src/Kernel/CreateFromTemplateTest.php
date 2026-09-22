@@ -2,6 +2,12 @@
 
 namespace Drupal\Tests\checklist_entity_template\Kernel;
 
+use Drupal\user\Entity\User;
+use Drupal\user\Entity\Role;
+use Drupal\flexiform\Api\InvalidInputException;
+use Drupal\flexiform\Entity\FormDefinition;
+use Drupal\Core\Form\FormState;
+use Drupal\flexiform\Session\HtmlFormAdapter;
 use Drupal\Core\Entity\EntityStorageException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Drupal\checklist\Attempt\ChecklistAttempt;
@@ -28,7 +34,10 @@ class CreateFromTemplateTest extends ChecklistItemExecutionTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['entity_test', 'entity_template', 'checklist_entity_template', 'checklist_template_test'];
+  protected static $modules = [
+    'ctools', 'token', 'flexiform', 'entity_test', 'entity_template',
+    'checklist_entity_template', 'checklist_template_test',
+  ];
 
   /**
    * {@inheritdoc}
@@ -110,6 +119,7 @@ class CreateFromTemplateTest extends ChecklistItemExecutionTestBase {
    */
   public function testInlineCreationAndOutcome(): void {
     [$host, $item] = $this->templateWork();
+    $this->assertFalse($item->getHandler()->hasFormClass('action'));
     $this->assertContains('entity_template', $item->getHandler()->calculateDependencies()['module']);
     $this->assertTrue($this->container->get('checklist.processor')->process($host->work->checklist));
     $saved = $this->reload($item);
@@ -287,6 +297,205 @@ class CreateFromTemplateTest extends ChecklistItemExecutionTestBase {
     $this->assertFalse($saved->get('state')->isEmpty());
     $this->assertTrue($saved->get('outcomes')->isEmpty());
     $this->assertCount(1, EntityTest::loadMultiple());
+  }
+
+  /**
+   * Builds a transient entity editor, optionally with two wizard pages.
+   */
+  protected function editorConfiguration(bool $wizard = FALSE): array {
+    $configuration = [
+      'data' => ['entity' => ['plugin' => 'provided_data']],
+      'components' => [
+        'name' => ['component_type' => 'typed_data', 'context' => 'entity', 'path' => 'name.0.value', 'label' => 'Name'],
+      ],
+    ];
+    if ($wizard) {
+      $configuration['components']['language'] = [
+        'component_type' => 'typed_data',
+        'context' => 'entity',
+        'path' => 'langcode.0.value',
+        'label' => 'Language',
+      ];
+      $configuration['pages'] = [
+        ['label' => 'Name', 'components' => ['name']],
+        ['label' => 'Language', 'components' => ['language']],
+      ];
+    }
+    return ['editor' => ['plugin' => $wizard ? 'wizard' : 'standard', 'configuration' => $configuration]];
+  }
+
+  /**
+   * HTML and API share revisions, values and a single final entity save.
+   */
+  public function testSharedEditor(): void {
+    [$host, $item] = $this->templateWork(settings: $this->editorConfiguration());
+    $editor = $this->container->get('checklist_entity_template.editor');
+    $this->assertSame('new', $editor->describe($item)['status']);
+    $this->container->get('checklist.processor')->process($host->work->checklist);
+    $this->assertNull($this->container->get('checklist.attempt_journal')->latest($item));
+    $dispatcher = $this->container->get('checklist.action_operation_dispatcher');
+    $this->assertArrayHasKey('start', $dispatcher->discover($host->work->checklist, 'create'));
+    $description = $dispatcher->execute($host->work->checklist, 'create', 'start', ['revision' => 0]);
+    $this->assertSame('ready', $description['status']);
+    $this->assertSame('Template target', $description['data']->name);
+    $this->assertCount(1, EntityTest::loadMultiple());
+    $html = new HtmlFormAdapter();
+    $form = $html->build($description, ['editor']);
+    $tempstore = $this->container->get('checklist.tempstore_repository');
+    $tempstore->set($host->work->checklist);
+    $old_revision = $description['revision'];
+    $description = $editor->operate($item, 'form/update', [
+      'revision' => $old_revision,
+      'input' => ['name' => 'API edit'],
+    ]);
+    $this->assertSame('API edit', $html->build($description, ['editor'])['values']['name']['#default_value']);
+    try {
+      $editor->operate($item, 'form/submit', ['revision' => $old_revision, 'input' => ['name' => 'Stale browser']]);
+      $this->fail('A stale browser must not overwrite API edits.');
+    }
+    catch (ChecklistAttemptConflictException) {
+      $this->assertCount(1, EntityTest::loadMultiple());
+    }
+    $form = $html->build($description, ['editor']);
+    $state = new FormState();
+    $button = $form['actions']['action_0'];
+    $state->setTriggeringElement($button);
+    $state->setValue(['editor', 'values', 'name'], 'HTML edit');
+    $description = $editor->operate($item, 'form/' . $button['#flexiform_action'], [
+      'revision' => $description['revision'],
+      'input' => $html->input($state),
+    ]);
+    $this->assertSame('HTML edit', $description['data']->name);
+    $done = $editor->operate($item, 'form/submit', ['revision' => $description['revision'], 'input' => []]);
+    $this->assertSame('complete', $done['status']);
+    $this->assertSame('HTML edit', $this->reload($item)->get('outcomes')->get('entity')->getValue()->label());
+    $cached = $tempstore->get($host->work->checklist)->getItem('create');
+    $this->assertTrue($cached->isComplete());
+    $this->assertSame('HTML edit', $cached->get('outcomes')->get('entity')->getValue()->label());
+    $this->assertTrue($this->reload($item)->get('state')->isEmpty());
+    $this->assertCount(2, EntityTest::loadMultiple());
+  }
+
+  /**
+   * Preparation and wizard pages retain the same entity until Finish.
+   */
+  public function testSharedWizard(): void {
+    [, $item] = $this->templateWork('checklist_pending', settings: $this->editorConfiguration(TRUE));
+    $editor = $this->container->get('checklist_entity_template.editor');
+    $description = $editor->operate($item, 'start', ['revision' => 0]);
+    $this->assertSame('preparing', $description['status']);
+    $this->assertArrayNotHasKey('data', $description);
+    $description = $editor->operate($item, 'advance', ['revision' => $description['revision']]);
+    $this->assertSame('ready', $description['status']);
+    $description = $editor->operate($item, 'form/next', [
+      'revision' => $description['revision'],
+      'input' => ['name' => 'Wizard edit'],
+    ]);
+    $this->assertSame(1, $description['wizard']['page']);
+    $this->assertCount(1, EntityTest::loadMultiple());
+    $description = $editor->operate($item, 'form/previous', ['revision' => $description['revision'], 'input' => []]);
+    $this->assertSame('Wizard edit', $description['data']->name);
+    $description = $editor->operate($item, 'form/next', ['revision' => $description['revision'], 'input' => []]);
+    $description = $editor->operate($item, 'form/finish', ['revision' => $description['revision'], 'input' => []]);
+    $this->assertSame('complete', $description['status']);
+    $this->assertCount(2, EntityTest::loadMultiple());
+  }
+
+  /**
+   * Other users cannot read or mutate the owner's prepared entity.
+   */
+  public function testSharedEditorOwner(): void {
+    [, $item] = $this->templateWork(settings: $this->editorConfiguration());
+    $editor = $this->container->get('checklist_entity_template.editor');
+    $editor->operate($item, 'start', ['revision' => 0]);
+    Role::create(['id' => 'editor_admin', 'label' => 'Editor administrator'])->setIsAdmin(TRUE)->save();
+    $other = User::create(['name' => 'Other', 'status' => 1, 'roles' => ['editor_admin']]);
+    $other->save();
+    $this->container->get('current_user')->setAccount($other);
+    $this->expectException(AccessDeniedHttpException::class);
+    $this->expectExceptionMessage('belongs to another');
+    $editor->describe($item);
+  }
+
+  /**
+   * Invalid edits leave state unchanged; revoked create access prevents Finish.
+   */
+  public function testEditorValidationAndRevokedAccess(): void {
+    [, $item] = $this->templateWork(settings: $this->editorConfiguration());
+    $editor = $this->container->get('checklist_entity_template.editor');
+    $ready = $editor->operate($item, 'start', ['revision' => 0]);
+    try {
+      $editor->operate($item, 'form/update', ['revision' => $ready['revision'], 'input' => ['unknown' => 'value']]);
+      $this->fail('Unknown input must be rejected.');
+    }
+    catch (InvalidInputException) {
+      $this->assertSame($ready['revision'], $editor->describe($item)['revision']);
+      $this->assertSame('Template target', $editor->describe($item)['data']->name);
+    }
+    $this->container->get('state')->set('checklist_template_test.deny_create', TRUE);
+    $this->container->get('entity_type.manager')->getAccessControlHandler('entity_test')->resetCache();
+    try {
+      $editor->operate($item, 'form/submit', ['revision' => $ready['revision'], 'input' => []]);
+      $this->fail('Revoked permission must prevent saving.');
+    }
+    catch (AccessDeniedHttpException) {
+      $this->assertCount(1, EntityTest::loadMultiple());
+      $this->assertTrue($this->reload($item)->get('outcomes')->isEmpty());
+      $this->assertFalse($this->reload($item)->get('state')->isEmpty());
+    }
+  }
+
+  /**
+   * A final entity-save failure retains the edited graph and attempt history.
+   */
+  public function testEditorSaveFailure(): void {
+    [, $item] = $this->templateWork(settings: $this->editorConfiguration());
+    $editor = $this->container->get('checklist_entity_template.editor');
+    $ready = $editor->operate($item, 'start', ['revision' => 0]);
+    $ready = $editor->operate($item, 'form/update', [
+      'revision' => $ready['revision'],
+      'input' => ['name' => 'Retain my edit'],
+    ]);
+    $this->container->get('state')->set('checklist_template_test.fail_save', TRUE);
+    try {
+      $editor->operate($item, 'form/submit', ['revision' => $ready['revision'], 'input' => []]);
+      $this->fail('Failed persistence must not complete the item.');
+    }
+    catch (EntityStorageException) {
+      $this->assertSame('failed', $editor->describe($item)['status']);
+      $saved = $this->reload($item);
+      $this->assertTrue($saved->get('outcomes')->isEmpty());
+      $this->assertFalse($saved->isComplete());
+      [$session] = $saved->getHandler()->getEditorSession();
+      $this->assertSame('Retain my edit', $session->describe()['data']->name);
+      $this->container->get('entity_type.manager')->getStorage('entity_test')->resetCache();
+      $this->assertCount(1, EntityTest::loadMultiple());
+    }
+  }
+
+  /**
+   * Referenced editors are captured and do not change underneath open forms.
+   */
+  public function testReusableEditorSnapshot(): void {
+    $configuration = $this->editorConfiguration()['editor']['configuration'];
+    $definition = FormDefinition::create([
+      'id' => 'review',
+      'label' => 'Review',
+      'plugin' => 'standard',
+      'configuration' => $configuration,
+    ]);
+    $definition->save();
+    [, $item] = $this->templateWork(settings: ['editor' => ['form_id' => 'review']]);
+    $this->assertContains('flexiform.form.review', $item->getHandler()->calculateDependencies()['config']);
+    $editor = $this->container->get('checklist_entity_template.editor');
+    $ready = $editor->operate($item, 'start', ['revision' => 0]);
+    $configuration['components'] = [];
+    $definition->set('configuration', $configuration)->save();
+    $editor->operate($item, 'form/submit', [
+      'revision' => $ready['revision'],
+      'input' => ['name' => 'Captured editor'],
+    ]);
+    $this->assertSame('Captured editor', $this->reload($item)->get('outcomes')->get('entity')->getValue()->label());
   }
 
 }

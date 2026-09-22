@@ -14,7 +14,7 @@ services:
       - { name: event_subscriber }
   checklist.tempstore_repository:
     class: Drupal\checklist\ChecklistTempstoreRepository
-    arguments: ['@tempstore.shared']
+    arguments: ['@tempstore.shared', '@entity_type.manager']
   checklist.tempstore_param_converter:
     class: Drupal\checklist\ChecklistTempstoreParamConverter
     arguments: ['@checklist.tempstore_repository', '@entity_type.manager']

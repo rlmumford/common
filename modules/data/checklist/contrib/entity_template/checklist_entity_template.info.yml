@@ -6,3 +6,4 @@ package: RLMumford
 dependencies:
   - checklist:checklist
   - entity_template:entity_template
+  - flexiform:flexiform
