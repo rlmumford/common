@@ -16,6 +16,34 @@ Flexiform 3.0.x with shared sessions and the `referenced` form plugin.
 Both dependencies track their development branches without commit pins.
 Entity Template's source resolver is available on its 1.0.x development branch.
 
+## Authoring in the job editor
+
+Enable `checklist_entity_template_ui`, which also enables Entity Template UI and
+Flexiform UI. Authoring requires the reusable editor in
+[Entity Template !21](https://git.drupalcode.org/project/entity_template/-/merge_requests/21)
+and definition-only selector matching in
+[Typed Data Plus !11](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/11).
+Both handlers then offer configuration forms in Task Job's checklist
+editor. Each named candidate has its own template source, availability condition,
+input mappings and optional prepared-entity editor. Apply-to additionally selects
+the existing target through the shared context selector.
+
+Choose a reusable blueprint/template or configure an embedded standalone template.
+The embedded editor supports entity type/bundle, declared inputs and property
+assignments from fixed values or context selectors. Other existing components and
+their conditions are preserved; this first editor does not expose every component
+plugin's settings. Update template fields/choice after changing inputs or the
+target so the mapping and Flexiform controls use the new definitions.
+
+Editors use Flexiform's own plugin forms: standard, wizard or referenced. A new
+embedded editor starts with an `entity` provided-data binding. Checklist owns the
+final save, so the shared editor must not configure additional persistence. These
+are forms for the prepared entity, not forms for editing template configuration.
+
+The authoring forms only inspect definitions. Templates execute and entities are
+created or saved when someone performs the checklist action. Runtime sites can
+import the configuration without enabling this optional UI module.
+
 ## Configuration
 
 `templates` is a sequence keyed by candidate machine name. Each candidate owns

@@ -61,7 +61,7 @@ class ChecklistContextsEventSubscriber implements EventSubscriberInterface {
         'Checklist @entity_type',
         ['@entity_type' => $checklist_entity->getEntityType()->getLabel()]
       ));
-    $event->addContext('checklist:entity', new EntityContext($definition, $checklist_entity));
+    $event->addContext('checklist:entity', new EntityContext($definition, $event instanceof ChecklistCollectConfigContextsEvent ? NULL : $checklist_entity));
   }
 
   /**

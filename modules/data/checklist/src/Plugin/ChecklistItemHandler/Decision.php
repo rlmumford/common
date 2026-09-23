@@ -16,6 +16,7 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
  *   label = @Translation("Decision"),
  *   category = @Translation("Basic"),
  *   forms = {
+ *     "configure" = "\Drupal\checklist\PluginForm\DecisionItemConfigureForm",
  *     "row" = "\Drupal\checklist\PluginForm\StartableItemRowForm",
  *     "action" = "\Drupal\checklist\PluginForm\DecisionItemActionForm",
  *   }
@@ -62,6 +63,16 @@ class Decision extends ChecklistItemHandlerBase implements InteractiveChecklistI
         ->setLabel(new TranslatableMarkup('Decision')),
       'reason' => DataDefinition::create('string')->setLabel(new TranslatableMarkup('Reason')),
     ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function calculateDependencies() {
+    return $this->conditionEvaluator->calculateDependencies(array_merge(
+      array_values($this->getConfiguration()['conditions']),
+      array_column($this->getConfiguration()['options'], 'available'),
+    ));
   }
 
   /**

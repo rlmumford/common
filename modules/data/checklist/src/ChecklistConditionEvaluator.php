@@ -70,4 +70,20 @@ class ChecklistConditionEvaluator {
     }
   }
 
+  /**
+   * Collects dependencies without evaluating conditions or loading contexts.
+   */
+  public function calculateDependencies(array $configurations): array {
+    $dependencies = [];
+    foreach ($configurations as $configuration) {
+      $condition = $this->conditionManager->createInstance($configuration['id'], $configuration);
+      $declared = $condition->calculateDependencies();
+      $declared['module'][] = $condition->getPluginDefinition()['provider'];
+      foreach ($declared as $type => $names) {
+        $dependencies[$type] = array_values(array_unique(array_merge($dependencies[$type] ?? [], $names)));
+      }
+    }
+    return $dependencies;
+  }
+
 }

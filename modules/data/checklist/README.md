@@ -3,6 +3,29 @@
 Programmable checklists for Drupal 10/11. Common is the source repository; the
 `rlmumford/checklist` repository is its split package.
 
+## Authoring job checklists
+
+The existing Task Job editor embeds handler configuration forms. Decision items
+configure their question, named choices, labels, reason requirements and optional
+availability conditions. Each item also exposes applicability, actionability and
+requiredness as native Drupal condition plugins, including condition strings,
+Views conditions, constants and nested groups. XOR and XAnd take two operands.
+
+Use the Update buttons after changing a plugin selection, and Add choice or Add
+operand to grow a section. These buttons rebuild the configuration form without
+saving the job or executing checklist items. Add/Update returns to the job draft;
+Save commits it and Cancel discards the draft. Existing settings outside the
+editor's controls are preserved.
+
+Available contexts include the host definition and expected outcomes from the
+job's current draft, so later items can map earlier outcomes before any task
+exists. Configuration forms do not fetch their runtime values. The job exports
+the modules and configuration entities required by its handlers and conditions.
+
+Enable `checklist_entity_template_ui` for template creation/application authoring
+and embedded or reusable Flexiform editors. See the integration's README for
+details; its UI dependencies are optional at runtime.
+
 ## Outcomes and contexts
 
 Handlers implement `ExpectedOutcomeChecklistItemHandlerInterface` to declare
@@ -576,7 +599,10 @@ service/resource objects are rejected. Host comparison is deliberately conservat
 even unrelated host edits can reject an in-flight result.
 
 This first runner is for **persisted autonomous items** on single-value,
-untranslatable checklist fields of non-revisionable hosts. It accepts initial
+untranslatable, non-revisionable checklist fields. Revisionable hosts, including
+tasks, are supported when their checklist field is shared across revisions. The
+runner reloads the host's current default revision for context/access checks;
+host changes still invalidate an in-flight input snapshot. It accepts initial
 `action` attempts only; it does not perform resume/fresh resets. Interactive/form
 and action-operation handlers are excluded until workspace ownership is integrated.
 Unsaved workspaces, multivalue checklist identity, translated/revision-specific
