@@ -61,6 +61,7 @@ class ChecklistContextTest extends KernelTestBase {
     $checklist = $this->checklist(['method' => 'manual']);
     $collector = $this->container->get('checklist.context_collector');
     $config = $collector->collectConfigContexts($checklist);
+    $this->assertFalse($config['checklist:entity']->hasContextValue());
     $runtime = $collector->collectRuntimeContexts($checklist);
     $this->assertSame(array_keys($config), array_keys($runtime));
     $this->assertFalse($config['item:source:value']->hasContextValue());

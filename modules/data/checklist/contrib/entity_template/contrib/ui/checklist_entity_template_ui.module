@@ -1,0 +1,17 @@
+<?php
+
+/**
+ * @file
+ * Optional authoring forms for template checklist handlers.
+ */
+
+use Drupal\checklist_entity_template_ui\PluginForm\TemplateItemConfigureForm;
+
+/**
+ * Implements hook_checklist_item_handler_info_alter().
+ */
+function checklist_entity_template_ui_checklist_item_handler_info_alter(array &$definitions) {
+  foreach (['entity_template__create', 'entity_template__apply_to'] as $id) {
+    $definitions[$id]['forms']['configure'] = TemplateItemConfigureForm::class;
+  }
+}

@@ -470,7 +470,8 @@ abstract class TemplateItemBase extends ContextAwareChecklistItemHandlerBase imp
    * {@inheritdoc}
    */
   public function calculateDependencies() {
-    $dependencies = ['module' => ['checklist_entity_template'], 'config' => []];
+    $dependencies = parent::calculateDependencies() + ['module' => [], 'config' => []];
+    $dependencies['module'][] = 'checklist_entity_template';
     foreach ($this->getConfiguration()['templates'] as $settings) {
       $sources = [$this->sources->calculateDependencies($settings['template'])];
       if (!empty($settings['editor'])) {

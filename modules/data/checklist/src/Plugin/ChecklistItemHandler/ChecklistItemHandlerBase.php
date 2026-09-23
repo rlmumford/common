@@ -4,6 +4,7 @@ namespace Drupal\checklist\Plugin\ChecklistItemHandler;
 
 use Drupal\checklist\ChecklistConditionEvaluator;
 use Drupal\checklist\Entity\ChecklistItemInterface;
+use Drupal\Component\Plugin\DependentPluginInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Plugin\PluginBase;
 use Drupal\Core\Plugin\PluginWithFormsTrait;
@@ -12,7 +13,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Base class for checklist item handlers.
  */
-abstract class ChecklistItemHandlerBase extends PluginBase implements ChecklistItemHandlerInterface, ContainerFactoryPluginInterface {
+abstract class ChecklistItemHandlerBase extends PluginBase implements ChecklistItemHandlerInterface, ContainerFactoryPluginInterface, DependentPluginInterface {
   use PluginWithFormsTrait;
 
   /**
@@ -73,6 +74,13 @@ abstract class ChecklistItemHandlerBase extends PluginBase implements ChecklistI
    */
   public function defaultConfiguration() {
     return ['conditions' => []];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function calculateDependencies() {
+    return $this->conditionEvaluator->calculateDependencies($this->getConfiguration()['conditions']);
   }
 
   /**

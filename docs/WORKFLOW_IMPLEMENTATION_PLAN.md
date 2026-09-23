@@ -1,6 +1,6 @@
 # Workflow framework implementation plan
 
-Status: P0 design baseline recorded; P1–P4 development in progress; P5–P9 planned. Updated 18 September 2026.
+Status: P0 design baseline recorded; P1–P4 development in progress; P5–P9 planned. Updated 23 September 2026.
 
 This plan implements the requirements in [Workflow architecture](WORKFLOW_ARCHITECTURE.md)
 within `rlmumford/common` on `2.x`. CounselKit `11.5.x` is the behavioral reference.
@@ -332,8 +332,14 @@ items are re-evaluated against changed gates. Tests cover newly applicable earli
 work, removed requirements, and required unfinished/failed work.
 
 Native condition gates now cover applicability, requiredness and actionability,
-including same-pass outcome selectors and action/form rechecks. Configuration UI,
-execution identity and claim integration remain open. The integration
+including same-pass outcome selectors and action/form rechecks. The authoring
+slice adds native condition plugin forms and decision choices to the existing job
+draft editor, with expected outcome contexts available before a task exists.
+Optional `checklist_entity_template_ui` composes reusable/embedded template sources,
+per-choice mappings and availability, and Flexiform's own editor plugin forms.
+Entity Template owns the reusable source editor; Typed Data Plus fixes definition
+matching so discovering selectors does not read computed properties or live values.
+Runtime execution identity and claim integration remain separate work. The integration
 requires the Typed Data Plus discovery and missing-context fixes in
 [MR !6](https://git.drupalcode.org/project/typed_data_plus/-/merge_requests/6).
 

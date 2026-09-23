@@ -1,4 +1,7 @@
 services:
+  checklist.condition_configuration_form:
+    class: Drupal\checklist\Form\ConditionConfigurationForm
+    arguments: ['@plugin.manager.condition']
   plugin.manager.checklist_type:
     class: Drupal\checklist\ChecklistTypeManager
     parent: default_plugin_manager

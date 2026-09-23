@@ -1,0 +1,9 @@
+name: Checklist Entity Template UI
+description: Configure template choices and shared entity editors on checklist items.
+type: module
+core_version_requirement: ^10 || ^11
+package: RLMumford
+dependencies:
+  - checklist:checklist_entity_template
+  - entity_template:entity_template_ui
+  - flexiform:flexiform_ui

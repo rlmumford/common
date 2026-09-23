@@ -67,8 +67,8 @@ class ChecklistItemExecutionPreparer {
     $reference = $item->get('checklist');
     $host_type = $reference->getFieldDefinition()->getSetting('target_type');
     $host = $this->entityTypeManager->getStorage($host_type)->loadUnchanged($reference->target_id);
-    if (!$host || $host->getEntityType()->isRevisionable()) {
-      throw new \DomainException('The runner requires an existing non-revisionable host.');
+    if (!$host) {
+      throw new \DomainException('The runner requires an existing host.');
     }
     $key = $reference->checklist_key;
     [$field, $delta] = array_pad(explode(':', $key, 2), 2, '0');
@@ -76,8 +76,13 @@ class ChecklistItemExecutionPreparer {
       throw new \DomainException('The runner requires a single-value checklist field.');
     }
     $definition = $host->get($field)->getFieldDefinition();
-    if ($definition->isTranslatable() || $definition->getFieldStorageDefinition()->getCardinality() !== 1) {
-      throw new \DomainException('Multivalue and translated checklist bindings need a workspace adapter.');
+    $field_storage = $definition->getFieldStorageDefinition();
+    // Non-revisionable fields (including task.checklist) are shared across host
+    // revisions. Use the freshly loaded default revision for their contexts;
+    // input snapshots still reject host changes during execution. A revisioned
+    // checklist needs an explicit revision binding, which item identity lacks.
+    if (($host->getEntityType()->isRevisionable() && $field_storage->isRevisionable()) || $definition->isTranslatable() || $field_storage->getCardinality() !== 1) {
+      throw new \DomainException('Revisioned, multivalue and translated checklist bindings need a workspace adapter.');
     }
     $this->entityTypeManager->getAccessControlHandler($host_type)->resetCache();
     $this->entityTypeManager->getAccessControlHandler('checklist_item')->resetCache();
