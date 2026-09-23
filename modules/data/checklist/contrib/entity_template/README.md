@@ -7,64 +7,87 @@ Enable `checklist_entity_template` to use the
 ```sh
 composer config repositories.entity-template vcs https://git.drupalcode.org/project/entity_template.git
 composer config repositories.flexiform vcs https://git.drupalcode.org/project/flexiform.git
-composer require drupal/entity_template:1.0.x-dev drupal/flexiform:3.0.x-dev#2052ec6
+composer require drupal/entity_template:1.0.x-dev#ac84380 drupal/flexiform:3.0.x-dev
 ```
 
 This optional integration ships inside `rlmumford/checklist` and requires
-Flexiform 3.0.x with its shared-session adapter ([Flexiform !12](https://git.drupalcode.org/project/flexiform/-/merge_requests/12)).
-The temporary Composer commit pin above also works after the MR branch is deleted;
-remove the pin once that change is on 3.0.x. Without an `editor` configuration
-the handler prepares and saves automatically. With an editor it retains the
-prepared entity for review through HTML or action operations. Applying a template
-to an existing entity (`entity_template__apply_to`) remains a subsequent slice.
+Flexiform 3.0.x with its shared-session adapter (merged in Flexiform !12).
+It also needs Entity Template's `entity_template.source` service from the companion
+[Entity Template !19](https://git.drupalcode.org/project/entity_template/-/merge_requests/19). The temporary commit pin can be removed after that merge.
+Applying templates to existing entities
+(`entity_template__apply_to`) remains a subsequent slice.
 
 ## Configuration
 
-An embedded template configures one new, fieldable entity. For example, inside a
-checklist's `default_items` configuration:
+`templates` is a sequence keyed by candidate machine name. Each candidate owns
+its template source, availability condition, parameter mappings and optional
+prepared-entity editor. For example, inside `default_items`:
 
 ```yaml
 create:
   title: Create the follow-up record
   handler: entity_template__create
   handler_configuration:
-    template:
-      id: standalone
-      target_entity_type_id: node
-      target_entity_bundle: article
-      parameters:
-        title:
-          type: string
-          required: true
-      components:
-        title:
-          id: property_context
-          path: title.0.value
-          context_mapping:
-            value: title
-    context_mapping:
-      title: checklist:entity.label
+    templates:
+      article:
+        condition:
+          id: condition_constant:true
+        template:
+          type: embedded
+          configuration:
+            id: standalone
+            label: Follow-up article
+            target_entity_type_id: node
+            target_entity_bundle: article
+            parameters:
+              title:
+                type: string
+                required: true
+            components:
+              title:
+                id: property_context
+                path: title.0.value
+                context_mapping:
+                  value: title
+        context_mapping:
+          title: checklist:entity.label
 ```
 
-The outer `context_mapping` uses the checklist's available contexts and Typed
-Data Plus selectors. Components receive the template's parameter contexts and
-its live `self` context. Replace the sample selector with a property exposed by
-the actual checklist host. Configure other required entity fields as necessary.
-
-Alternatively, choose a specific template from a reusable blueprint:
+A referenced candidate replaces only its `template` property:
 
 ```yaml
-handler_configuration:
-  blueprint: follow_up
-  template_id: main
-  context_mapping:
-    title: checklist:entity.label
+template:
+  type: referenced
+  configuration:
+    blueprint: follow_up
+    template_id: main
 ```
 
-The template must return a single entity. Referenced execution does not run the
-other templates in the blueprint, so earlier blueprint results are unavailable.
-Builder contexts remain available. Module, bundle, builder, blueprint, component
-and condition dependencies are reported for configuration consumers.
+Drupal config schema selects the configuration shape using `type`. This avoids
+ambiguous combinations of reference IDs and embedded plugin configuration. It
+uses dynamic schema types, not JSON Schema `oneOf` and not another plugin manager.
+
+Mappings use checklist contexts and Typed Data Plus selectors, including global
+`@provider:context` selectors. Inputs are scoped to their candidate; two templates
+can use the same parameter name with different definitions and selectors. Missing
+required inputs make only that candidate unavailable. Components receive the
+chosen template's parameters and live `self`. Replace the sample selector with a
+property exposed by the actual host and configure other required entity fields.
+
+A candidate must pass both its optional `condition` and the template's own
+conditions. One available candidate without an editor runs automatically. An
+editor makes that candidate interactive; multiple available candidates first
+present a choice in HTML/API. No candidates means the item is not actionable.
+The selected template and editor are captured before preparation and stay selected
+across pending passes. This follows the D7 choice/per-template-editor behaviour;
+the D7 missing-parameter input form and form-bypass option are not ported here.
+
+All alternatives must return one fieldable entity of the same entity type;
+bundles may differ. The stable `entity` outcome definition includes their bundle
+union. Referencing a blueprint member does not run its sibling templates, so
+previous blueprint results are unavailable. Builder contexts remain available.
+Entity Template owns source resolution and template dependency collection;
+Common adds the selection-condition and editor dependencies.
 
 This slice provides configuration schema and runtime handling; it does not add
 a template selector/editor to the checklist configuration UI.
@@ -100,31 +123,48 @@ commands are not introduced by this integration.
 
 ## Shared editing before save
 
-Add `editor` to the handler configuration to make this an interactive item:
+Add `editor` to a **candidate**, alongside its `template` and `context_mapping`:
 
 ```yaml
 editor:
-  plugin: standard
+  type: embedded
   configuration:
-    data:
-      entity:
-        plugin: provided_data
-    components:
-      title:
-        component_type: typed_data
-        context: entity
-        path: title.0.value
-        label: Title
+    plugin: standard
+    configuration:
+      data:
+        entity:
+          plugin: provided_data
+      components:
+        title:
+          component_type: typed_data
+          context: entity
+          path: title.0.value
+          label: Title
 ```
 
-Or reference a saved Flexiform with `editor: {form_id: review_article}`. A wizard
-uses `plugin: wizard` with its normal `pages` configuration. The editor's one
-binding must be transient `provided_data` named `entity`; do not configure
-`save_on_submit`, additional providers or save enhancers. The checklist owns the
-final save. Components must support Flexiform's API contract; custom schemas need
-an HTML adapter. Standard entity field widgets are not implicitly API-capable.
+A saved form uses the other shape:
 
-Opening the existing checklist action form bootstraps preparation through a
+```yaml
+editor:
+  type: referenced
+  configuration:
+    form_id: review_article
+```
+
+A wizard uses `plugin: wizard` and its normal `pages`. The single binding must be
+transient `provided_data` named `entity`; do not configure `save_on_submit`, extra
+providers or save enhancers. The checklist owns the final save. Components must
+support Flexiform's API contract; custom schemas need an HTML adapter. Standard
+entity field widgets are not implicitly API-capable.
+
+`PreparedEntityEditor` coordinates editing the unsaved **entity produced by a
+template**. It is not a template configuration editor. It belongs in the optional
+checklist integration because it owns checklist claims, revisions, authorization,
+audit and completion. Reusable working sessions and HTML controls live in
+Flexiform; template resolution and preparation live in Entity Template.
+
+With multiple candidates, the action form asks the user to select a template.
+With one candidate, opening the existing checklist action form bootstraps preparation through a
 CSRF-protected submission. JavaScript advances that submission automatically;
 non-JavaScript users have an Open form button. The first pass uses the existing
 two-second cooperative budget. A short template goes straight to its fields;
@@ -136,7 +176,8 @@ interactive operations.
 The named action operations are:
 
 - `get`: current status, revision and, when ready, values/schema/UI/actions.
-- `start`: initial preparation, with `revision: 0`.
+- `start`: initial preparation, with `revision: 0` and a candidate `template`
+  machine name. The name is required when several candidates are available.
 - `advance`: another preparation pass, with the current revision.
 - `form/<action>`: a currently advertised Flexiform action, with `revision` and
   `input`. Examples include `form/update`, `form/submit`, `form/next`,

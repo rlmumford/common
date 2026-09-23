@@ -27,7 +27,7 @@ class SharedEditorTest extends BrowserTestBase {
   /**
    * Creates a saved template item with an embedded standard or wizard editor.
    */
-  protected function work(bool $pending = FALSE): array {
+  protected function work(bool $pending = FALSE, bool $choice = FALSE): array {
     $account = $this->drupalCreateUser([], 'Editor', TRUE);
     $this->drupalLogin($account);
     FieldStorageConfig::create(['field_name' => 'work', 'entity_type' => 'entity_test', 'type' => 'checklist'])->save();
@@ -95,6 +95,24 @@ class SharedEditorTest extends BrowserTestBase {
       unset($handler);
       $host->work->configuration = $configuration;
     }
+    $configuration = $host->work->configuration;
+    $settings = $configuration['default_items']['create']['handler_configuration'];
+    $configuration['default_items']['create']['handler_configuration'] = [
+      'templates' => [
+        'default' => [
+          'template' => ['type' => 'embedded', 'configuration' => $settings['template']],
+          'context_mapping' => $settings['context_mapping'] ?? [],
+          'editor' => ['type' => 'embedded', 'configuration' => $settings['editor']],
+        ],
+      ],
+    ];
+    if ($choice) {
+      $candidate = $configuration['default_items']['create']['handler_configuration']['templates']['default'];
+      $candidate['template']['configuration']['label'] = 'Second template';
+      $candidate['template']['configuration']['components']['name']['value'] = 'Second prepared name';
+      $configuration['default_items']['create']['handler_configuration']['templates']['second'] = $candidate;
+    }
+    $host->work->configuration = $configuration;
     $host->save();
     $item = $host->work->checklist->getItem('create');
     $item->save();
@@ -160,6 +178,22 @@ class SharedEditorTest extends BrowserTestBase {
     $this->assertSession()->fieldValueEquals('editor[values][name]', 'Wizard browser');
     $this->submitForm([], 'Next');
     $this->submitForm([], 'Finish');
+    $this->assertSession()->pageTextContains('Entity created.');
+    $this->assertCount(2, EntityTest::loadMultiple());
+  }
+
+  /**
+   * Several matching templates present a choice before preparing an entity.
+   */
+  public function testTemplateChoice(): void {
+    [, $path] = $this->work(choice: TRUE);
+    $this->drupalGet($path);
+    $this->assertSession()->fieldExists('template');
+    $this->assertSession()->elementNotExists('css', '[data-flexiform-advance="new"]');
+    $this->assertCount(1, EntityTest::loadMultiple());
+    $this->submitForm(['template' => 'second'], 'Select template');
+    $this->assertSession()->fieldValueEquals('editor[values][name]', 'Second prepared name');
+    $this->submitForm(['editor[values][name]' => 'Selected in browser'], 'Submit');
     $this->assertSession()->pageTextContains('Entity created.');
     $this->assertCount(2, EntityTest::loadMultiple());
   }

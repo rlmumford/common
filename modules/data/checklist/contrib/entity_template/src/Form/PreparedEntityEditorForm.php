@@ -5,7 +5,7 @@ namespace Drupal\checklist_entity_template\Form;
 use Drupal\checklist\Attempt\ChecklistAttemptConflictException;
 use Drupal\checklist\Attempt\ChecklistAttempt;
 use Drupal\checklist\Form\ChecklistItemActionForm;
-use Drupal\checklist_entity_template\TemplateEditor;
+use Drupal\checklist_entity_template\PreparedEntityEditor;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -16,12 +16,12 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * A thin HTML adapter over the same revisioned checklist action operations.
  */
-class TemplateEditorForm extends ChecklistItemActionForm {
+class PreparedEntityEditorForm extends ChecklistItemActionForm {
 
   /**
    * The shared checklist operation coordinator.
    */
-  protected TemplateEditor $editor;
+  protected PreparedEntityEditor $editor;
 
   /**
    * Converts the shared schema to browser controls.
@@ -73,19 +73,35 @@ class TemplateEditorForm extends ChecklistItemActionForm {
           '#attributes' => ['aria-label' => $this->t('Preparing your form')],
         ];
       }
+      $choose = $description['status'] === 'new' && count($description['templates']) > 1;
+      if ($choose) {
+        $form['template'] = [
+          '#type' => 'select',
+          '#title' => $this->t('Template'),
+          '#options' => $description['templates'],
+          '#required' => TRUE,
+        ];
+      }
       $form['actions']['progress'] = [
         '#type' => 'submit',
         '#value' => $description['status'] === 'new' ? $this->t('Open form') : $this->t('Check progress'),
         '#editor_operation' => $description['status'] === 'new' ? 'start' : 'advance',
         '#attributes' => ['data-flexiform-advance' => $description['status']],
       ];
-      $form['#attached']['library'][] = 'flexiform/preparation';
+      if ($choose) {
+        unset($form['actions']['progress']['#attributes']['data-flexiform-advance']);
+        $form['actions']['progress']['#value'] = $this->t('Select template');
+      }
+      else {
+        $form['#attached']['library'][] = 'flexiform/preparation';
+      }
     }
     else {
       $form['status'] = [
         '#plain_text' => match ($description['status']) {
         'complete' => $this->t('Entity created.'),
         'failed' => $this->t('This attempt failed. Working data has been retained for review.'),
+        'unavailable' => $this->t('No templates are currently available.'),
         default => $this->t('An operation is in progress. Refresh to check its status.'),
         },
       ];
@@ -140,6 +156,9 @@ class TemplateEditorForm extends ChecklistItemActionForm {
     $button = $form_state->getTriggeringElement();
     $operation = $button['#editor_operation'] ?? 'form/' . $button['#flexiform_action'];
     $parameters = ['revision' => $form['#editor_revision']];
+    if ($operation === 'start' && $form_state->hasValue('template')) {
+      $parameters['template'] = $form_state->getValue('template');
+    }
     if (isset($button['#flexiform_action'])) {
       $parameters['input'] = $form_state->get('editor_input');
     }

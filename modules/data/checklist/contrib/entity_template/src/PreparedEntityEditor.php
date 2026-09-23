@@ -22,12 +22,12 @@ use Drupal\flexiform\Session\FormSession;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
- * Owns one audited editor shared by HTML and checklist action operations.
+ * Coordinates editing a prepared entity through HTML and action operations.
  *
  * The item state is authoritative. There is no second Flexiform tempstore copy.
  * Attempts pin the owner; takeover/recovery require a separate explicit action.
  */
-class TemplateEditor {
+class PreparedEntityEditor {
 
   public function __construct(
     protected ChecklistItemExecutionPreparer $preparer,
@@ -45,12 +45,23 @@ class TemplateEditor {
    * Resolves a reusable or embedded editor without loading provider values.
    */
   public function form(array $definition): FormPluginInterface {
-    if (!empty($definition['form_id'])) {
+    $type = $definition['type'] ?? NULL;
+    $definition = $definition['configuration'] ?? [];
+    if ($type === 'referenced') {
+      if (array_keys($definition) !== ['form_id'] || !$definition['form_id']) {
+        throw new \InvalidArgumentException('A referenced editor requires only form_id.');
+      }
       $saved = $this->entities->getStorage('flexiform_form')->load($definition['form_id']);
-      if (!$saved) {
-        throw new \InvalidArgumentException('The configured Flexiform does not exist.');
+      if (!$saved || !$saved->status()) {
+        throw new \InvalidArgumentException('The configured Flexiform is missing or disabled.');
       }
       $definition = $saved->getFormDefinition();
+    }
+    elseif (
+      $type !== 'embedded' || empty($definition['plugin']) ||
+      array_diff(array_keys($definition), ['plugin', 'configuration'])
+    ) {
+      throw new \InvalidArgumentException('An editor must be referenced or an embedded form plugin.');
     }
     $form = $this->forms->create($definition['configuration'] ?? [], $definition['plugin'] ?? 'standard');
     // The checklist owns entity persistence. The editor changes that entity in
@@ -104,7 +115,11 @@ class TemplateEditor {
     [$item, $attempt] = $this->load($identity);
     $metadata = ['id' => $item->uuid(), 'revision' => $attempt?->version ?? 0];
     if (!$attempt) {
-      return $metadata + ['status' => 'new'];
+      $choices = [];
+      foreach ($item->getHandler()->available() as $key => $template) {
+        $choices[$key] = (string) $template->label();
+      }
+      return $metadata + ['status' => $choices ? 'new' : 'unavailable', 'templates' => $choices];
     }
     if ($attempt->isTerminal()) {
       return $metadata + ['status' => $attempt->status === ChecklistAttempt::SUCCEEDED ? 'complete' : 'failed'];
@@ -132,13 +147,21 @@ class TemplateEditor {
       ],
     ];
     if (in_array($description['status'], ['new', 'preparing'], TRUE)) {
+      $properties = ['revision' => $revision];
+      $required = ['revision'];
+      if ($description['status'] === 'new') {
+        $properties['template'] = ['type' => 'string', 'enum' => array_keys($description['templates'])];
+        if (count($description['templates']) !== 1) {
+          $required[] = 'template';
+        }
+      }
       $operations[$description['status'] === 'new' ? 'start' : 'advance'] = [
         'label' => $description['status'] === 'new' ? 'Open editor' : 'Check preparation',
         'description' => 'Run one bounded preparation pass without saving the entity.',
         'parameters_schema' => [
           'type' => 'object',
-          'properties' => ['revision' => $revision],
-          'required' => ['revision'],
+          'properties' => $properties,
+          'required' => $required,
           'additionalProperties' => FALSE,
         ],
       ];
@@ -204,7 +227,7 @@ class TemplateEditor {
       return $this->describe($identity);
     }
     $form_action = str_starts_with($operation, 'form/');
-    $allowed = $form_action ? ['revision', 'input'] : ['revision'];
+    $allowed = $form_action ? ['revision', 'input'] : ($operation === 'start' ? ['revision', 'template'] : ['revision']);
     if (!is_int($parameters['revision'] ?? NULL) || array_diff(array_keys($parameters), $allowed) || ($form_action && !is_array($parameters['input'] ?? NULL))) {
       throw new \InvalidArgumentException('Supply the rendered revision and action input.');
     }
@@ -214,6 +237,14 @@ class TemplateEditor {
     }
     [$item, $snapshot] = $this->preparer->prepare($item->uuid(), FALSE);
     $handler = $item->getHandler();
+    if ($operation === 'start') {
+      $available = $handler->available();
+      $key = $parameters['template'] ?? (count($available) === 1 ? array_key_first($available) : NULL);
+      if (!is_string($key)) {
+        throw new \InvalidArgumentException('Select one of the available templates.');
+      }
+      $handler->select($key);
+    }
     $session = NULL;
     if ($form_action) {
       [$session, $editable] = $handler->getEditorSession();

@@ -5,7 +5,7 @@ namespace Drupal\checklist_entity_template\Plugin\ChecklistItemHandler;
 use Drupal\checklist\Attempt\ChecklistAttempt;
 use Drupal\checklist\Plugin\ChecklistItemHandler\InteractiveChecklistItemHandlerInterface;
 use Drupal\checklist\Plugin\ChecklistItemHandler\ActionOperationsChecklistItemHandlerInterface;
-use Drupal\checklist_entity_template\TemplateEditor;
+use Drupal\checklist_entity_template\PreparedEntityEditor;
 use Drupal\flexiform\Session\FormSession;
 use Drupal\checklist\ChecklistActionState;
 use Drupal\checklist\Entity\ChecklistItemInterface;
@@ -20,7 +20,11 @@ use Drupal\checklist\Plugin\ChecklistItemHandler\StatefulChecklistItemHandlerInt
 use Drupal\Component\Plugin\DependentPluginInterface;
 use Drupal\Component\Plugin\Exception\ContextException;
 use Drupal\Component\Serialization\PhpSerialize;
-use Drupal\Core\Condition\ConditionManager;
+use Drupal\checklist\ChecklistContextCollectorInterface;
+use Drupal\Core\Plugin\Context\Context;
+use Drupal\Core\Plugin\Context\ContextHandlerInterface;
+use Drupal\Core\Entity\TypedData\EntityDataDefinition;
+use Drupal\Core\Entity\TypedData\EntityDataDefinitionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -30,7 +34,7 @@ use Drupal\entity_template\BlueprintResult;
 use Drupal\entity_template\Execution\ExecutionContext;
 use Drupal\entity_template\Plugin\EntityTemplate\Template\BlueprintTemplateInterface;
 use Drupal\entity_template\Plugin\EntityTemplate\Template\Template;
-use Drupal\entity_template\TemplateManager;
+use Drupal\entity_template\TemplateSource;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -44,16 +48,16 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
  *   category = @Translation("Entity Template"),
  *   forms = {
  *     "row" = "\Drupal\checklist_entity_template\PluginForm\TemplateItemRowForm",
- *     "action" = "\Drupal\checklist_entity_template\PluginForm\TemplateEditorActionForm",
+ *     "action" = "\Drupal\checklist_entity_template\PluginForm\PreparedEntityEditorActionForm",
  *   }
  * )
  */
 class CreateFromTemplate extends ContextAwareChecklistItemHandlerBase implements IterativeChecklistItemHandlerInterface, StatefulChecklistItemHandlerInterface, ExpectedOutcomeChecklistItemHandlerInterface, ActionStateChecklistItemHandlerInterface, DependentPluginInterface, InteractiveChecklistItemHandlerInterface, ActionOperationsChecklistItemHandlerInterface {
 
   /**
-   * The template plugin manager.
+   * Resolves reusable and embedded template sources.
    */
-  protected TemplateManager $templates;
+  protected TemplateSource $sources;
 
   /**
    * Entity storage and access handlers.
@@ -71,25 +75,36 @@ class CreateFromTemplate extends ContextAwareChecklistItemHandlerBase implements
   protected LoggerInterface $logger;
 
   /**
-   * Condition plugins contributing configuration dependencies.
+   * Provides the checklist contexts used by candidate mappings and conditions.
    */
-  protected ConditionManager $conditions;
+  protected ChecklistContextCollectorInterface $collector;
+
+  /**
+   * Resolves per-candidate parameter selectors, including global providers.
+   */
+  protected ContextHandlerInterface $contextHandler;
+
+  /**
+   * Choice made for this invocation, before its audited result is committed.
+   */
+  protected ?string $selected = NULL;
 
   /**
    * Shared interactive coordinator.
    */
-  protected TemplateEditor $editor;
+  protected PreparedEntityEditor $editor;
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
-    $instance->templates = $container->get('plugin.manager.entity_template.template');
+    $instance->sources = $container->get('entity_template.source');
     $instance->entityTypes = $container->get('entity_type.manager');
     $instance->itemExecutor = $container->get('checklist.item_executor');
     $instance->logger = $container->get('logger.channel.checklist');
-    $instance->conditions = $container->get('plugin.manager.condition');
+    $instance->collector = $container->get('checklist.context_collector');
+    $instance->contextHandler = $container->get('context.handler');
     $instance->editor = $container->get('checklist_entity_template.editor');
     return $instance;
   }
@@ -98,38 +113,119 @@ class CreateFromTemplate extends ContextAwareChecklistItemHandlerBase implements
    * {@inheritdoc}
    */
   public function defaultConfiguration() {
-    return ['editor' => [], 'blueprint' => '', 'template_id' => '', 'template' => [], 'context_mapping' => []] + parent::defaultConfiguration();
+    return ['templates' => []] + parent::defaultConfiguration();
   }
 
   /**
-   * Resolves configuration without executing components or creating a target.
+   * Resolves every candidate without executing components or creating targets.
    */
-  public function getTemplate(): Template {
-    $configuration = $this->getConfiguration();
-    if ($configuration['blueprint'] !== '') {
-      $blueprint = $this->entityTypes->getStorage('entity_template_blueprint')->load($configuration['blueprint']);
-      if (!$blueprint) {
-        throw new \InvalidArgumentException('The configured template blueprint does not exist.');
+  public function getTemplates(): array {
+    $templates = [];
+    foreach ($this->getConfiguration()['templates'] as $key => $settings) {
+      if (!is_string($key) || !preg_match('/^[a-z][a-z0-9_]*$/D', $key)) {
+        throw new \InvalidArgumentException('Template candidates require machine-name keys.');
       }
-      $template = $blueprint->toBlueprint()->getTemplate($configuration['template_id']);
+      $template = $this->sources->resolve($settings['template']);
+      if (!$template->isSingle() || !$template->getTargetDefinition() instanceof EntityDataDefinitionInterface) {
+        throw new \InvalidArgumentException('Each checklist template must return one entity.');
+      }
+      $templates[$key] = $template;
     }
-    else {
-      $settings = $configuration['template'];
-      $template = $this->templates->createInstance($settings['id'] ?? 'standalone', $settings);
+    if (!$templates) {
+      throw new \InvalidArgumentException('Configure at least one template candidate.');
     }
-    if (!$template instanceof Template || !$template->isSingle()) {
-      throw new \InvalidArgumentException('This checklist item requires a template returning one entity.');
+    return $templates;
+  }
+
+  /**
+   * Namespaces inputs so candidates can reuse names with different data types.
+   *
+   * Candidate inputs are optional here: only the chosen candidate's required
+   * inputs gate execution. Its original definitions are checked in available().
+   */
+  public function getContextDefinitions() {
+    $definitions = [];
+    foreach ($this->getTemplates() as $key => $template) {
+      foreach ($template->getContextDefinitions() as $name => $definition) {
+        if ($name !== '_blueprint_result') {
+          $definitions[$key . '/' . $name] = (clone $definition)->setRequired(FALSE);
+        }
+      }
     }
-    return $template;
+    return $definitions;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getContextDefinitions() {
-    $definitions = $this->getTemplate()->getContextDefinitions();
-    unset($definitions['_blueprint_result']);
-    return $definitions;
+  public function getContextMapping() {
+    $mapping = [];
+    foreach ($this->getConfiguration()['templates'] as $key => $settings) {
+      foreach ($settings['context_mapping'] ?? [] as $name => $selector) {
+        $mapping[$key . '/' . $name] = $selector;
+      }
+    }
+    return $mapping;
+  }
+
+  /**
+   * Returns currently applicable candidates with independently mapped inputs.
+   */
+  public function available(): array {
+    $checklist = $this->getItem()->get('checklist')->checklist;
+    foreach ($this->getContextDefinitions() as $name => $definition) {
+      $this->setContext($name, new Context($definition));
+    }
+    $this->contextHandler->applyContextMapping($this, $this->collector->collectRuntimeContexts($checklist));
+    $available = [];
+    foreach ($this->getTemplates() as $key => $template) {
+      $settings = $this->getConfiguration()['templates'][$key];
+      if (isset($settings['condition']) && $this->conditionEvaluator->evaluate($checklist, $settings['condition']) !== TRUE) {
+        continue;
+      }
+      foreach ($template->getContextDefinitions() as $name => $definition) {
+        if ($name === '_blueprint_result') {
+          continue;
+        }
+        $context = $this->getContext($key . '/' . $name);
+        if ($definition->isRequired() && !$context->hasContextValue()) {
+          continue 2;
+        }
+        $template->setContext($name, $context);
+      }
+      if ($template instanceof BlueprintTemplateInterface) {
+        $template->setBlueprintResult(new BlueprintResult());
+      }
+      if ($template->applies()) {
+        $available[$key] = $template;
+      }
+    }
+    return $available;
+  }
+
+  /**
+   * Pins an explicitly chosen, currently available candidate for this pass.
+   */
+  public function select(string $key): void {
+    if (!isset($this->available()[$key])) {
+      throw new \DomainException('The chosen template is unavailable.');
+    }
+    $this->selected = $key;
+  }
+
+  /**
+   * Reads the choice and editor captured when this attempt began.
+   */
+  protected function selection(): ?array {
+    $stored = $this->getItem()->get('state')->get('selection')->getValue();
+    return empty($stored['snapshot']) ? NULL : PhpSerialize::decode($stored['snapshot']);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function isActionable(): bool {
+    return $this->selection() !== NULL ? parent::isActionable() : (bool) $this->available() && parent::isActionable();
   }
 
   /**
@@ -147,7 +243,13 @@ class CreateFromTemplate extends ContextAwareChecklistItemHandlerBase implements
    * {@inheritdoc}
    */
   public function getMethod(): string {
-    return $this->getConfiguration()['editor'] ? ChecklistItemInterface::METHOD_INTERACTIVE : ChecklistItemInterface::METHOD_AUTO;
+    $selection = $this->selection();
+    if ($selection) {
+      return $selection['method'];
+    }
+    $available = $this->available();
+    $key = array_key_first($available);
+    return count($available) !== 1 || !empty($this->getConfiguration()['templates'][$key]['editor']) ? ChecklistItemInterface::METHOD_INTERACTIVE : ChecklistItemInterface::METHOD_AUTO;
   }
 
   /**
@@ -174,6 +276,9 @@ class CreateFromTemplate extends ContextAwareChecklistItemHandlerBase implements
     // A structured value uses typed_data_reference's blob storage. The opaque
     // snapshot belongs to server code, never to submitted API parameters.
     return [
+      'selection' => MapDataDefinition::create()
+        ->setLabel(new TranslatableMarkup('Selected template'))
+        ->setPropertyDefinition('snapshot', DataDefinition::create('string')),
       'editor' => MapDataDefinition::create()
         ->setLabel(new TranslatableMarkup('Shared editor'))
         ->setPropertyDefinition('snapshot', DataDefinition::create('string')),
@@ -187,8 +292,23 @@ class CreateFromTemplate extends ContextAwareChecklistItemHandlerBase implements
    * {@inheritdoc}
    */
   public function expectedOutcomeDefinitions(): array {
-    $definition = clone $this->getTemplate()->getTargetDefinition();
-    $definition->setLabel(new TranslatableMarkup('Created entity'));
+    $type = NULL;
+    $bundles = [];
+    $unrestricted = FALSE;
+    foreach ($this->getTemplates() as $template) {
+      $target = $template->getTargetDefinition();
+      if ($type !== NULL && $type !== $target->getEntityTypeId()) {
+        throw new \InvalidArgumentException('Template alternatives must produce the same entity type.');
+      }
+      $type = $target->getEntityTypeId();
+      $bundle = $target->getConstraint('Bundle');
+      $unrestricted = $unrestricted || !$bundle;
+      $bundles = array_merge($bundles, (array) $bundle);
+    }
+    $definition = EntityDataDefinition::create($type)->setLabel(new TranslatableMarkup('Created entity'));
+    if (!$unrestricted) {
+      $definition->addConstraint('Bundle', array_values(array_unique($bundles)));
+    }
     return ['entity' => $definition];
   }
 
@@ -198,29 +318,41 @@ class CreateFromTemplate extends ContextAwareChecklistItemHandlerBase implements
   protected function execution(): array {
     $stored = $this->getItem()->get('state')->get('preparation')->getValue();
     if (!empty($stored['snapshot'])) {
-      [$template, $execution, $editable] = PhpSerialize::decode($stored['snapshot']);
+      [$template, $execution, $editable, , $selection] = PhpSerialize::decode($stored['snapshot']);
       if (!$template instanceof Template || !$execution instanceof ExecutionContext) {
         throw new \UnexpectedValueException('Invalid retained template preparation.');
       }
-      return [$template, $execution, $editable];
+      return [$template, $execution, $editable, $selection];
     }
-    $template = $this->getTemplate();
-    foreach ($this->getContexts() as $name => $context) {
-      if ($context->hasContextValue()) {
-        $template->setContext($name, $context);
-      }
+    $available = $this->available();
+    $key = $this->selected ?? (count($available) === 1 ? array_key_first($available) : NULL);
+    if ($key === NULL || !isset($available[$key])) {
+      throw new \DomainException('Choose an available template before execution.');
     }
-    if ($template instanceof BlueprintTemplateInterface) {
-      $template->setBlueprintResult(new BlueprintResult());
+    $editor = $this->getConfiguration()['templates'][$key]['editor'] ?? [];
+    if ($editor) {
+      $form = $this->editor->form($editor);
+      $editor = [
+        'type' => 'embedded',
+        'configuration' => [
+          'plugin' => $form->getPluginId(),
+          'configuration' => $form->getConfiguration(),
+        ],
+      ];
     }
-    return [$template, new ExecutionContext(2000), []];
+    $selection = [
+      'key' => $key,
+      'editor' => $editor,
+      'method' => $this->getMethod(),
+    ];
+    return [$available[$key], new ExecutionContext(2000), [], $selection];
   }
 
   /**
    * {@inheritdoc}
    */
   public function actionIteration(ChecklistAttempt $attempt): ChecklistItemResult {
-    [$template, $execution, $editable] = $this->execution();
+    [$template, $execution, $editable, $selection] = $this->execution();
     $entity = NULL;
     try {
       $partial = $execution->getState()?->target->getValue();
@@ -237,23 +369,23 @@ class CreateFromTemplate extends ContextAwareChecklistItemHandlerBase implements
         }
       }
       if ($result->isPending()) {
-        return new ChecklistItemResult(ChecklistAttempt::WAITING, $this->workingState($template, $execution, $editable, $entity), delay: 1, reason: 'Template preparation is pending.');
+        return new ChecklistItemResult(ChecklistAttempt::WAITING, $this->workingState($template, $execution, $editable, $entity, $selection), delay: 1, reason: 'Template preparation is pending.');
       }
       $entity = $result->getEntity();
       if (!$result->isComplete() || !$entity instanceof FieldableEntityInterface || !$entity->isNew()) {
         throw new \UnexpectedValueException('The template did not prepare a new fieldable entity.');
       }
-      if (!$this->getConfiguration()['editor'] && $entity->validate()->count()) {
+      if (!$selection['editor'] && $entity->validate()->count()) {
         throw new \UnexpectedValueException('The prepared entity is invalid.');
       }
-      if ($this->getConfiguration()['editor']) {
-        $session = $this->editor->createSession($this->getConfiguration()['editor'], $entity);
-        return $this->editorResult($session, $editable);
+      if ($selection['editor']) {
+        $session = $this->editor->createSession($selection['editor'], $entity);
+        return $this->editorResult($session, $editable, FALSE, $selection);
       }
     }
     catch (\Throwable $exception) {
       $this->logger->error('Checklist template preparation failed: @message', ['@message' => $exception->getMessage()]);
-      return new ChecklistItemResult(ChecklistAttempt::FAILED, $this->workingState($template, $execution, $editable, $entity), reason: 'Template preparation failed.');
+      return new ChecklistItemResult(ChecklistAttempt::FAILED, $this->workingState($template, $execution, $editable, $entity, $selection), reason: 'Template preparation failed.');
     }
     return $this->completedResult($entity, $editable);
   }
@@ -269,12 +401,13 @@ class CreateFromTemplate extends ContextAwareChecklistItemHandlerBase implements
   /**
    * Builds a ready/wizard result without saving provider-owned data.
    */
-  public function editorResult(FormSession $session, array $editable, bool $complete = FALSE): ChecklistItemResult {
+  public function editorResult(FormSession $session, array $editable, bool $complete = FALSE, ?array $selection = NULL): ChecklistItemResult {
     $entity = $session->getDataManager()->getContext('entity')->getContextValue();
     if ($complete) {
       return $this->completedResult($entity, $editable);
     }
     return new ChecklistItemResult(ChecklistAttempt::WAITING, [
+      'selection' => ['snapshot' => PhpSerialize::encode($selection ?? $this->selection())],
       'preparation' => NULL,
       'editor' => ['snapshot' => PhpSerialize::encode([$session, $editable])],
     ], reason: 'Waiting for form input.');
@@ -304,10 +437,13 @@ class CreateFromTemplate extends ContextAwareChecklistItemHandlerBase implements
   /**
    * Serializes trusted preparation state into the declared blob-backed map.
    */
-  protected function workingState(Template $template, ExecutionContext $execution, array $editable, ?FieldableEntityInterface $entity): array {
+  protected function workingState(Template $template, ExecutionContext $execution, array $editable, ?FieldableEntityInterface $entity, array $selection): array {
     // On final validation failure the executor has already cleared its state;
     // retain the unsaved result as well for diagnostics and explicit recovery.
-    return ['preparation' => ['snapshot' => PhpSerialize::encode([$template, $execution, $editable, $entity])]];
+    return [
+      'selection' => ['snapshot' => PhpSerialize::encode($selection)],
+      'preparation' => ['snapshot' => PhpSerialize::encode([$template, $execution, $editable, $entity, $selection])],
+    ];
   }
 
   /**
@@ -323,6 +459,9 @@ class CreateFromTemplate extends ContextAwareChecklistItemHandlerBase implements
     if ($this->getEditorSession()) {
       return new ChecklistActionState('editing', (string) $this->t('Review the prepared entity.'), inputRequired: TRUE);
     }
+    if ($this->selection() === NULL && count($this->available()) > 1) {
+      return new ChecklistActionState('selecting', (string) $this->t('Choose a template.'), inputRequired: TRUE);
+    }
     return new ChecklistActionState('preparing', (string) $this->t('Preparing the entity.'));
   }
 
@@ -330,52 +469,25 @@ class CreateFromTemplate extends ContextAwareChecklistItemHandlerBase implements
    * {@inheritdoc}
    */
   public function calculateDependencies() {
-    $template = $this->getTemplate();
-    $modules = ['entity_template', 'checklist_entity_template', $template->getPluginDefinition()['provider']];
-    $configs = [];
-    if ($this->getConfiguration()['blueprint'] !== '') {
-      $blueprint = $this->entityTypes->getStorage('entity_template_blueprint')->load($this->getConfiguration()['blueprint']);
-      $configs[] = $blueprint->getConfigDependencyName();
-      $builder = $blueprint->toBlueprint()->getBuilder();
-      $modules[] = $builder->getPluginDefinition()['provider'];
-      if ($builder->getBaseId() === 'config') {
-        $configs[] = 'entity_template.builder.' . $builder->getDerivativeId();
+    $dependencies = ['module' => ['checklist_entity_template'], 'config' => []];
+    foreach ($this->getConfiguration()['templates'] as $settings) {
+      $sources = [$this->sources->calculateDependencies($settings['template'])];
+      if (!empty($settings['editor'])) {
+        $sources[] = $this->editor->form($settings['editor'])->calculateDependencies();
+        if ($settings['editor']['type'] === 'referenced') {
+          $dependencies['config'][] = 'flexiform.form.' . $settings['editor']['configuration']['form_id'];
+        }
+      }
+      if (isset($settings['condition'])) {
+        $sources[] = $this->sources->conditionDependencies($settings['condition']);
+      }
+      foreach ($sources as $source) {
+        foreach ($source as $type => $names) {
+          $dependencies[$type] = array_merge($dependencies[$type] ?? [], $names);
+        }
       }
     }
-    $definition = $template->getTargetDefinition();
-    $type = $this->entityTypes->getDefinition($definition->getEntityTypeId());
-    $modules[] = $type->getProvider();
-    if ($bundle_type = $type->getBundleEntityType()) {
-      $bundles = (array) $definition->getConstraint('Bundle');
-      foreach ($this->entityTypes->getStorage($bundle_type)->loadMultiple($bundles) as $bundle) {
-        $configs[] = $bundle->getConfigDependencyName();
-      }
-    }
-    $plugins = iterator_to_array($template->getComponents());
-    $conditions = array_values($template->getConfiguration()['conditions'] ?? []);
-    foreach ($plugins as $component) {
-      $conditions = array_merge($conditions, array_values($component->getConfiguration()['conditions'] ?? []));
-    }
-    foreach ($conditions as $condition) {
-      $plugins[] = $this->conditions->createInstance($condition['id'], $condition);
-    }
-    foreach ($plugins as $plugin) {
-      $modules[] = $plugin->getPluginDefinition()['provider'];
-      if ($plugin instanceof DependentPluginInterface) {
-        $dependencies = $plugin->calculateDependencies();
-        $modules = array_merge($modules, $dependencies['module'] ?? []);
-        $configs = array_merge($configs, $dependencies['config'] ?? []);
-      }
-    }
-    if ($settings = $this->getConfiguration()['editor']) {
-      $dependencies = $this->editor->form($settings)->calculateDependencies();
-      $modules = array_merge($modules, $dependencies['module'] ?? []);
-      $configs = array_merge($configs, $dependencies['config'] ?? []);
-      if (!empty($settings['form_id'])) {
-        $configs[] = 'flexiform.form.' . $settings['form_id'];
-      }
-    }
-    return ['module' => array_values(array_unique($modules)), 'config' => array_values(array_unique($configs))];
+    return array_map(static fn($names) => array_values(array_unique($names)), $dependencies);
   }
 
   /**
@@ -397,7 +509,7 @@ class CreateFromTemplate extends ContextAwareChecklistItemHandlerBase implements
    * {@inheritdoc}
    */
   public function actionOperations(): array {
-    return $this->getConfiguration()['editor'] ? $this->editor->operations($this->getItem()) : [];
+    return $this->getMethod() === ChecklistItemInterface::METHOD_INTERACTIVE ? $this->editor->operations($this->getItem()) : [];
   }
 
   /**

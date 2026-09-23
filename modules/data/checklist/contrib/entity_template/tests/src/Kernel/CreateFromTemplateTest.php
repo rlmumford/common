@@ -104,6 +104,23 @@ class CreateFromTemplateTest extends ChecklistItemExecutionTestBase {
       $configuration['default_items']['create']['handler_configuration'] = $settings + $configuration['default_items']['create']['handler_configuration'];
       $host->work->configuration = $configuration;
     }
+    $configuration = $host->work->configuration;
+    $settings = $configuration['default_items']['create']['handler_configuration'];
+    $source = !empty($settings['blueprint'])
+      ? [
+        'type' => 'referenced',
+        'configuration' => array_intersect_key($settings, array_flip(['blueprint', 'template_id'])),
+      ]
+      : ['type' => 'embedded', 'configuration' => $settings['template']];
+    $candidate = ['template' => $source, 'context_mapping' => $settings['context_mapping'] ?? []];
+    if (!empty($settings['editor'])) {
+      $candidate['editor'] = [
+        'type' => isset($settings['editor']['form_id']) ? 'referenced' : 'embedded',
+        'configuration' => $settings['editor'],
+      ];
+    }
+    $configuration['default_items']['create']['handler_configuration'] = ['templates' => $settings['templates'] ?? ['default' => $candidate]];
+    $host->work->configuration = $configuration;
     $host->save();
     foreach ($host->work->checklist->getItems() as $item) {
       $item->save();
@@ -496,6 +513,144 @@ class CreateFromTemplateTest extends ChecklistItemExecutionTestBase {
       'input' => ['name' => 'Captured editor'],
     ]);
     $this->assertSame('Captured editor', $this->reload($item)->get('outcomes')->get('entity')->getValue()->label());
+  }
+
+  /**
+   * Builds a candidate with its own parameter type, selector and editor.
+   */
+  protected function candidate(string $type = 'string', string $selector = 'checklist:entity.name.value', bool $editor = FALSE): array {
+    $candidate = [
+      'template' => [
+        'type' => 'embedded',
+        'configuration' => [
+          'id' => 'standalone',
+          'label' => 'Candidate ' . $type,
+          'target_entity_type_id' => 'entity_test',
+          'target_entity_bundle' => 'entity_test',
+          'parameters' => ['value' => ['type' => $type, 'required' => TRUE]],
+          'components' => [
+            'name' => [
+              'id' => 'property_context',
+              'path' => 'name.0.value',
+              'context_mapping' => ['value' => 'value'],
+            ],
+          ],
+        ],
+      ],
+      'context_mapping' => ['value' => $selector],
+    ];
+    if ($editor) {
+      $candidate['editor'] = ['type' => 'embedded', 'configuration' => $this->editorConfiguration()['editor']];
+    }
+    return $candidate;
+  }
+
+  /**
+   * Missing inputs and false conditions only remove the affected candidate.
+   */
+  public function testConditionalCandidatesAndScopedContexts(): void {
+    $unavailable = $this->candidate('integer', 'missing');
+    $false = $this->candidate('integer', 'checklist:entity.id.value');
+    $false['condition'] = ['id' => 'condition_constant:false'];
+    $selected = $this->candidate();
+    $selected['condition'] = ['id' => 'condition_constant:true'];
+    [, $item] = $this->templateWork(settings: [
+      'templates' => ['missing' => $unavailable, 'false' => $false, 'selected' => $selected],
+    ]);
+    $this->assertSame(['selected'], array_keys($item->getHandler()->available()));
+    $this->assertSame('auto', $item->getMethod());
+    $this->assertSame('integer', $item->getHandler()->getContextDefinition('missing/value')->getDataType());
+    $this->assertSame('string', $item->getHandler()->getContextDefinition('selected/value')->getDataType());
+    $attempt = $this->container->get('checklist.item_executor')->submit($item);
+    $this->assertSame(ChecklistAttempt::SUCCEEDED, $attempt->status);
+    $this->assertSame('Template target', $this->reload($item)->get('outcomes')->get('entity')->getValue()->label());
+  }
+
+  /**
+   * Multiple applicable candidates require an explicit choice through the API.
+   */
+  public function testCandidateSelection(): void {
+    $first = $this->candidate();
+    $second = $this->candidate(editor: TRUE);
+    $second['template']['configuration']['components']['name'] = [
+      'id' => 'property_value',
+      'path' => 'name.0.value',
+      'value' => 'Second',
+    ];
+    [, $item] = $this->templateWork(settings: ['templates' => ['first' => $first, 'second' => $second]]);
+    $editor = $this->container->get('checklist_entity_template.editor');
+    $description = $editor->describe($item);
+    $this->assertSame(['first', 'second'], array_keys($description['templates']));
+    $this->assertContains('template', $editor->operations($item)['start']['parameters_schema']['required']);
+    foreach ([[], ['template' => 'unknown']] as $parameters) {
+      try {
+        $editor->operate($item, 'start', ['revision' => 0] + $parameters);
+        $this->fail('A missing or unavailable choice must not start an attempt.');
+      }
+      catch (\InvalidArgumentException | \DomainException) {
+        $this->assertNull($this->container->get('checklist.attempt_journal')->latest($item));
+      }
+    }
+    $ready = $editor->operate($item, 'start', ['revision' => 0, 'template' => 'second']);
+    $this->assertSame('ready', $ready['status']);
+    $this->assertSame('Second', $ready['data']->name);
+    $this->assertCount(1, EntityTest::loadMultiple());
+    $done = $editor->operate($item, 'form/submit', ['revision' => $ready['revision'], 'input' => ['name' => 'Chosen']]);
+    $this->assertSame('complete', $done['status']);
+    $this->assertSame('Chosen', $this->reload($item)->get('outcomes')->get('entity')->getValue()->label());
+  }
+
+  /**
+   * Selecting an automatic alternative completes without showing an editor.
+   */
+  public function testSelectedAutomaticCandidate(): void {
+    [, $item] = $this->templateWork(settings: [
+      'templates' => ['first' => $this->candidate(), 'second' => $this->candidate(editor: TRUE)],
+    ]);
+    $done = $this->container->get('checklist_entity_template.editor')->operate($item, 'start', [
+      'revision' => 0,
+      'template' => 'first',
+    ]);
+    $this->assertSame('complete', $done['status']);
+    $this->assertCount(2, EntityTest::loadMultiple());
+  }
+
+  /**
+   * The editor is captured with the choice before resumable preparation starts.
+   */
+  public function testPendingSelectionCapturesEditor(): void {
+    $configuration = $this->editorConfiguration()['editor']['configuration'];
+    $definition = FormDefinition::create([
+      'id' => 'pending_review',
+      'label' => 'Pending',
+      'plugin' => 'standard',
+      'configuration' => $configuration,
+    ]);
+    $definition->save();
+    [, $item] = $this->templateWork('checklist_pending', settings: ['editor' => ['form_id' => 'pending_review']]);
+    $editor = $this->container->get('checklist_entity_template.editor');
+    $pending = $editor->operate($item, 'start', ['revision' => 0]);
+    $this->assertSame('preparing', $pending['status']);
+    $definition->set('configuration', ['data' => []])->save();
+    $ready = $editor->operate($item, 'advance', ['revision' => $pending['revision']]);
+    $this->assertSame('ready', $ready['status']);
+    $this->assertSame('Template target', $ready['data']->name);
+  }
+
+  /**
+   * No applicable candidates leave work unstarted.
+   */
+  public function testNoAvailableCandidate(): void {
+    $candidate = $this->candidate();
+    $candidate['condition'] = ['id' => 'condition_constant:false'];
+    [, $item] = $this->templateWork(settings: ['templates' => ['hidden' => $candidate]]);
+    $this->assertSame([], $item->getHandler()->available());
+    $editor = $this->container->get('checklist_entity_template.editor');
+    $this->assertSame('unavailable', $editor->describe($item)['status']);
+    $this->assertSame(['get'], array_keys($editor->operations($item)));
+    $this->assertFalse($item->isActionable());
+    $this->assertNull($this->container->get('checklist.attempt_journal')->latest($item));
+    $this->assertCount(1, EntityTest::loadMultiple());
   }
 
 }
