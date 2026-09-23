@@ -1,8 +1,9 @@
 # Checklist Entity Template
 
 Enable `checklist_entity_template` to use the
-`entity_template__create` checklist item handler. Install Entity Template's
-`1.0.x-dev` branch, which includes typed targets and resumable execution:
+`entity_template__create` and `entity_template__apply_to` checklist item handlers.
+Install Entity Template's `1.0.x-dev` branch, which includes typed targets and
+resumable execution:
 
 ```sh
 composer config repositories.entity-template vcs https://git.drupalcode.org/project/entity_template.git
@@ -14,8 +15,6 @@ This optional integration ships inside `rlmumford/checklist` and requires
 Flexiform 3.0.x with shared sessions and the `referenced` form plugin.
 Both dependencies track their development branches without commit pins.
 Entity Template's source resolver is available on its 1.0.x development branch.
-Applying templates to existing entities
-(`entity_template__apply_to`) remains a subsequent slice.
 
 ## Configuration
 
@@ -196,3 +195,73 @@ committed working graph and audit history. The inherited saved-host binding
 restrictions apply to this first shared editor too; unsaved/revisionable hosts
 need their own adapter. The private snapshot is the sole authoritative session:
 there is no parallel copy in legacy checklist tempstore or Flexiform HTTP storage.
+
+## Applying templates to an existing entity
+
+`entity_template__apply_to` accepts the same `templates` alternatives and optional
+editors. It adds a standard handler-level `context_mapping.target` for the saved
+entity to update; each candidate retains its own template parameter mappings:
+
+```yaml
+update_record:
+  title: Update the related record
+  handler: entity_template__apply_to
+  handler_configuration:
+    context_mapping:
+      target: checklist:entity.related_record.0.entity
+    templates:
+      main:
+        template:
+          type: embedded
+          configuration:
+            id: standalone
+            label: Update title
+            target_entity_type_id: node
+            target_entity_bundle: article
+            parameters:
+              title:
+                type: string
+                required: true
+            components:
+              title:
+                id: property_context
+                path: title.0.value
+                context_mapping:
+                  value: title
+        context_mapping:
+          title: checklist:entity.label
+```
+
+Use an actual reference field in place of `related_record`. The target may also
+be `checklist:entity` itself or an entity outcome from an earlier item. Explicit
+list deltas such as `.0.entity` allow an empty reference to resolve without
+traversing an absent implicit list item. Missing or unsaved targets do not start
+work. Candidates must match the target entity type and bundle, and the executor
+must be able to view and update it. Template conditions and components receive
+`self` as the target; candidate conditions use ordinary checklist contexts.
+
+The handler clones the target before preparation, detached from its originating
+reference or computed context. Pending passes and form actions retain that copy
+without saving it. Final completion saves the existing entity and publishes it
+as `entity`, so later items use `item:update_record:entity`. It does not create a
+replacement record. An editor still uses the transient `entity` binding, with
+saving owned by the checklist. This also supports editing the checklist host.
+
+The attempt captures target identity, translation/revision and a fingerprint of
+its original values. Resume, editor reads and final save check the live target:
+deletion, remapping, intervening edits or revoked access cannot silently redirect
+or overwrite the work. A preparation conflict fails the attempt and retains its
+private state; an interactive conflict rejects the operation and retains the
+last committed editor; reloading the HTML form displays a conflict message
+without submission controls. A final-save exception rolls back the entity update and
+completion, records failure and retains previously committed state. Recovery
+and reset operations remain separate work.
+
+The fingerprint detects stale data across requests; it is not an atomic
+compare-and-swap with arbitrary external writers. Entity storage and consumers
+still own concurrent-write policy. This slice adds no generic merge/save-policy
+framework. Revisionable targets must be the current revision; historical-revision
+editing, bulk targets and D7's separate entity-confirmation step are not provided.
+The existing checklist **host** restrictions still apply even when the target is
+another entity. Use storage on the checklist database connection when relying on
+transactional rollback; external effects in save hooks cannot be rolled back.

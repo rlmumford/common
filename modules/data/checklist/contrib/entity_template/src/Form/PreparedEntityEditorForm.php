@@ -48,7 +48,12 @@ class PreparedEntityEditorForm extends ChecklistItemActionForm {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $description = $this->editor->describe($this->item);
+    try {
+      $description = $this->editor->describe($this->item);
+    }
+    catch (ChecklistAttemptConflictException) {
+      $description = ['status' => 'conflict', 'revision' => 0];
+    }
     $wrapper = 'checklist-template-' . $this->item->uuid();
     $form['#prefix'] = '<div id="' . $wrapper . '">';
     $form['#suffix'] = '</div>';
@@ -99,8 +104,9 @@ class PreparedEntityEditorForm extends ChecklistItemActionForm {
     else {
       $form['status'] = [
         '#plain_text' => match ($description['status']) {
-        'complete' => $this->t('Entity created.'),
+        'complete' => $this->t('Entity saved.'),
         'failed' => $this->t('This attempt failed. Working data has been retained for review.'),
+        'conflict' => $this->t('The entity or checklist changed while this form was open. Your working data has been retained for review.'),
         'unavailable' => $this->t('No templates are currently available.'),
         default => $this->t('An operation is in progress. Refresh to check its status.'),
         },
