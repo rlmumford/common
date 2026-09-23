@@ -57,7 +57,7 @@ jobs:
                   repo['options'] = {'versions': versions}
           path.write_text(json.dumps(data, indent=2))
           PY
-          composer require rlmumford/task:2.x-dev rlmumford/service:2.x-dev rlmumford/note:2.x-dev drupal/entity_template:1.0.x-dev drupal/flexiform:3.0.x-dev#f90bfd8246a5ce217d2c9e93f4a2c2379066e1c6 drupal/core-dev:^10 --with-all-dependencies --no-interaction
+          composer require rlmumford/task:2.x-dev rlmumford/service:2.x-dev rlmumford/note:2.x-dev drupal/entity_template:1.0.x-dev drupal/flexiform:3.0.x-dev drupal/core-dev:^10 --with-all-dependencies --no-interaction
       - name: Test the installed task packages
         working-directory: /tmp/task-consumer
         env:

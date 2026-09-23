@@ -11,9 +11,8 @@ composer require drupal/entity_template:1.0.x-dev drupal/flexiform:3.0.x-dev
 ```
 
 This optional integration ships inside `rlmumford/checklist` and requires
-Flexiform 3.0.x with shared sessions and the `referenced` form plugin from
-[Flexiform !13](https://git.drupalcode.org/project/flexiform/-/merge_requests/13).
-Merge that first; CI pins its reviewed commit until then.
+Flexiform 3.0.x with shared sessions and the `referenced` form plugin.
+Both dependencies track their development branches without commit pins.
 Entity Template's source resolver is available on its 1.0.x development branch.
 Applying templates to existing entities
 (`entity_template__apply_to`) remains a subsequent slice.
