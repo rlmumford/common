@@ -6,8 +6,6 @@ use Drupal\checklist\ChecklistContextPreparer;
 use Drupal\checklist\ChecklistInterface;
 use Drupal\checklist\ChecklistResolver;
 use Drupal\checklist\Entity\ChecklistItemInterface;
-use Drupal\checklist\Plugin\ChecklistItemHandler\ActionOperationsChecklistItemHandlerInterface;
-use Drupal\checklist\Plugin\ChecklistItemHandler\InteractiveChecklistItemHandlerInterface;
 use Drupal\checklist\Plugin\ChecklistItemHandler\IterativeChecklistItemHandlerInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -49,12 +47,15 @@ class ChecklistItemExecutionPreparer {
   }
 
   /**
-   * Loads and authorizes a saved autonomous item under the current account.
+   * Loads and authorizes a saved item under the current account.
+   *
+   * Automatic runners additionally require an automatic iterative handler.
+   * Interactive coordinators pass FALSE and own their handler/path checks.
    *
    * @return array
    *   The authoritative checklist and item, without evaluating item gates.
    */
-  public function load(string $item_uuid): array {
+  public function load(string $item_uuid, bool $automatic = TRUE): array {
     $storage = $this->entityTypeManager->getStorage('checklist_item');
     // Other items may supply outcomes changed by another worker/request.
     $storage->resetCache();
@@ -86,11 +87,11 @@ class ChecklistItemExecutionPreparer {
     }
     $reference->entity = $host;
     $checklist->setItem($item->getName(), $item);
-    if (!$item->access('execute iteration')) {
+    if (!$item->access($automatic ? 'execute iteration' : 'execute action operation')) {
       throw new AccessDeniedHttpException('The item cannot be executed.');
     }
     $handler = $item->getHandler();
-    if (!$handler instanceof IterativeChecklistItemHandlerInterface || $handler instanceof ActionOperationsChecklistItemHandlerInterface || $handler instanceof InteractiveChecklistItemHandlerInterface || $item->getMethod() !== ChecklistItemInterface::METHOD_AUTO) {
+    if ($automatic && (!$handler instanceof IterativeChecklistItemHandlerInterface || $item->getMethod() !== ChecklistItemInterface::METHOD_AUTO)) {
       throw new \DomainException('The handler must support autonomous action iterations.');
     }
     return [$checklist, $item];
@@ -105,8 +106,8 @@ class ChecklistItemExecutionPreparer {
    * @throws \Drupal\checklist\Execution\ChecklistItemNotReadyException
    *   If incomplete state, required context or item conditions prevent work.
    */
-  public function prepare(string $item_uuid): array {
-    [$checklist, $item] = $this->load($item_uuid);
+  public function prepare(string $item_uuid, bool $automatic = TRUE): array {
+    [$checklist, $item] = $this->load($item_uuid, $automatic);
     return $this->prepareItem($checklist, $item);
   }
 

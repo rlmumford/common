@@ -3,6 +3,10 @@
     "description": "Reusable checklist module extracted from rlmumford/common.",
     "type": "drupal-module",
     "license": "GPL-2.0-or-later",
+    "suggest": {
+        "drupal/flexiform": "Required by checklist_entity_template with the shared-session adapter on 3.0.x.",
+        "drupal/entity_template": "Required by checklist_entity_template; use 1.0.x-dev for resumable execution."
+    },
     "require": {
         "drupal/core": "^10 || ^11",
         "drupal/entity": "^1.4",

@@ -1,0 +1,7 @@
+name: Checklist template test
+description: Fixtures for checklist template preparation and editing tests.
+type: module
+package: Testing
+core_version_requirement: ^10 || ^11
+dependencies:
+  - checklist:checklist_entity_template

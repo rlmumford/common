@@ -1,0 +1,27 @@
+checklist_item_handler.entity_template__create:
+  type: checklist_item_handler
+  label: Create an entity from a template
+  mapping:
+    templates:
+      type: sequence
+      label: Template alternatives keyed by machine name
+      sequence:
+        type: checklist_entity_template.candidate
+
+checklist_entity_template.candidate:
+  type: mapping
+  mapping:
+    template:
+      type: entity_template.source
+      label: Template source
+    condition:
+      type: condition.plugin.[id]
+      label: Candidate availability condition
+    context_mapping:
+      type: sequence
+      label: This template's input mappings
+      sequence:
+        type: string
+    editor:
+      type: flexiform.form_configuration
+      label: Optional prepared entity editor

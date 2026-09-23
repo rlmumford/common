@@ -1,0 +1,2 @@
+entity_template.component.plugin.checklist_pending:
+  type: entity_template.component.plugin.property_value

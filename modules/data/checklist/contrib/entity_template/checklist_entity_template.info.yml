@@ -1,0 +1,9 @@
+name: Checklist Entity Template
+description: Resumable entity-template checklist actions.
+type: module
+core_version_requirement: ^10 || ^11
+package: RLMumford
+dependencies:
+  - checklist:checklist
+  - entity_template:entity_template
+  - flexiform:flexiform

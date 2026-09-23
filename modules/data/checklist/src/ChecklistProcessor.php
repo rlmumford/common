@@ -67,7 +67,7 @@ class ChecklistProcessor {
         $before = $item->toArray();
         $defer = $this->time->getCurrentMicroTime() >= $deadline;
         if ($item->getHandler() instanceof IterativeChecklistItemHandlerInterface) {
-          if ($checklist->getEntity()->isNew() || $item->isNew()) {
+          if ($item->getMethod() !== ChecklistItemInterface::METHOD_AUTO || $checklist->getEntity()->isNew() || $item->isNew()) {
             continue;
           }
           $attempt = $this->executor->submit($item, $defer);

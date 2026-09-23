@@ -276,6 +276,23 @@ upgrade. Execution-path integration, workspace ownership, coordinated item-state
 application, access-filtered history and retention policy remain open. Worker
 claim primitives are described under P4.
 
+The optional `checklist_entity_template` submodule now provides automatic
+`entity_template__create` execution from an embedded template or a selected
+blueprint template. It reuses Entity Template's resumable engine and the checklist
+item scheduler, retains private preparation on failure, and commits the new entity
+and its published outcome under the existing claim checks. Later items can use the
+entity outcome as context. See the [integration README](../modules/data/checklist/contrib/entity_template/README.md).
+Template candidates each own an explicit embedded/referenced source, availability
+condition, scoped parameter mappings and optional editor. One matching automatic
+candidate runs directly; multiple matches expose a choice in HTML/action
+operations. The chosen template and editor are captured for resumption. Entity
+Template owns reusable source resolution and dependency collection.
+An optional embedded/reusable Flexiform editor now retains one private working
+session for both HTML and action operations, with revision checks, one owner,
+preparation polling and Finish-only persistence. The automatic scheduler does not
+claim interactive attempts. The apply-to handler, configuration editor,
+unsaved/revisionable-host adapter and explicit recovery/takeover remain follow-ups.
+
 Deliverables:
 
 - Shared action methods, action forms and schema-defined action operations. Keep

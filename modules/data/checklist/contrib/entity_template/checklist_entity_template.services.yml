@@ -1,0 +1,4 @@
+services:
+  checklist_entity_template.editor:
+    class: Drupal\checklist_entity_template\PreparedEntityEditor
+    arguments: ['@checklist.item_execution_preparer', '@checklist.attempt_journal', '@checklist.attempt_claims', '@checklist.item_executor', '@current_user', '@account_switcher', '@flexiform.form_factory', '@flexiform.form_data_manager_factory']
