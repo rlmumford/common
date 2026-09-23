@@ -24,3 +24,19 @@ function checklist_template_test_entity_insert(EntityInterface $entity) {
     throw new \RuntimeException('The target save failed.');
   }
 }
+
+/**
+ * Implements hook_entity_access().
+ */
+function checklist_template_test_entity_access(EntityInterface $entity, $operation, AccountInterface $account) {
+  return AccessResult::forbiddenIf($operation === 'update' && $entity->getEntityTypeId() === 'entity_test' && $entity->id() === \Drupal::state()->get('checklist_template_test.deny_update'));
+}
+
+/**
+ * Implements hook_entity_update().
+ */
+function checklist_template_test_entity_update(EntityInterface $entity) {
+  if ($entity->getEntityTypeId() === 'entity_test' && $entity->id() === \Drupal::state()->get('checklist_template_test.fail_update')) {
+    throw new \RuntimeException('The target update failed.');
+  }
+}

@@ -9,7 +9,7 @@ use Drupal\checklist\Attempt\ChecklistAttemptJournal;
 use Drupal\checklist\Entity\ChecklistItemInterface;
 use Drupal\checklist\Execution\ChecklistItemExecutionPreparer;
 use Drupal\checklist\Execution\ChecklistItemExecutor;
-use Drupal\checklist_entity_template\Plugin\ChecklistItemHandler\CreateFromTemplate;
+use Drupal\checklist_entity_template\Plugin\ChecklistItemHandler\TemplateItemBase;
 use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Session\AccountSwitcherInterface;
@@ -73,7 +73,7 @@ class PreparedEntityEditor {
   protected function load(ChecklistItemInterface $identity): array {
     $this->preparer->executor((int) $this->account->id());
     [, $item] = $this->preparer->load($identity->uuid(), FALSE);
-    if (!$item->getHandler() instanceof CreateFromTemplate || $item->getMethod() !== ChecklistItemInterface::METHOD_INTERACTIVE) {
+    if (!$item->getHandler() instanceof TemplateItemBase || $item->getMethod() !== ChecklistItemInterface::METHOD_INTERACTIVE) {
       throw new \DomainException('This item has no shared template editor.');
     }
     $attempt = $this->journal->latest($item);
@@ -107,7 +107,7 @@ class PreparedEntityEditor {
       return $metadata + ['status' => 'running'];
     }
     // Re-evaluate the item conditions before exposing editable working values.
-    $this->preparer->prepare($item->uuid(), FALSE);
+    [$item] = $this->preparer->prepare($item->uuid(), FALSE);
     $editor = $item->getHandler()->getEditorSession();
     return $metadata + ($editor ? $editor[0]->describe() : ['status' => 'preparing']);
   }
@@ -168,7 +168,7 @@ class PreparedEntityEditor {
     if (!$attempt || $attempt->version !== $revision) {
       throw new ChecklistAttemptConflictException('The editor changed. Refresh before submitting again.');
     }
-    $this->preparer->prepare($item->uuid(), FALSE);
+    [$item] = $this->preparer->prepare($item->uuid(), FALSE);
     $editor = $item->getHandler()->getEditorSession();
     if (!$editor) {
       throw new \DomainException('The editor is not ready.');

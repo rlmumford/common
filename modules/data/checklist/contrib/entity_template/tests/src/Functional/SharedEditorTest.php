@@ -27,7 +27,7 @@ class SharedEditorTest extends BrowserTestBase {
   /**
    * Creates a saved template item with an embedded standard or wizard editor.
    */
-  protected function work(bool $pending = FALSE, bool $choice = FALSE): array {
+  protected function work(bool $pending = FALSE, bool $choice = FALSE, bool $apply = FALSE): array {
     $account = $this->drupalCreateUser([], 'Editor', TRUE);
     $this->drupalLogin($account);
     FieldStorageConfig::create(['field_name' => 'work', 'entity_type' => 'entity_test', 'type' => 'checklist'])->save();
@@ -112,6 +112,10 @@ class SharedEditorTest extends BrowserTestBase {
       $candidate['template']['configuration']['components']['name']['value'] = 'Second prepared name';
       $configuration['default_items']['create']['handler_configuration']['templates']['second'] = $candidate;
     }
+    if ($apply) {
+      $configuration['default_items']['create']['handler'] = 'entity_template__apply_to';
+      $configuration['default_items']['create']['handler_configuration']['context_mapping'] = ['target' => 'checklist:entity'];
+    }
     $host->work->configuration = $configuration;
     $host->save();
     $item = $host->work->checklist->getItem('create');
@@ -151,7 +155,7 @@ class SharedEditorTest extends BrowserTestBase {
     $this->assertSession()->fieldValueEquals('editor[values][name]', 'Browser changed');
     $this->assertSame('Browser changed', $editor->describe($item)['data']->name);
     $this->submitForm([], 'Submit');
-    $this->assertSession()->pageTextContains('Entity created.');
+    $this->assertSession()->pageTextContains('Entity saved.');
     $this->assertSame('complete', $editor->describe($item)['status']);
     $this->assertCount(2, EntityTest::loadMultiple());
   }
@@ -178,7 +182,7 @@ class SharedEditorTest extends BrowserTestBase {
     $this->assertSession()->fieldValueEquals('editor[values][name]', 'Wizard browser');
     $this->submitForm([], 'Next');
     $this->submitForm([], 'Finish');
-    $this->assertSession()->pageTextContains('Entity created.');
+    $this->assertSession()->pageTextContains('Entity saved.');
     $this->assertCount(2, EntityTest::loadMultiple());
   }
 
@@ -194,8 +198,57 @@ class SharedEditorTest extends BrowserTestBase {
     $this->submitForm(['template' => 'second'], 'Select template');
     $this->assertSession()->fieldValueEquals('editor[values][name]', 'Second prepared name');
     $this->submitForm(['editor[values][name]' => 'Selected in browser'], 'Submit');
-    $this->assertSession()->pageTextContains('Entity created.');
+    $this->assertSession()->pageTextContains('Entity saved.');
     $this->assertCount(2, EntityTest::loadMultiple());
+  }
+
+  /**
+   * A resumable wizard can update the checklist host without creating a copy.
+   */
+  public function testApplyToHost(): void {
+    [$item, $path, $account] = $this->work(pending: TRUE, apply: TRUE);
+    $this->drupalGet($path);
+    $this->submitForm([], 'Open form');
+    $this->assertSession()->pageTextContains('Preparing your form');
+    $this->submitForm([], 'Check progress');
+    $this->assertSession()->fieldValueEquals('editor[values][name]', 'Host');
+    $this->submitForm(['editor[values][name]' => 'Updated host'], 'Next');
+    $storage = $this->container->get('entity_type.manager')->getStorage('entity_test');
+    $host_id = $item->get('checklist')->target_id;
+    $this->assertSame('Host', $storage->loadUnchanged($host_id)->label());
+    $this->submitForm([], 'Finish');
+    $this->assertSession()->pageTextContains('Entity saved.');
+    $this->assertSame('Updated host', $storage->loadUnchanged($host_id)->label());
+    $this->assertCount(1, $storage->loadMultiple());
+    $this->container->get('current_user')->setAccount($account);
+    $this->assertSame('complete', $this->container->get('checklist_entity_template.editor')->describe($item)['status']);
+    $saved = $this->container->get('entity_type.manager')->getStorage('checklist_item')->loadUnchanged($item->id());
+    $this->assertSame((string) $host_id, (string) $saved->get('outcomes')->get('entity')->getValue()->id());
+  }
+
+  /**
+   * A stale target displays a conflict without saving or discarding work.
+   */
+  public function testApplyConflict(): void {
+    [$item, $path] = $this->work(apply: TRUE);
+    $this->drupalGet($path);
+    $this->submitForm([], 'Open form');
+    $this->assertSession()->fieldValueEquals('editor[values][name]', 'Prepared name');
+    $storage = $this->container->get('entity_type.manager')->getStorage('entity_test');
+    $host_id = $item->get('checklist')->target_id;
+    $storage->loadUnchanged($host_id)->setName('Concurrent edit')->save();
+    $this->submitForm(['editor[values][name]' => 'Stale edit'], 'Submit');
+    $this->assertSession()->statusCodeEquals(200);
+    $this->assertSession()->pageTextContains('The template target changed during preparation or editing.');
+    $this->drupalGet($path);
+    $this->assertSession()->statusCodeEquals(200);
+    $this->assertSession()->pageTextContains('Your working data has been retained for review.');
+    $this->assertSession()->buttonNotExists('Submit');
+    $this->assertSame('Concurrent edit', $storage->loadUnchanged($host_id)->label());
+    $saved = $this->container->get('entity_type.manager')->getStorage('checklist_item')->loadUnchanged($item->id());
+    $this->assertFalse($saved->isComplete());
+    $this->assertFalse($saved->get('state')->isEmpty());
+    $this->assertTrue($saved->get('outcomes')->isEmpty());
   }
 
 }

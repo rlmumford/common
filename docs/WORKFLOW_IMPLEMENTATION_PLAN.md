@@ -282,6 +282,14 @@ blueprint template. It reuses Entity Template's resumable engine and the checkli
 item scheduler, retains private preparation on failure, and commits the new entity
 and its published outcome under the existing claim checks. Later items can use the
 entity outcome as context. See the [integration README](../modules/data/checklist/contrib/entity_template/README.md).
+The companion `entity_template__apply_to` handler maps a saved target through
+`context_mapping.target` and shares selection, resumability and optional editing
+with create through `TemplateItemBase`. It edits detached working data, checks
+live identity/access and intervening changes, saves the original record under the
+claim, and publishes the updated `entity` outcome. It supports the checklist host
+as target. Bulk targets, separate confirmation and generic save policies remain
+later work; the fingerprint check is not an atomic external-writer lock.
+
 Template candidates each own an explicit embedded/referenced source, availability
 condition, scoped parameter mappings and optional editor. One matching automatic
 candidate runs directly; multiple matches expose a choice in HTML/action
