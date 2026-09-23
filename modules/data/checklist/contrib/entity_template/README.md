@@ -7,13 +7,14 @@ Enable `checklist_entity_template` to use the
 ```sh
 composer config repositories.entity-template vcs https://git.drupalcode.org/project/entity_template.git
 composer config repositories.flexiform vcs https://git.drupalcode.org/project/flexiform.git
-composer require drupal/entity_template:1.0.x-dev#ac84380 drupal/flexiform:3.0.x-dev
+composer require drupal/entity_template:1.0.x-dev drupal/flexiform:3.0.x-dev
 ```
 
 This optional integration ships inside `rlmumford/checklist` and requires
-Flexiform 3.0.x with its shared-session adapter (merged in Flexiform !12).
-It also needs Entity Template's `entity_template.source` service from the companion
-[Entity Template !19](https://git.drupalcode.org/project/entity_template/-/merge_requests/19). The temporary commit pin can be removed after that merge.
+Flexiform 3.0.x with shared sessions and the `referenced` form plugin from
+[Flexiform !13](https://git.drupalcode.org/project/flexiform/-/merge_requests/13).
+Merge that first; CI pins its reviewed commit until then.
+Entity Template's source resolver is available on its 1.0.x development branch.
 Applying templates to existing entities
 (`entity_template__apply_to`) remains a subsequent slice.
 
@@ -127,26 +128,24 @@ Add `editor` to a **candidate**, alongside its `template` and `context_mapping`:
 
 ```yaml
 editor:
-  type: embedded
+  plugin: standard
   configuration:
-    plugin: standard
-    configuration:
-      data:
-        entity:
-          plugin: provided_data
-      components:
-        title:
-          component_type: typed_data
-          context: entity
-          path: title.0.value
-          label: Title
+    data:
+      entity:
+        plugin: provided_data
+    components:
+      title:
+        component_type: typed_data
+        context: entity
+        path: title.0.value
+        label: Title
 ```
 
-A saved form uses the other shape:
+A saved form uses the same plugin configuration contract:
 
 ```yaml
 editor:
-  type: referenced
+  plugin: referenced
   configuration:
     form_id: review_article
 ```

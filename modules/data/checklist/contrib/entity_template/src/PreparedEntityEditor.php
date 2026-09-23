@@ -10,7 +10,6 @@ use Drupal\checklist\Entity\ChecklistItemInterface;
 use Drupal\checklist\Execution\ChecklistItemExecutionPreparer;
 use Drupal\checklist\Execution\ChecklistItemExecutor;
 use Drupal\checklist_entity_template\Plugin\ChecklistItemHandler\CreateFromTemplate;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Session\AccountSwitcherInterface;
@@ -38,47 +37,27 @@ class PreparedEntityEditor {
     protected AccountSwitcherInterface $accountSwitcher,
     protected FormFactory $forms,
     protected FormDataManagerFactory $managers,
-    protected EntityTypeManagerInterface $entities,
   ) {}
 
   /**
    * Resolves a reusable or embedded editor without loading provider values.
    */
   public function form(array $definition): FormPluginInterface {
-    $type = $definition['type'] ?? NULL;
-    $definition = $definition['configuration'] ?? [];
-    if ($type === 'referenced') {
-      if (array_keys($definition) !== ['form_id'] || !$definition['form_id']) {
-        throw new \InvalidArgumentException('A referenced editor requires only form_id.');
-      }
-      $saved = $this->entities->getStorage('flexiform_form')->load($definition['form_id']);
-      if (!$saved || !$saved->status()) {
-        throw new \InvalidArgumentException('The configured Flexiform is missing or disabled.');
-      }
-      $definition = $saved->getFormDefinition();
-    }
-    elseif (
-      $type !== 'embedded' || empty($definition['plugin']) ||
-      array_diff(array_keys($definition), ['plugin', 'configuration'])
-    ) {
-      throw new \InvalidArgumentException('An editor must be referenced or an embedded form plugin.');
-    }
     $form = $this->forms->create($definition['configuration'] ?? [], $definition['plugin'] ?? 'standard');
     // The checklist owns entity persistence. The editor changes that entity in
     // memory; other providers/savers/enhancers would introduce a second commit
     // boundary or external effects before the checklist result is fenced.
     $data = $form->getDataConfig();
-    if (!$form instanceof ApiFormInterface || array_keys($data) !== ['entity'] || $data['entity']['plugin'] !== 'provided_data' || !empty($data['entity']['save_on_submit']) || $form->getConfiguration()['enhancers']) {
+    if (!$form instanceof ApiFormInterface || array_keys($data) !== ['entity'] || $data['entity']['plugin'] !== 'provided_data' || !empty($data['entity']['save_on_submit']) || $form->getFormEnhancers()) {
       throw new \InvalidArgumentException('A shared template editor requires one transient provided_data binding named entity and no save enhancers.');
     }
     return $form;
   }
 
   /**
-   * Initializes the captured editor around the unsaved template result.
+   * Initializes the captured form plugin around the unsaved template result.
    */
-  public function createSession(array $definition, FieldableEntityInterface $entity): FormSession {
-    $form = $this->form($definition);
+  public function createSession(FormPluginInterface $form, FieldableEntityInterface $entity): FormSession {
     $session = new FormSession($form, $this->managers->create($form, ['entity' => $entity->getTypedData()]));
     $session->prepare();
     $description = $session->describe();

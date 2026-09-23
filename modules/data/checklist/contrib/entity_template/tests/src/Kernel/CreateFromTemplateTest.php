@@ -114,10 +114,9 @@ class CreateFromTemplateTest extends ChecklistItemExecutionTestBase {
       : ['type' => 'embedded', 'configuration' => $settings['template']];
     $candidate = ['template' => $source, 'context_mapping' => $settings['context_mapping'] ?? []];
     if (!empty($settings['editor'])) {
-      $candidate['editor'] = [
-        'type' => isset($settings['editor']['form_id']) ? 'referenced' : 'embedded',
-        'configuration' => $settings['editor'],
-      ];
+      $candidate['editor'] = isset($settings['editor']['form_id'])
+        ? ['plugin' => 'referenced', 'configuration' => $settings['editor']]
+        : $settings['editor'];
     }
     $configuration['default_items']['create']['handler_configuration'] = ['templates' => $settings['templates'] ?? ['default' => $candidate]];
     $host->work->configuration = $configuration;
@@ -540,7 +539,7 @@ class CreateFromTemplateTest extends ChecklistItemExecutionTestBase {
       'context_mapping' => ['value' => $selector],
     ];
     if ($editor) {
-      $candidate['editor'] = ['type' => 'embedded', 'configuration' => $this->editorConfiguration()['editor']];
+      $candidate['editor'] = $this->editorConfiguration()['editor'];
     }
     return $candidate;
   }

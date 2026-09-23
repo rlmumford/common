@@ -330,16 +330,7 @@ class CreateFromTemplate extends ContextAwareChecklistItemHandlerBase implements
       throw new \DomainException('Choose an available template before execution.');
     }
     $editor = $this->getConfiguration()['templates'][$key]['editor'] ?? [];
-    if ($editor) {
-      $form = $this->editor->form($editor);
-      $editor = [
-        'type' => 'embedded',
-        'configuration' => [
-          'plugin' => $form->getPluginId(),
-          'configuration' => $form->getConfiguration(),
-        ],
-      ];
-    }
+    $editor = $editor ? $this->editor->form($editor) : NULL;
     $selection = [
       'key' => $key,
       'editor' => $editor,
@@ -474,9 +465,6 @@ class CreateFromTemplate extends ContextAwareChecklistItemHandlerBase implements
       $sources = [$this->sources->calculateDependencies($settings['template'])];
       if (!empty($settings['editor'])) {
         $sources[] = $this->editor->form($settings['editor'])->calculateDependencies();
-        if ($settings['editor']['type'] === 'referenced') {
-          $dependencies['config'][] = 'flexiform.form.' . $settings['editor']['configuration']['form_id'];
-        }
       }
       if (isset($settings['condition'])) {
         $sources[] = $this->sources->conditionDependencies($settings['condition']);

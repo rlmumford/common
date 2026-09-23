@@ -102,7 +102,7 @@ class SharedEditorTest extends BrowserTestBase {
         'default' => [
           'template' => ['type' => 'embedded', 'configuration' => $settings['template']],
           'context_mapping' => $settings['context_mapping'] ?? [],
-          'editor' => ['type' => 'embedded', 'configuration' => $settings['editor']],
+          'editor' => $settings['editor'],
         ],
       ],
     ];

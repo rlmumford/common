@@ -23,31 +23,5 @@ checklist_entity_template.candidate:
       sequence:
         type: string
     editor:
-      type: checklist_entity_template.editor
+      type: flexiform.form_configuration
       label: Optional prepared entity editor
-
-checklist_entity_template.editor:
-  type: mapping
-  mapping:
-    type:
-      type: string
-      constraints:
-        Choice: [referenced, embedded]
-    configuration:
-      type: checklist_entity_template.editor.[%parent.type]
-
-checklist_entity_template.editor.referenced:
-  type: mapping
-  mapping:
-    form_id:
-      type: string
-      label: Reusable Flexiform ID
-
-checklist_entity_template.editor.embedded:
-  type: mapping
-  mapping:
-    plugin:
-      type: string
-      label: Form plugin
-    configuration:
-      type: flexiform.form_plugin.[%parent.plugin]
