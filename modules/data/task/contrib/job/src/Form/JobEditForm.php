@@ -134,7 +134,7 @@ class JobEditForm extends JobForm {
     BlueprintTempstoreRepository $blueprint_tempstore_repository,
     PluginFormFactoryInterface $plugin_form_factory,
     JobTriggerManager $job_trigger_manager,
-    JobVersionResolverInterface $job_version_resolver
+    JobVersionResolverInterface $job_version_resolver,
   ) {
     $this->tempstoreRepository = $tempstore_repository;
     $this->blueprintTempstoreRepository = $blueprint_tempstore_repository;
