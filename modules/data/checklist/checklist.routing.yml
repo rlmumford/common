@@ -9,6 +9,32 @@ checklist.item.action_form:
     parameters:
       checklist:
         checklist_tempstore: TRUE
+checklist.item.state:
+  path: '/checklist/{entity_type}/{entity_id}/{checklist}/{item_name}'
+  defaults:
+    _controller: '\Drupal\checklist\Controller\ChecklistApiController::itemState'
+  requirements:
+    _method: 'GET|HEAD'
+checklist.item.operations:
+  path: '/checklist/{entity_type}/{entity_id}/{checklist}/{item_name}/operations'
+  defaults:
+    _controller: '\Drupal\checklist\Controller\ChecklistApiController::operations'
+  requirements:
+    _method: 'GET|HEAD'
+  options:
+    parameters:
+      checklist:
+        checklist_tempstore: TRUE
+checklist.item.operation:
+  path: '/checklist/{entity_type}/{entity_id}/{checklist}/{item_name}/operation'
+  defaults:
+    _controller: '\Drupal\checklist\Controller\ChecklistApiController::execute'
+  requirements:
+    _method: 'POST'
+  options:
+    parameters:
+      checklist:
+        checklist_tempstore: TRUE
 checklist.item.row_form:
   path: '/checklist/{entity_type}/{entity_id}/{checklist}/{item_name}/row'
   defaults:
