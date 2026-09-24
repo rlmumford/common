@@ -73,7 +73,7 @@ class Job extends ChecklistTypeBase implements PluginWithFormsInterface {
     $plugin_definition,
     EntityStorageInterface $item_storage,
     EventDispatcherInterface $event_dispatcher,
-    JobVersionResolverInterface $job_version_resolver
+    JobVersionResolverInterface $job_version_resolver,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $item_storage, $event_dispatcher);
 

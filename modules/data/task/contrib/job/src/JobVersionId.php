@@ -2,8 +2,6 @@
 
 namespace Drupal\task_job;
 
-use InvalidArgumentException;
-
 /**
  * Encodes and decodes versioned task job configuration IDs.
  *
@@ -35,11 +33,11 @@ final class JobVersionId {
     self::assertMachinePart($version, 'version');
 
     if (self::isVersioned($job_id)) {
-      throw new InvalidArgumentException('The job ID must not already contain a version suffix.');
+      throw new \InvalidArgumentException('The job ID must not already contain a version suffix.');
     }
 
     if (str_ends_with($version, '-dirty')) {
-      throw new InvalidArgumentException('The version must not include the reserved dirty suffix.');
+      throw new \InvalidArgumentException('The version must not include the reserved dirty suffix.');
     }
 
     return $job_id . self::SEPARATOR . $version . ($dirty ? '-dirty' : '');
@@ -106,7 +104,7 @@ final class JobVersionId {
    */
   private static function assertMachinePart(string $value, string $name): void {
     if (!preg_match('/^[a-z0-9][a-z0-9_.-]*$/', $value)) {
-      throw new InvalidArgumentException(sprintf(
+      throw new \InvalidArgumentException(sprintf(
         'The %s "%s" is not a valid machine-name component.',
         $name,
         $value

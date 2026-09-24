@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * @file
+ */
+
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 
@@ -227,7 +231,7 @@ function task_job_update_8003() {
     ['collection'],
     [
       'fields' => [
-        'collection' =>  [
+        'collection' => [
           'description' => 'The config collection of the job.',
           'type' => 'varchar',
           'length' => 255,

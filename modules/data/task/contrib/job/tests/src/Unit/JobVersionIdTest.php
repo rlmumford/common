@@ -4,7 +4,6 @@ namespace Drupal\Tests\task_job\Unit;
 
 use Drupal\task_job\JobVersionId;
 use Drupal\Tests\UnitTestCase;
-use InvalidArgumentException;
 
 /**
  * Tests versioned job IDs.
@@ -41,7 +40,7 @@ class JobVersionIdTest extends UnitTestCase {
    * Tests that invalid IDs cannot be created.
    */
   public function testBuildRejectsInvalidParts(): void {
-    $this->expectException(InvalidArgumentException::class);
+    $this->expectException(\InvalidArgumentException::class);
     JobVersionId::build('Employment Support', '6');
   }
 
@@ -49,7 +48,7 @@ class JobVersionIdTest extends UnitTestCase {
    * Tests that a version suffix cannot be applied twice.
    */
   public function testBuildRejectsVersionedJobId(): void {
-    $this->expectException(InvalidArgumentException::class);
+    $this->expectException(\InvalidArgumentException::class);
     JobVersionId::build('employment_support--v5', '6');
   }
 
@@ -57,7 +56,7 @@ class JobVersionIdTest extends UnitTestCase {
    * Tests that the dirty suffix is reserved.
    */
   public function testBuildRejectsDirtySuffix(): void {
-    $this->expectException(InvalidArgumentException::class);
+    $this->expectException(\InvalidArgumentException::class);
     JobVersionId::build('employment_support', '6-dirty');
   }
 

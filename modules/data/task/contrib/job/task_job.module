@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * @file
+ */
+
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
@@ -44,7 +48,7 @@ function task_job_entity_base_field_info_alter(&$fields, EntityTypeInterface $en
  * Default value callback to set the checklist value when a task job is set.
  *
  * @param \Drupal\task\Entity\Task $task
- *   The task
+ *   The task.
  */
 function _task_job_task_checklist_default_value(EntityInterface $task) {
   if (!$task->job->isEmpty()) {
@@ -125,7 +129,7 @@ function _task_job_trigger_entity_operation(string $op, EntityInterface $entity)
       $plugin_id,
       array_filter([
         $entity->getEntityTypeId() => $entity,
-        "original_{$entity->getEntityTypeId()}" => isset($entity->original) ? $entity->original : NULL,
+        "original_{$entity->getEntityTypeId()}" => $entity->original ?? NULL,
       ])
     );
   }
