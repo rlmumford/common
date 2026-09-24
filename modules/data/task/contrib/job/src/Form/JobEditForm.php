@@ -753,7 +753,7 @@ class JobEditForm extends JobForm {
    *   The form state.
    */
   public function submitFormCancel(array $form, FormStateInterface $form_state) {
-    foreach ($this->blueprintStorages as $key => $storage) {
+    foreach ($this->blueprintStorages as $storage) {
       $this->blueprintTempstoreRepository->delete($storage);
     }
     $this->tempstoreRepository->delete($this->entity);
