@@ -120,7 +120,12 @@ class TaskReadinessTest extends KernelTestBase {
       $parent->set('status', $status)->save();
       $this->assertSame('active', $evaluator->evaluate($task)->state);
       $child->set('status', $status)->save();
-      $this->assertSame($status === 'draft' ? 'pending' : 'waiting', $evaluator->evaluate($task)->state);
+      $expected = match ($status) {
+        'draft' => 'pending',
+        'cancelled', 'superseded' => 'invalid',
+        default => 'waiting',
+      };
+      $this->assertSame($expected, $evaluator->evaluate($task)->state);
       $child->set('status', 'active')->save();
     }
     $task->set('service', 999999);
