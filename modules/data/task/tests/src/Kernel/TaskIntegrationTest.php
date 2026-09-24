@@ -80,6 +80,25 @@ class TaskIntegrationTest extends KernelTestBase {
     $this->assertSame('active', $task->status->value);
     $this->assertNotNull($task->checklist->checklist);
     $this->assertCount(1, $task->checklist->checklist->getItems());
+    $item = $task->checklist->checklist->getItem('review');
+    $this->assertNotNull($item->id(), 'The job checklist item is materialised on task creation.');
+
+    // Job edits affect future tasks, never the task snapshot already created.
+    $job->set('default_checklist', [
+      'review' => [
+        'label' => 'A changed review step',
+        'handler' => 'simply_checkable',
+        'handler_configuration' => [],
+      ],
+      'follow_up' => [
+        'label' => 'Follow up',
+        'handler' => 'simply_checkable',
+        'handler_configuration' => [],
+      ],
+    ])->save();
+    $task = Task::load($task->id());
+    $this->assertSame('Review the request', $task->checklist->checklist->getItem('review')->label->value);
+    $this->assertFalse($task->checklist->checklist->hasItem('follow_up'));
     $note = Note::create(['subject' => 'Progress', 'task' => $task]);
     $note->save();
     $this->assertEquals($task->id(), $note->root_task->target_id);

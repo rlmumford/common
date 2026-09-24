@@ -6,6 +6,7 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\task\Entity\Task;
 
 /**
  * Implements hook_entity_base_field_info().
@@ -95,6 +96,30 @@ function task_job_entity_update(EntityInterface $entity) {
  */
 function task_job_entity_delete(EntityInterface $entity) {
   _task_job_trigger_entity_operation('delete', $entity);
+}
+
+/**
+ * Implements hook_task_insert().
+ *
+ * A job supplies default checklist items dynamically. Materialise those
+ * defaults on the task immediately after it receives an ID so later edits to
+ * the job definition cannot change work that has already been created.
+ */
+function task_job_task_insert(Task $task) {
+  if ($task->job->isEmpty() || $task->checklist->isEmpty()) {
+    return;
+  }
+
+  $checklist = $task->checklist->checklist;
+  if (!$checklist) {
+    return;
+  }
+
+  foreach ($checklist->getItems() as $item) {
+    if ($item->isNew()) {
+      $item->save();
+    }
+  }
 }
 
 /**
