@@ -79,7 +79,7 @@ class TaskAddController extends ControllerBase {
     TemplateBuilderManager $template_builder_manager,
     EventDispatcherInterface $event_dispatcher,
     AccountInterface $current_user,
-    JobVersionResolverInterface $job_version_resolver
+    JobVersionResolverInterface $job_version_resolver,
   ) {
     $this->entityTypeManager = $entity_type_manager;
     $this->entityFormBuilder = $entity_form_builder;
