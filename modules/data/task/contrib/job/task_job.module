@@ -20,6 +20,12 @@ function task_job_entity_base_field_info(EntityTypeInterface $entity_type) {
       ->setSetting('target_type', 'task_job')
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
+    $fields['job_version'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Job version'))
+      ->setDescription(new TranslatableMarkup('The named job version used by this task.'))
+      ->setSetting('max_length', 128)
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('form', TRUE);
   }
 
   return $fields;
@@ -42,11 +48,16 @@ function task_job_entity_base_field_info_alter(&$fields, EntityTypeInterface $en
  */
 function _task_job_task_checklist_default_value(EntityInterface $task) {
   if (!$task->job->isEmpty()) {
+    $configuration = [
+      'job' => $task->job->target_id,
+    ];
+    if (!$task->get('job_version')->isEmpty()) {
+      $configuration['job_version'] = $task->get('job_version')->value;
+    }
+
     return [
       'id' => 'job',
-      'configuration' => [
-        'job' => $task->job->target_id,
-      ]
+      'configuration' => $configuration,
     ];
   }
 
