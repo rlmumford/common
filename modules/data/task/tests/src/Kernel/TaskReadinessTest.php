@@ -169,6 +169,21 @@ class TaskReadinessTest extends KernelTestBase {
   }
 
   /**
+   * Cancelled and superseded services invalidate their immediate task work.
+   */
+  public function testTerminalServiceInvalidatesTask(): void {
+    foreach (['cancelled', 'superseded'] as $status) {
+      $service = Service::create(['type' => 'work', 'status' => $status]);
+      $service->save();
+      $task = Task::create(['title' => ucfirst($status), 'service' => $service]);
+
+      $result = $this->container->get('task.readiness')->evaluate($task);
+      $this->assertSame('invalid', $result->state);
+      $this->assertSame('service_' . $status, $result->reasons[0]['code']);
+    }
+  }
+
+  /**
    * Module gates are additive and obey the same precedence as core task gates.
    */
   public function testModuleContributions(): void {
