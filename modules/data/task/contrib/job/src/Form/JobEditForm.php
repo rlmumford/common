@@ -715,7 +715,7 @@ class JobEditForm extends JobForm {
     }
 
     $triggers_config = [];
-    foreach ($this->blueprintStorages as $key => $storage) {
+    foreach ($this->blueprintStorages as $storage) {
       $trigger = $storage->getTrigger();
 
       $triggers_config[$key] = [
@@ -734,7 +734,7 @@ class JobEditForm extends JobForm {
   public function save(array $form, FormStateInterface $form_state) {
     $return = parent::save($form, $form_state);
 
-    foreach ($this->blueprintStorages as $key => $storage) {
+    foreach ($this->blueprintStorages as $storage) {
       $this->blueprintTempstoreRepository->delete($storage);
     }
     $this->tempstoreRepository->delete($this->entity);
