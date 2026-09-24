@@ -96,19 +96,31 @@ class Job extends ConfigEntityBase implements JobInterface, EntityWithPluginColl
   protected $dirty = FALSE;
 
   /**
-   * @var int|null */
+   * The code revision.
+   *
+   * @var int|null
+   */
   protected $code_revision;
 
   /**
-   * @var int|null */
+   * The active system revision.
+   *
+   * @var int|null
+   */
   protected $system_revision;
 
   /**
-   * @var string|null */
+   * The last imported definition hash.
+   *
+   * @var string|null
+   */
   protected $last_imported_hash;
 
   /**
-   * @var string|null */
+   * The active definition hash.
+   *
+   * @var string|null
+   */
   protected $active_hash;
 
   /**

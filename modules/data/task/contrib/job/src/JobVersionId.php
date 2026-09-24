@@ -24,6 +24,8 @@ final class JobVersionId {
    *   The unversioned job ID.
    * @param string $version
    *   The version identifier.
+   * @param bool $dirty
+   *   Whether to create a working-copy ID.
    *
    * @return string
    *   The versioned config entity ID.

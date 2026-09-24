@@ -2,6 +2,7 @@
 
 /**
  * @file
+ * Task job integration for task entities and checklists.
  */
 
 use Drupal\Core\Entity\EntityInterface;
@@ -180,7 +181,7 @@ function task_job_task_prepare_form(EntityInterface $task, string $op, FormState
 }
 
 /**
- * Implement hook_plugin_filter_PLUGIN_TYPE__CONSUMER() for block and task_job_resource.
+ * Implements hook_plugin_filter_block__task_job_resource_alter().
  *
  * Some block plugins make no sense as resources. Remove them.
  */
