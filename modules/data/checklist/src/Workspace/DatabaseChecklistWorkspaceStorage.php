@@ -28,7 +28,8 @@ final class DatabaseChecklistWorkspaceStorage implements ChecklistWorkspaceStora
       if ($current && $current->isActive($now) && $current->owner !== $owner) {
         throw new ChecklistAttemptConflictException('The checklist workspace is owned by another user.');
       }
-      $generation = $current ? $current->generation + 1 : 1;
+      $same_active_owner = $current && $current->isActive($now) && $current->owner === $owner;
+      $generation = $current ? ($same_active_owner ? $current->generation : $current->generation + 1) : 1;
       $fields = [
         'host_type' => $address->hostType,
         'host_uuid' => $address->hostUuid,

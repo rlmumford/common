@@ -8,7 +8,9 @@ namespace Drupal\checklist\Workspace;
 interface ChecklistWorkspaceStorageInterface {
 
   /**
-   * Acquires a new fencing generation for a workspace.
+   * Acquires a workspace or renews the current owner's active lease.
+   *
+   * A new generation is created only when there is no active lease to resume.
    *
    * @throws \Drupal\checklist\Attempt\ChecklistAttemptConflictException
    *   If another user owns an unexpired lease.

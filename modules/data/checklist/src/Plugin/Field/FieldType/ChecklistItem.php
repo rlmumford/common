@@ -85,6 +85,13 @@ class ChecklistItem extends PluginReferenceItem {
   }
 
   /**
+   * Gets the instance UUID stored on this field item, if any.
+   */
+  public function getPersistedInstanceUuid(): ?string {
+    return $this->instance_uuid ?: NULL;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function preSave() {
