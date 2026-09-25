@@ -7,7 +7,7 @@ use Drupal\checklist\ChecklistItemReader;
 use Drupal\checklist\ChecklistResolver;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Field\FieldableEntityInterface;
+use Drupal\Core\Entity\FieldableEntityInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
