@@ -34,7 +34,7 @@ class ChecklistApiController extends ControllerBase {
     protected ChecklistActionOperationDispatcher $dispatcher,
     protected ChecklistOperationSchemaValidator $schemaValidator,
     protected ChecklistWorkspaceStorageInterface $workspaceStorage,
-    protected AccountProxyInterface $currentUser,
+    protected AccountProxyInterface $account,
   ) {}
 
   /**
@@ -262,7 +262,7 @@ class ChecklistApiController extends ControllerBase {
    * Returns the authenticated workspace owner ID.
    */
   protected function ownerId(): int {
-    $owner = (int) $this->currentUser->id();
+    $owner = (int) $this->account->id();
     if ($owner < 1) {
       throw new AccessDeniedHttpException('An authenticated user is required to edit this checklist.');
     }
