@@ -78,6 +78,46 @@ class ChecklistApiController extends ControllerBase {
   }
 
   /**
+   * Returns minimal, read-only status for the shared checklist workspace.
+   */
+  public function workspaceStatus(string $entity_type, string $entity_id, string $checklist): JsonResponse {
+    $entity = $this->loadEntity($entity_type, $entity_id);
+    [$field_name, $delta] = $this->parseChecklistAddress($checklist);
+    $checklist_object = $this->resolve($entity, $field_name, $delta, 'view');
+    $instance_uuid = $entity->get($field_name)->get($delta)->getPersistedInstanceUuid();
+    if ($instance_uuid === NULL) {
+      return new JsonResponse([
+        'workspace' => [
+          'instance_uuid' => NULL,
+          'identity_persisted' => FALSE,
+          'locked' => FALSE,
+          'owned_by_current_user' => FALSE,
+          'generation' => NULL,
+          'version' => NULL,
+          'expires' => NULL,
+        ],
+      ]);
+    }
+
+    $address = ChecklistWorkspaceAddress::fromEntity($entity, $field_name, $delta, $checklist_object->getKey());
+    $lease = $this->workspaceStorage->load($address);
+    $active = $lease !== NULL && $this->workspaceStorage->isCurrent($lease);
+    $owned_by_current_user = $active && $lease->owner === (int) $this->account->id();
+
+    return new JsonResponse([
+      'workspace' => [
+        'instance_uuid' => $instance_uuid,
+        'identity_persisted' => TRUE,
+        'locked' => $active && !$owned_by_current_user,
+        'owned_by_current_user' => $owned_by_current_user,
+        'generation' => $owned_by_current_user ? $lease->generation : NULL,
+        'version' => $owned_by_current_user ? $lease->version : NULL,
+        'expires' => $owned_by_current_user ? $lease->expires : NULL,
+      ],
+    ]);
+  }
+
+  /**
    * Acquires or resumes the authenticated user's workspace lease.
    */
   public function acquireWorkspace(Request $request, string $entity_type, string $entity_id, string $checklist): JsonResponse {

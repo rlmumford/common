@@ -456,9 +456,10 @@ entity access operations inherit host/field permissions and support item visibil
 denials without granting full entity-view access. The action-operation dispatcher
 uses these checks too. Tests cover read-only viewers, hidden items, denied field
 access, missing contexts, safe progress, no execution/persistence and unsaved hosts.
-HTTP item and operation routes plus API workspace fencing are implemented. UI/AI
-integration, resource panes, attempts/ownership projection and cache aggregation
-remain open; read snapshots must not be cached across users or changes.
+HTTP item and operation routes plus API workspace status and write fencing are
+implemented. UI/AI integration, resource panes, attempts/ownership projection and
+cache aggregation remain open; read snapshots must not be cached across users or
+changes.
 
 Deliverables:
 

@@ -27,6 +27,7 @@ single-value field. Item names are scoped to a checklist, not global entity IDs.
 | GET `/items/{item_name}` | Current item status, readiness and safe action progress. |
 | GET `/items/{item_name}/action-operations` | Currently available action operations and parameter schemas. |
 | POST `/items/{item_name}/action-operations` | Invoke the operation named in the JSON body. |
+| GET `/workspace` | Read-only workspace lock status and, for its owner, current version and fencing generation. |
 | POST `/workspace` | Acquire or resume the authenticated user's editing lease. |
 | PATCH `/workspace` | Renew that user's lease. |
 | DELETE `/workspace` | Release that user's lease. |
@@ -58,6 +59,12 @@ a new operation at the newer version; they must not replay the old operation usi
 that version automatically.
 Mutating routes require an authenticated user and Drupal's `X-CSRF-Token` request
 header when the request uses a session cookie.
+
+The read-only workspace status route uses host and checklist field view access and
+never acquires or renews a lease. It reports only whether another owner currently
+holds the workspace; it does not reveal that user's ID, lease version, generation
+or expiry. The current owner can read their own version, generation and expiry.
+Responses are uncacheable because lease state changes independently of the host.
 
 Operation discovery includes parameter schemas using JSON Schema Draft 7. The
 dispatcher validates request parameters against the current schema immediately
@@ -174,9 +181,10 @@ The initial storage contract is `checklist.workspace_storage`. It addresses a
 workspace by host entity type/UUID, checklist field and instance UUID; delta and
 checklist key remain current-location metadata. It persists the owner, expiry,
 workspace version and fencing generation. Acquire, renew, release and
-current-generation checks are durable and atomic. The HTTP API adapter now exposes
-lease lifecycle methods and fences operation writes by owner, generation and
-expected version. UI/AI integration and takeover remain follow-up work.
+current-generation checks are durable and atomic. The HTTP API adapter exposes
+read-only status and lease lifecycle methods, and fences operation writes by owner,
+generation and expected version. UI/AI integration and takeover remain follow-up
+work.
 
 Acquiring or taking over ownership is atomic. Each new ownership grant increments
 a generation/fencing token. The HTTP API reserves the next workspace version
