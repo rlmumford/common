@@ -90,3 +90,6 @@ jobs:
           server_pid=$!
           trap 'kill "$server_pid"' EXIT
           ../vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php modules/contrib/checklist/contrib/entity_template/tests/src
+      - name: Show the browser server log on failure
+        if: failure()
+        run: tail -n 200 /tmp/checklist-browser.log
