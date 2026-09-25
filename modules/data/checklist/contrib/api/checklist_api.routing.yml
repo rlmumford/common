@@ -25,3 +25,41 @@ checklist.item.operation:
   methods: ['POST']
   requirements:
     _format: 'json'
+    _user_is_logged_in: 'TRUE'
+    _csrf_request_header_token: 'TRUE'
+
+checklist.workspace.acquire:
+  path: '/checklist/{entity_type}/{entity_id}/{checklist}/workspace'
+  defaults:
+    _controller: '\Drupal\checklist_api\Controller\ChecklistApiController::acquireWorkspace'
+  options:
+    no_cache: 'TRUE'
+  methods: ['POST']
+  requirements:
+    _format: 'json'
+    _user_is_logged_in: 'TRUE'
+    _csrf_request_header_token: 'TRUE'
+
+checklist.workspace.renew:
+  path: '/checklist/{entity_type}/{entity_id}/{checklist}/workspace'
+  defaults:
+    _controller: '\Drupal\checklist_api\Controller\ChecklistApiController::renewWorkspace'
+  options:
+    no_cache: 'TRUE'
+  methods: ['PATCH']
+  requirements:
+    _format: 'json'
+    _user_is_logged_in: 'TRUE'
+    _csrf_request_header_token: 'TRUE'
+
+checklist.workspace.release:
+  path: '/checklist/{entity_type}/{entity_id}/{checklist}/workspace'
+  defaults:
+    _controller: '\Drupal\checklist_api\Controller\ChecklistApiController::releaseWorkspace'
+  options:
+    no_cache: 'TRUE'
+  methods: ['DELETE']
+  requirements:
+    _format: 'json'
+    _user_is_logged_in: 'TRUE'
+    _csrf_request_header_token: 'TRUE'

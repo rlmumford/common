@@ -73,6 +73,24 @@ class ChecklistWorkspaceStorageTest extends KernelTestBase {
   }
 
   /**
+   * Reacquiring an active lease as the same owner preserves its fence.
+   */
+  public function testSameOwnerAcquisitionIsIdempotent(): void {
+    $storage = $this->container->get('checklist.workspace_storage');
+    $address = new ChecklistWorkspaceAddress('user', 'host-uuid', 'work', 0, 'main', 'instance-uuid-1');
+    $first = $storage->acquire($address, 11, 30);
+    $version = $storage->advanceVersion($first, 0);
+    $this->now = 1010;
+
+    $reacquired = $storage->acquire($address, 11, 60);
+
+    $this->assertSame($first->generation, $reacquired->generation);
+    $this->assertSame($version->version, $reacquired->version);
+    $this->assertSame(1070, $reacquired->expires);
+    $this->assertTrue($storage->isCurrent($version));
+  }
+
+  /**
    * Version advancement rejects stale tabs and expired owners atomically.
    */
   public function testVersionFence(): void {

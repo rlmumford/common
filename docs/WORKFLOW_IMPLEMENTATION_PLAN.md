@@ -249,13 +249,12 @@ and conflicting tempstore.
 Adapters still supply the current checklist/account; shared workspace composition,
 claims, execution identities and attempts remain open.
 
-The first workspace slice now provides `checklist.workspace_storage`, with a
-stable host UUID/field/delta/checklist-key address, durable user leases, expiry,
-renewal, release and fencing generations. It deliberately has no HTTP adapter,
-takeover policy or mutation integration yet; those consumers must check the
-lease before writing and remain future work. `advanceVersion()` now conditionally
-increments the workspace version under the active owner and generation, rejecting
-stale tabs and expired leases.
+The first workspace slice now provides `checklist.workspace_storage`, with stable
+host and checklist-instance UUIDs, durable user leases, expiry, renewal, release
+and fencing generations. The optional API adapter now exposes lease acquisition,
+renewal and release, and reserves a workspace version before invoking an operation.
+Active same-user acquisition preserves the generation and version for continuity.
+Takeover and UI/AI mutation integration remain future work.
 
 Opt-in working-state storage is now implemented through
 `StatefulChecklistItemHandlerInterface::stateDefinitions()` and the item's separate
@@ -264,7 +263,8 @@ helpers and storage after presave hooks, preserving outcomes. Scalar/list/map/en
 state, unsaved-host tempstore, safe progress projection, excluded outcome contexts
 and upgrades from the previous schema have kernel coverage. Ordinary field access
 does not expose raw state. This is not yet a versioned attempt or public reset API;
-operational history, ownership and stale-result protection remain open.
+operational history, workspace ownership and stale-result protection remain separate
+concerns.
 
 The internal `checklist.attempt_journal` now stores distinct attempts and append-only
 transition metadata, with item UUID identity, entry path/operation, initiator and
@@ -446,8 +446,8 @@ reset existing work; invalid/missing templates cannot silently complete the task
 Checklist field items now have persistent instance UUIDs, and durable workspace
 addresses use those UUIDs so field reordering does not retarget a workspace. Existing
 field items are assigned an identity when accessed and store it with their next host
-save. API/UI mutation adapters still need to carry and verify that identity before
-they acquire ownership or apply a write.
+save. The optional API adapter requires that persisted identity before acquiring a
+workspace and verifies it before each write; acquiring a lease never saves the host.
 
 Initial item reader implemented: `checklist.item_reader` returns authorized item
 snapshots and visible-item lists without executing work. Optional handler progress
@@ -456,7 +456,8 @@ entity access operations inherit host/field permissions and support item visibil
 denials without granting full entity-view access. The action-operation dispatcher
 uses these checks too. Tests cover read-only viewers, hidden items, denied field
 access, missing contexts, safe progress, no execution/persistence and unsaved hosts.
-HTTP routes, UI integration, resources, attempts/ownership and cache aggregation
+HTTP item and operation routes plus API workspace fencing are implemented. UI/AI
+integration, resource panes, attempts/ownership projection and cache aggregation
 remain open; read snapshots must not be cached across users or changes.
 
 Deliverables:

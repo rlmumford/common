@@ -1,13 +1,13 @@
 # Checklist interaction contract
 
-Status: agreed direction; implementation remains staged. Updated 18 September 2026.
+Status: agreed direction; core reads, API interaction and workspace write fencing are implemented. UI/AI integration and takeover remain staged. Updated 25 September 2026.
 
 UI forms, HTTP clients and AI tools interact with the same checklist, working state
 and ownership rules. This document extends the [workflow architecture](WORKFLOW_ARCHITECTURE.md)
 and [implementation plan](WORKFLOW_IMPLEMENTATION_PLAN.md). The action operation
 dispatcher supplies preparation/gating. Implemented readers, attempt history, worker
-claims and the initial automatic runner are described below; shared editing
-ownership and HTTP adapters remain staged.
+claims, the initial automatic runner, HTTP adapter and API workspace fencing are
+described below; UI/AI integration and takeover remain staged.
 
 ## Addressing and HTTP surface
 
@@ -27,15 +27,37 @@ single-value field. Item names are scoped to a checklist, not global entity IDs.
 | GET `/items/{item_name}` | Current item status, readiness and safe action progress. |
 | GET `/items/{item_name}/action-operations` | Currently available action operations and parameter schemas. |
 | POST `/items/{item_name}/action-operations` | Invoke the operation named in the JSON body. |
+| POST `/workspace` | Acquire or resume the authenticated user's editing lease. |
+| PATCH `/workspace` | Renew that user's lease. |
+| DELETE `/workspace` | Release that user's lease. |
 
 Example execution body:
 
 ```json
 {
   "operation": "choose",
+  "instance_uuid": "<checklist-field-item-uuid>",
+  "generation": 3,
+  "expected_version": 4,
   "parameters": {"choice": "approve", "reason": "Reviewed"}
 }
 ```
+
+Workspace acquisition requires the current persisted `instance_uuid`. Older field
+items without an identity return a conflict until the host has been saved and
+reloaded so the identity is durable; acquiring a workspace does not save or
+otherwise mutate the host. The
+response contains the UUID, generation, current version and expiry. Renewal and
+release require the UUID and generation. An operation response wraps the handler result and the advanced
+workspace version. Schema-invalid requests do not consume a version; once a valid
+operation reserves a version, that version stays consumed even if the handler later
+fails, so retrying the same request cannot duplicate a side effect. Reacquiring an
+active lease as the same user renews it and returns its current generation/version.
+After a lost response, clients must reread the item before choosing whether to send
+a new operation at the newer version; they must not replay the old operation using
+that version automatically.
+Mutating routes require an authenticated user and Drupal's `X-CSRF-Token` request
+header when the request uses a session cookie.
 
 Operation discovery includes parameter schemas using JSON Schema Draft 7. The
 dispatcher validates request parameters against the current schema immediately
@@ -45,9 +67,8 @@ handlers adopt the contract. Schema validation does not replace handler checks
 for current permissions, domain rules, or side-effect safety. API adapters return
 a generic client error for invalid parameters and do not expose validator internals.
 
-Ownership/version preconditions accompany mutations; their exact wire format will
-be fixed with the workspace implementation. A successful synchronous invocation
-returns a structured result and refreshed item/operation links. Durable execution
+Ownership/version preconditions accompany mutations. A successful synchronous
+invocation returns a structured result and the new workspace version. Durable execution
 will return an accepted response with an attempt identifier and polling link once
 attempt storage exists. Do not report acceptance before the work is durable.
 
@@ -70,8 +91,8 @@ between host entity types using the same numeric ID and field name.
 Current keys use a field name and optional delta. Delta is a location, not durable
 identity: reordering can retarget an old URL. Checklist field items now carry an
 instance UUID, and workspace identity is anchored to it rather than the delta. New
-items persist the UUID when their host is saved; existing items receive one on first
-access and persist it on their next host save. Any adapter that accepts a location
+items persist the UUID when their host is saved; existing items receive one on their
+next host save. Any adapter that accepts a location
 must bind the expected UUID and compare it to the currently resolved field item
 before acting; an adapter must first ensure the UUID is durable across requests. A
 stale address must never execute against replacement work. Translation/revision
@@ -99,8 +120,8 @@ input-required flag. Handlers without the capability still expose generic item
 status. Dedicated `view action state` and `execute action operation` entity access
 operations inherit host/field restrictions and allow item-specific hook denials.
 They do not grant full entity-view access. Reads are currently uncacheable snapshots.
-HTTP routes, UI integration, attempt/ownership details, safe outcomes/resources and
-blocked-reason descriptions remain future work.
+The optional HTTP routes expose item reads and action operations. Safe outcomes/resources
+and blocked-reason descriptions remain future work.
 
 The projection reads stored working state and attempt/run records. It does not
 serialize the entire state bag or expose raw prompts, credentials, internal tool
@@ -126,8 +147,8 @@ Stable addressing does not update serialized snapshots automatically. After savi
 a host, the workspace coordinator must update/rebind the stored graph explicitly;
 it must not later treat an old unsaved snapshot as a new host to insert again.
 Tempstore remains subject to its lifetime policy; durable attempt/state storage is
-still required for long-running work. Stable checklist identity across delta moves
-remains separate from stable host identity.
+still required for long-running work. Checklist field-item UUIDs now keep workspace
+identity stable when a multivalue field is reordered.
 
 There is one authoritative interaction workspace per checklist, shared across UI,
 API and AI. Do not create separate per-channel or per-user copies of checklist item
@@ -141,28 +162,30 @@ Two tabs or tools belonging to the same user still need version checks to avoid
 last-write-wins overwrites. Other authorized users may observe progress but receive
 a conflict if they attempt to mutate without ownership.
 
-Acquisition, renewal, release and takeover are explicit shared-service operations,
-with thin UI/API/tool adapters. Takeover requires a separate policy/access decision,
+Acquisition, renewal and release are explicit shared-service operations, with thin
+UI/API/tool adapters. Takeover requires a separate policy/access decision,
 is visible to the previous owner, and records who took over, from whom, when and
 why. Ordinary host update access must not implicitly grant force-takeover access.
 The UI presents an explicit takeover action when allowed. Lease duration, renewal
-interval and takeover permission defaults will be chosen during implementation.
+interval defaults to five minutes for the API adapter; takeover permission remains
+to be chosen during implementation.
 
 The initial storage contract is `checklist.workspace_storage`. It addresses a
-workspace by host entity type/UUID, checklist field and delta, and checklist key;
-it persists the owner, expiry, workspace version and fencing generation. Acquire,
-renew, release and current-generation checks are durable and atomic. HTTP, UI and
-AI adapters, takeover, and enforcement in every mutating path remain follow-up
-work. Mutating adapters can advance the version only with the active owner,
-generation and expected version, so stale tabs and delayed calls fail atomically.
+workspace by host entity type/UUID, checklist field and instance UUID; delta and
+checklist key remain current-location metadata. It persists the owner, expiry,
+workspace version and fencing generation. Acquire, renew, release and
+current-generation checks are durable and atomic. The HTTP API adapter now exposes
+lease lifecycle methods and fences operation writes by owner, generation and
+expected version. UI/AI integration and takeover remain follow-up work.
 
 Acquiring or taking over ownership is atomic. Each new ownership grant increments
-a generation/fencing token. Every mutating path checks the active owner, generation
-and workspace/item version at commit time, not only when rendering a form or
-starting a request. Release/expiry revokes the old grant; reacquisition creates a
-new generation even for the same user. Old forms, API calls and delayed AI results
-cannot save after takeover or expiry. Return a conflict and current read links so
-the client can refresh deliberately.
+a generation/fencing token. The HTTP API reserves the next workspace version
+atomically immediately before invoking a handler; UI and AI adapters must apply the
+same owner, generation and version checks at their write boundary. Reacquiring an
+active lease as the same user renews it without changing generation or version.
+Release/expiry revokes the old grant; a later grant uses a new generation. Old
+forms, API calls and delayed AI results cannot save after takeover or expiry.
+Return a conflict and current read links so the client can refresh deliberately.
 
 Temporary storage may cache editing data, but must not be the only copy of durable
 working state, pending run IDs or attempts. Tempstore expiry must not discard a
@@ -175,13 +198,14 @@ values stored in a separate internal item field. Failure preserves them; complet
 clears them in memory and at the storage boundary, including presave-hook status
 changes. Raw field view/edit access is denied, and state is not added to outcome
 contexts; safe handler progress remains the viewer-facing projection. Attempt
-versioning, ownership and public resume/reset/takeover enforcement are still open.
+Attempt/workspace integration for retry, reset and takeover enforcement remains
+open.
 
 The internal attempt journal now persists per-item attempt streams and transition
 history. It records resume/fresh intent and rejects stale journal versions without
 changing working state, outcomes or item disposition. Attempt status and history
 are not yet exposed in the item reader. Worker claim primitives are described
-below; handler execution, workspace leases and takeover remain separate steps; existing
+below; handler execution and takeover remain separate steps; existing autonomous
 mutating paths are not yet journalled or fenced by this service.
 
 Proposed takeover default, following the user's latest direction: start fresh rather
@@ -228,8 +252,8 @@ Inline work and queue delivery share item claims, audit and result application. 
 attempt, never changes its executor, and never implicitly retries terminal work.
 Calls inside an outer transaction record only the journal, which rolls back with
 the caller; handler execution is deferred until after commit. Generated-item persistence and alternate execution policies remain separate.
-Workspace ownership, retry/reset authorization and integration across interactive
-paths remain open before external clients can mutate work safely.
+Retry/reset authorization, UI/AI integration and takeover remain open before those
+interactive paths can mutate work safely.
 
 Interactive AI work binds its checklist/item reference, owning user, ownership
 generation, attempt and expected version server-side. The model receives the
@@ -268,13 +292,14 @@ Implement in this order:
    resolution is available through `checklist.resolver::resolve()`: host/field access,
    type checks, field/delta isolation, unsaved entities and in-memory state are
    covered. Callers own loading/workspace selection; shared workspace composition
-   remains open. The initial item reader and optional action-progress projection
-   now have access-filtered kernel coverage; HTTP adapters remain open.
-3. Implement durable state/attempt storage, ownership leases, atomic takeover,
-   version checks and operational history; integrate all mutating paths.
-4. Add `checklist_api` discovery, reads and invocation, then AI tool adapters using
-   the same services. Enable external mutations only with stale-write and duplicate
-   invocation protection; discovery/polling can be delivered earlier.
+   remains open. The item reader, progress projection and optional API adapter have
+   access-filtered kernel coverage.
+3. Implement durable state/attempt storage, ownership leases, version checks and
+   operational history; integrate all mutating paths. API writes now consume
+   expected versions; UI/AI integration and authorized takeover remain open.
+4. Add `checklist_api` discovery, reads, workspace lease operations and invocation,
+   then AI tool adapters using the same services. API writes reject stale instance,
+   generation and version values.
 
 Required acceptance scenarios include two users viewing one checklist; denied edits
 while another owns it; same-user UI/API/tool continuity; concurrent same-user tabs;
