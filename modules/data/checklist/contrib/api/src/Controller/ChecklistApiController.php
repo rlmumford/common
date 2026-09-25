@@ -131,7 +131,7 @@ class ChecklistApiController extends ControllerBase {
   /**
    * Releases the authenticated user's current workspace lease.
    */
-  public function releaseWorkspace(Request $request, string $entity_type, string $entity_id, string $checklist): JsonResponse {
+  public function releaseWorkspace(Request $request, string $entity_type, string $entity_id, string $checklist): Response {
     $payload = $this->decodeObject($request);
     if (!$this->hasLeasePayload($payload)) {
       return new JsonResponse(['error' => 'The request must contain instance_uuid and generation.'], 400);
