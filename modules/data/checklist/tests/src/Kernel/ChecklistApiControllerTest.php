@@ -47,6 +47,9 @@ class ChecklistApiControllerTest extends KernelTestBase {
       'entity_type' => 'user',
       'bundle' => 'user',
     ])->save();
+    $admin = User::create(['name' => 'Admin']);
+    $admin->save();
+    $this->container->get('current_user')->setAccount($admin);
   }
 
   /**
@@ -125,7 +128,6 @@ class ChecklistApiControllerTest extends KernelTestBase {
    */
   protected function createHost(): User {
     $host = User::create([
-      'uid' => 100,
       'name' => 'Host',
       'status' => 1,
       'work' => [
