@@ -65,11 +65,12 @@ class ChecklistApiControllerTest extends KernelTestBase {
 
     $state_response = $controller->itemState('user', $host->id(), 'work:0', 'operation');
     $this->assertSame(200, $state_response->getStatusCode());
-    $this->assertSame('operation', $state_response->getData(TRUE)['name']);
-    $this->assertTrue($state_response->getData(TRUE)['actionable']);
+    $state = json_decode($state_response->getContent(), TRUE);
+    $this->assertSame('operation', $state['name']);
+    $this->assertTrue($state['actionable']);
 
     $operations_response = $controller->operations('user', $host->id(), 'work:0', 'operation');
-    $operations = $operations_response->getData(TRUE);
+    $operations = json_decode($operations_response->getContent(), TRUE);
     $this->assertArrayHasKey('read', $operations['operations']);
     $this->assertSame('Produced', $operations['operations']['read']['label']);
 
@@ -79,7 +80,7 @@ class ChecklistApiControllerTest extends KernelTestBase {
     ]));
     $result = $controller->execute($request, 'user', $host->id(), 'work:0', 'operation');
     $this->assertSame(200, $result->getStatusCode());
-    $this->assertSame(['value' => 'Produced', 'optional' => NULL], $result->getData(TRUE));
+    $this->assertSame(['value' => 'Produced', 'optional' => NULL], json_decode($result->getContent(), TRUE));
   }
 
   /**
