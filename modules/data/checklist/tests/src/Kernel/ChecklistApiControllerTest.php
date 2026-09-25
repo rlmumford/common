@@ -34,6 +34,7 @@ class ChecklistApiControllerTest extends KernelTestBase {
     parent::setUp();
     $this->installEntitySchema('user');
     $this->installEntitySchema('checklist_item');
+    $this->installSchema('system', ['sequences']);
     $this->installConfig(['system', 'user']);
     FieldStorageConfig::create([
       'field_name' => 'work',
