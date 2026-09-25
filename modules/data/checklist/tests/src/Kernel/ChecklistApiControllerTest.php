@@ -4,10 +4,12 @@ namespace Drupal\Tests\checklist\Kernel;
 
 use Drupal\checklist_api\Controller\ChecklistApiController;
 use Drupal\entity_test\Entity\EntityTest;
+use Drupal\Core\Field\FieldableEntityInterface;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\user\Entity\User;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
@@ -65,7 +67,7 @@ class ChecklistApiControllerTest extends KernelTestBase {
     $source = $checklist->getItem('source');
     $source->setOutcome('value', 'Produced');
     $source->save();
-    $controller = ChecklistApiController::create($this->container);
+    $controller = $this->controller($host);
 
     $state_response = $controller->itemState('entity_test', $host->id(), 'work:0', 'operation');
     $this->assertSame(200, $state_response->getStatusCode());
@@ -91,7 +93,7 @@ class ChecklistApiControllerTest extends KernelTestBase {
    */
   public function testMalformedOperationRequest(): void {
     $host = $this->createHost();
-    $controller = ChecklistApiController::create($this->container);
+    $controller = $this->controller($host);
     $request = Request::create('/', 'POST', [], [], [], [], '{');
 
     $response = $controller->execute($request, 'entity_test', $host->id(), 'work', 'operation');
@@ -106,7 +108,7 @@ class ChecklistApiControllerTest extends KernelTestBase {
   public function testDeniedChecklistFieldAccess(): void {
     $host = $this->createHost();
     $this->container->get('state')->set('checklist_resolver_test.denied_field_operations', ['work' => ['edit']]);
-    $controller = ChecklistApiController::create($this->container);
+    $controller = $this->controller($host);
 
     $this->expectException(AccessDeniedHttpException::class);
     $controller->operations('entity_test', $host->id(), 'work', 'operation');
@@ -157,6 +159,39 @@ class ChecklistApiControllerTest extends KernelTestBase {
     ]);
     $host->save();
     return $host;
+  }
+
+  /**
+   * Creates a controller that receives the saved entity supplied by the test.
+   */
+  protected function controller(FieldableEntityInterface $host): ChecklistApiController {
+    return new class($this->container, $host) extends ChecklistApiController {
+
+      /**
+       * The host entity for this API request.
+       *
+       * @var \Drupal\Core\Field\FieldableEntityInterface
+       */
+      protected FieldableEntityInterface $host;
+
+      public function __construct(ContainerInterface $container, FieldableEntityInterface $host) {
+        parent::__construct(
+          $container->get('entity_type.manager'),
+          $container->get('checklist.item_reader'),
+          $container->get('checklist.resolver'),
+          $container->get('checklist.action_operation_dispatcher'),
+        );
+        $this->host = $host;
+      }
+
+      /**
+       * {@inheritdoc}
+       */
+      protected function loadEntity(string $entity_type, string $entity_id): FieldableEntityInterface {
+        return $this->host;
+      }
+
+    };
   }
 
 }
