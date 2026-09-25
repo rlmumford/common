@@ -443,6 +443,12 @@ reset existing work; invalid/missing templates cannot silently complete the task
 
 ## P6 — Resource workspace and interaction parity
 
+Checklist field items now have persistent instance UUIDs, and durable workspace
+addresses use those UUIDs so field reordering does not retarget a workspace. Existing
+field items are assigned an identity when accessed and store it with their next host
+save. API/UI mutation adapters still need to carry and verify that identity before
+they acquire ownership or apply a write.
+
 Initial item reader implemented: `checklist.item_reader` returns authorized item
 snapshots and visible-item lists without executing work. Optional handler progress
 uses `ActionStateChecklistItemHandlerInterface` and `ChecklistActionState`. Dedicated

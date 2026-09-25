@@ -3,6 +3,7 @@
 namespace Drupal\Tests\checklist\Kernel;
 
 use Drupal\Core\Entity\FieldableEntityInterface;
+use Drupal\checklist\Workspace\ChecklistWorkspaceAddress;
 use Drupal\entity_test\Entity\EntityTest;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
@@ -121,6 +122,38 @@ class ChecklistResolverTest extends KernelTestBase {
       $this->assertSame('yes', $item->get('outcomes')->get('decision')->getValue());
     }
     $this->assertCount(3, array_unique($ids));
+  }
+
+  /**
+   * Checklist identities travel with field items when their deltas change.
+   */
+  public function testChecklistInstanceIdentitySurvivesReordering(): void {
+    $host = $this->host();
+    $original = $host->get('multiple');
+    $first_uuid = $original->get(0)->getInstanceUuid();
+    $second_uuid = $original->get(1)->getInstanceUuid();
+    $first_address = ChecklistWorkspaceAddress::fromEntity($host, 'multiple', 0, 'multiple:0');
+
+    $host->set('multiple', array_reverse($original->getValue()));
+    $host->save();
+    $storage = $this->container->get('entity_type.manager')->getStorage('user');
+    $reordered_host = $storage->loadUnchanged($host->id());
+    $reordered = $reordered_host->get('multiple');
+    $this->assertSame($second_uuid, $reordered->get(0)->getInstanceUuid());
+    $this->assertSame($first_uuid, $reordered->get(1)->getInstanceUuid());
+    $moved_address = ChecklistWorkspaceAddress::fromEntity($storage->loadUnchanged($host->id()), 'multiple', 1, 'multiple:1');
+    $this->assertSame($first_address->id(), $moved_address->id());
+
+    $reordered_host->set('multiple', [
+      $this->value('context_test', 'Replacement'),
+      $reordered->get(1)->getValue(),
+    ]);
+    $reordered_host->save();
+    $replacement_host = $storage->loadUnchanged($host->id());
+    $reloaded = $replacement_host->get('multiple');
+    $this->assertNotSame($second_uuid, $reloaded->get(0)->getInstanceUuid());
+    $replacement_address = ChecklistWorkspaceAddress::fromEntity($replacement_host, 'multiple', 0, 'multiple:0');
+    $this->assertNotSame($moved_address->id(), $replacement_address->id());
   }
 
   /**

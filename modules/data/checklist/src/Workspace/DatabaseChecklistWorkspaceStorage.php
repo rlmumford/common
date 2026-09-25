@@ -35,6 +35,7 @@ final class DatabaseChecklistWorkspaceStorage implements ChecklistWorkspaceStora
         'field_name' => $address->fieldName,
         'delta' => $address->delta,
         'checklist_key' => $address->checklistKey,
+        'instance_uuid' => $address->instanceUuid,
         'owner' => $owner,
         'generation' => $generation,
         'version' => $current ? $current->version : 0,

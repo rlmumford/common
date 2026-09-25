@@ -15,9 +15,10 @@ final class ChecklistWorkspaceAddress {
     public readonly string $fieldName,
     public readonly int $delta,
     public readonly string $checklistKey,
+    public readonly string $instanceUuid,
   ) {
-    if ($hostType === '' || $hostUuid === '' || $fieldName === '' || $delta < 0 || $checklistKey === '') {
-      throw new \InvalidArgumentException('A checklist workspace address must identify a host, field, delta and key.');
+    if ($hostType === '' || $hostUuid === '' || $fieldName === '' || $delta < 0 || $checklistKey === '' || $instanceUuid === '') {
+      throw new \InvalidArgumentException('A checklist workspace address must identify a host, field item and key.');
     }
   }
 
@@ -25,7 +26,8 @@ final class ChecklistWorkspaceAddress {
    * Creates an address from a host entity and checklist field location.
    */
   public static function fromEntity(FieldableEntityInterface $entity, string $field_name, int $delta, string $checklist_key): self {
-    return new self($entity->getEntityTypeId(), $entity->uuid(), $field_name, $delta, $checklist_key);
+    $instance_uuid = $entity->get($field_name)->get($delta)->getInstanceUuid();
+    return new self($entity->getEntityTypeId(), $entity->uuid(), $field_name, $delta, $checklist_key, $instance_uuid);
   }
 
   /**
@@ -36,8 +38,7 @@ final class ChecklistWorkspaceAddress {
       $this->hostType,
       $this->hostUuid,
       $this->fieldName,
-      $this->delta,
-      $this->checklistKey,
+      $this->instanceUuid,
     ]));
   }
 

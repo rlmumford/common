@@ -68,11 +68,15 @@ queries by checklist type as well as host ID and checklist key to prevent collis
 between host entity types using the same numeric ID and field name.
 
 Current keys use a field name and optional delta. Delta is a location, not durable
-identity: reordering can retarget an old URL. Before durable bindings are exposed,
-introduce stable checklist-instance identity or enforce a no-reordering policy with
-identity/version checks. A stale address must never execute against replacement
-work. Translation/revision targeting also needs an explicit policy before exposure;
-initial APIs must not infer it from an arbitrary viewer's language or draft context.
+identity: reordering can retarget an old URL. Checklist field items now carry an
+instance UUID, and workspace identity is anchored to it rather than the delta. New
+items persist the UUID when their host is saved; existing items receive one on first
+access and persist it on their next host save. Any adapter that accepts a location
+must bind the expected UUID and compare it to the currently resolved field item
+before acting; an adapter must first ensure the UUID is durable across requests. A
+stale address must never execute against replacement work. Translation/revision
+targeting also needs an explicit policy before exposure; initial APIs must not infer
+it from an arbitrary viewer's language or draft context.
 
 ## Item reads and live action progress
 
