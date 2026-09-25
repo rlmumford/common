@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\checklist\Kernel;
 
+use Drupal\checklist\ChecklistOperationSchemaValidator;
 use Drupal\checklist\ChecklistInterface;
 use Drupal\checklist\Entity\ChecklistItemInterface;
 use Drupal\checklist\ChecklistOperationInputException;
@@ -89,11 +90,11 @@ class ChecklistOperationTest extends KernelTestBase {
     $operation = $dispatcher->discover($checklist, 'operation')['read'];
     $this->assertSame('First', $operation['label']);
     $this->assertSame(
-      \Drupal\checklist\ChecklistOperationSchemaValidator::DIALECT,
+      ChecklistOperationSchemaValidator::DIALECT,
       $operation['parameters_schema']['$schema'],
     );
     $this->assertSame(
-      \Drupal\checklist\ChecklistOperationSchemaValidator::DIALECT,
+      ChecklistOperationSchemaValidator::DIALECT,
       $operation['result_schema']['$schema'],
     );
     $source->setOutcome('value', 'Second');
