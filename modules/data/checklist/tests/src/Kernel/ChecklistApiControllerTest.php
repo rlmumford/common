@@ -125,6 +125,7 @@ class ChecklistApiControllerTest extends KernelTestBase {
    */
   protected function createHost(): User {
     $host = User::create([
+      'uid' => 100,
       'name' => 'Host',
       'status' => 1,
       'work' => [
