@@ -40,6 +40,16 @@ checklist.workspace.acquire:
     _user_is_logged_in: 'TRUE'
     _csrf_request_header_token: 'TRUE'
 
+checklist.workspace.status:
+  path: '/checklist/{entity_type}/{entity_id}/{checklist}/workspace'
+  defaults:
+    _controller: '\Drupal\checklist_api\Controller\ChecklistApiController::workspaceStatus'
+  options:
+    no_cache: 'TRUE'
+  methods: ['GET', 'HEAD']
+  requirements:
+    _format: 'json'
+
 checklist.workspace.renew:
   path: '/checklist/{entity_type}/{entity_id}/{checklist}/workspace'
   defaults:

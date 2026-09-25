@@ -164,11 +164,13 @@ class ChecklistApiControllerTest extends KernelTestBase {
     $route_provider = $this->container->get('router.route_provider');
     $state_route = $route_provider->getRouteByName('checklist.item.state');
     $operation_route = $route_provider->getRouteByName('checklist.item.operation');
+    $workspace_status_route = $route_provider->getRouteByName('checklist.workspace.status');
     $workspace_acquire_route = $route_provider->getRouteByName('checklist.workspace.acquire');
     $workspace_renew_route = $route_provider->getRouteByName('checklist.workspace.renew');
     $workspace_release_route = $route_provider->getRouteByName('checklist.workspace.release');
 
     $this->assertSame(['GET', 'HEAD'], $state_route->getMethods());
+    $this->assertSame(['GET', 'HEAD'], $workspace_status_route->getMethods());
     $this->assertSame(['POST'], $operation_route->getMethods());
     $this->assertSame(['POST'], $workspace_acquire_route->getMethods());
     $this->assertSame(['PATCH'], $workspace_renew_route->getMethods());
@@ -283,6 +285,49 @@ class ChecklistApiControllerTest extends KernelTestBase {
     $this->assertSame(204, $released->getStatusCode());
     $this->assertSame('', $released->getContent());
     $this->assertSame(409, $controller->renewWorkspace($lease_request, 'user', $host->id(), 'work:0')->getStatusCode());
+  }
+
+  /**
+   * Workspace status reads do not acquire or renew a lease.
+   */
+  public function testWorkspaceStatusIsReadOnly(): void {
+    $host = $this->createHost();
+    $controller = ChecklistApiController::create($this->container);
+    $uuid = $host->get('work')->get(0)->getPersistedInstanceUuid();
+    $address = ChecklistWorkspaceAddress::fromEntity($host, 'work', 0, 'work');
+
+    $available = json_decode($controller->workspaceStatus('user', $host->id(), 'work:0')->getContent(), TRUE)['workspace'];
+
+    $this->assertSame($uuid, $available['instance_uuid']);
+    $this->assertFalse($available['locked']);
+    $this->assertFalse($available['owned_by_current_user']);
+    $this->assertNull($available['generation']);
+    $this->assertNull($this->container->get('checklist.workspace_storage')->load($address));
+
+    $lease = json_decode($this->acquireWorkspace($controller, $host, $uuid)->getContent(), TRUE);
+    $before = $this->container->get('checklist.workspace_storage')->load($address);
+    $owned = json_decode($controller->workspaceStatus('user', $host->id(), 'work:0')->getContent(), TRUE)['workspace'];
+    $after = $this->container->get('checklist.workspace_storage')->load($address);
+
+    $this->assertTrue($owned['owned_by_current_user']);
+    $this->assertFalse($owned['locked']);
+    $this->assertSame($lease['generation'], $owned['generation']);
+    $this->assertSame($lease['version'], $owned['version']);
+    $this->assertArrayNotHasKey('owner', $owned);
+    $this->assertSame($before->expires, $after->expires);
+    $this->assertSame($before->generation, $after->generation);
+    $this->assertSame($before->version, $after->version);
+
+    $storage = $this->container->get('checklist.workspace_storage');
+    $storage->release($after);
+    $storage->acquire($address, 999);
+    $locked = json_decode($controller->workspaceStatus('user', $host->id(), 'work:0')->getContent(), TRUE)['workspace'];
+    $this->assertTrue($locked['locked']);
+    $this->assertFalse($locked['owned_by_current_user']);
+    $this->assertNull($locked['generation']);
+    $this->assertNull($locked['version']);
+    $this->assertNull($locked['expires']);
+    $this->assertArrayNotHasKey('owner', $locked);
   }
 
   /**
