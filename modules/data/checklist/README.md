@@ -26,6 +26,40 @@ Enable `checklist_entity_template_ui` for template creation/application authorin
 and embedded or reusable Flexiform editors. See the integration's README for
 details; its UI dependencies are optional at runtime.
 
+## Checklist HTTP API
+
+Enable the optional `checklist_api` module to expose checklist item state and
+action operations over JSON. The base `checklist` module provides the reader,
+operation dispatcher and shared access checks without adding HTTP routes.
+
+The routes address a host entity and one checklist field value:
+
+```text
+GET|HEAD /checklist/{entity_type}/{entity_id}/{field_name[:delta]}/{item_name}
+GET|HEAD /checklist/{entity_type}/{entity_id}/{field_name[:delta]}/{item_name}/operations
+POST     /checklist/{entity_type}/{entity_id}/{field_name[:delta]}/{item_name}/operation
+```
+
+The first route returns the authorized item snapshot, including optional action
+progress. The operations route lists actions currently available to the caller;
+discovery is a snapshot and never grants permission to execute. The POST body
+contains the selected operation and its parameters:
+
+```json
+{
+  "operation": "choose",
+  "parameters": {
+    "choice": "approve",
+    "reason": "The evidence is complete."
+  }
+}
+```
+
+Execution resolves the current host and checklist again, then rechecks host,
+field, item and operation access and readiness. Requests use the site's configured
+authentication. The API module does not require Drupal REST; callers that need
+another transport can use the shared checklist services directly.
+
 ## Outcomes and contexts
 
 Handlers implement `ExpectedOutcomeChecklistItemHandlerInterface` to declare

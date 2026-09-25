@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\checklist\Controller;
+namespace Drupal\checklist_api\Controller;
 
 use Drupal\checklist\ChecklistActionOperationDispatcher;
 use Drupal\checklist\ChecklistItemReader;
