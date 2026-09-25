@@ -73,14 +73,38 @@ class ChecklistApiControllerTest extends KernelTestBase {
     $operations = json_decode($operations_response->getContent(), TRUE);
     $this->assertArrayHasKey('read', $operations['operations']);
     $this->assertSame('Produced', $operations['operations']['read']['label']);
+    $this->assertSame(
+      'http://json-schema.org/draft-07/schema#',
+      $operations['operations']['read']['parameters_schema']['$schema'],
+    );
 
     $request = Request::create('/', 'POST', [], [], [], [], json_encode([
       'operation' => 'read',
-      'parameters' => [],
+      'parameters' => (object) [],
     ]));
     $result = $controller->execute($request, 'user', $host->id(), 'work:0', 'operation');
     $this->assertSame(200, $result->getStatusCode());
     $this->assertSame(['value' => 'Produced', 'optional' => NULL], json_decode($result->getContent(), TRUE));
+  }
+
+  /**
+   * Schema-invalid operation input returns 400 before handler execution.
+   */
+  public function testInvalidOperationParameters(): void {
+    $host = $this->createHost();
+    $source = $host->get('work')->checklist->getItem('source');
+    $source->setOutcome('value', 'Produced');
+    $source->save();
+    $controller = ChecklistApiController::create($this->container);
+    $request = Request::create('/', 'POST', [], [], [], [], json_encode([
+      'operation' => 'read',
+      'parameters' => ['unexpected' => TRUE],
+    ]));
+
+    $response = $controller->execute($request, 'user', $host->id(), 'work:0', 'operation');
+
+    $this->assertSame(400, $response->getStatusCode());
+    $this->assertSame([], $this->container->get('state')->get('checklist_context_test.runs', []));
   }
 
   /**

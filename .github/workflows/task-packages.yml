@@ -57,7 +57,9 @@ jobs:
                   repo['options'] = {'versions': versions}
           path.write_text(json.dumps(data, indent=2))
           PY
-          composer require rlmumford/task:2.x-dev rlmumford/service:2.x-dev rlmumford/note:2.x-dev drupal/entity_template:1.0.x-dev drupal/flexiform:3.0.x-dev drupal/core-dev:^10 --with-all-dependencies --no-interaction
+          # Drupal 10.6.17 permits Twig 3.30, which currently breaks rendering
+          # input.html.twig; keep this consumer on the latest compatible Twig.
+          composer require rlmumford/task:2.x-dev rlmumford/service:2.x-dev rlmumford/note:2.x-dev drupal/entity_template:1.0.x-dev drupal/flexiform:3.0.x-dev drupal/core-dev:^10 twig/twig:3.29.0 --with-all-dependencies --no-interaction
       - name: Test the installed task packages
         working-directory: /tmp/task-consumer
         env:
@@ -90,3 +92,6 @@ jobs:
           server_pid=$!
           trap 'kill "$server_pid"' EXIT
           ../vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php modules/contrib/checklist/contrib/entity_template/tests/src
+      - name: Show the browser server log on failure
+        if: failure()
+        run: tail -n 200 /tmp/checklist-browser.log

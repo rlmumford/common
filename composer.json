@@ -11,7 +11,8 @@
     ],
     "require": {
         "drupal/entity": "^1.4",
-        "drupal/typed_data_plus": "2.0.x-dev"
+        "drupal/typed_data_plus": "2.0.x-dev",
+        "justinrainbow/json-schema": "^6.12"
     },
     "suggest": {
         "aws/aws-sdk-php": "Required by the aws and ebids modules.",

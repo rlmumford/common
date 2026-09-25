@@ -4,6 +4,7 @@ namespace Drupal\checklist_api\Controller;
 
 use Drupal\checklist\ChecklistActionOperationDispatcher;
 use Drupal\checklist\ChecklistItemReader;
+use Drupal\checklist\ChecklistOperationInputException;
 use Drupal\checklist\ChecklistResolver;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -65,17 +66,26 @@ class ChecklistApiController extends ControllerBase {
   public function execute(Request $request, string $entity_type, string $entity_id, string $checklist, string $item_name): JsonResponse {
     $entity = $this->loadEntity($entity_type, $entity_id);
     [$field_name, $delta] = $this->parseChecklistAddress($checklist);
-    $payload = json_decode($request->getContent(), TRUE);
-    if (!is_array($payload) || empty($payload['operation'])) {
+    $payload = json_decode($request->getContent());
+    if (!$payload instanceof \stdClass || empty($payload->operation)) {
       return new JsonResponse(['error' => 'The request must contain an operation.'], 400);
     }
+    $parameters = $payload->parameters ?? new \stdClass();
+    if (!$parameters instanceof \stdClass) {
+      return new JsonResponse(['error' => 'Operation parameters must be a JSON object.'], 400);
+    }
     $checklist_object = $this->resolve($entity, $field_name, $delta, 'update');
-    return new JsonResponse($this->dispatcher->execute(
-      $checklist_object,
-      $item_name,
-      (string) $payload['operation'],
-      is_array($payload['parameters'] ?? NULL) ? $payload['parameters'] : [],
-    ));
+    try {
+      return new JsonResponse($this->dispatcher->execute(
+        $checklist_object,
+        $item_name,
+        (string) $payload->operation,
+        $parameters,
+      ));
+    }
+    catch (ChecklistOperationInputException) {
+      return new JsonResponse(['error' => 'Operation parameters do not match the required schema.'], 400);
+    }
   }
 
   /**
