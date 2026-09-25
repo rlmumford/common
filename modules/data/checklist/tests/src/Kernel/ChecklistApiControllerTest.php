@@ -3,7 +3,7 @@
 namespace Drupal\Tests\checklist\Kernel;
 
 use Drupal\checklist_api\Controller\ChecklistApiController;
-use Drupal\Core\Field\FieldableEntityInterface;
+use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\KernelTests\KernelTestBase;
