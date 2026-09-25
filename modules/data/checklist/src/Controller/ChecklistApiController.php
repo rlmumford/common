@@ -19,7 +19,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class ChecklistApiController extends ControllerBase {
 
   public function __construct(
-    protected EntityTypeManagerInterface $entityTypeManager,
+    protected EntityTypeManagerInterface $entityManager,
     protected ChecklistItemReader $itemReader,
     protected ChecklistResolver $resolver,
     protected ChecklistActionOperationDispatcher $dispatcher,
@@ -82,10 +82,10 @@ class ChecklistApiController extends ControllerBase {
    * Loads a fieldable host entity.
    */
   protected function loadEntity(string $entity_type, string $entity_id): FieldableEntityInterface {
-    if (!$this->entityTypeManager->hasDefinition($entity_type)) {
+    if (!$this->entityManager->hasDefinition($entity_type)) {
       throw new NotFoundHttpException('Checklist host not found.');
     }
-    $entity = $this->entityTypeManager->getStorage($entity_type)->load($entity_id);
+    $entity = $this->entityManager->getStorage($entity_type)->load($entity_id);
     if (!$entity instanceof FieldableEntityInterface) {
       throw new NotFoundHttpException('Checklist host not found.');
     }
