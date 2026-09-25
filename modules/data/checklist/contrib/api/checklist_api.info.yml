@@ -1,0 +1,7 @@
+name: Checklist API
+description: Exposes checklist item state and operations over HTTP.
+type: module
+core_version_requirement: ^10 || ^11
+package: RLMumford
+dependencies:
+  - checklist:checklist

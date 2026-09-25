@@ -1,0 +1,27 @@
+checklist.item.state:
+  path: '/checklist/{entity_type}/{entity_id}/{checklist}/{item_name}'
+  defaults:
+    _controller: '\Drupal\checklist_api\Controller\ChecklistApiController::itemState'
+  options:
+    no_cache: 'TRUE'
+  methods: ['GET', 'HEAD']
+  requirements:
+    _format: 'json'
+checklist.item.operations:
+  path: '/checklist/{entity_type}/{entity_id}/{checklist}/{item_name}/operations'
+  defaults:
+    _controller: '\Drupal\checklist_api\Controller\ChecklistApiController::operations'
+  options:
+    no_cache: 'TRUE'
+  methods: ['GET', 'HEAD']
+  requirements:
+    _format: 'json'
+checklist.item.operation:
+  path: '/checklist/{entity_type}/{entity_id}/{checklist}/{item_name}/operation'
+  defaults:
+    _controller: '\Drupal\checklist_api\Controller\ChecklistApiController::execute'
+  options:
+    no_cache: 'TRUE'
+  methods: ['POST']
+  requirements:
+    _format: 'json'
