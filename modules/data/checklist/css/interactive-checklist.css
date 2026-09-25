@@ -3,6 +3,37 @@ div.checklist-item-row-form-wrapper {
   display: inline-block;
 }
 
+.checklist-workspace--resources {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 35%);
+  align-items: start;
+  gap: 1.5rem;
+}
+
+.checklist-resource-pane {
+  border: 1px solid #d3d7db;
+  border-radius: 0.25rem;
+  padding: 1rem;
+  min-width: 0;
+}
+
+.checklist-resource-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.checklist-resource-content[hidden] {
+  display: none;
+}
+
+@media (max-width: 48rem) {
+  .checklist-workspace--resources {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .ci-inprogress .ci-row-form input[type="checkbox"]:not(:checked) {
   height: 0;
   border: none;

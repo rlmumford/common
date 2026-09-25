@@ -1,4 +1,34 @@
 (function ($, Drupal, drupalSettings) {
+  Drupal.behaviors.checklistResourcePane = {
+    attach: function (context) {
+      once('checklist-resource-pane', '.checklist-workspace', context).forEach(function (workspace) {
+        workspace.addEventListener('click', function (event) {
+          var control = event.target.closest('[data-resource-key]');
+          if (!control || !workspace.contains(control)) {
+            return;
+          }
+
+          var key = control.dataset.resourceKey;
+          var panel = Array.from(workspace.querySelectorAll('.checklist-resource-content'))
+            .find(function (candidate) { return candidate.dataset.resourceKey === key; });
+          if (!panel) {
+            return;
+          }
+
+          workspace.querySelectorAll('.checklist-resource-content').forEach(function (candidate) {
+            candidate.hidden = candidate !== panel;
+          });
+          workspace.querySelectorAll('.checklist-resource-select').forEach(function (candidate) {
+            candidate.setAttribute('aria-pressed', candidate.dataset.resourceKey === key ? 'true' : 'false');
+          });
+          workspace.querySelectorAll('.checklist-resource-trigger').forEach(function (candidate) {
+            candidate.setAttribute('aria-pressed', candidate.dataset.resourceKey === key ? 'true' : 'false');
+          });
+        });
+      });
+    }
+  };
+
   Drupal.AjaxCommands.prototype.startNextItem = function (ajax, response, status) {
     if (!response.selector) {
       return false;

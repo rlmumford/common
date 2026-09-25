@@ -3,8 +3,10 @@
 namespace Drupal\checklist_reader_test\Plugin\ChecklistItemHandler;
 
 use Drupal\checklist\ChecklistActionState;
+use Drupal\checklist\ChecklistActionResource;
 use Drupal\checklist\Entity\ChecklistItemInterface;
 use Drupal\checklist\Plugin\ChecklistItemHandler\ActionOperationsChecklistItemHandlerInterface;
+use Drupal\checklist\Plugin\ChecklistItemHandler\ActionResourceChecklistItemHandlerInterface;
 use Drupal\checklist\Plugin\ChecklistItemHandler\ActionStateChecklistItemHandlerInterface;
 use Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerInterface;
 use Drupal\checklist\Plugin\ChecklistItemHandler\ContextAwareChecklistItemHandlerBase;
@@ -20,7 +22,7 @@ use Drupal\checklist\Plugin\ChecklistItemHandler\ContextAwareChecklistItemHandle
  *   }
  * )
  */
-class Progress extends ContextAwareChecklistItemHandlerBase implements ActionStateChecklistItemHandlerInterface, ActionOperationsChecklistItemHandlerInterface {
+class Progress extends ContextAwareChecklistItemHandlerBase implements ActionStateChecklistItemHandlerInterface, ActionOperationsChecklistItemHandlerInterface, ActionResourceChecklistItemHandlerInterface {
 
   /**
    * {@inheritdoc}
@@ -66,6 +68,21 @@ class Progress extends ContextAwareChecklistItemHandlerBase implements ActionSta
    */
   public function executeActionOperation(string $operation, array $parameters): array {
     throw new \LogicException('Inaccessible work must not execute.');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getActionResource(): ?ChecklistActionResource {
+    if (empty($this->configuration['resource_key'])) {
+      return NULL;
+    }
+    return new ChecklistActionResource(
+      $this->configuration['resource_key'],
+      ['#plain_text' => $this->configuration['resource_content'] ?? 'Context value: ' . $this->getContextValue('value')],
+      $this->configuration['resource_label'] ?? NULL,
+      $this->configuration['resource_weight'] ?? 0,
+    );
   }
 
 }

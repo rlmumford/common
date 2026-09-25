@@ -52,33 +52,46 @@ class ChecklistItemReaderTest extends KernelTestBase {
   /**
    * Creates a host with context-driven progress, a hidden item and a decision.
    */
-  protected function host(array $configuration = [], bool $save = TRUE): User {
+  protected function host(array $configuration = [], bool $save = TRUE, string $name = 'Host'): User {
+    $default_items = [
+      'progress' => [
+        'title' => 'Process content',
+        'handler' => 'reader_progress',
+        'handler_configuration' => $configuration + ['context_mapping' => ['value' => 'checklist:entity.name.value']],
+      ],
+      'hidden' => [
+        'title' => 'Hidden work',
+        'handler' => 'reader_progress',
+        'handler_configuration' => [
+          'fail_on_read' => TRUE,
+          'resource_key' => $configuration['hidden_resource_key'] ?? NULL,
+          'context_mapping' => ['value' => 'checklist:entity.name.value'],
+        ],
+      ],
+      'decision' => [
+        'title' => 'Review',
+        'handler' => 'decision',
+        'handler_configuration' => ['question' => 'Approve?', 'options' => ['yes' => ['label' => 'Yes']]],
+      ],
+    ];
+    if (!empty($configuration['add_shared_resource'])) {
+      $default_items['resource_peer'] = [
+        'title' => 'Review resource',
+        'handler' => 'reader_progress',
+        'handler_configuration' => [
+          'resource_key' => $configuration['resource_key'],
+          'resource_label' => 'Latest resource',
+          'context_mapping' => ['value' => 'checklist:entity.name.value'],
+        ],
+      ];
+    }
     $host = User::create([
-      'name' => 'Host',
+      'name' => $name,
       'status' => 1,
       'work' => [
         'id' => 'context_test',
         'configuration' => [
-          'default_items' => [
-            'progress' => [
-              'title' => 'Process content',
-              'handler' => 'reader_progress',
-              'handler_configuration' => $configuration + ['context_mapping' => ['value' => 'checklist:entity.name.value']],
-            ],
-            'hidden' => [
-              'title' => 'Hidden work',
-              'handler' => 'reader_progress',
-              'handler_configuration' => [
-                'fail_on_read' => TRUE,
-                'context_mapping' => ['value' => 'checklist:entity.name.value'],
-              ],
-            ],
-            'decision' => [
-              'title' => 'Review',
-              'handler' => 'decision',
-              'handler_configuration' => ['question' => 'Approve?', 'options' => ['yes' => ['label' => 'Yes']]],
-            ],
-          ],
+          'default_items' => $default_items,
         ],
       ],
     ]);
@@ -214,6 +227,50 @@ class ChecklistItemReaderTest extends KernelTestBase {
       $this->assertSame($status, $snapshot['status']);
       $this->assertFalse($snapshot['actionable']);
     }
+  }
+
+  /**
+   * Item resources use current contexts, gates, and item visibility.
+   */
+  public function testActionResources(): void {
+    $host = $this->host([
+      'resource_key' => 'shared-case-file',
+      'resource_label' => 'Case file',
+      'resource_weight' => 10,
+      'add_shared_resource' => TRUE,
+    ]);
+    $checklist = $this->container->get('checklist.resolver')->resolve($host, 'work');
+    $resources = $this->container->get('checklist.action_resource_collector')->collect($checklist);
+    $this->assertSame(['shared-case-file'], array_keys($resources));
+    $this->assertSame(['progress', 'resource_peer'], $resources['shared-case-file']['owners']);
+    $this->assertSame('Latest resource', $resources['shared-case-file']['resource']->getLabel());
+    $this->assertSame(
+      ['#plain_text' => 'Context value: Host'],
+      $resources['shared-case-file']['resource']->getContent()
+    );
+
+    // A false actionability gate removes unfinished resources.
+    $gated_host = $this->host([
+      'resource_key' => 'gated',
+      'conditions' => ['actionability' => ['id' => 'condition_constant:false']],
+    ], TRUE, 'Gated host');
+    $gated_checklist = $this->container->get('checklist.resolver')->resolve($gated_host, 'work');
+    $this->assertSame([], $this->container->get('checklist.action_resource_collector')->collect($gated_checklist));
+
+    // Terminal items retain their resource even when the actionability gate is
+    // now false, so completed/failed work remains available for review.
+    $gated_checklist->getItem('progress')->setComplete();
+    $terminal_resources = $this->container->get('checklist.action_resource_collector')->collect($gated_checklist);
+    $this->assertArrayHasKey('gated', $terminal_resources);
+    $gated_checklist->getItem('progress')->setFailed();
+    $failed_resources = $this->container->get('checklist.action_resource_collector')->collect($gated_checklist);
+    $this->assertArrayHasKey('gated', $failed_resources);
+
+    // Hidden items cannot leak their resource pane content.
+    $hidden_host = $this->host(['hidden_resource_key' => 'private'], TRUE, 'Hidden host');
+    $hidden_checklist = $this->container->get('checklist.resolver')->resolve($hidden_host, 'work');
+    $this->container->get('state')->set('checklist_reader_test.grant_item_access', FALSE);
+    $this->assertArrayNotHasKey('private', $this->container->get('checklist.action_resource_collector')->collect($hidden_checklist));
   }
 
   /**
