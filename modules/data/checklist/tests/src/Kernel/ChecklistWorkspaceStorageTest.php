@@ -42,7 +42,7 @@ class ChecklistWorkspaceStorageTest extends KernelTestBase {
    */
   public function testOwnershipAndFencing(): void {
     $storage = $this->container->get('checklist.workspace_storage');
-    $address = new ChecklistWorkspaceAddress('user', 'host-uuid', 'work', 0, 'main');
+    $address = new ChecklistWorkspaceAddress('user', 'host-uuid', 'work', 0, 'main', 'instance-uuid-1');
     $first = $storage->acquire($address, 11, 30);
     $this->assertSame(1, $first->generation);
     $this->assertTrue($storage->isCurrent($first));
@@ -63,7 +63,7 @@ class ChecklistWorkspaceStorageTest extends KernelTestBase {
    */
   public function testExpiryAllowsReacquisition(): void {
     $storage = $this->container->get('checklist.workspace_storage');
-    $address = new ChecklistWorkspaceAddress('user', 'host-uuid', 'work', 0, 'main');
+    $address = new ChecklistWorkspaceAddress('user', 'host-uuid', 'work', 0, 'main', 'instance-uuid-1');
     $first = $storage->acquire($address, 11, 30);
     $this->now = 1030;
     $second = $storage->acquire($address, 22, 30);
@@ -77,13 +77,25 @@ class ChecklistWorkspaceStorageTest extends KernelTestBase {
    */
   public function testVersionFence(): void {
     $storage = $this->container->get('checklist.workspace_storage');
-    $address = new ChecklistWorkspaceAddress('user', 'host-uuid', 'work', 0, 'main');
+    $address = new ChecklistWorkspaceAddress('user', 'host-uuid', 'work', 0, 'main', 'instance-uuid-1');
     $lease = $storage->acquire($address, 11, 30);
     $next = $storage->advanceVersion($lease, 0);
     $this->assertSame(1, $next->version);
     $this->assertConflict(fn() => $storage->advanceVersion($lease, 0));
     $this->now = 1030;
     $this->assertConflict(fn() => $storage->advanceVersion($next, 1));
+  }
+
+  /**
+   * A moved checklist has the same identity; a replacement has another.
+   */
+  public function testInstanceIdentitySurvivesReorderingAndChangesOnReplacement(): void {
+    $first = new ChecklistWorkspaceAddress('user', 'host-uuid', 'multiple', 0, 'multiple:0', 'first-instance');
+    $moved = new ChecklistWorkspaceAddress('user', 'host-uuid', 'multiple', 1, 'multiple:1', 'first-instance');
+    $replacement = new ChecklistWorkspaceAddress('user', 'host-uuid', 'multiple', 0, 'multiple:0', 'replacement-instance');
+
+    $this->assertSame($first->id(), $moved->id());
+    $this->assertNotSame($first->id(), $replacement->id());
   }
 
   /**

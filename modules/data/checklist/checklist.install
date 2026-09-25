@@ -98,6 +98,7 @@ function checklist_schema() {
       'field_name' => ['type' => 'varchar_ascii', 'length' => 128, 'not null' => TRUE],
       'delta' => $number,
       'checklist_key' => ['type' => 'varchar_ascii', 'length' => 128, 'not null' => TRUE],
+      'instance_uuid' => ['not null' => FALSE] + $uuid,
       'owner' => ['default' => 0] + $number,
       'generation' => $number,
       'version' => $number,
@@ -108,7 +109,7 @@ function checklist_schema() {
     'primary key' => ['id'],
     'indexes' => [
       'lease' => ['owner', 'generation', 'expires'],
-      'address' => ['host_type', 'host_uuid', 'field_name', 'delta', 'checklist_key'],
+      'address' => ['host_type', 'host_uuid', 'field_name', 'instance_uuid'],
     ],
   ];
   return $schema;
@@ -161,5 +162,31 @@ function checklist_update_10005() {
   $definition = checklist_schema()['checklist_workspace'];
   if (!$schema->tableExists('checklist_workspace')) {
     $schema->createTable('checklist_workspace', $definition);
+  }
+}
+
+/**
+ * Adds stable checklist-instance identities to field items and workspaces.
+ */
+function checklist_update_10006() {
+  $schema = \Drupal::database()->schema();
+  if ($schema->tableExists('checklist_workspace') && !$schema->fieldExists('checklist_workspace', 'instance_uuid')) {
+    $schema->addField('checklist_workspace', 'instance_uuid', checklist_schema()['checklist_workspace']['fields']['instance_uuid']);
+    if ($schema->indexExists('checklist_workspace', 'address')) {
+      $schema->dropIndex('checklist_workspace', 'address');
+    }
+    $schema->addIndex('checklist_workspace', 'address', checklist_schema()['checklist_workspace']['indexes']['address'], checklist_schema()['checklist_workspace']);
+  }
+
+  // The field type schema changed. Ask Drupal's entity definition updater to
+  // add the nullable column to every installed checklist field storage.
+  $entity_field_manager = \Drupal::service('entity_field.manager');
+  $definition_manager = \Drupal::entityDefinitionUpdateManager();
+  foreach (array_keys(\Drupal::entityTypeManager()->getDefinitions()) as $entity_type_id) {
+    foreach ($entity_field_manager->getFieldStorageDefinitions($entity_type_id) as $definition) {
+      if ($definition->getType() === 'checklist' && $definition_manager->getFieldStorageDefinition($definition->getName(), $entity_type_id)) {
+        $definition_manager->updateFieldStorageDefinition($definition);
+      }
+    }
   }
 }
