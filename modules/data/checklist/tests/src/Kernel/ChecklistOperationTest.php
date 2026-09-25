@@ -4,6 +4,7 @@ namespace Drupal\Tests\checklist\Kernel;
 
 use Drupal\checklist\ChecklistInterface;
 use Drupal\checklist\Entity\ChecklistItemInterface;
+use Drupal\checklist\ChecklistOperationInputException;
 use Drupal\Component\Plugin\Exception\ContextException;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
@@ -85,7 +86,16 @@ class ChecklistOperationTest extends KernelTestBase {
     $source = $checklist->getItem('source');
     $source->setOutcome('value', 'First');
     $source->setOutcome('details', ['label' => 'Optional']);
-    $this->assertSame('First', $dispatcher->discover($checklist, 'operation')['read']['label']);
+    $operation = $dispatcher->discover($checklist, 'operation')['read'];
+    $this->assertSame('First', $operation['label']);
+    $this->assertSame(
+      \Drupal\checklist\ChecklistOperationSchemaValidator::DIALECT,
+      $operation['parameters_schema']['$schema'],
+    );
+    $this->assertSame(
+      \Drupal\checklist\ChecklistOperationSchemaValidator::DIALECT,
+      $operation['result_schema']['$schema'],
+    );
     $source->setOutcome('value', 'Second');
     $source->setOutcome('details', NULL);
     $this->assertSame(['value' => 'Second', 'optional' => NULL], $dispatcher->execute($checklist, 'operation', 'read', []));
@@ -98,6 +108,40 @@ class ChecklistOperationTest extends KernelTestBase {
     catch (\DomainException) {
       $this->assertSame([['Second', NULL]], $this->container->get('state')->get('checklist_context_test.runs'));
       $this->assertFalse($checklist->getItem('operation')->getHandler()->getContext('value')->hasContextValue());
+    }
+  }
+
+  /**
+   * Parameter schemas reject invalid input before a handler can act.
+   */
+  public function testInvalidOperationInputDoesNotRunHandler(): void {
+    $checklist = $this->checklist();
+    $checklist->getItem('source')->setOutcome('value', 'Ready');
+    $dispatcher = $this->container->get('checklist.action_operation_dispatcher');
+
+    try {
+      $dispatcher->execute($checklist, 'operation', 'read', ['extra' => 'rejected']);
+      $this->fail('Additional properties must be rejected by the advertised schema.');
+    }
+    catch (ChecklistOperationInputException) {
+      $this->assertSame([], $this->container->get('state')->get('checklist_context_test.runs', []));
+    }
+  }
+
+  /**
+   * A handler result that violates its declared contract is a server error.
+   */
+  public function testInvalidOperationResultIsRejected(): void {
+    $checklist = $this->checklist(['invalid_result' => TRUE]);
+    $checklist->getItem('source')->setOutcome('value', 'Ready');
+    $dispatcher = $this->container->get('checklist.action_operation_dispatcher');
+
+    try {
+      $dispatcher->execute($checklist, 'operation', 'read', []);
+      $this->fail('A result outside the declared schema must fail.');
+    }
+    catch (\UnexpectedValueException) {
+      $this->assertSame([['Ready', NULL]], $this->container->get('state')->get('checklist_context_test.runs'));
     }
   }
 

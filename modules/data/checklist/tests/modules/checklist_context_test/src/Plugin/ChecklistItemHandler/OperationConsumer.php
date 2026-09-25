@@ -30,6 +30,15 @@ class OperationConsumer extends Consumer implements ActionOperationsChecklistIte
         'label' => $this->getContextValue('value'),
         'description' => 'Read the assigned contexts.',
         'parameters_schema' => ['type' => 'object', 'additionalProperties' => FALSE],
+        'result_schema' => [
+          'type' => 'object',
+          'properties' => [
+            'value' => ['type' => 'string'],
+            'optional' => ['type' => ['string', 'null']],
+          ],
+          'required' => ['value', 'optional'],
+          'additionalProperties' => FALSE,
+        ],
       ],
     ];
   }
@@ -42,7 +51,11 @@ class OperationConsumer extends Consumer implements ActionOperationsChecklistIte
       throw new \InvalidArgumentException('No parameters expected.');
     }
     $this->action();
-    return ['value' => $this->getContextValue('value'), 'optional' => $this->getContextValue('optional')];
+    $result = ['value' => $this->getContextValue('value'), 'optional' => $this->getContextValue('optional')];
+    if (!empty($this->getConfiguration()['invalid_result'])) {
+      $result['unexpected'] = TRUE;
+    }
+    return $result;
   }
 
 }

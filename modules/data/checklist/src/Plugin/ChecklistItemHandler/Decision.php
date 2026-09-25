@@ -180,6 +180,15 @@ class Decision extends ChecklistItemHandlerBase implements InteractiveChecklistI
           'required' => ['choice'],
           'additionalProperties' => FALSE,
         ],
+        'result_schema' => [
+          'type' => 'object',
+          'properties' => [
+            'decision' => ['type' => 'string', 'enum' => array_keys($options)],
+            'reason' => ['type' => 'string'],
+          ],
+          'required' => ['decision', 'reason'],
+          'additionalProperties' => FALSE,
+        ],
       ],
     ];
     if ($reason_options) {

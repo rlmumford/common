@@ -31,7 +31,9 @@ services:
     arguments: ['@plugin.manager.condition', '@checklist.context_collector', '@typed_data_plus.context_handler']
   checklist.action_operation_dispatcher:
     class: Drupal\checklist\ChecklistActionOperationDispatcher
-    arguments: ['@checklist.context_preparer']
+    arguments: ['@checklist.context_preparer', '@checklist.operation_schema_validator']
+  checklist.operation_schema_validator:
+    class: Drupal\checklist\ChecklistOperationSchemaValidator
   checklist.resolver:
     class: Drupal\checklist\ChecklistResolver
     arguments: ['@current_user']

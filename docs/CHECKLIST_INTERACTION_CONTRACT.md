@@ -37,6 +37,14 @@ Example execution body:
 }
 ```
 
+Operation discovery includes parameter schemas using JSON Schema Draft 7. The
+dispatcher validates request parameters against the current schema immediately
+before invoking a handler, then validates the structured result when that
+operation declares `result_schema`. Result schemas are optional while existing
+handlers adopt the contract. Schema validation does not replace handler checks
+for current permissions, domain rules, or side-effect safety. API adapters return
+a generic client error for invalid parameters and do not expose validator internals.
+
 Ownership/version preconditions accompany mutations; their exact wire format will
 be fixed with the workspace implementation. A successful synchronous invocation
 returns a structured result and refreshed item/operation links. Durable execution
