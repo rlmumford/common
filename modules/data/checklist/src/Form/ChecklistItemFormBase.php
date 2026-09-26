@@ -3,6 +3,7 @@
 namespace Drupal\checklist\Form;
 
 use Drupal\checklist\ChecklistInterface;
+use Drupal\checklist\ChecklistActionResourcePaneUpdater;
 use Drupal\checklist\ChecklistContextPreparer;
 use Drupal\checklist\ChecklistTempstoreRepository;
 use Drupal\checklist\Entity\ChecklistItemInterface;
@@ -78,7 +79,8 @@ abstract class ChecklistItemFormBase extends FormBase implements BaseFormIdInter
       $container->get('plugin_form.factory'),
       $container->get('checklist.tempstore_repository'),
       $container->get('context.handler'),
-      $container->get('checklist.context_preparer')
+      $container->get('checklist.context_preparer'),
+      $container->get('checklist.action_resource_pane_updater')
     );
   }
 
@@ -93,12 +95,15 @@ abstract class ChecklistItemFormBase extends FormBase implements BaseFormIdInter
    *   The context handler service.
    * @param \Drupal\checklist\ChecklistContextPreparer $contextPreparer
    *   The checklist context preparer.
+   * @param \Drupal\checklist\ChecklistActionResourcePaneUpdater $resourcePaneUpdater
+   *   The AJAX resource pane updater.
    */
   public function __construct(
     PluginFormFactoryInterface $plugin_form_factory,
     ChecklistTempstoreRepository $checklist_tempstore_repository,
     ContextHandlerInterface $context_handler,
     protected ChecklistContextPreparer $contextPreparer,
+    protected ChecklistActionResourcePaneUpdater $resourcePaneUpdater,
   ) {
     $this->pluginFormFactory = $plugin_form_factory;
     $this->checklistTempstoreRepo = $checklist_tempstore_repository;

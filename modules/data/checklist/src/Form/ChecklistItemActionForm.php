@@ -7,6 +7,7 @@ use Drupal\checklist\Ajax\StartNextItemCommand;
 use Drupal\checklist\ChecklistContextCollectorInterface;
 use Drupal\checklist\ChecklistTempstoreRepository;
 use Drupal\checklist\ChecklistContextPreparer;
+use Drupal\checklist\ChecklistActionResourcePaneUpdater;
 use Drupal\Component\Plugin\Exception\ContextException;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\InsertCommand;
@@ -69,7 +70,8 @@ class ChecklistItemActionForm extends ChecklistItemFormBase {
       $container->get('renderer'),
       $container->get('context.handler'),
       $container->get('checklist.context_collector'),
-      $container->get('checklist.context_preparer')
+      $container->get('checklist.context_preparer'),
+      $container->get('checklist.action_resource_pane_updater')
     );
   }
 
@@ -92,6 +94,8 @@ class ChecklistItemActionForm extends ChecklistItemFormBase {
    *   The context collector service.
    * @param \Drupal\checklist\ChecklistContextPreparer $context_preparer
    *   The checklist context preparer.
+   * @param \Drupal\checklist\ChecklistActionResourcePaneUpdater $resource_pane_updater
+   *   The AJAX resource pane updater.
    */
   public function __construct(
     PluginFormFactoryInterface $plugin_form_factory,
@@ -102,8 +106,9 @@ class ChecklistItemActionForm extends ChecklistItemFormBase {
     ContextHandlerInterface $context_handler,
     ChecklistContextCollectorInterface $context_collector,
     ChecklistContextPreparer $context_preparer,
+    ChecklistActionResourcePaneUpdater $resource_pane_updater,
   ) {
-    parent::__construct($plugin_form_factory, $checklist_tempstore_repository, $context_handler, $context_preparer);
+    parent::__construct($plugin_form_factory, $checklist_tempstore_repository, $context_handler, $context_preparer, $resource_pane_updater);
     $this->classResolver = $class_resolver;
     $this->formBuilder = $form_builder;
     $this->renderer = $renderer;
@@ -224,6 +229,8 @@ class ChecklistItemActionForm extends ChecklistItemFormBase {
 
       $response->addCommand(new StartNextItemCommand($this->item));
     }
+
+    $this->resourcePaneUpdater->refresh($response, $checklist);
 
     return $response;
   }

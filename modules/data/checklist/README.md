@@ -75,8 +75,10 @@ may keep contributing a resource for review or recovery. Items that use the same
 key share one pane; every owning item name is retained and the last eligible item
 in checklist order supplies the current content. The formatter renders the
 resources in an accessible right-side pane and supports selecting a resource
-from either its checklist row or the pane navigation. Resource refresh after
-AJAX actions and job-level default resources are separate integration work.
+from either its checklist row or the pane navigation. Row start, complete, and
+reverse actions, plus action form completion, rebuild the pane in their AJAX
+response. Job-level default resources and refreshes from plugin-specific AJAX
+rebuilds remain separate integration work.
 
 ## Outcomes and contexts
 

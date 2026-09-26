@@ -29,6 +29,11 @@ services:
   checklist.action_resource_collector:
     class: Drupal\checklist\ChecklistActionResourceCollector
     arguments: ['@checklist.context_preparer']
+  checklist.action_resource_pane_builder:
+    class: Drupal\checklist\ChecklistActionResourcePaneBuilder
+  checklist.action_resource_pane_updater:
+    class: Drupal\checklist\ChecklistActionResourcePaneUpdater
+    arguments: ['@checklist.action_resource_collector', '@checklist.action_resource_pane_builder', '@renderer']
   checklist.condition_evaluator:
     class: Drupal\checklist\ChecklistConditionEvaluator
     arguments: ['@plugin.manager.condition', '@checklist.context_collector', '@typed_data_plus.context_handler']

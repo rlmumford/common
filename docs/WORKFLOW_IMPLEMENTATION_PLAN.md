@@ -457,9 +457,10 @@ denials without granting full entity-view access. The action-operation dispatche
 uses these checks too. Tests cover read-only viewers, hidden items, denied field
 access, missing contexts, safe progress, no execution/persistence and unsaved hosts.
 HTTP item and operation routes plus API workspace status and write fencing are
-implemented. The base checklist now has a per-item render-array resource contract
-and an interactive split pane with shared-key ownership. Job/default resources,
-refreshing the pane after actions, attempts/ownership projection and precise cache
+implemented. The base checklist now has a per-item render-array resource contract,
+an interactive split pane with shared-key ownership, and pane refreshes after row
+and action completion callbacks. Job/default resources, refreshes during
+plugin-specific AJAX rebuilds, attempts/ownership projection and precise cache
 aggregation remain open; read snapshots must not be cached across users or changes.
 
 Deliverables:
