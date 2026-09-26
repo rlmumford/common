@@ -17,4 +17,9 @@ final class ChecklistEvents {
    */
   const COLLECT_CONFIG_CONTEXTS = 'checklist.collect_config_contexts';
 
+  /**
+   * Event for collecting contextual resources for a checklist workspace.
+   */
+  const COLLECT_RESOURCES = 'checklist.collect_resources';
+
 }

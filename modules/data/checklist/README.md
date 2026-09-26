@@ -77,8 +77,11 @@ in checklist order supplies the current content. The formatter renders the
 resources in an accessible right-side pane and supports selecting a resource
 from either its checklist row or the pane navigation. Row start, complete, and
 reverse actions, plus action form completion, rebuild the pane in their AJAX
-response. Job-level default resources and refreshes from plugin-specific AJAX
-rebuilds remain separate integration work.
+response. Tasks with job configuration also include task resources in the pane
+through the task resource manager, preserving its context mapping, access checks,
+and cache metadata. Sites displaying the legacy Task Resources block beside the
+checklist pane may choose one rendering location to avoid duplicate content.
+Refreshes from plugin-specific AJAX rebuilds remain separate integration work.
 
 ## Outcomes and contexts
 

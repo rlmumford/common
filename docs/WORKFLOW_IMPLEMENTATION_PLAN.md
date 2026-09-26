@@ -459,14 +459,16 @@ access, missing contexts, safe progress, no execution/persistence and unsaved ho
 HTTP item and operation routes plus API workspace status and write fencing are
 implemented. The base checklist now has a per-item render-array resource contract,
 an interactive split pane with shared-key ownership, and pane refreshes after row
-and action completion callbacks. Job/default resources, refreshes during
-plugin-specific AJAX rebuilds, attempts/ownership projection and precise cache
-aggregation remain open; read snapshots must not be cached across users or changes.
+and action completion callbacks. Job resources now enter the shared pane through
+the existing task resource manager, preserving task contexts, access checks and
+cache metadata. Refreshes during plugin-specific AJAX rebuilds,
+attempts/ownership projection and precise cache aggregation remain open; read
+snapshots must not be cached across users or changes.
 
 Deliverables:
 
 - Generic split checklist/action and resource-pane layout in reusable modules.
-- Job/default and item resources, shared keys, contextual mappings, focus/refresh
+- Job and item resources, shared keys, contextual mappings, focus/refresh
   commands and access/cache metadata. No phone/chat integration dependency.
 - AJAX updates for newly added/removed/blocked items and refreshed resources.
 - Usable forms/API descriptions for decisions, stateful operations and waiting work;
