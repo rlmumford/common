@@ -6,6 +6,7 @@ use Drupal\checklist\ChecklistActionState;
 use Drupal\Component\Plugin\Exception\ContextException;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\user\Entity\Role;
 use Drupal\user\Entity\User;
@@ -248,6 +249,19 @@ class ChecklistItemReaderTest extends KernelTestBase {
       ['#plain_text' => 'Context value: Host'],
       $resources['shared-case-file']['resource']->getContent()
     );
+    $builder = $this->container->get('checklist.action_resource_pane_builder');
+    $pane = $builder->build($resources, $checklist);
+    $this->assertSame($builder->getPaneId($checklist), $pane['#attributes']['id']);
+    $this->assertSame('true', $pane['#attributes']['data-has-resources']);
+    $response = new AjaxResponse();
+    $this->container->get('checklist.action_resource_pane_updater')->refresh($response, $checklist);
+    $commands = $response->getCommands();
+    $this->assertSame('insert', $commands[0]['command']);
+    $this->assertSame('replaceWith', $commands[0]['method']);
+    $this->assertSame('#' . $builder->getPaneId($checklist), $commands[0]['selector']);
+    $this->assertSame('invoke', $commands[1]['command']);
+    $this->assertSame('addClass', $commands[1]['method']);
+    $this->assertSame('#' . $builder->getWorkspaceId($checklist), $commands[1]['selector']);
 
     // A false actionability gate removes unfinished resources.
     $gated_host = $this->host([
@@ -256,6 +270,12 @@ class ChecklistItemReaderTest extends KernelTestBase {
     ], TRUE, 'Gated host');
     $gated_checklist = $this->container->get('checklist.resolver')->resolve($gated_host, 'work');
     $this->assertSame([], $this->container->get('checklist.action_resource_collector')->collect($gated_checklist));
+    $empty_pane = $builder->build([], $gated_checklist);
+    $this->assertSame('false', $empty_pane['#attributes']['data-has-resources']);
+    $empty_response = new AjaxResponse();
+    $this->container->get('checklist.action_resource_pane_updater')->refresh($empty_response, $gated_checklist);
+    $empty_commands = $empty_response->getCommands();
+    $this->assertSame('removeClass', $empty_commands[1]['method']);
 
     // Terminal items retain their resource even when the actionability gate is
     // now false, so completed/failed work remains available for review.

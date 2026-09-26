@@ -4,6 +4,7 @@ namespace Drupal\checklist\Plugin\Field\FieldFormatter;
 
 use Drupal\checklist\ChecklistContextCollectorInterface;
 use Drupal\checklist\ChecklistActionResourceCollectorInterface;
+use Drupal\checklist\ChecklistActionResourcePaneBuilder;
 use Drupal\checklist\ChecklistTempstoreRepository;
 use Drupal\checklist\Form\ChecklistCompleteForm;
 use Drupal\checklist\Form\ChecklistItemRowForm;
@@ -11,7 +12,6 @@ use Drupal\checklist\Plugin\ChecklistItemHandler\SimplyCheckableChecklistItemHan
 use Drupal\checklist\PluginForm\CustomFormObjectClassInterface;
 use Drupal\Component\Plugin\Exception\ContextException;
 use Drupal\Component\Plugin\Exception\MissingValueContextException;
-use Drupal\Component\Utility\Html;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
 use Drupal\Core\Entity\Plugin\DataType\EntityAdapter;
 use Drupal\Core\Field\FieldDefinitionInterface;
@@ -85,6 +85,13 @@ class InteractiveChecklist extends FormatterBase {
   protected ChecklistActionResourceCollectorInterface $resourceCollector;
 
   /**
+   * Builds stable resource pane markup.
+   *
+   * @var \Drupal\checklist\ChecklistActionResourcePaneBuilder
+   */
+  protected ChecklistActionResourcePaneBuilder $resourcePaneBuilder;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
@@ -101,7 +108,8 @@ class InteractiveChecklist extends FormatterBase {
       $container->get('form_builder'),
       $container->get('context.handler'),
       $container->get('checklist.context_collector'),
-      $container->get('checklist.action_resource_collector')
+      $container->get('checklist.action_resource_collector'),
+      $container->get('checklist.action_resource_pane_builder')
     ))->setPlaceholderResolver($container->get('typed_data.placeholder_resolver'));
   }
 
@@ -134,6 +142,8 @@ class InteractiveChecklist extends FormatterBase {
    *   The context collector.
    * @param \Drupal\checklist\ChecklistActionResourceCollectorInterface $resource_collector
    *   The action resource collector.
+   * @param \Drupal\checklist\ChecklistActionResourcePaneBuilder $resource_pane_builder
+   *   The resource pane builder.
    */
   public function __construct(
     string $plugin_id,
@@ -149,6 +159,7 @@ class InteractiveChecklist extends FormatterBase {
     ContextHandlerInterface $context_handler,
     ChecklistContextCollectorInterface $context_collector,
     ChecklistActionResourceCollectorInterface $resource_collector,
+    ChecklistActionResourcePaneBuilder $resource_pane_builder,
   ) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings);
 
@@ -158,6 +169,7 @@ class InteractiveChecklist extends FormatterBase {
     $this->contextHandler = $context_handler;
     $this->contextCollector = $context_collector;
     $this->resourceCollector = $resource_collector;
+    $this->resourcePaneBuilder = $resource_pane_builder;
   }
 
   /**
@@ -214,8 +226,6 @@ class InteractiveChecklist extends FormatterBase {
           $resource_keys_by_item[$owner] = $resource_key;
         }
       }
-      $pane_id = Html::getId('checklist-resource-pane-' . $items->getEntity()->uuid() . '-' . $items->getName() . '-' . $delta);
-
       $id = $checklist->getEntity()->getEntityTypeId()
         . '--' . str_replace(':', '--', $checklist->getKey());
 
@@ -338,7 +348,7 @@ class InteractiveChecklist extends FormatterBase {
               'class' => ['checklist-resource-trigger'],
               'type' => 'button',
               'data-resource-key' => $resource_key,
-              'aria-controls' => $this->getResourcePanelId($pane_id, $resource_key),
+              'aria-controls' => $this->resourcePaneBuilder->getResourcePanelId($checklist, $resource_key),
               'aria-pressed' => $resource_key === $initial_resource_key ? 'true' : 'false',
             ],
           ];
@@ -387,7 +397,10 @@ class InteractiveChecklist extends FormatterBase {
 
       $elements[$delta] = [
         '#type' => 'container',
-        '#attributes' => ['class' => ['checklist-workspace']],
+        '#attributes' => [
+          'id' => $this->resourcePaneBuilder->getWorkspaceId($checklist),
+          'class' => ['checklist-workspace'],
+        ],
         'actions' => [
           '#type' => 'container',
           '#attributes' => ['class' => ['checklist-workspace-actions']],
@@ -405,96 +418,13 @@ class InteractiveChecklist extends FormatterBase {
           ],
         ],
       ];
-      if ($resource_pane = $this->buildResourcePane($collected_resources, $pane_id)) {
-        $elements[$delta]['resources'] = $resource_pane;
+      $elements[$delta]['resources'] = $this->resourcePaneBuilder->build($collected_resources, $checklist);
+      if ($collected_resources) {
         $elements[$delta]['#attributes']['class'][] = 'checklist-workspace--resources';
       }
     }
 
     return $elements;
-  }
-
-  /**
-   * Builds a navigable pane for resources contributed by checklist items.
-   *
-   * @param array $resources
-   *   Collected resources, keyed by their shared key.
-   * @param string $pane_id
-   *   Unique DOM ID for this checklist pane.
-   *
-   * @return array|null
-   *   The resource pane render array, or NULL when no resources are available.
-   */
-  protected function buildResourcePane(array $resources, string $pane_id): ?array {
-    if (!$resources) {
-      return NULL;
-    }
-
-    $navigation = [];
-    $panels = [];
-    $first = TRUE;
-    foreach ($resources as $key => $entry) {
-      $resource = $entry['resource'];
-      $panel_id = $this->getResourcePanelId($pane_id, $key);
-      $navigation[] = [
-        '#type' => 'button',
-        '#value' => $resource->getLabel() ?? reset($entry['owners']),
-        '#attributes' => [
-          'type' => 'button',
-          'class' => ['checklist-resource-select'],
-          'data-resource-key' => $key,
-          'aria-controls' => $panel_id,
-          'aria-pressed' => $first ? 'true' : 'false',
-        ],
-      ];
-      $panels[$key] = [
-        '#type' => 'container',
-        '#weight' => $resource->getWeight(),
-        '#attributes' => [
-          'id' => $panel_id,
-          'class' => ['checklist-resource-content'],
-          'data-resource-key' => $key,
-          'data-resource-owners' => implode(' ', $entry['owners']),
-          'data-resource-closeable' => $resource->isCloseable() ? 'true' : 'false',
-          'data-resource-icon' => $resource->getIcon() ?? '',
-          'data-resource-pinned' => $resource->isPinned() ? 'true' : 'false',
-          'hidden' => !$first,
-        ],
-        'content' => $resource->getContent(),
-      ];
-      $first = FALSE;
-    }
-
-    return [
-      '#type' => 'container',
-      '#attributes' => [
-        'id' => $pane_id,
-        'class' => ['checklist-resource-pane'],
-        'role' => 'complementary',
-        'aria-label' => $this->t('Checklist resources'),
-      ],
-      'navigation' => [
-        '#type' => 'container',
-        '#attributes' => ['class' => ['checklist-resource-navigation'], 'role' => 'group'],
-        'items' => $navigation,
-      ],
-      'panels' => $panels,
-    ];
-  }
-
-  /**
-   * Creates a stable, collision-resistant DOM ID for a resource panel.
-   *
-   * @param string $pane_id
-   *   The checklist pane ID.
-   * @param string $key
-   *   The resource's shared key.
-   *
-   * @return string
-   *   A sanitized panel ID.
-   */
-  protected function getResourcePanelId(string $pane_id, string $key): string {
-    return Html::getId($pane_id . '-' . $key . '-' . substr(hash('sha256', $key), 0, 8));
   }
 
 }
