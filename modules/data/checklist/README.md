@@ -60,6 +60,24 @@ field, item and operation access and readiness. Requests use the site's configur
 authentication. The API module does not require Drupal REST; callers that need
 another transport can use the shared checklist services directly.
 
+## Checklist action resources
+
+Handlers can implement `ActionResourceChecklistItemHandlerInterface` and return a
+`ChecklistActionResource` from `getActionResource()`. The resource contains a
+shared key, render-array content, optional label, ordering weight, and display
+metadata. Keep content as a render array so Drupal can apply access checks and
+cache metadata from nested elements.
+
+The interactive formatter collects resources only for items visible under the
+`view action state` access operation and prepares the item's current contexts
+before checking its applicability and actionability. Completed and failed items
+may keep contributing a resource for review or recovery. Items that use the same
+key share one pane; every owning item name is retained and the last eligible item
+in checklist order supplies the current content. The formatter renders the
+resources in an accessible right-side pane and supports selecting a resource
+from either its checklist row or the pane navigation. Resource refresh after
+AJAX actions and job-level default resources are separate integration work.
+
 ## Outcomes and contexts
 
 Handlers implement `ExpectedOutcomeChecklistItemHandlerInterface` to declare
