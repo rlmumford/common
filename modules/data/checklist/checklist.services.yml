@@ -28,7 +28,7 @@ services:
     arguments: ['@checklist.context_collector', '@typed_data_plus.context_handler']
   checklist.action_resource_collector:
     class: Drupal\checklist\ChecklistActionResourceCollector
-    arguments: ['@checklist.context_preparer']
+    arguments: ['@checklist.context_preparer', '@event_dispatcher']
   checklist.action_resource_pane_builder:
     class: Drupal\checklist\ChecklistActionResourcePaneBuilder
   checklist.action_resource_pane_updater:
