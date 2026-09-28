@@ -85,6 +85,7 @@ class ChecklistActionResourcePaneBuilder {
           'class' => ['checklist-resource-content'],
           'data-resource-key' => $key,
           'data-resource-owners' => implode(' ', $entry['owners']),
+          'data-resource-label' => $resource->getLabel() ?? reset($entry['owners']),
           'data-resource-closeable' => $resource->isCloseable() ? 'true' : 'false',
           'data-resource-icon' => $resource->getIcon() ?? '',
           'data-resource-pinned' => $resource->isPinned() ? 'true' : 'false',
@@ -100,6 +101,7 @@ class ChecklistActionResourcePaneBuilder {
       '#attributes' => [
         'id' => $pane_id,
         'class' => ['checklist-resource-pane'],
+        'data-checklist-workspace-panel' => 'resources',
         'role' => 'complementary',
         'aria-label' => new TranslatableMarkup('Checklist resources'),
         'data-has-resources' => 'true',

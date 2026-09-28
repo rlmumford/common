@@ -83,6 +83,12 @@ and cache metadata. Sites displaying the legacy Task Resources block beside the
 checklist pane may choose one rendering location to avoid duplicate content.
 Refreshes from plugin-specific AJAX rebuilds remain separate integration work.
 
+On narrow screens, the workspace adds a bottom navigation bar with a Checklist
+tab, up to four tabs for pinned resources or resources owned by the active item,
+and a Resources tab when additional resources are available. The Resources tab
+opens the full resource selector, so resources outside the promoted set remain
+available. Desktop keeps the two-column checklist and resource pane.
+
 ## Outcomes and contexts
 
 Handlers implement `ExpectedOutcomeChecklistItemHandlerInterface` to declare

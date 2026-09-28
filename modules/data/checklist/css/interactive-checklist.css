@@ -28,9 +28,59 @@ div.checklist-item-row-form-wrapper {
   display: none;
 }
 
+.checklist-workspace-mobile-navigation {
+  grid-column: 1 / -1;
+}
+
 @media (max-width: 48rem) {
   .checklist-workspace--resources {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .checklist-workspace--mobile-navigation[data-checklist-workspace-view="checklist"] [data-checklist-workspace-panel="resources"],
+  .checklist-workspace--mobile-navigation[data-checklist-workspace-view="resources"] [data-checklist-workspace-panel="checklist"],
+  .checklist-workspace--mobile-navigation[data-checklist-workspace-view^="resource:"] [data-checklist-workspace-panel="checklist"] {
+    display: none;
+  }
+
+  .checklist-workspace--mobile-navigation:not([data-checklist-workspace-view="resources"]) .checklist-resource-navigation {
+    display: none;
+  }
+
+  .checklist-workspace-mobile-navigation:not([hidden]) {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    display: flex;
+    gap: 0.25rem;
+    overflow-x: auto;
+    padding: 0.5rem 0.5rem calc(0.5rem + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid #d3d7db;
+    background: #fff;
+    box-shadow: 0 -0.25rem 0.75rem rgb(0 0 0 / 12%);
+  }
+
+  .checklist-workspace-mobile-tab {
+    flex: 1 0 auto;
+    min-width: 4.5rem;
+    min-height: 2.75rem;
+    border: 0;
+    border-radius: 0.25rem;
+    background: transparent;
+    color: #222;
+    font: inherit;
+    padding: 0.4rem 0.65rem;
+  }
+
+  .checklist-workspace-mobile-tab[aria-pressed="true"] {
+    background: #e7edf2;
+    box-shadow: inset 0 -0.2rem #285b7a;
+    font-weight: 600;
+  }
+
+  .checklist-resource-pane {
+    border: 0;
+    padding: 0.75rem 0;
   }
 }
 

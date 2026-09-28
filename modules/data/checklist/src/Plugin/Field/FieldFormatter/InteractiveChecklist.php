@@ -401,9 +401,32 @@ class InteractiveChecklist extends FormatterBase {
           'id' => $this->resourcePaneBuilder->getWorkspaceId($checklist),
           'class' => ['checklist-workspace'],
         ],
+        'mobile_navigation' => [
+          '#type' => 'container',
+          '#weight' => 100,
+          '#attributes' => [
+            'class' => ['checklist-workspace-mobile-navigation'],
+            'role' => 'navigation',
+            'aria-label' => $this->t('Checklist navigation'),
+            'hidden' => TRUE,
+          ],
+          'checklist' => [
+            '#type' => 'button',
+            '#value' => $this->t('Checklist'),
+            '#attributes' => [
+              'type' => 'button',
+              'class' => ['checklist-workspace-mobile-tab'],
+              'data-checklist-workspace-view' => 'checklist',
+              'aria-pressed' => 'true',
+            ],
+          ],
+        ],
         'actions' => [
           '#type' => 'container',
-          '#attributes' => ['class' => ['checklist-workspace-actions']],
+          '#attributes' => [
+            'class' => ['checklist-workspace-actions'],
+            'data-checklist-workspace-panel' => 'checklist',
+          ],
           'checklist' => $element,
           'completion_form' => [
             '#type' => 'container',

@@ -1,31 +1,172 @@
 (function ($, Drupal, drupalSettings) {
+  var MAX_MOBILE_RESOURCE_TABS = 4;
+
+  function setActiveResource(workspace, key) {
+    var panel = Array.from(workspace.querySelectorAll('.checklist-resource-content'))
+      .find(function (candidate) { return candidate.dataset.resourceKey === key; });
+    if (!panel) {
+      return false;
+    }
+
+    workspace.querySelectorAll('.checklist-resource-content').forEach(function (candidate) {
+      candidate.hidden = candidate !== panel;
+    });
+    workspace.querySelectorAll('.checklist-resource-select, .checklist-workspace-mobile-tab[data-resource-key]')
+      .forEach(function (candidate) {
+        candidate.setAttribute('aria-pressed', candidate.dataset.resourceKey === key ? 'true' : 'false');
+      });
+    return true;
+  }
+
+  function buildMobileNavigation(workspace) {
+    var navigation = workspace.querySelector('.checklist-workspace-mobile-navigation');
+    var panels = Array.from(workspace.querySelectorAll('.checklist-resource-content'));
+    if (!navigation) {
+      return;
+    }
+
+    navigation.querySelectorAll('[data-mobile-generated]').forEach(function (button) {
+      button.remove();
+    });
+    if (!panels.length) {
+      navigation.hidden = true;
+      workspace.classList.remove('checklist-workspace--mobile-navigation');
+      delete workspace.dataset.checklistWorkspaceView;
+      return;
+    }
+
+    navigation.hidden = false;
+    workspace.classList.add('checklist-workspace--mobile-navigation');
+    var activeItem = workspace.querySelector('.ci-inprogress[data-ciname]');
+    var activeName = activeItem ? activeItem.dataset.ciname : null;
+    var promoted = panels.filter(function (panel) {
+      var owners = (panel.dataset.resourceOwners || '').split(/\s+/);
+      return panel.dataset.resourcePinned === 'true' || (activeName && owners.indexOf(activeName) !== -1);
+    }).slice(0, MAX_MOBILE_RESOURCE_TABS);
+    var promotedKeys = promoted.map(function (panel) { return panel.dataset.resourceKey; });
+
+    promoted.forEach(function (panel) {
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'checklist-workspace-mobile-tab';
+      button.textContent = panel.dataset.resourceLabel || panel.dataset.resourceKey;
+      button.dataset.checklistWorkspaceView = 'resource';
+      button.dataset.resourceKey = panel.dataset.resourceKey;
+      button.dataset.resourceIcon = panel.dataset.resourceIcon;
+      button.dataset.mobileGenerated = 'true';
+      button.setAttribute('aria-controls', panel.id);
+      button.setAttribute('aria-pressed', 'false');
+      navigation.appendChild(button);
+    });
+
+    if (panels.length > promotedKeys.length) {
+      var more = document.createElement('button');
+      more.type = 'button';
+      more.className = 'checklist-workspace-mobile-tab checklist-workspace-mobile-tab--resources';
+      more.textContent = Drupal.t('Resources');
+      more.dataset.checklistWorkspaceView = 'resources';
+      more.dataset.mobileGenerated = 'true';
+      more.setAttribute('aria-controls', workspace.querySelector('.checklist-resource-pane').id);
+      more.setAttribute('aria-pressed', 'false');
+      navigation.appendChild(more);
+    }
+
+    var currentView = workspace.dataset.checklistWorkspaceView;
+    if (currentView && currentView.indexOf('resource:') === 0) {
+      var currentKey = currentView.substring('resource:'.length);
+      if (!setActiveResource(workspace, currentKey)) {
+        workspace.dataset.checklistWorkspaceView = 'checklist';
+      }
+      else if (promotedKeys.indexOf(currentKey) === -1) {
+        workspace.dataset.checklistWorkspaceView = 'resources';
+      }
+    }
+    else if (currentView !== 'resources') {
+      workspace.dataset.checklistWorkspaceView = 'checklist';
+    }
+    else {
+      var firstOther = panels.find(function (panel) {
+        return promotedKeys.indexOf(panel.dataset.resourceKey) === -1;
+      });
+      setActiveResource(workspace, (firstOther || panels[0]).dataset.resourceKey);
+    }
+    currentView = workspace.dataset.checklistWorkspaceView;
+    navigation.querySelectorAll('.checklist-workspace-mobile-tab').forEach(function (button) {
+      var selected = button.dataset.checklistWorkspaceView === currentView;
+      if (button.dataset.resourceKey) {
+        selected = currentView === 'resource:' + button.dataset.resourceKey;
+      }
+      button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+    });
+    // Keep the computed collection available to the click handler without
+    // repeating resource ownership and pinning checks for every interaction.
+    workspace._checklistPromotedResourceKeys = promotedKeys;
+  }
+
   Drupal.behaviors.checklistResourcePane = {
     attach: function (context) {
       once('checklist-resource-pane', '.checklist-workspace', context).forEach(function (workspace) {
         workspace.addEventListener('click', function (event) {
+          var viewControl = event.target.closest('[data-checklist-workspace-view]');
+          if (viewControl && workspace.contains(viewControl)) {
+            var view = viewControl.dataset.checklistWorkspaceView;
+            if (view === 'checklist') {
+              workspace.dataset.checklistWorkspaceView = 'checklist';
+            }
+            else if (view === 'resources') {
+              workspace.dataset.checklistWorkspaceView = 'resources';
+              var promoted = workspace._checklistPromotedResourceKeys || [];
+              var firstOther = Array.from(workspace.querySelectorAll('.checklist-resource-content'))
+                .find(function (panel) { return promoted.indexOf(panel.dataset.resourceKey) === -1; });
+              var firstPanel = firstOther || workspace.querySelector('.checklist-resource-content');
+              if (firstPanel) {
+                setActiveResource(workspace, firstPanel.dataset.resourceKey);
+              }
+            }
+            else if (view === 'resource') {
+              workspace.dataset.checklistWorkspaceView = 'resource:' + viewControl.dataset.resourceKey;
+              setActiveResource(workspace, viewControl.dataset.resourceKey);
+            }
+            workspace.querySelectorAll('.checklist-workspace-mobile-tab').forEach(function (button) {
+              var selected = button.dataset.checklistWorkspaceView === workspace.dataset.checklistWorkspaceView;
+              if (button.dataset.resourceKey) {
+                selected = workspace.dataset.checklistWorkspaceView === 'resource:' + button.dataset.resourceKey;
+              }
+              button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+            });
+            return;
+          }
+
           var control = event.target.closest('[data-resource-key]');
           if (!control || !workspace.contains(control)) {
             return;
           }
 
-          var key = control.dataset.resourceKey;
-          var panel = Array.from(workspace.querySelectorAll('.checklist-resource-content'))
-            .find(function (candidate) { return candidate.dataset.resourceKey === key; });
-          if (!panel) {
+          if (!setActiveResource(workspace, control.dataset.resourceKey)) {
             return;
           }
-
-          workspace.querySelectorAll('.checklist-resource-content').forEach(function (candidate) {
-            candidate.hidden = candidate !== panel;
-          });
-          workspace.querySelectorAll('.checklist-resource-select').forEach(function (candidate) {
-            candidate.setAttribute('aria-pressed', candidate.dataset.resourceKey === key ? 'true' : 'false');
-          });
-          workspace.querySelectorAll('.checklist-resource-trigger').forEach(function (candidate) {
-            candidate.setAttribute('aria-pressed', candidate.dataset.resourceKey === key ? 'true' : 'false');
+          if (control.classList.contains('checklist-resource-select')) {
+            workspace.dataset.checklistWorkspaceView = 'resources';
+          }
+          else if (control.classList.contains('checklist-resource-trigger')) {
+            var isPromoted = (workspace._checklistPromotedResourceKeys || []).indexOf(control.dataset.resourceKey) !== -1;
+            workspace.dataset.checklistWorkspaceView = isPromoted
+              ? 'resource:' + control.dataset.resourceKey
+              : 'resources';
+          }
+          workspace.querySelectorAll('.checklist-workspace-mobile-tab').forEach(function (button) {
+            var selected = button.dataset.checklistWorkspaceView === workspace.dataset.checklistWorkspaceView;
+            if (button.dataset.resourceKey) {
+              selected = workspace.dataset.checklistWorkspaceView === 'resource:' + button.dataset.resourceKey;
+            }
+            button.setAttribute('aria-pressed', selected ? 'true' : 'false');
           });
         });
       });
+
+      var workspace = context.matches && context.matches('.checklist-workspace') ? context : context.closest && context.closest('.checklist-workspace');
+      (workspace ? [workspace] : context.querySelectorAll ? context.querySelectorAll('.checklist-workspace') : [])
+        .forEach(buildMobileNavigation);
     }
   };
 
