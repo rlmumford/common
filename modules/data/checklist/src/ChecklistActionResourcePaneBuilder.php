@@ -60,25 +60,14 @@ class ChecklistActionResourcePaneBuilder {
     uasort($resources, static function (array $a, array $b): int {
       return $a['resource']->getWeight() <=> $b['resource']->getWeight();
     });
-    $navigation = [];
     $panels = [];
     $first = TRUE;
     foreach ($resources as $key => $entry) {
       $resource = $entry['resource'];
       $panel_id = $this->getResourcePanelId($checklist, $key);
-      $navigation[] = [
-        '#type' => 'button',
-        '#value' => $resource->getLabel() ?? reset($entry['owners']),
-        '#attributes' => [
-          'type' => 'button',
-          'class' => ['checklist-resource-select'],
-          'data-resource-key' => $key,
-          'aria-controls' => $panel_id,
-          'aria-pressed' => $first ? 'true' : 'false',
-        ],
-      ];
       $panels[$key] = [
-        '#type' => 'container',
+        '#type' => 'html_tag',
+        '#tag' => 'details',
         '#weight' => $resource->getWeight(),
         '#attributes' => [
           'id' => $panel_id,
@@ -89,9 +78,19 @@ class ChecklistActionResourcePaneBuilder {
           'data-resource-closeable' => $resource->isCloseable() ? 'true' : 'false',
           'data-resource-icon' => $resource->getIcon() ?? '',
           'data-resource-pinned' => $resource->isPinned() ? 'true' : 'false',
-          'hidden' => !$first,
+          'name' => $pane_id,
+          'open' => $first,
         ],
-        'content' => $resource->getContent(),
+        'summary' => [
+          '#type' => 'html_tag',
+          '#tag' => 'summary',
+          '#value' => Html::escape((string) ($resource->getLabel() ?? reset($entry['owners']))),
+        ],
+        'content' => [
+          '#type' => 'container',
+          '#attributes' => ['class' => ['checklist-resource-body']],
+          'resource' => $resource->getContent(),
+        ],
       ];
       $first = FALSE;
     }
@@ -107,11 +106,6 @@ class ChecklistActionResourcePaneBuilder {
         'data-has-resources' => 'true',
       ],
       '#cache' => ['max-age' => 0],
-      'navigation' => [
-        '#type' => 'container',
-        '#attributes' => ['class' => ['checklist-resource-navigation'], 'role' => 'group'],
-        'items' => $navigation,
-      ],
       'panels' => $panels,
     ];
   }

@@ -8,13 +8,10 @@
       return false;
     }
 
+    panel.open = true;
     workspace.querySelectorAll('.checklist-resource-content').forEach(function (candidate) {
-      candidate.hidden = candidate !== panel;
+      candidate.dataset.mobileSelected = candidate === panel ? 'true' : 'false';
     });
-    workspace.querySelectorAll('.checklist-resource-select, .checklist-workspace-mobile-tab[data-resource-key]')
-      .forEach(function (candidate) {
-        candidate.setAttribute('aria-pressed', candidate.dataset.resourceKey === key ? 'true' : 'false');
-      });
     return true;
   }
 
@@ -43,6 +40,9 @@
       var owners = (panel.dataset.resourceOwners || '').split(/\s+/);
       return panel.dataset.resourcePinned === 'true' || (activeName && owners.indexOf(activeName) !== -1);
     }).slice(0, MAX_MOBILE_RESOURCE_TABS);
+    panels.forEach(function (panel) {
+      panel.dataset.mobilePromoted = promoted.indexOf(panel) !== -1 ? 'true' : 'false';
+    });
     var promotedKeys = promoted.map(function (panel) { return panel.dataset.resourceKey; });
 
     promoted.forEach(function (panel) {
@@ -88,7 +88,12 @@
       var firstOther = panels.find(function (panel) {
         return promotedKeys.indexOf(panel.dataset.resourceKey) === -1;
       });
-      setActiveResource(workspace, (firstOther || panels[0]).dataset.resourceKey);
+      if (firstOther) {
+        setActiveResource(workspace, firstOther.dataset.resourceKey);
+      }
+      else {
+        workspace.dataset.checklistWorkspaceView = 'checklist';
+      }
     }
     currentView = workspace.dataset.checklistWorkspaceView;
     navigation.querySelectorAll('.checklist-workspace-mobile-tab').forEach(function (button) {
@@ -107,7 +112,7 @@
     attach: function (context) {
       once('checklist-resource-pane', '.checklist-workspace', context).forEach(function (workspace) {
         workspace.addEventListener('click', function (event) {
-          var viewControl = event.target.closest('[data-checklist-workspace-view]');
+          var viewControl = event.target.closest('.checklist-workspace-mobile-tab');
           if (viewControl && workspace.contains(viewControl)) {
             var view = viewControl.dataset.checklistWorkspaceView;
             if (view === 'checklist') {
@@ -134,33 +139,7 @@
               }
               button.setAttribute('aria-pressed', selected ? 'true' : 'false');
             });
-            return;
           }
-
-          var control = event.target.closest('[data-resource-key]');
-          if (!control || !workspace.contains(control)) {
-            return;
-          }
-
-          if (!setActiveResource(workspace, control.dataset.resourceKey)) {
-            return;
-          }
-          if (control.classList.contains('checklist-resource-select')) {
-            workspace.dataset.checklistWorkspaceView = 'resources';
-          }
-          else if (control.classList.contains('checklist-resource-trigger')) {
-            var isPromoted = (workspace._checklistPromotedResourceKeys || []).indexOf(control.dataset.resourceKey) !== -1;
-            workspace.dataset.checklistWorkspaceView = isPromoted
-              ? 'resource:' + control.dataset.resourceKey
-              : 'resources';
-          }
-          workspace.querySelectorAll('.checklist-workspace-mobile-tab').forEach(function (button) {
-            var selected = button.dataset.checklistWorkspaceView === workspace.dataset.checklistWorkspaceView;
-            if (button.dataset.resourceKey) {
-              selected = workspace.dataset.checklistWorkspaceView === 'resource:' + button.dataset.resourceKey;
-            }
-            button.setAttribute('aria-pressed', selected ? 'true' : 'false');
-          });
         });
       });
 

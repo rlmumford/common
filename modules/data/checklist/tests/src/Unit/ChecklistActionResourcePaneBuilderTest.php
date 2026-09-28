@@ -60,6 +60,11 @@ class ChecklistActionResourcePaneBuilderTest extends UnitTestCase {
       ],
     ], $checklist);
 
+    $this->assertSame('details', $pane['panels']['employment']['#tag']);
+    $this->assertSame('summary', $pane['panels']['employment']['summary']['#tag']);
+    $this->assertTrue($pane['panels']['employment']['#attributes']['open']);
+    $this->assertSame($pane['#attributes']['id'], $pane['panels']['employment']['#attributes']['name']);
+    $this->assertArrayNotHasKey('navigation', $pane);
     $this->assertSame('resources', $pane['#attributes']['data-checklist-workspace-panel']);
     $this->assertSame('Employment', $pane['panels']['employment']['#attributes']['data-resource-label']);
     $this->assertSame('employment_review', $pane['panels']['employment']['#attributes']['data-resource-owners']);
