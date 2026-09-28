@@ -37,6 +37,10 @@ div.checklist-item-row-form-wrapper {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .checklist-workspace--mobile-navigation {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
+
   .checklist-workspace--mobile-navigation[data-checklist-workspace-view="checklist"] [data-checklist-workspace-panel="resources"],
   .checklist-workspace--mobile-navigation[data-checklist-workspace-view="resources"] [data-checklist-workspace-panel="checklist"],
   .checklist-workspace--mobile-navigation[data-checklist-workspace-view^="resource:"] [data-checklist-workspace-panel="checklist"] {
@@ -48,11 +52,15 @@ div.checklist-item-row-form-wrapper {
   }
 
   .checklist-workspace-mobile-navigation:not([hidden]) {
-    position: sticky;
+    position: fixed;
+    left: 0;
+    right: 0;
     bottom: 0;
     z-index: 5;
     display: flex;
-    gap: 0.25rem;
+    box-sizing: border-box;
+    width: 100%;
+    gap: 0.125rem;
     overflow-x: auto;
     padding: 0.5rem 0.5rem calc(0.5rem + env(safe-area-inset-bottom, 0px));
     border-top: 1px solid #d3d7db;
@@ -61,15 +69,22 @@ div.checklist-item-row-form-wrapper {
   }
 
   .checklist-workspace-mobile-tab {
-    flex: 1 0 auto;
-    min-width: 4.5rem;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 8rem;
     min-height: 2.75rem;
     border: 0;
     border-radius: 0.25rem;
     background: transparent;
     color: #222;
     font: inherit;
-    padding: 0.4rem 0.65rem;
+    font-size: 0.75rem;
+    letter-spacing: normal;
+    text-transform: none;
+    padding: 0.4rem 0.35rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .checklist-workspace-mobile-tab[aria-pressed="true"] {
