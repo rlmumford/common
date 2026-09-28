@@ -3,6 +3,9 @@
 namespace Drupal\checklist;
 
 use Drupal\checklist\Plugin\ChecklistItemHandler\ActionResourceChecklistItemHandlerInterface;
+use Drupal\checklist\Event\ChecklistCollectResourcesEvent;
+use Drupal\checklist\Event\ChecklistEvents;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Collects item resources for a checklist's contextual resource pane.
@@ -14,9 +17,12 @@ class ChecklistActionResourceCollector implements ChecklistActionResourceCollect
    *
    * @param \Drupal\checklist\ChecklistContextPreparer $contextPreparer
    *   Prepares current contexts before gates and resources are evaluated.
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
+   *   Dispatches resource collection to integration modules.
    */
   public function __construct(
     protected ChecklistContextPreparer $contextPreparer,
+    protected EventDispatcherInterface $eventDispatcher,
   ) {}
 
   /**
@@ -63,7 +69,10 @@ class ChecklistActionResourceCollector implements ChecklistActionResourceCollect
       }
       $resources[$resource->getKey()]['owners'][] = $name;
     }
-    return $resources;
+    $event = new ChecklistCollectResourcesEvent($checklist, $resources);
+    $this->eventDispatcher->dispatch($event, ChecklistEvents::COLLECT_RESOURCES);
+
+    return $event->getResources();
   }
 
 }
