@@ -49,8 +49,8 @@ class Progress extends ContextAwareChecklistItemHandlerBase implements ActionSta
     return new ChecklistActionState(
       stage: $state['stage'] ?? 'running',
       message: 'Processing ' . $this->getContextValue('value'),
-      completed: $state['completed'] ?? 2,
-      total: $state['total'] ?? 5,
+      completed: array_key_exists('completed', $state) ? $state['completed'] : 2,
+      total: array_key_exists('total', $state) ? $state['total'] : 5,
       updatedAt: $state['updated_at'] ?? 1234567890,
       inputRequired: $state['input_required'] ?? FALSE,
     );

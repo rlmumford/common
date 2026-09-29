@@ -3,6 +3,7 @@
 namespace Drupal\checklist;
 
 use Drupal\checklist\Entity\ChecklistItemInterface;
+use Drupal\checklist\Plugin\ChecklistItemHandler\ActionStateChecklistItemHandlerInterface;
 use Drupal\checklist\Form\ChecklistItemRowForm;
 use Drupal\checklist\Plugin\ChecklistItemHandler\SimplyCheckableChecklistItemHandler;
 use Drupal\checklist\PluginForm\CustomFormObjectClassInterface;
@@ -10,6 +11,7 @@ use Drupal\Core\DependencyInjection\ClassResolverInterface;
 use Drupal\Core\Entity\Plugin\DataType\EntityAdapter;
 use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Render\BubbleableMetadata;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 use Drupal\typed_data\PlaceholderResolverInterface;
 
@@ -132,6 +134,12 @@ class ChecklistRowBuilder {
         ],
       ],
     ];
+    if ($available && $handler instanceof ActionStateChecklistItemHandlerInterface && ($progress = $handler->getActionState())) {
+      $progress_build = $this->buildProgress($progress);
+      if ($progress_build) {
+        $row['progress'] = $progress_build;
+      }
+    }
     $cache_metadata->applyTo($row);
 
     if ($checklist_item->getHandler() instanceof SimplyCheckableChecklistItemHandler) {
@@ -149,6 +157,63 @@ class ChecklistRowBuilder {
       ];
     }
     return $row;
+  }
+
+  /**
+   * Renders only the handler's public progress projection, never raw state.
+   */
+  protected function buildProgress(ChecklistActionState $progress): array {
+    if (($progress->message === NULL || $progress->message === '') && $progress->completed === NULL && !$progress->inputRequired) {
+      return [];
+    }
+    $build = [
+      '#type' => 'container',
+      '#wrapper_attributes' => ['class' => ['checklist-item-progress-cell']],
+      '#attributes' => [
+        'class' => ['checklist-item-progress'],
+        'role' => 'status',
+        'aria-live' => 'polite',
+        'aria-atomic' => 'true',
+      ],
+    ];
+    if ($progress->message !== NULL && $progress->message !== '') {
+      $build['message'] = ['#plain_text' => $progress->message];
+    }
+    if ($progress->completed !== NULL && $progress->total !== NULL && $progress->total > 0) {
+      $build['meter'] = [
+        '#type' => 'html_tag',
+        '#tag' => 'progress',
+        '#attributes' => [
+          'value' => $progress->completed,
+          'max' => $progress->total,
+          'aria-label' => new TranslatableMarkup('Item progress'),
+        ],
+      ];
+      $build['count'] = [
+        '#type' => 'html_tag',
+        '#tag' => 'span',
+        '#value' => new TranslatableMarkup('@completed of @total', [
+          '@completed' => $progress->completed,
+          '@total' => $progress->total,
+        ]),
+      ];
+    }
+    elseif ($progress->completed !== NULL) {
+      $build['count'] = [
+        '#type' => 'html_tag',
+        '#tag' => 'span',
+        '#value' => new TranslatableMarkup('@completed completed', ['@completed' => $progress->completed]),
+      ];
+    }
+    if ($progress->inputRequired) {
+      $build['input_required'] = [
+        '#type' => 'html_tag',
+        '#tag' => 'strong',
+        '#value' => new TranslatableMarkup('Input required'),
+      ];
+    }
+    // Machine stage names and timestamps are not translated display messages.
+    return $build;
   }
 
 }

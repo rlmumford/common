@@ -400,6 +400,11 @@ applies; this is not a replacement for durable attempt/state storage.
 
 ## Item reads and action progress
 
+Checklist rows display the same safe handler progress: a message, completed/total
+counts and an input-required indicator. Progress refreshes on page loads and existing
+item AJAX callbacks; this does not add polling or execute work when viewing a row.
+Raw intermediate state is never rendered.
+
 `checklist.item_reader` provides transport-independent read snapshots:
 
 ```php

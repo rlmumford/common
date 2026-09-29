@@ -239,6 +239,53 @@ class ChecklistItemReaderTest extends KernelTestBase {
   }
 
   /**
+   * Rows show escaped public progress and refresh it without executing work.
+   */
+  public function testRowProgress(): void {
+    $host = $this->host([], TRUE, '<script>private()</script>');
+    $checklist = $this->container->get('checklist.resolver')->resolve($host, 'work');
+    $builder = $this->container->get('checklist.row_builder');
+    $row = $builder->build($checklist, $checklist->getItem('progress'));
+    $markup = (string) $this->container->get('renderer')->renderRoot($row['progress']);
+    $this->assertStringContainsString('value="2"', $markup);
+    $this->assertStringContainsString('max="5"', $markup);
+    $this->assertStringContainsString('2 of 5', $markup);
+    $this->assertStringContainsString('&lt;script&gt;', $markup);
+    $this->assertStringNotContainsString('<script>', $markup);
+    $this->assertStringNotContainsString('Input required', $markup);
+    $this->assertNull($builder->build($checklist, $checklist->getItem('hidden')));
+
+    $this->container->get('state')->set('checklist_reader_test.progress', [
+      'completed' => 4,
+      'total' => 5,
+      'input_required' => TRUE,
+      'secret' => 'Never render private state',
+    ]);
+    $response = new AjaxResponse();
+    $this->container->get('checklist.row_updater')->refresh($response, $checklist);
+    $commands = array_values(array_filter($response->getCommands(), static fn(array $command): bool => $command['command'] === 'checklistReconcileRows'));
+    $this->assertStringContainsString('4 of 5', $commands[0]['data']);
+    $this->assertStringContainsString('Input required', $commands[0]['data']);
+    $this->assertStringNotContainsString('Never render private state', $commands[0]['data']);
+
+    foreach ([[3, NULL], [0, 0], [NULL, 5]] as [$completed, $total]) {
+      $this->container->get('state')->set('checklist_reader_test.progress', [
+        'completed' => $completed,
+        'total' => $total,
+      ]);
+      $row = $builder->build($checklist, $checklist->getItem('progress'));
+      $this->assertArrayNotHasKey('meter', $row['progress']);
+      $this->assertSame($completed !== NULL, isset($row['progress']['count']));
+    }
+
+    $missing = $this->container->get('checklist.resolver')->resolve($this->host([
+      'context_mapping' => ['value' => 'item:decision:decision'],
+      'fail_on_read' => TRUE,
+    ]), 'work');
+    $this->assertArrayNotHasKey('progress', $builder->build($missing, $missing->getItem('progress')));
+  }
+
+  /**
    * Reversing a prerequisite blocks its successor and rebuilds its controls.
    */
   public function testRowReadinessRefresh(): void {

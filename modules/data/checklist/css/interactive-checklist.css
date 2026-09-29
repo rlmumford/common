@@ -166,3 +166,20 @@ table.interactive-checklist td.action-form-container {
     font-weight: 700;
   }
 }
+
+/* Align progress with the row title. */
+table.interactive-checklist td.checklist-item-progress-cell {
+  grid-column: 2;
+}
+.checklist-item-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: #454f59;
+  font-size: 0.9rem;
+}
+.checklist-item-progress progress {
+  width: 100%;
+  max-width: 24rem;
+  accent-color: #285b7a;
+}
