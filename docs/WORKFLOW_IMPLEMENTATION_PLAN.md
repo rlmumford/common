@@ -463,9 +463,12 @@ and action completion callbacks. Job resources now enter the shared pane through
 the existing task resource manager, preserving task contexts, access checks and
 cache metadata. Plugin-specific Form API AJAX rebuilds now refresh resources after the callback,
 preserving custom commands, attachments and the selected resource when available.
-Existing rows now refresh their controls and readiness after each item AJAX response,
-including prerequisite reversal; newly blocked action forms close while still-actionable
-forms retain edits. Inserting newly generated rows remains open.
+Rows now reconcile against the current visible item list after each item AJAX response,
+including additions, removals, ordering and prerequisite reversal. Initial display and
+refresh share a row builder. Still-actionable forms retain identity, focus and edits;
+blocked forms close. Completion controls and validation use current required work.
+This consumes producer changes to the working checklist; provider expansion itself
+remains within P5.
 Desktop uses a 50/50 split and resource tabs; mobile uses bottom navigation and
 a remaining-resource accordion. Attempts/ownership projection and precise cache
 aggregation remain open; read
