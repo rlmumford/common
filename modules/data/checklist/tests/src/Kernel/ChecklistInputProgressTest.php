@@ -148,7 +148,7 @@ class ChecklistInputProgressTest extends ChecklistItemExecutionTestBase {
    * Changed gates reject input even when a caller still has an old form.
    */
   public function testInputGate(): void {
-    [$host, $item, $attempt] = $this->inputWork();
+    [, $item, $attempt] = $this->inputWork();
     $configuration = $item->getHandler()->getConfiguration();
     $configuration['conditions']['actionability'] = ['id' => 'condition_constant:false'];
     $item->getHandler()->setConfiguration($configuration);
