@@ -219,7 +219,6 @@ class InteractiveChecklist extends FormatterBase {
       uasort($collected_resources, static function (array $a, array $b): int {
         return $a['resource']->getWeight() <=> $b['resource']->getWeight();
       });
-      $initial_resource_key = array_key_first($collected_resources);
       $resource_keys_by_item = [];
       foreach ($collected_resources as $resource_key => $collected_resource) {
         foreach ($collected_resource['owners'] as $owner) {
@@ -339,21 +338,6 @@ class InteractiveChecklist extends FormatterBase {
             ],
           ],
         ];
-        if (isset($resource_keys_by_item[$name])) {
-          $resource_key = $resource_keys_by_item[$name];
-          $element[$name]['resource'] = [
-            '#type' => 'button',
-            '#value' => $this->t('Open resource'),
-            '#attributes' => [
-              'class' => ['checklist-resource-trigger'],
-              'type' => 'button',
-              'data-resource-key' => $resource_key,
-              'aria-controls' => $this->resourcePaneBuilder->getResourcePanelId($checklist, $resource_key),
-              'aria-pressed' => $resource_key === $initial_resource_key ? 'true' : 'false',
-            ],
-          ];
-          $element[$name]['#attributes']['class'][] = 'checklist-item-has-resource';
-        }
         $cache_metadata->applyTo($element[$name]);
 
         if ($checklist_item->getHandler() instanceof SimplyCheckableChecklistItemHandler) {
@@ -401,9 +385,33 @@ class InteractiveChecklist extends FormatterBase {
           'id' => $this->resourcePaneBuilder->getWorkspaceId($checklist),
           'class' => ['checklist-workspace'],
         ],
+        'mobile_navigation' => [
+          '#type' => 'container',
+          '#weight' => 100,
+          '#attributes' => [
+            'class' => ['checklist-workspace-mobile-navigation'],
+            'role' => 'navigation',
+            'aria-label' => $this->t('Checklist navigation'),
+            'hidden' => TRUE,
+          ],
+          'checklist' => [
+            '#type' => 'html_tag',
+            '#tag' => 'button',
+            '#value' => $this->t('Checklist'),
+            '#attributes' => [
+              'type' => 'button',
+              'class' => ['checklist-workspace-mobile-tab'],
+              'data-checklist-workspace-view' => 'checklist',
+              'aria-pressed' => 'true',
+            ],
+          ],
+        ],
         'actions' => [
           '#type' => 'container',
-          '#attributes' => ['class' => ['checklist-workspace-actions']],
+          '#attributes' => [
+            'class' => ['checklist-workspace-actions'],
+            'data-checklist-workspace-panel' => 'checklist',
+          ],
           'checklist' => $element,
           'completion_form' => [
             '#type' => 'container',
