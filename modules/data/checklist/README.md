@@ -88,13 +88,20 @@ checklist pane may choose one rendering location to avoid duplicate content.
 The browser retains the selected resource across pane replacement when its key
 still exists. Removed resources fall back to an available panel or the checklist.
 
-The same response boundary refreshes the controls and readiness classes of existing
-checklist rows. Reversing a prerequisite disables blocked successors immediately;
-missing required contexts also block their controls. Open action forms retain their
-working inputs while actionable, and are detached and cleared if they become
-blocked, complete or failed. Rows no longer visible to the viewer are removed.
-Auto-advance runs only after row and resource updates. This does not insert newly
-generated rows or restore removed rows; that still requires reloading the checklist.
+The same response boundary reconciles the current visible item list, including
+newly generated items, removed items and ordering changes. Initial display and AJAX
+use `checklist.row_builder`, so labels, access filtering and controls stay consistent.
+Reversing a prerequisite disables blocked successors immediately; missing required
+contexts also block their controls. Open action forms retain their DOM identity,
+focus and working inputs while actionable, and are detached and cleared if they
+become blocked, complete, failed or are removed. Auto-advance runs after row and
+resource updates. The renderer does not generate items itself: handlers/providers
+must first update the working checklist through its existing APIs.
+
+The completion button reflects all current required work, including hidden items.
+Completion validation reloads the working checklist from its repository rather than
+trusting the snapshot captured when the form was built. Visual removal does not delete
+persisted items or their history; lifecycle decisions remain with the producer.
 
 On narrow screens, the workspace adds a bottom navigation bar with a Checklist
 tab, up to four tabs for pinned resources or resources owned by the active item,

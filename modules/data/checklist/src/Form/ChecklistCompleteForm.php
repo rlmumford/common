@@ -2,6 +2,7 @@
 
 namespace Drupal\checklist\Form;
 
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Drupal\checklist\ChecklistInterface;
 use Drupal\checklist\ChecklistTempstoreRepository;
 use Drupal\Core\Form\FormBase;
@@ -99,6 +100,11 @@ class ChecklistCompleteForm extends FormBase {
       'complete' => [
         '#type' => 'submit',
         '#value' => $this->t('Complete'),
+        // This is UI state; validation checks the current working checklist.
+        '#attributes' => [
+          'data-checklist-complete' => 'true',
+          'disabled' => !$this->checklist->isCompletable(),
+        ],
         '#submit' => ['::submitForm'],
         '#validate' => ['::validateForm'],
       ],
@@ -120,8 +126,9 @@ class ChecklistCompleteForm extends FormBase {
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     parent::validateForm($form, $form_state);
+    $this->checklist = $this->checklistTempstoreRepository->get($this->checklist);
     if (!$this->checklist->getEntity()->access('update')) {
-      throw new \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException();
+      throw new AccessDeniedHttpException();
     }
 
     if (!$this->checklist->isCompletable()) {
@@ -143,7 +150,7 @@ class ChecklistCompleteForm extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     if (!$this->checklist->getEntity()->access('update')) {
-      throw new \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException();
+      throw new AccessDeniedHttpException();
     }
     $type = $this->checklist->getType();
 

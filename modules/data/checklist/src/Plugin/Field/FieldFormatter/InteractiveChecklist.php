@@ -2,27 +2,16 @@
 
 namespace Drupal\checklist\Plugin\Field\FieldFormatter;
 
-use Drupal\checklist\ChecklistContextCollectorInterface;
 use Drupal\checklist\ChecklistActionResourceCollectorInterface;
 use Drupal\checklist\ChecklistActionResourcePaneBuilder;
 use Drupal\checklist\ChecklistTempstoreRepository;
+use Drupal\checklist\ChecklistRowBuilder;
 use Drupal\checklist\Form\ChecklistCompleteForm;
-use Drupal\checklist\Form\ChecklistItemRowForm;
-use Drupal\checklist\Plugin\ChecklistItemHandler\SimplyCheckableChecklistItemHandler;
-use Drupal\checklist\PluginForm\CustomFormObjectClassInterface;
-use Drupal\Component\Plugin\Exception\ContextException;
-use Drupal\Component\Plugin\Exception\MissingValueContextException;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
-use Drupal\Core\Entity\Plugin\DataType\EntityAdapter;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Form\FormBuilderInterface;
-use Drupal\Core\Plugin\Context\ContextHandlerInterface;
-use Drupal\Core\Plugin\ContextAwarePluginInterface;
-use Drupal\Core\Render\BubbleableMetadata;
-use Drupal\Core\Url;
-use Drupal\typed_data\PlaceholderResolverTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -40,7 +29,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * @package Drupal\checklist\Plugin\Field\FieldFormatter
  */
 class InteractiveChecklist extends FormatterBase {
-  use PlaceholderResolverTrait;
 
   /**
    * The checklist tempstore factory.
@@ -64,20 +52,6 @@ class InteractiveChecklist extends FormatterBase {
   protected $classResolver;
 
   /**
-   * The context handler service.
-   *
-   * @var \Drupal\Core\Plugin\Context\ContextHandlerInterface
-   */
-  protected ContextHandlerInterface $contextHandler;
-
-  /**
-   * The context collector service.
-   *
-   * @var \Drupal\checklist\ChecklistContextCollectorInterface
-   */
-  protected ChecklistContextCollectorInterface $contextCollector;
-
-  /**
    * The action resource collector.
    *
    * @var \Drupal\checklist\ChecklistActionResourceCollectorInterface
@@ -95,7 +69,7 @@ class InteractiveChecklist extends FormatterBase {
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return (new static(
+    return new static(
       $plugin_id,
       $plugin_definition,
       $configuration['field_definition'],
@@ -106,11 +80,10 @@ class InteractiveChecklist extends FormatterBase {
       $container->get('checklist.tempstore_repository'),
       $container->get('class_resolver'),
       $container->get('form_builder'),
-      $container->get('context.handler'),
-      $container->get('checklist.context_collector'),
+      $container->get('checklist.row_builder'),
       $container->get('checklist.action_resource_collector'),
       $container->get('checklist.action_resource_pane_builder')
-    ))->setPlaceholderResolver($container->get('typed_data.placeholder_resolver'));
+    );
   }
 
   /**
@@ -136,10 +109,8 @@ class InteractiveChecklist extends FormatterBase {
    *   The class resolver service.
    * @param \Drupal\Core\Form\FormBuilderInterface $form_builder
    *   The form builder.
-   * @param \Drupal\Core\Plugin\Context\ContextHandlerInterface $context_handler
-   *   The context handler.
-   * @param \Drupal\checklist\ChecklistContextCollectorInterface $context_collector
-   *   The context collector.
+   * @param \Drupal\checklist\ChecklistRowBuilder $rowBuilder
+   *   Builds initial and refreshed rows.
    * @param \Drupal\checklist\ChecklistActionResourceCollectorInterface $resource_collector
    *   The action resource collector.
    * @param \Drupal\checklist\ChecklistActionResourcePaneBuilder $resource_pane_builder
@@ -156,8 +127,7 @@ class InteractiveChecklist extends FormatterBase {
     ChecklistTempstoreRepository $checklist_tempstore_repository,
     ClassResolverInterface $class_resolver,
     FormBuilderInterface $form_builder,
-    ContextHandlerInterface $context_handler,
-    ChecklistContextCollectorInterface $context_collector,
+    protected ChecklistRowBuilder $rowBuilder,
     ChecklistActionResourceCollectorInterface $resource_collector,
     ChecklistActionResourcePaneBuilder $resource_pane_builder,
   ) {
@@ -166,8 +136,6 @@ class InteractiveChecklist extends FormatterBase {
     $this->tempstoreRepo = $checklist_tempstore_repository;
     $this->formBuilder = $form_builder;
     $this->classResolver = $class_resolver;
-    $this->contextHandler = $context_handler;
-    $this->contextCollector = $context_collector;
     $this->resourceCollector = $resource_collector;
     $this->resourcePaneBuilder = $resource_pane_builder;
   }
@@ -205,26 +173,10 @@ class InteractiveChecklist extends FormatterBase {
       ],
     ];
 
-    $placeholder_datas = [
-      $items->getEntity()->getEntityTypeId() => EntityAdapter::createFromEntity($items->getEntity()),
-    ];
     /** @var \Drupal\checklist\Plugin\Field\FieldType\ChecklistItem $item */
     foreach ($items as $delta => $item) {
       $checklist = $item->getChecklist();
-      $contexts = $this->contextCollector->collectRuntimeContexts($checklist);
-      foreach ($contexts as $name => $context) {
-        $placeholder_datas[$name] = $context->getContextData();
-      }
       $collected_resources = $this->resourceCollector->collect($checklist);
-      uasort($collected_resources, static function (array $a, array $b): int {
-        return $a['resource']->getWeight() <=> $b['resource']->getWeight();
-      });
-      $resource_keys_by_item = [];
-      foreach ($collected_resources as $resource_key => $collected_resource) {
-        foreach ($collected_resource['owners'] as $owner) {
-          $resource_keys_by_item[$owner] = $resource_key;
-        }
-      }
       $id = $checklist->getEntity()->getEntityTypeId()
         . '--' . str_replace(':', '--', $checklist->getKey());
 
@@ -245,139 +197,10 @@ class InteractiveChecklist extends FormatterBase {
       ];
 
       foreach ($checklist->getOrderedItems() as $name => $checklist_item) {
-        $handler = $checklist_item->getHandler();
-
-        // Handle contexts.
-        if ($handler instanceof ContextAwarePluginInterface) {
-          try {
-            $this->contextHandler->applyContextMapping($handler, $contexts);
-          }
-          catch (MissingValueContextException $exception) {
-            // We're ok with missing values here, do nothing.
-          }
-          catch (ContextException $exception) {
-            // Having the context not available at all is more of a problem, so
-            // we just skip this CI.
-            continue;
-          }
-        }
-
-        $placeholder_datas['checklist_item'] = EntityAdapter::createFromEntity($checklist_item);
-
-        $checklist_item_classes = ['ci'];
-        if ($checklist_item->isComplete()) {
-          $checklist_item_classes[] = 'ci-complete';
-        }
-        if ($checklist_item->isFailed()) {
-          $checklist_item_classes[] = 'ci-failed';
-        }
-        if ($checklist_item->isRequired()) {
-          $checklist_item_classes[] = 'ci-required';
-        }
-        else {
-          $checklist_item_classes[] = 'ci-optional';
-        }
-        if ($checklist_item->isApplicable()) {
-          $checklist_item_classes[] = 'ci-applicable';
-        }
-        else {
-          $checklist_item_classes[] = 'ci-inapplicable';
-        }
-        if ($checklist_item->isActionable() && !$checklist_item->isComplete() && !$checklist_item->isFailed()) {
-          $checklist_item_classes[] = 'ci-actionable';
-        }
-        else {
-          $checklist_item_classes[] = 'ci-inactionable';
-        }
-
-        $form_class = ChecklistItemRowForm::class;
-        if (is_subclass_of($handler->getFormClass('row'), CustomFormObjectClassInterface::class)) {
-          $form_class = [$handler->getFormClass('row'), 'getFormObjectClass']($handler, $form_class);
-        }
-
-        /** @var \Drupal\checklist\Form\ChecklistItemRowForm $form_obj */
-        $form_obj = $this->classResolver->getInstanceFromDefinition($form_class);
-        $form_obj->setChecklistItem($checklist_item);
-        $form_obj->setActionUrl(Url::fromRoute(
-          'checklist.item.row_form',
-          [
-            'entity_type' => $checklist->getEntity()->getEntityTypeId(),
-            'entity_id' => $checklist->getEntity()->id(),
-            'checklist' => $checklist->getKey(),
-            'item_name' => $checklist_item->getName(),
-          ]
-        ));
-
-        // @todo Estimates
-        // @todo Icons
-        $cache_metadata = new BubbleableMetadata();
-        $element[$name] = [
-          '#attributes' => [
-            'class' => $checklist_item_classes,
-            'data-has-resource' => isset($resource_keys_by_item[$name]),
-            'data-is-complete' => $checklist_item->isComplete(),
-            'data-is-failed' => $checklist_item->isFailed(),
-            'data-is-actionable' => $checklist_item->isActionable(),
-            'data-ciid' => $checklist_item->id(),
-            'data-ciname' => $checklist_item->getName(),
-          ],
-          'checkbox' => $this->formBuilder->getForm($form_obj),
-          'label' => [
-            '#type' => 'html_tag',
-            '#tag' => 'span',
-            '#value' => $this->getPlaceholderResolver()->replacePlaceHolders(
-              $checklist_item->title->value,
-              $placeholder_datas,
-              $cache_metadata,
-              ['langcode' => $langcode]
-            ),
-            '#attributes' => [
-              'class' => [
-                'ci-label',
-              ],
-            ],
-          ],
-        ];
-        $cache_metadata->applyTo($element[$name]);
-
-        if ($checklist_item->getHandler() instanceof SimplyCheckableChecklistItemHandler) {
-          $element[$name]['checkbox']['#attributes']['class'][] = 'checklist-checkbox-checkable';
-          $element[$name]['#attributes']['class'][] = 'checklist-item-checkable';
-        }
-        if ($checklist_item->getHandler()->hasFormClass('action')) {
-          $element[$name]['#attributes']['class'][] = 'checklist-item-has-form';
-
-          $element[$name]['action_form'] = [
-            '#wrapper_attributes' => [
-              'class' => ['action-form-container'],
-              'id' => $id . '--' . $name . '--action-form-container',
-            ],
-          ];
+        if ($row = $this->rowBuilder->build($checklist, $checklist_item, $langcode)) {
+          $element[$name] = $row;
         }
       }
-
-      $element['#items']['__checklist_complete'] = [
-        '#wrapper_attributes' => [
-          'class' => ['ci', 'ci-checklist-complete-form'],
-      // @todo Add resources
-          'data-has-resource' => FALSE,
-        ],
-        'label' => [
-          '#type' => 'html_tag',
-          '#tag' => 'span',
-          '#value' => $this->t('Complete'),
-          '#attributes' => [
-            'class' => [
-              'ci-label',
-            ],
-          ],
-        ],
-        'form' => $this->formBuilder->getForm(
-          $this->classResolver
-            ->getInstanceFromDefinition(ChecklistCompleteForm::class)
-            ->setChecklist($checklist)
-        ),
-      ];
 
       $elements[$delta] = [
         '#type' => 'container',

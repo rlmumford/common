@@ -173,6 +173,51 @@
     }
   };
 
+  Drupal.AjaxCommands.prototype.checklistReconcileRows = function (ajax, response) {
+    var parsed = document.createElement('template');
+    parsed.innerHTML = response.data;
+    document.querySelectorAll(response.selector).forEach(function (table) {
+      var body = table.tBodies[0] || table.createTBody();
+      var current = new Map(Array.from(body.querySelectorAll('tr[data-ciname]')).map(function (row) {
+        return [row.dataset.ciname, row];
+      }));
+      var focused = document.activeElement;
+      var rows = Array.from(parsed.content.querySelectorAll('tr[data-ciname]'));
+      rows.forEach(function (source) {
+        var row = source.cloneNode(true);
+        var previous = current.get(row.dataset.ciname);
+        if (previous) {
+          var action = previous.querySelector('.action-form-container');
+          var destination = row.querySelector('.action-form-container');
+          if (action && destination && row.classList.contains('ci-actionable')) {
+            destination.replaceWith(action);
+            row.classList.toggle('ci-inprogress', previous.classList.contains('ci-inprogress'));
+          }
+          Drupal.detachBehaviors(previous, drupalSettings, 'unload');
+          previous.remove();
+          current.delete(row.dataset.ciname);
+        }
+        body.appendChild(row);
+        Drupal.attachBehaviors(row, response.settings || drupalSettings);
+      });
+      if (focused && table.contains(focused)) {
+        focused.focus({preventScroll: true});
+      }
+      current.forEach(function (row) {
+        Drupal.detachBehaviors(row, drupalSettings, 'unload');
+        row.remove();
+      });
+      // Remove an initial empty-table message when the first item appears.
+      body.querySelectorAll('tr:not([data-ciname])').forEach(function (row) { row.remove(); });
+      var workspace = table.closest('.checklist-workspace');
+      if (workspace) {
+        workspace.querySelectorAll('[data-checklist-complete]').forEach(function (button) {
+          button.disabled = !response.completable;
+        });
+      }
+    });
+  };
+
   Drupal.AjaxCommands.prototype.checklistItemState = function (ajax, response) {
     document.querySelectorAll(response.selector).forEach(function (table) {
       var row = Array.from(table.querySelectorAll('tr[data-ciname]')).find(function (candidate) {

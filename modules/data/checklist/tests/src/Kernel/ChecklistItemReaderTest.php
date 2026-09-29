@@ -8,6 +8,8 @@ use Drupal\Core\Ajax\InvokeCommand;
 use Drupal\Core\Form\FormState;
 use Drupal\checklist\Form\ChecklistItemActionForm;
 use Drupal\checklist\ChecklistActionState;
+use Drupal\checklist\ChecklistTempstoreRepository;
+use Drupal\checklist\Form\ChecklistCompleteForm;
 use Drupal\checklist\Ajax\StartNextItemCommand;
 use Drupal\Component\Plugin\Exception\ContextException;
 use Drupal\field\Entity\FieldConfig;
@@ -257,7 +259,7 @@ class ChecklistItemReaderTest extends KernelTestBase {
       $states = array_values(array_filter($response->getCommands(), static fn(array $command): bool => $command['command'] === 'checklistItemState' && $command['ciname'] === 'decision'));
       $this->assertCount(1, $states);
       $this->assertSame($complete, $states[0]['state']['actionable']);
-      $controls = array_values(array_filter($response->getCommands(), static fn(array $command): bool => ($command['selector'] ?? '') === '#checklist-row--work--decision'));
+      $controls = array_values(array_filter($response->getCommands(), static fn(array $command): bool => $command['command'] === 'checklistReconcileRows'));
       $this->assertCount(1, $controls);
       if ($complete) {
         $this->assertStringNotContainsString('disabled="disabled"', $controls[0]['data']);
@@ -267,7 +269,8 @@ class ChecklistItemReaderTest extends KernelTestBase {
       }
       // Hidden rows receive removal only, never their form or resource content.
       $hidden = array_values(array_filter($response->getCommands(), static fn(array $command): bool => $command['command'] === 'checklistItemState' && $command['ciname'] === 'hidden'));
-      $this->assertSame(['visible' => FALSE], $hidden[0]['state']);
+      $this->assertSame([], $hidden);
+      $this->assertStringNotContainsString('data-ciname="hidden"', $controls[0]['data']);
     }
     $handler = $this->container->get('plugin.manager.checklist_item_handler')->createInstance('simply_checkable', ['reversible' => TRUE]);
     $handler->setItem($source);
@@ -275,6 +278,57 @@ class ChecklistItemReaderTest extends KernelTestBase {
     $form = $plugin_form->buildConfigurationForm(['#wrapper_id' => 'source'], new FormState());
     $this->assertSame('::onReverseAjaxCallback', $form['checkbox']['#ajax']['callback']);
     $this->assertSame('::onReverseAjaxCallback', $form['complete']['#ajax']['callback']);
+  }
+
+  /**
+   * New and removed items reconcile with access-safe rows and completion state.
+   */
+  public function testDynamicRows(): void {
+    $host = $this->host();
+    $checklist = $this->container->get('checklist.resolver')->resolve($host, 'work');
+    foreach ($checklist->getItems() as $item) {
+      $item->setComplete();
+    }
+    $before = new AjaxResponse();
+    $this->container->get('checklist.row_updater')->refresh($before, $checklist);
+    $this->assertTrue($before->getCommands()[0]['completable']);
+
+    $old_checklist = clone $checklist;
+    $generated = $checklist->getItem('decision')->createDuplicate();
+    $generated->set('name', 'generated_review');
+    $generated->set('title', 'Additional review');
+    $generated->setIncomplete();
+    $checklist->setItem('generated_review', $generated);
+    $checklist->removeItem('progress');
+    $after = new AjaxResponse();
+    $this->container->get('checklist.row_updater')->refresh($after, $checklist);
+    $command = $after->getCommands()[0];
+    $this->assertSame('checklistReconcileRows', $command['command']);
+    $this->assertFalse($command['completable']);
+    $this->assertStringContainsString('data-ciname="generated_review"', $command['data']);
+    $this->assertStringContainsString('Additional review', $command['data']);
+    $this->assertStringContainsString('checklist-row--work--generated_review', $command['data']);
+    $this->assertStringNotContainsString('data-ciname="progress"', $command['data']);
+    $this->assertStringNotContainsString('data-ciname="hidden"', $command['data']);
+    $this->assertContains('core/drupal.ajax', $after->getAttachments()['library']);
+
+    $repository = $this->createMock(ChecklistTempstoreRepository::class);
+    $repository->expects($this->once())->method('get')->with($old_checklist)->willReturn($checklist);
+    $completion = new ChecklistCompleteForm($this->container->get('plugin_form.factory'), $repository);
+    $completion->setChecklist($old_checklist);
+    $form = [];
+    $state = new FormState();
+    $trigger = ['#parents' => ['complete']];
+    $state->setTriggeringElement($trigger);
+    $completion->validateForm($form, $state);
+    $this->assertNotEmpty($state->getErrors());
+    $state->clearErrors();
+
+    // The initial formatter delegates to the same access-filtered row builder.
+    $rendered = $host->get('work')->view(['type' => 'checklist_interactive', 'label' => 'hidden']);
+    $html = (string) $this->container->get('renderer')->renderRoot($rendered);
+    $this->assertStringContainsString('data-ciname="decision"', $html);
+    $this->assertStringNotContainsString('data-ciname="hidden"', $html);
   }
 
   /**

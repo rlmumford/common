@@ -81,4 +81,7 @@ services:
     arguments: ['@checklist.form_ajax_response_builder.inner', '@checklist.action_resource_pane_updater', '@checklist.row_updater']
   checklist.row_updater:
     class: Drupal\checklist\ChecklistRowUpdater
-    arguments: ['@checklist.context_preparer', '@class_resolver', '@form_builder']
+    arguments: ['@checklist.row_builder', '@checklist.action_resource_pane_builder']
+  checklist.row_builder:
+    class: Drupal\checklist\ChecklistRowBuilder
+    arguments: ['@checklist.context_preparer', '@checklist.context_collector', '@class_resolver', '@form_builder', '@typed_data.placeholder_resolver']

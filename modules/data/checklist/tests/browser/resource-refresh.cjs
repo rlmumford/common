@@ -12,7 +12,7 @@ const path = require('node:path');
     page.on('pageerror', error => errors.push(error.message));
     await page.setContent('<div class="checklist-workspace"><nav class="checklist-workspace-mobile-navigation"><button class="checklist-workspace-mobile-tab" data-checklist-workspace-view="checklist">Checklist</button></nav><div class="checklist-resource-pane" id="resources"></div></div>');
     await page.evaluate(() => {
-      window.Drupal = { detachBehaviors: () => {}, behaviors: {}, t: text => text, AjaxCommands: function () {} };
+      window.Drupal = { detachBehaviors: () => {}, attachBehaviors: () => {}, behaviors: {}, t: text => text, AjaxCommands: function () {} };
       window.drupalSettings = {};
       window.jQuery = {};
       const seen = new WeakSet();
@@ -84,8 +84,29 @@ const path = require('node:path');
     assert(await page.locator('#rows input').isEnabled());
     await page.evaluate(() => updateRow({ visible: false }));
     assert.equal(await page.locator('#rows tr').count(), 0);
+    await page.evaluate(() => {
+      document.querySelector('.checklist-workspace').insertAdjacentHTML('beforeend', '<table id="dynamic"><tbody><tr data-ciname="existing" class="ci ci-actionable ci-inprogress"><td>Old controls</td><td>Existing</td><td class="action-form-container"><textarea>Keep these edits</textarea></td></tr><tr data-ciname="removed"><td>Removed</td></tr></tbody></table><button data-checklist-complete>Complete</button>');
+      window.liveAction = document.querySelector('#dynamic textarea');
+      window.liveAction.focus();
+      window.reconcile = (names, completable) => {
+        const data = '<table><tbody>' + names.map(name => `<tr data-ciname="${name}" class="ci ci-actionable"><td>New controls</td><td>${name}</td><td class="action-form-container"></td></tr>`).join('') + '</tbody></table>';
+        Drupal.AjaxCommands.prototype.checklistReconcileRows(null, { selector: '#dynamic', data, completable });
+      };
+      reconcile(['generated', 'existing'], false);
+    });
+    assert.deepEqual(await page.locator('#dynamic tr').evaluateAll(rows => rows.map(row => row.dataset.ciname)), ['generated', 'existing']);
+    assert(await page.evaluate(() => document.querySelector('#dynamic textarea') === window.liveAction));
+    assert.equal(await page.locator('#dynamic textarea').inputValue(), 'Keep these edits');
+    assert(await page.evaluate(() => document.activeElement === window.liveAction));
+    assert(await page.locator('[data-checklist-complete]').isDisabled());
+    await page.evaluate(() => reconcile(['existing', 'generated'], true));
+    assert.equal(await page.locator('#dynamic tr').count(), 2);
+    assert.deepEqual(await page.locator('#dynamic tr').evaluateAll(rows => rows.map(row => row.dataset.ciname)), ['existing', 'generated']);
+    assert(await page.locator('[data-checklist-complete]').isEnabled());
+    await page.evaluate(() => reconcile([], true));
+    assert.equal(await page.locator('#dynamic tr').count(), 0);
     assert.deepEqual(errors, []);
-    console.log('PASS: resource selection, row readiness, preserved active edits, blocked-form closure and hidden-row removal.');
+    console.log('PASS: resources, row readiness, additions/removals/reordering, retained form identity/focus/edits and completion controls.');
   }
   finally {
     await browser.close();
