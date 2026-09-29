@@ -8,7 +8,6 @@ use Drupal\checklist\Ajax\StartNextItemCommand;
 use Drupal\checklist\ChecklistContextCollectorInterface;
 use Drupal\checklist\ChecklistTempstoreRepository;
 use Drupal\checklist\ChecklistContextPreparer;
-use Drupal\checklist\ChecklistActionResourcePaneUpdater;
 use Drupal\checklist\PluginForm\CustomFormObjectClassInterface;
 use Drupal\Component\Plugin\Exception\ContextException;
 use Drupal\Core\Ajax\AjaxResponse;
@@ -83,8 +82,7 @@ class ChecklistItemRowForm extends ChecklistItemFormBase {
       $container->get('renderer'),
       $container->get('context.handler'),
       $container->get('checklist.context_collector'),
-      $container->get('checklist.context_preparer'),
-      $container->get('checklist.action_resource_pane_updater')
+      $container->get('checklist.context_preparer')
     );
   }
 
@@ -107,8 +105,6 @@ class ChecklistItemRowForm extends ChecklistItemFormBase {
    *   The context collector service.
    * @param \Drupal\checklist\ChecklistContextPreparer $context_preparer
    *   The checklist context preparer.
-   * @param \Drupal\checklist\ChecklistActionResourcePaneUpdater $resource_pane_updater
-   *   The AJAX resource pane updater.
    */
   public function __construct(
     PluginFormFactoryInterface $plugin_form_factory,
@@ -119,9 +115,8 @@ class ChecklistItemRowForm extends ChecklistItemFormBase {
     ContextHandlerInterface $context_handler,
     ChecklistContextCollectorInterface $collector,
     ChecklistContextPreparer $context_preparer,
-    ChecklistActionResourcePaneUpdater $resource_pane_updater,
   ) {
-    parent::__construct($plugin_form_factory, $checklist_tempstore_repository, $context_handler, $context_preparer, $resource_pane_updater);
+    parent::__construct($plugin_form_factory, $checklist_tempstore_repository, $context_handler, $context_preparer);
     $this->formBuilder = $form_builder;
     $this->classResolver = $class_resolver;
     $this->renderer = $renderer;
@@ -202,7 +197,6 @@ class ChecklistItemRowForm extends ChecklistItemFormBase {
       }
     }
 
-    $this->resourcePaneUpdater->refresh($response, $this->item->checklist->checklist);
     $response->addCommand(new StartNextItemCommand($this->item));
 
     return $response;
@@ -227,7 +221,6 @@ class ChecklistItemRowForm extends ChecklistItemFormBase {
     $response = static::prepareAjaxResponse($form, $form_state);
 
     // @todo Reload any dependent forms.
-    $this->resourcePaneUpdater->refresh($response, $this->item->checklist->checklist);
     return $response;
   }
 
@@ -250,7 +243,6 @@ class ChecklistItemRowForm extends ChecklistItemFormBase {
     $response = static::prepareAjaxResponse($form, $form_state);
     $this->insertActionForm($response);
     $response->addCommand(new EnsureItemInProgressCommand($this->item));
-    $this->resourcePaneUpdater->refresh($response, $this->item->checklist->checklist);
 
     return $response;
   }

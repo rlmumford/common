@@ -75,3 +75,7 @@ services:
   logger.channel.checklist:
     parent: logger.channel_base
     arguments: ['checklist']
+  checklist.form_ajax_response_builder:
+    class: Drupal\checklist\Form\ChecklistFormAjaxResponseBuilder
+    decorates: form_ajax_response_builder
+    arguments: ['@checklist.form_ajax_response_builder.inner', '@checklist.action_resource_pane_updater']

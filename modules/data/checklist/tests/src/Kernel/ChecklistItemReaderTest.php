@@ -2,6 +2,11 @@
 
 namespace Drupal\Tests\checklist\Kernel;
 
+use Drupal\Core\Form\FormInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Drupal\Core\Ajax\InvokeCommand;
+use Drupal\Core\Form\FormState;
+use Drupal\checklist\Form\ChecklistItemActionForm;
 use Drupal\checklist\ChecklistActionState;
 use Drupal\Component\Plugin\Exception\ContextException;
 use Drupal\field\Entity\FieldConfig;
@@ -228,6 +233,55 @@ class ChecklistItemReaderTest extends KernelTestBase {
       $this->assertSame($status, $snapshot['status']);
       $this->assertFalse($snapshot['actionable']);
     }
+  }
+
+  /**
+   * Plugin AJAX callbacks refresh resources once, using their updated contexts.
+   */
+  public function testPluginAjaxResourceRefresh(): void {
+    $host = $this->host(['resource_key' => 'case-file']);
+    $checklist = $this->container->get('checklist.resolver')->resolve($host, 'work');
+    $form_object = $this->container->get('class_resolver')->getInstanceFromDefinition(ChecklistItemActionForm::class);
+    $form_object->setChecklistItem($checklist->getItem('progress'));
+    $state = (new FormState())->setFormObject($form_object);
+    $state->setRebuild();
+
+    foreach ([FALSE, TRUE] as $custom_response) {
+      $trigger = [
+        '#ajax' => [
+          'callback' => function () use ($host, $custom_response) {
+            $host->setUsername('Updated during callback');
+            if ($custom_response) {
+              $response = new AjaxResponse();
+              $response->addCommand(new InvokeCommand('#editor', 'addClass', ['updated']));
+              $response->addAttachments(['library' => ['core/drupal.dialog.ajax']]);
+              return $response;
+            }
+            return ['#markup' => 'Rebuilt editor', '#attached' => ['library' => ['core/drupal.dialog.ajax']]];
+          },
+        ],
+      ];
+      $state->setTriggeringElement($trigger);
+      $response = $this->container->get('form_ajax_response_builder')->buildResponse(
+        Request::create('/'), [], $state, []
+      );
+      $commands = $response->getCommands();
+      $selector = '#' . $this->container->get('checklist.action_resource_pane_builder')->getPaneId($checklist);
+      $panes = array_values(array_filter($commands, static fn(array $command): bool => ($command['selector'] ?? NULL) === $selector));
+      $this->assertCount(1, $panes);
+      $this->assertStringContainsString('Context value: Updated during callback', $panes[0]['data']);
+      $this->assertContains('core/drupal.dialog.ajax', $response->getAttachments()['library']);
+      $this->assertSame($custom_response ? 'invoke' : 'insert', $commands[0]['command']);
+      $host->setUsername('Before callback');
+    }
+
+    // Ordinary forms do not collect checklist resources.
+    $state->setFormObject($this->createMock(FormInterface::class));
+    $response = $this->container->get('form_ajax_response_builder')->buildResponse(
+      Request::create('/'), [], $state, []
+    );
+    $this->assertCount(1, $response->getCommands());
+    $this->assertSame('#editor', $response->getCommands()[0]['selector']);
   }
 
   /**
