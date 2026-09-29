@@ -74,20 +74,30 @@ before checking its applicability and actionability. Completed and failed items
 may keep contributing a resource for review or recovery. Items that use the same
 key share one pane; every owning item name is retained and the last eligible item
 in checklist order supplies the current content. The formatter renders the
-resources in an accessible right-side pane and supports selecting a resource
-from either its checklist row or the pane navigation. Row start, complete, and
-reverse actions, plus action form completion, rebuild the pane in their AJAX
-response. Tasks with job configuration also include task resources in the pane
+resources as native details panels styled as tabs on desktop. Row start, complete,
+and reverse actions, action completion, and plugin-specific AJAX rebuilds refresh
+the pane after their callback. The checklist decorator of Drupal's
+`form_ajax_response_builder` preserves render-array and custom-response callbacks,
+including their commands and attachments. Plugins need not refresh the pane
+themselves. This applies to forms extending `ChecklistItemFormBase`; independent
+non-Form-API endpoints remain responsible for their own resource updates. Tasks with job configuration also include task resources in the pane
 through the task resource manager, preserving its context mapping, access checks,
 and cache metadata. Sites displaying the legacy Task Resources block beside the
 checklist pane may choose one rendering location to avoid duplicate content.
-Refreshes from plugin-specific AJAX rebuilds remain separate integration work.
+The browser retains the selected resource across pane replacement when its key
+still exists. Removed resources fall back to an available panel or the checklist.
 
 On narrow screens, the workspace adds a bottom navigation bar with a Checklist
 tab, up to four tabs for pinned resources or resources owned by the active item,
 and a Resources tab when additional resources are available. The Resources tab
-opens the full resource selector, so resources outside the promoted set remain
-available. Desktop keeps the two-column checklist and resource pane.
+shows the remaining resources as an accordion. Desktop uses an equal 50/50
+checklist and resource split.
+
+The DOM regression test for resource replacement runs with Playwright:
+`node tests/browser/resource-refresh.cjs`. Install Playwright in your test
+environment or supply its module path through `PLAYWRIGHT_MODULE`. This checks
+the production behavior in a browser DOM fixture; it is not an end-to-end
+Drupal form submission test.
 
 ## Outcomes and contexts
 

@@ -461,8 +461,11 @@ implemented. The base checklist now has a per-item render-array resource contrac
 an interactive split pane with shared-key ownership, and pane refreshes after row
 and action completion callbacks. Job resources now enter the shared pane through
 the existing task resource manager, preserving task contexts, access checks and
-cache metadata. Refreshes during plugin-specific AJAX rebuilds,
-attempts/ownership projection and precise cache aggregation remain open; read
+cache metadata. Plugin-specific Form API AJAX rebuilds now refresh resources after the callback,
+preserving custom commands, attachments and the selected resource when available.
+Desktop uses a 50/50 split and resource tabs; mobile uses bottom navigation and
+a remaining-resource accordion. Attempts/ownership projection and precise cache
+aggregation remain open; read
 snapshots must not be cached across users or changes.
 
 Deliverables:

@@ -32,6 +32,10 @@
       return;
     }
 
+    if (workspace.dataset.checklistResourceKey) {
+      setActiveResource(workspace, workspace.dataset.checklistResourceKey);
+      delete workspace.dataset.checklistResourceKey;
+    }
     navigation.hidden = false;
     workspace.classList.add('checklist-workspace--mobile-navigation');
     var activeItem = workspace.querySelector('.ci-inprogress[data-ciname]');
@@ -85,9 +89,10 @@
       workspace.dataset.checklistWorkspaceView = 'checklist';
     }
     else {
-      var firstOther = panels.find(function (panel) {
+      var otherPanels = panels.filter(function (panel) {
         return promotedKeys.indexOf(panel.dataset.resourceKey) === -1;
       });
+      var firstOther = otherPanels.find(function (panel) { return panel.open; }) || otherPanels[0];
       if (firstOther) {
         setActiveResource(workspace, firstOther.dataset.resourceKey);
       }
@@ -109,6 +114,25 @@
   }
 
   Drupal.behaviors.checklistResourcePane = {
+    detach: function (context, settings, trigger) {
+      if (trigger !== 'unload') {
+        return;
+      }
+      var panes = context.matches && context.matches('.checklist-resource-pane')
+        ? [context] : context.querySelectorAll('.checklist-resource-pane');
+      panes.forEach(function (pane) {
+        var workspace = pane.closest('.checklist-workspace');
+        var selected = pane.querySelector('details[open][data-resource-key]');
+        if (workspace) {
+          if (selected) {
+            workspace.dataset.checklistResourceKey = selected.dataset.resourceKey;
+          }
+          else {
+            delete workspace.dataset.checklistResourceKey;
+          }
+        }
+      });
+    },
     attach: function (context) {
       once('checklist-resource-pane', '.checklist-workspace', context).forEach(function (workspace) {
         workspace.addEventListener('click', function (event) {
