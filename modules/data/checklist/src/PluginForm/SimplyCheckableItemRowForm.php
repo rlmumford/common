@@ -60,6 +60,7 @@ class SimplyCheckableItemRowForm extends PluginFormBase {
     // 'complete' button into a 'reverse' button. We do this by changing the
     // value and callbacks.
     if ($item->isComplete() && $is_reversible) {
+      $form['checkbox']['#ajax']['callback'] = '::onReverseAjaxCallback';
       $form['complete']['#value'] = new TranslatableMarkup('Reverse');
       $form['complete']['#ajax']['callback'] = '::onReverseAjaxCallback';
       $form['complete']['#is_reversing'] = TRUE;

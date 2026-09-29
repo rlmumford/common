@@ -179,24 +179,6 @@ class ChecklistItemRowForm extends ChecklistItemFormBase {
 
     $response->addCommand(new EnsureItemCompleteCommand($this->item));
 
-    if ($this->item->isComplete()) {
-      $checklist = $this->item->checklist->checklist;
-      $contexts = $this->contextCollector->collectRuntimeContexts($checklist);
-
-      foreach ($checklist->getItems() as $item) {
-        if ($item->isComplete() || $item->id() === $this->item->id()) {
-          continue;
-        }
-
-        try {
-          $this->addRefreshRowCommand($response, $checklist, $item, $contexts);
-        }
-        catch (ContextException $exception) {
-          // Do nothing.
-        }
-      }
-    }
-
     $response->addCommand(new StartNextItemCommand($this->item));
 
     return $response;
@@ -220,7 +202,6 @@ class ChecklistItemRowForm extends ChecklistItemFormBase {
 
     $response = static::prepareAjaxResponse($form, $form_state);
 
-    // @todo Reload any dependent forms.
     return $response;
   }
 
