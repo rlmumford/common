@@ -479,6 +479,11 @@ pages/AJAX, backs off on transient errors, and stops on terminal/input/access st
 Resources keep action-triggered refresh to preserve resource form input.
 This consumes producer changes to the working checklist; provider expansion itself
 remains within P5.
+The item reader and optional API now expose bounded, authorized attempt history.
+Clients can pin an attempt while paging and follow predecessor IDs; working state,
+execution bindings and claim tokens are excluded. This covers recorded durable
+attempts, not unjournaled legacy synchronous actions. See
+`modules/data/checklist/docs/operational-history.md`.
 Desktop uses a 50/50 split and resource tabs; mobile uses bottom navigation and
 a remaining-resource accordion. Attempts/ownership projection and precise cache
 aggregation remain open; read

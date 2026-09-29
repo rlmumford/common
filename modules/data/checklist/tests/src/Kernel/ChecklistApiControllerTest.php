@@ -2,8 +2,10 @@
 
 namespace Drupal\Tests\checklist\Kernel;
 
+use Drupal\checklist\Attempt\ChecklistAttempt;
 use Drupal\checklist_api\Controller\ChecklistApiController;
 use Drupal\checklist\Workspace\ChecklistWorkspaceAddress;
+use Drupal\Core\Session\AnonymousUserSession;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\KernelTests\KernelTestBase;
@@ -11,6 +13,7 @@ use Drupal\user\Entity\User;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Tests the optional JSON checklist API adapter.
@@ -37,7 +40,10 @@ class ChecklistApiControllerTest extends KernelTestBase {
     $this->installEntitySchema('user');
     $this->installEntitySchema('checklist_item');
     $this->installSchema('system', ['sequences']);
-    $this->installSchema('checklist', ['checklist_workspace']);
+    $this->installSchema('checklist', [
+      'checklist_workspace', 'checklist_attempt',
+      'checklist_attempt_head', 'checklist_attempt_event',
+    ]);
     $this->installConfig(['system', 'user']);
     FieldStorageConfig::create([
       'field_name' => 'work',
@@ -372,6 +378,146 @@ class ChecklistApiControllerTest extends KernelTestBase {
     $host->save();
     $this->container->get('current_user')->setAccount($host);
     return $host;
+  }
+
+  /**
+   * Paging remains on the chosen attempt even after a successor is created.
+   */
+  public function testHistoryPaginationAndSuccessors(): void {
+    $host = $this->createHost();
+    $item = $host->get('work')->checklist->getItem('operation');
+    $item->save();
+    $journal = $this->container->get('checklist.attempt_journal');
+    $controller = ChecklistApiController::create($this->container);
+    $empty = json_decode($controller->history(Request::create('/'), 'user', $host->id(), 'work', 'operation')->getContent(), TRUE);
+    $this->assertNull($empty['attempt']);
+    $this->assertSame([], $empty['events']);
+
+    $attempt = $journal->create($item, 12, 13, ChecklistAttempt::ACTION);
+    $attempt = $journal->transition($attempt, ChecklistAttempt::RUNNING, 13);
+    $attempt = $journal->transition($attempt, ChecklistAttempt::WAITING, 13);
+    $attempt = $journal->transition($attempt, ChecklistAttempt::QUEUED, 14, 'Requested input supplied.');
+    $attempt = $journal->transition($attempt, ChecklistAttempt::RUNNING, 13);
+    $attempt = $journal->transition($attempt, ChecklistAttempt::FAILED, 13, 'Could not finish.');
+    $response = $controller->history(Request::create('/', 'GET', ['limit' => '2']), 'user', $host->id(), 'work:0', 'operation');
+    $page = json_decode($response->getContent(), TRUE);
+    $this->assertSame($attempt->id, $page['attempt']['id']);
+    $this->assertSame(12, $page['attempt']['initiator']);
+    $this->assertSame(13, $page['attempt']['executor']);
+    $this->assertSame([1, 2], array_column($page['events'], 'version'));
+    $this->assertSame(2, $page['next_after_version']);
+    $this->assertTrue($response->headers->hasCacheControlDirective('no-store'));
+    $this->assertSame($host->get('work')->first()->getPersistedInstanceUuid(), $page['instance_uuid']);
+    $this->assertSame([
+      'id', 'previous', 'mode', 'status', 'version', 'initiator', 'executor',
+      'path', 'operation', 'created', 'changed',
+    ], array_keys($page['attempt']));
+
+    $successor = $journal->create($item, 15, 13, ChecklistAttempt::ACTION, NULL, ChecklistAttempt::RESUME, $attempt->id);
+    $second = json_decode($controller->history(Request::create('/', 'GET', [
+      'attempt' => $attempt->id,
+      'after_version' => $page['next_after_version'],
+      'limit' => 2,
+    ]), 'user', $host->id(), 'work', 'operation')->getContent(), TRUE);
+    $this->assertSame([3, 4], array_column($second['events'], 'version'));
+    $this->assertSame(14, $second['events'][1]['actor']);
+    $this->assertSame('Requested input supplied.', $second['events'][1]['reason']);
+    $latest = $this->container->get('checklist.item_reader')->readHistory($host, 'work', 0, 'operation');
+    $this->assertSame($successor->id, $latest['attempt']['id']);
+    $this->assertSame($attempt->id, $latest['attempt']['previous']);
+    $this->assertSame(1, $journal->latest($item)->version);
+    $this->assertCount(6, $journal->history($attempt->id));
+    $this->assertSame([], $this->container->get('state')->get('checklist_context_test.runs', []));
+    $end = $this->container->get('checklist.item_reader')->readHistory($host, 'work', 0, 'operation', $attempt->id, 6);
+    $this->assertSame([], $end['events']);
+    $this->assertSame(6, $end['next_after_version']);
+  }
+
+  /**
+   * An attempt ID cannot disclose a different item's history.
+   */
+  public function testHistoryRejectsAnotherItem(): void {
+    $host = $this->createHost();
+    $source = $host->get('work')->checklist->getItem('source');
+    $source->save();
+    $attempt = $this->container->get('checklist.attempt_journal')->create($source, 1, 1, ChecklistAttempt::ACTION);
+    $this->expectException(NotFoundHttpException::class);
+    $this->container->get('checklist.item_reader')->readHistory($host, 'work', 0, 'operation', $attempt->id);
+  }
+
+  /**
+   * Field denial applies before attempting to read the journal.
+   */
+  public function testHistoryRejectsDeniedField(): void {
+    $host = $this->createHost();
+    $this->container->get('state')->set('checklist_resolver_test.denied_field_operations', ['work' => ['view']]);
+    $this->expectException(AccessDeniedHttpException::class);
+    $this->container->get('checklist.item_reader')->readHistory($host, 'work', 0, 'operation');
+  }
+
+  /**
+   * Hidden items produce not-found responses before journal lookup.
+   */
+  public function testHistoryRejectsHiddenItem(): void {
+    $this->enableModules(['checklist_reader_test']);
+    $host = $this->createHost();
+    $checklist = $host->get('work')->checklist;
+    $item = $checklist->getItem('source');
+    $item->set('name', 'hidden');
+    $checklist->setItem('hidden', $item);
+    $this->expectException(NotFoundHttpException::class);
+    $this->container->get('checklist.item_reader')->readHistory($host, 'work', 0, 'hidden');
+  }
+
+  /**
+   * Missing attempts return 404 rather than an empty successful history.
+   */
+  public function testHistoryRejectsUnknownAttempt(): void {
+    $host = $this->createHost();
+    $this->expectException(NotFoundHttpException::class);
+    $this->container->get('checklist.item_reader')->readHistory($host, 'work', 0, 'operation', $this->container->get('uuid')->generate());
+  }
+
+  /**
+   * History requires view access but does not require field edit access.
+   */
+  public function testHistoryAllowsReadOnlyField(): void {
+    $host = $this->createHost();
+    $this->container->get('state')->set('checklist_resolver_test.denied_field_operations', ['work' => ['edit']]);
+    $history = $this->container->get('checklist.item_reader')->readHistory($host, 'work', 0, 'operation');
+    $this->assertNull($history['attempt']);
+    $this->assertSame([], $history['events']);
+    $this->assertTrue($host->get('work')->checklist->getItem('operation')->isNew());
+    $this->assertFalse($this->container->get('checklist.tempstore_repository')->has($host->get('work')->checklist));
+  }
+
+  /**
+   * A different account cannot inspect a host it cannot view.
+   */
+  public function testHistoryRejectsDeniedHost(): void {
+    $host = $this->createHost();
+    $this->container->get('current_user')->setAccount(new AnonymousUserSession());
+    $this->expectException(AccessDeniedHttpException::class);
+    ChecklistApiController::create($this->container)->history(Request::create('/'), 'user', $host->id(), 'work', 'operation');
+  }
+
+  /**
+   * Invalid pagination cannot produce unbounded queries or array input errors.
+   */
+  public function testInvalidHistoryQuery(): void {
+    $host = $this->createHost();
+    $controller = ChecklistApiController::create($this->container);
+    foreach ([
+      ['limit' => 0], ['limit' => 101], ['after_version' => -1],
+      ['limit' => ['50']], ['attempt' => ['id']], ['after_version' => '1.5'],
+    ] as $query) {
+      $response = $controller->history(Request::create('/', 'GET', $query), 'user', $host->id(), 'work', 'operation');
+      $this->assertSame(400, $response->getStatusCode());
+    }
+    $this->container->get('router.builder')->rebuild();
+    $route = $this->container->get('router.route_provider')->getRouteByName('checklist.item.history');
+    $this->assertSame(['GET', 'HEAD'], $route->getMethods());
+    $this->assertSame('TRUE', $route->getOption('no_cache'));
   }
 
 }

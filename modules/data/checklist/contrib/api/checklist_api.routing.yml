@@ -73,3 +73,13 @@ checklist.workspace.release:
     _format: 'json'
     _user_is_logged_in: 'TRUE'
     _csrf_request_header_token: 'TRUE'
+
+checklist.item.history:
+  path: '/checklist/{entity_type}/{entity_id}/{checklist}/{item_name}/history'
+  defaults:
+    _controller: '\Drupal\checklist_api\Controller\ChecklistApiController::history'
+  options:
+    no_cache: 'TRUE'
+  methods: ['GET', 'HEAD']
+  requirements:
+    _format: 'json'
