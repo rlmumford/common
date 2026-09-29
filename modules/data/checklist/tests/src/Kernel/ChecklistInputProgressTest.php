@@ -8,6 +8,8 @@ use Drupal\checklist\Attempt\ChecklistAttemptConflictException;
 use Drupal\Core\Form\FormState;
 use Drupal\checklist\Form\ChecklistItemActionForm;
 use Drupal\checklist\Controller\ChecklistController;
+use Drupal\checklist\Controller\ChecklistRefreshController;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Drupal\checklist_api\Controller\ChecklistApiController;
 use Drupal\checklist\Workspace\ChecklistWorkspaceAddress;
 use Symfony\Component\HttpFoundation\Request;
@@ -203,6 +205,62 @@ class ChecklistInputProgressTest extends ChecklistItemExecutionTestBase {
     catch (ChecklistAttemptConflictException) {
       $this->assertSame('FIRST', $this->reload($item)->get('state')->get('reference')->getValue());
     }
+  }
+
+  /**
+   * Refresh reads fresh worker state without executing or writing an attempt.
+   */
+  public function testLiveRefresh(): void {
+    [$host, $item, $attempt] = $this->inputWork();
+    $controller = ChecklistRefreshController::create($this->container);
+    $instance = $host->work->first()->getPersistedInstanceUuid();
+    $checklist = $host->work->checklist;
+    $this->container->get('checklist.tempstore_repository')->set($checklist);
+    $before = $this->container->get('checklist.attempt_journal')->history($attempt->id);
+    $response = $controller->refresh('user', $host->id(), 'work', $instance);
+    $rows = array_values(array_filter($response->getCommands(), static fn(array $command) => $command['command'] === 'checklistReconcileRows'));
+    $this->assertStringContainsString('Document reference', $rows[0]['data']);
+    $this->assertStringContainsString('data-refresh-progress="false"', $rows[0]['data']);
+    $this->assertTrue($response->headers->hasCacheControlDirective('no-store'));
+    $this->assertSame($before, $this->container->get('checklist.attempt_journal')->history($attempt->id));
+    $item->getHandler()->supplyReference('DOC-42', $attempt->id, $attempt->version);
+    $response = $controller->refresh('user', $host->id(), 'work', $instance);
+    $rows = array_values(array_filter($response->getCommands(), static fn(array $command) => $command['command'] === 'checklistReconcileRows'));
+    $this->assertStringContainsString('data-refresh-progress="true"', $rows[0]['data']);
+    $this->assertStringNotContainsString('Document reference', $rows[0]['data']);
+    $this->assertTrue($this->reload($item)->isIncomplete());
+    $this->assertSame('DOC-42', $this->reload($item)->get('state')->get('reference')->getValue());
+    $queued = $this->container->get('checklist.attempt_journal')->latest($item);
+    $this->container->get('checklist.item_executor')->run($queued);
+    $response = $controller->refresh('user', $host->id(), 'work', $instance);
+    $rows = array_values(array_filter($response->getCommands(), static fn(array $command) => $command['command'] === 'checklistReconcileRows'));
+    $this->assertStringContainsString('data-is-complete="true"', $rows[0]['data']);
+    $this->assertStringContainsString('5 of 5', $rows[0]['data']);
+    $this->assertStringContainsString('data-refresh-progress="false"', $rows[0]['data']);
+    $this->container->get('router.builder')->rebuild();
+    $routes = $this->container->get('router.route_provider');
+    $this->assertSame(['GET'], $routes->getRouteByName('checklist.refresh')->getMethods());
+    $this->assertStringEndsWith('::actionFormAccess', $routes->getRouteByName('checklist.item.action_form')->getRequirement('_custom_access'));
+  }
+
+  /**
+   * A replaced checklist cannot receive a previous instance's refresh.
+   */
+  public function testRefreshInstanceMismatch(): void {
+    [$host] = $this->inputWork();
+    $this->expectException(ConflictHttpException::class);
+    ChecklistRefreshController::create($this->container)->refresh('user', $host->id(), 'work', 'previous-instance');
+  }
+
+  /**
+   * Refresh checks current field access before looking in the working copy.
+   */
+  public function testDeniedRefresh(): void {
+    [$host] = $this->inputWork();
+    $this->container->get('checklist.tempstore_repository')->set($host->work->checklist);
+    $this->container->get('state')->set('checklist_resolver_test.denied_field_operations', ['work' => ['view']]);
+    $this->expectException(AccessDeniedHttpException::class);
+    ChecklistRefreshController::create($this->container)->refresh('user', $host->id(), 'work', $host->work->first()->getPersistedInstanceUuid());
   }
 
 }

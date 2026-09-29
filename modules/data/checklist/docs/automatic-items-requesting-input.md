@@ -127,10 +127,15 @@ validation or persistence in its submit callback.
 A worker delivery while the stored projection requires input returns without
 claiming or invoking `actionIteration()`. The current scheduler can still deliver
 these waiting attempts periodically; no provider calls or new history transitions
-are produced while input is outstanding. This slice does not add a dedicated
-scheduler index for human-input waits or automatic browser polling.
+are produced while input is outstanding. There is no dedicated scheduler index for human-input waits.
 
-Progress and input forms refresh on page load and existing checklist AJAX actions.
+Saved, untranslatable default-revision checklists poll their rows every five
+seconds while actionable automatic work has a progress provider and does not
+require input. The input form therefore appears when a worker requests it; polling
+pauses for that item until a local submission restarts it. Changes made elsewhere
+while all items await input require a reload. Progress also refreshes on page load
+and checklist AJAX actions. Hidden tabs and active AJAX requests defer polling;
+transient failures back off up to a minute, and access/instance failures stop it.
 Kernel tests cover form/API submission, access/readiness, stale claims, shared
 working state, history and continuation. Real screenshots in
 `docs/screenshots/checklist-progress` at the repository root show the Drupal UI.

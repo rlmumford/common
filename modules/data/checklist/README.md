@@ -401,8 +401,14 @@ applies; this is not a replacement for durable attempt/state storage.
 ## Item reads and action progress
 
 Checklist rows display the same safe handler progress: a message, completed/total
-counts and an input-required indicator. Progress refreshes on page loads and existing
-item AJAX callbacks; this does not add polling or execute work when viewing a row.
+counts and an input-required indicator. On saved, untranslatable default-revision checklists, progress refreshes every
+five seconds while an actionable automatic item with a progress provider is not
+requesting input. Refresh never executes work. Polling pauses in hidden tabs or
+during AJAX activity and stops when no such items remain. Input submission can
+restart it. Open action forms retain their edits; responses requested before a
+user interaction are discarded. Resource panes retain action-triggered refresh
+to avoid replacing resource forms during background polling. Unsaved or translated
+checklists retain page-load and action-triggered updates.
 Raw intermediate state is never rendered. Automatic items requesting input can
 embed their action PluginForm and expose matching API operations; see
 [the executable input-request example](docs/automatic-items-requesting-input.md).
