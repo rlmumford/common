@@ -189,7 +189,7 @@
         if (previous) {
           var action = previous.querySelector('.action-form-container');
           var destination = row.querySelector('.action-form-container');
-          if (action && destination && row.classList.contains('ci-actionable')) {
+          if (action && destination && action.children.length && row.classList.contains('ci-actionable') && row.dataset.inputRequired !== 'false') {
             destination.replaceWith(action);
             row.classList.toggle('ci-inprogress', previous.classList.contains('ci-inprogress'));
           }

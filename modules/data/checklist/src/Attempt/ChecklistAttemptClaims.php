@@ -171,6 +171,35 @@ class ChecklistAttemptClaims {
   }
 
   /**
+   * Applies human input to an unclaimed waiting attempt and makes it due.
+   *
+   * The caller must authorize fresh item access, gates and input before calling
+   * and again in the callback. The callback performs local transactional writes
+   * only. Version fencing rejects stale forms and concurrent worker claims.
+   */
+  public function acceptInput(ChecklistAttempt $expected, int $actor, callable $apply): ChecklistAttempt {
+    $this->assertStandalone();
+    $transaction = $this->database->startTransaction();
+    try {
+      $current = $this->current($expected);
+      if ($current->status !== ChecklistAttempt::WAITING) {
+        throw new ChecklistAttemptConflictException('The attempt is not waiting for input.');
+      }
+      $queued = $this->journal->transition($current, ChecklistAttempt::QUEUED, $actor, 'Requested input supplied.');
+      $apply();
+      $this->database->update('checklist_attempt')->fields([
+        'available' => 0,
+        'dispatch_expires' => 0,
+      ])->condition('id', $queued->id)->execute();
+      return $queued;
+    }
+    catch (\Throwable $exception) {
+      $transaction->rollBack();
+      throw $exception;
+    }
+  }
+
+  /**
    * Records an expired iteration as failed without rerunning its work.
    *
    * State is retained. A supervisor must authorize reconciliation/retry before

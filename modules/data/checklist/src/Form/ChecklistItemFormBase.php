@@ -5,6 +5,7 @@ namespace Drupal\checklist\Form;
 use Drupal\checklist\ChecklistContextPreparer;
 use Drupal\checklist\ChecklistTempstoreRepository;
 use Drupal\checklist\Entity\ChecklistItemInterface;
+use Drupal\checklist\Plugin\ChecklistItemHandler\IterativeChecklistItemHandlerInterface;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Form\BaseFormIdInterface;
 use Drupal\Core\Form\FormBase;
@@ -195,6 +196,11 @@ abstract class ChecklistItemFormBase extends FormBase implements BaseFormIdInter
     $plugin_form->submitConfigurationForm($form, $form_state);
 
     $this->checklistTempstoreRepo->set($checklist);
+    if ($item->getHandler() instanceof IterativeChecklistItemHandlerInterface) {
+      // An audited input submission saves authoritative state, not this form's
+      // item object. AJAX callbacks must project the committed continuation.
+      $this->item = $this->checklistTempstoreRepo->get($checklist)->getItem($item->getName());
+    }
   }
 
   /**

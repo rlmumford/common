@@ -10,6 +10,8 @@ use Drupal\checklist\Entity\ChecklistItemInterface;
 use Drupal\Core\Session\AccountSwitcherInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\checklist\Plugin\ChecklistItemHandler\BackgroundChecklistItemHandlerInterface;
+use Drupal\checklist\Plugin\ChecklistItemHandler\ActionStateChecklistItemHandlerInterface;
+use Drupal\checklist\Plugin\ChecklistItemHandler\IterativeChecklistItemHandlerInterface;
 
 /**
  * Submits and executes one item through the same audited inline/worker path.
@@ -132,12 +134,45 @@ class ChecklistItemExecutor {
   }
 
   /**
+   * Accepts input while preserving the attempt's executor and identity.
+   *
+   * Internal plugin API, not an endpoint accepting arbitrary state. The plugin
+   * validates domain input and maps it to declared working-state names. Both
+   * its action form and action operation should call this same method, passing
+   * the attempt snapshot/version that accompanied the input request. No worker
+   * or provider runs here; the existing scheduler picks up the continuation.
+   */
+  public function acceptInput(ChecklistItemInterface $item, ChecklistAttempt $expected, array $state): ChecklistAttempt {
+    if ($expected->itemUuid !== $item->uuid() || $expected->path !== ChecklistAttempt::ACTION || $expected->mode !== ChecklistAttempt::INITIAL) {
+      throw new \DomainException('Input requires the matching automatic attempt.');
+    }
+    $prepare = function () use ($item): ChecklistItemInterface {
+      [$fresh] = $this->preparer->prepare($item->uuid(), FALSE);
+      $handler = $fresh->getHandler();
+      if ($fresh->getMethod() !== ChecklistItemInterface::METHOD_AUTO || !$handler instanceof IterativeChecklistItemHandlerInterface || !$handler instanceof ActionStateChecklistItemHandlerInterface || !$handler->getActionState()?->inputRequired) {
+        throw new \DomainException('The automatic item is not requesting input.');
+      }
+      return $fresh;
+    };
+    $prepare();
+    return $this->claims->acceptInput($expected, (int) $this->currentUser->id(), function () use ($prepare, $state): void {
+      $this->apply($prepare(), new ChecklistItemResult(ChecklistAttempt::WAITING, state: $state));
+    });
+  }
+
+  /**
    * Executes prepared work under a claim, with no transport-specific behavior.
    *
    * The caller has switched to the executor and prepared authoritative inputs.
    * Never expose prepared inputs as a public way to bypass authorization.
    */
   protected function execute(ChecklistAttempt $attempt, ChecklistItemInterface $item, array $snapshot, int $lease_seconds = 300): ChecklistAttempt {
+    // Viewing/requesting human input must not repeatedly invoke the provider.
+    // A due scheduler delivery is harmless while the handler requests input.
+    $handler = $item->getHandler();
+    if ($attempt->status === ChecklistAttempt::WAITING && $handler instanceof ActionStateChecklistItemHandlerInterface && $handler->getActionState()?->inputRequired) {
+      return $attempt;
+    }
     $claim = $this->claims->claim($attempt, $lease_seconds);
     $failure = NULL;
     try {
