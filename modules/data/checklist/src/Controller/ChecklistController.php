@@ -4,6 +4,9 @@ namespace Drupal\checklist\Controller;
 
 use Drupal\checklist\ChecklistContextCollectorInterface;
 use Drupal\checklist\ChecklistInterface;
+use Drupal\checklist\ChecklistContextPreparer;
+use Drupal\checklist\Entity\ChecklistItemInterface;
+use Drupal\checklist\Plugin\ChecklistItemHandler\ActionStateChecklistItemHandlerInterface;
 use Drupal\checklist\Form\ChecklistItemActionForm;
 use Drupal\checklist\Form\ChecklistItemRowForm;
 use Drupal\checklist\PluginForm\CustomFormObjectClassInterface;
@@ -58,6 +61,7 @@ class ChecklistController extends ControllerBase {
       $container->get('class_resolver'),
       $container->get('context.handler'),
       $container->get('checklist.context_collector'),
+      $container->get('checklist.context_preparer'),
     );
   }
 
@@ -72,8 +76,10 @@ class ChecklistController extends ControllerBase {
    *   The context handler.
    * @param \Drupal\checklist\ChecklistContextCollectorInterface $collector
    *   The context collector.
+   * @param \Drupal\checklist\ChecklistContextPreparer $contextPreparer
+   *   Prepares current handler contexts.
    */
-  public function __construct(FormBuilderInterface $form_builder, ClassResolverInterface $class_resolver, ContextHandlerInterface $context_handler, ChecklistContextCollectorInterface $collector) {
+  public function __construct(FormBuilderInterface $form_builder, ClassResolverInterface $class_resolver, ContextHandlerInterface $context_handler, ChecklistContextCollectorInterface $collector, protected ChecklistContextPreparer $contextPreparer) {
     $this->classResolver = $class_resolver;
     $this->formBuilder = $form_builder;
     $this->contextHandler = $context_handler;
@@ -129,7 +135,20 @@ class ChecklistController extends ControllerBase {
    *   The access result.
    */
   public function actionFormAccess(ChecklistInterface $checklist, string $item_name) {
-    return $this->rowFormAccess($checklist, $item_name);
+    $access = $this->rowFormAccess($checklist, $item_name);
+    $item = $checklist->getItem($item_name);
+    if ($item && $item->getMethod() === ChecklistItemInterface::METHOD_AUTO) {
+      $access = $access->andIf($item->access('view action state', NULL, TRUE))
+        ->andIf($item->access('execute action operation', NULL, TRUE));
+      $handler = $item->getHandler();
+      $available = $access->isAllowed() && $item->isIncomplete()
+        && $this->contextPreparer->prepare($checklist, $item)
+        && $item->isApplicable() === TRUE && $item->isActionable()
+        && $handler instanceof ActionStateChecklistItemHandlerInterface
+        && $handler->getActionState()?->inputRequired;
+      return $access->andIf(AccessResult::allowedIf($available))->setCacheMaxAge(0);
+    }
+    return $access;
   }
 
   /**

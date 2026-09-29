@@ -80,7 +80,7 @@ final class ChecklistAttempt {
     $transitions = [
       self::QUEUED => [self::RUNNING, self::CANCELLED, self::SUPERSEDED],
       self::RUNNING => [self::WAITING, self::SUCCEEDED, self::FAILED, self::CANCELLED, self::SUPERSEDED],
-      self::WAITING => [self::RUNNING, self::FAILED, self::CANCELLED, self::SUPERSEDED],
+      self::WAITING => [self::QUEUED, self::RUNNING, self::FAILED, self::CANCELLED, self::SUPERSEDED],
     ];
     return in_array($status, $transitions[$this->status] ?? [], TRUE);
   }

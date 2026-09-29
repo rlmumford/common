@@ -105,6 +105,22 @@ const path = require('node:path');
     assert(await page.locator('[data-checklist-complete]').isEnabled());
     await page.evaluate(() => reconcile([], true));
     assert.equal(await page.locator('#dynamic tr').count(), 0);
+    // An automatic row gains a form when it requests input, preserves edits
+    // across refreshes, then drops the form when the request is satisfied.
+    await page.evaluate(() => {
+      window.inputRow = required => Drupal.AjaxCommands.prototype.checklistReconcileRows(null, {
+        selector: '#dynamic', completable: false,
+        data: `<table><tbody><tr data-ciname="automatic" data-input-required="${required}" class="ci ci-actionable"><td>Worker</td><td class="action-form-container">${required ? '<form><input name="reference"></form>' : ''}</td></tr></tbody></table>`
+      });
+      inputRow(false);
+      inputRow(true);
+    });
+    assert.equal(await page.locator('#dynamic input[name="reference"]').count(), 1);
+    await page.locator('#dynamic input').fill('Unsaved reference');
+    await page.evaluate(() => inputRow(true));
+    assert.equal(await page.locator('#dynamic input').inputValue(), 'Unsaved reference');
+    await page.evaluate(() => inputRow(false));
+    assert.equal(await page.locator('#dynamic input').count(), 0);
     assert.deepEqual(errors, []);
     console.log('PASS: resources, row readiness, additions/removals/reordering, retained form identity/focus/edits and completion controls.');
   }

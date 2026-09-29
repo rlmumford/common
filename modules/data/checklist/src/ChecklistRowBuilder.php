@@ -5,6 +5,7 @@ namespace Drupal\checklist;
 use Drupal\checklist\Entity\ChecklistItemInterface;
 use Drupal\checklist\Plugin\ChecklistItemHandler\ActionStateChecklistItemHandlerInterface;
 use Drupal\checklist\Form\ChecklistItemRowForm;
+use Drupal\checklist\Form\ChecklistItemActionForm;
 use Drupal\checklist\Plugin\ChecklistItemHandler\SimplyCheckableChecklistItemHandler;
 use Drupal\checklist\PluginForm\CustomFormObjectClassInterface;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
@@ -134,7 +135,9 @@ class ChecklistRowBuilder {
         ],
       ],
     ];
+    $input_required = FALSE;
     if ($available && $handler instanceof ActionStateChecklistItemHandlerInterface && ($progress = $handler->getActionState())) {
+      $input_required = $progress->inputRequired;
       $progress_build = $this->buildProgress($progress);
       if ($progress_build) {
         $row['progress'] = $progress_build;
@@ -155,6 +158,24 @@ class ChecklistRowBuilder {
           'id' => $id . '--' . $name . '--action-form-container',
         ],
       ];
+    }
+    if ($checklist_item->getMethod() === ChecklistItemInterface::METHOD_AUTO) {
+      $row['#attributes']['data-input-required'] = $input_required ? 'true' : 'false';
+      if ($input_required && $state['actionable'] && $handler->hasFormClass('action') && $checklist_item->access('execute action operation')) {
+        $form_class = ChecklistItemActionForm::class;
+        if (is_subclass_of($handler->getFormClass('action'), CustomFormObjectClassInterface::class)) {
+          $form_class = [$handler->getFormClass('action'), 'getFormObjectClass']($handler, $form_class);
+        }
+        $form = $this->classResolver->getInstanceFromDefinition($form_class);
+        $form->setChecklistItem($checklist_item);
+        $form->setActionUrl(Url::fromRoute('checklist.item.action_form', [
+          'entity_type' => $checklist->getEntity()->getEntityTypeId(),
+          'entity_id' => $checklist->getEntity()->id(),
+          'checklist' => $checklist->getKey(),
+          'item_name' => $name,
+        ]));
+        $row['action_form']['input'] = $this->formBuilder->getForm($form);
+      }
     }
     return $row;
   }
