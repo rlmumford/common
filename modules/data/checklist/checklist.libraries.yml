@@ -1,6 +1,7 @@
 interactive_checklist:
   js:
     js/interactive-checklist.js: {}
+    js/checklist-progress-refresh.js: {}
   css:
     theme:
       css/interactive-checklist.css: {}

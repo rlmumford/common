@@ -4,7 +4,7 @@ checklist.item.action_form:
     _controller: '\Drupal\checklist\Controller\ChecklistController::actionForm'
     _title: 'Action'
   requirements:
-    _custom_access: '\Drupal\checklist\Controller\ChecklistController::rowFormAccess'
+    _custom_access: '\Drupal\checklist\Controller\ChecklistController::actionFormAccess'
   options:
     parameters:
       checklist:
@@ -20,3 +20,12 @@ checklist.item.row_form:
     parameters:
       checklist:
         checklist_tempstore: TRUE
+
+checklist.refresh:
+  path: '/checklist/{entity_type}/{entity_id}/{checklist}/refresh/{instance_uuid}'
+  defaults:
+    _controller: '\Drupal\checklist\Controller\ChecklistRefreshController::refresh'
+  methods: [GET]
+  requirements:
+    # The controller authorizes the fresh host and field through the resolver.
+    _access: 'TRUE'

@@ -12,6 +12,7 @@ use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Form\FormBuilderInterface;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -249,6 +250,17 @@ class InteractiveChecklist extends FormatterBase {
           ],
         ],
       ];
+      $host = $items->getEntity();
+      // Refresh addresses the saved default revision, never an unsaved form or
+      // a translated/revision-specific checklist editing workspace.
+      if (!$host->isNew() && (!$host->getEntityType()->isRevisionable() || $host->isDefaultRevision()) && !$items->getFieldDefinition()->isTranslatable() && ($instance_uuid = $item->getPersistedInstanceUuid())) {
+        $elements[$delta]['#attributes']['data-checklist-refresh-url'] = Url::fromRoute('checklist.refresh', [
+          'entity_type' => $host->getEntityTypeId(),
+          'entity_id' => $host->id(),
+          'checklist' => $checklist->getKey(),
+          'instance_uuid' => $instance_uuid,
+        ])->toString();
+      }
       $elements[$delta]['resources'] = $this->resourcePaneBuilder->build($collected_resources, $checklist);
       if ($collected_resources) {
         $elements[$delta]['#attributes']['class'][] = 'checklist-workspace--resources';

@@ -467,6 +467,16 @@ Rows now reconcile against the current visible item list after each item AJAX re
 including additions, removals, ordering and prerequisite reversal. Initial display and
 refresh share a row builder. Still-actionable forms retain identity, focus and edits;
 blocked forms close. Completion controls and validation use current required work.
+Automatic items now display safe progress and can embed their action PluginForm
+when requesting input (#103). Forms and action operations update declared working
+state under the same attempt/version fence, recording the input actor and queuing
+the original continuation. Workers do not invoke handlers while input is required.
+Saved default-revision, untranslatable checklists now refresh rows in the browser
+while automatic work is actionable and not requesting input. The read-only route
+checks current host/field access and checklist instance identity. Open forms retain
+edits; stale responses after user interaction are ignored. Polling pauses for hidden
+pages/AJAX, backs off on transient errors, and stops on terminal/input/access states.
+Resources keep action-triggered refresh to preserve resource form input.
 This consumes producer changes to the working checklist; provider expansion itself
 remains within P5.
 Desktop uses a 50/50 split and resource tabs; mobile uses bottom navigation and

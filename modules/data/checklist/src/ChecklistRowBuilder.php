@@ -161,6 +161,7 @@ class ChecklistRowBuilder {
     }
     if ($checklist_item->getMethod() === ChecklistItemInterface::METHOD_AUTO) {
       $row['#attributes']['data-input-required'] = $input_required ? 'true' : 'false';
+      $row['#attributes']['data-refresh-progress'] = $state['actionable'] && !$input_required && $handler instanceof ActionStateChecklistItemHandlerInterface ? 'true' : 'false';
       if ($input_required && $state['actionable'] && $handler->hasFormClass('action') && $checklist_item->access('execute action operation')) {
         $form_class = ChecklistItemActionForm::class;
         if (is_subclass_of($handler->getFormClass('action'), CustomFormObjectClassInterface::class)) {
