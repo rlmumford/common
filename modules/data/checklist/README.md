@@ -80,12 +80,21 @@ the pane after their callback. The checklist decorator of Drupal's
 `form_ajax_response_builder` preserves render-array and custom-response callbacks,
 including their commands and attachments. Plugins need not refresh the pane
 themselves. This applies to forms extending `ChecklistItemFormBase`; independent
-non-Form-API endpoints remain responsible for their own resource updates. Tasks with job configuration also include task resources in the pane
+non-Form-API endpoints remain responsible for their own resource updates.
+Tasks with job configuration also include task resources in the pane
 through the task resource manager, preserving its context mapping, access checks,
 and cache metadata. Sites displaying the legacy Task Resources block beside the
 checklist pane may choose one rendering location to avoid duplicate content.
 The browser retains the selected resource across pane replacement when its key
 still exists. Removed resources fall back to an available panel or the checklist.
+
+The same response boundary refreshes the controls and readiness classes of existing
+checklist rows. Reversing a prerequisite disables blocked successors immediately;
+missing required contexts also block their controls. Open action forms retain their
+working inputs while actionable, and are detached and cleared if they become
+blocked, complete or failed. Rows no longer visible to the viewer are removed.
+Auto-advance runs only after row and resource updates. This does not insert newly
+generated rows or restore removed rows; that still requires reloading the checklist.
 
 On narrow screens, the workspace adds a bottom navigation bar with a Checklist
 tab, up to four tabs for pinned resources or resources owned by the active item,

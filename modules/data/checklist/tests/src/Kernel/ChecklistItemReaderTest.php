@@ -8,6 +8,7 @@ use Drupal\Core\Ajax\InvokeCommand;
 use Drupal\Core\Form\FormState;
 use Drupal\checklist\Form\ChecklistItemActionForm;
 use Drupal\checklist\ChecklistActionState;
+use Drupal\checklist\Ajax\StartNextItemCommand;
 use Drupal\Component\Plugin\Exception\ContextException;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
@@ -236,6 +237,47 @@ class ChecklistItemReaderTest extends KernelTestBase {
   }
 
   /**
+   * Reversing a prerequisite blocks its successor and rebuilds its controls.
+   */
+  public function testRowReadinessRefresh(): void {
+    $host = $this->host();
+    $checklist = $this->container->get('checklist.resolver')->resolve($host, 'work');
+    $source = $checklist->getItem('progress');
+    $successor = $checklist->getItem('decision');
+    $configuration = $successor->getHandler()->getConfiguration();
+    $configuration['conditions']['actionability'] = [
+      'id' => 'condition_string',
+      'condition_string' => "items.progress.status == 'complete'",
+    ];
+    $successor->getHandler()->setConfiguration($configuration);
+    foreach ([TRUE, FALSE, TRUE] as $complete) {
+      $complete ? $source->setComplete() : $source->setIncomplete();
+      $response = new AjaxResponse();
+      $this->container->get('checklist.row_updater')->refresh($response, $checklist);
+      $states = array_values(array_filter($response->getCommands(), static fn(array $command): bool => $command['command'] === 'checklistItemState' && $command['ciname'] === 'decision'));
+      $this->assertCount(1, $states);
+      $this->assertSame($complete, $states[0]['state']['actionable']);
+      $controls = array_values(array_filter($response->getCommands(), static fn(array $command): bool => ($command['selector'] ?? '') === '#checklist-row--work--decision'));
+      $this->assertCount(1, $controls);
+      if ($complete) {
+        $this->assertStringNotContainsString('disabled="disabled"', $controls[0]['data']);
+      }
+      else {
+        $this->assertStringContainsString('disabled="disabled"', $controls[0]['data']);
+      }
+      // Hidden rows receive removal only, never their form or resource content.
+      $hidden = array_values(array_filter($response->getCommands(), static fn(array $command): bool => $command['command'] === 'checklistItemState' && $command['ciname'] === 'hidden'));
+      $this->assertSame(['visible' => FALSE], $hidden[0]['state']);
+    }
+    $handler = $this->container->get('plugin.manager.checklist_item_handler')->createInstance('simply_checkable', ['reversible' => TRUE]);
+    $handler->setItem($source);
+    $plugin_form = $this->container->get('plugin_form.factory')->createInstance($handler, 'row');
+    $form = $plugin_form->buildConfigurationForm(['#wrapper_id' => 'source'], new FormState());
+    $this->assertSame('::onReverseAjaxCallback', $form['checkbox']['#ajax']['callback']);
+    $this->assertSame('::onReverseAjaxCallback', $form['complete']['#ajax']['callback']);
+  }
+
+  /**
    * Plugin AJAX callbacks refresh resources once, using their updated contexts.
    */
   public function testPluginAjaxResourceRefresh(): void {
@@ -249,12 +291,13 @@ class ChecklistItemReaderTest extends KernelTestBase {
     foreach ([FALSE, TRUE] as $custom_response) {
       $trigger = [
         '#ajax' => [
-          'callback' => function () use ($host, $custom_response) {
+          'callback' => function () use ($host, $custom_response, $checklist) {
             $host->setUsername('Updated during callback');
             if ($custom_response) {
               $response = new AjaxResponse();
               $response->addCommand(new InvokeCommand('#editor', 'addClass', ['updated']));
               $response->addAttachments(['library' => ['core/drupal.dialog.ajax']]);
+              $response->addCommand(new StartNextItemCommand($checklist->getItem('progress')));
               return $response;
             }
             return ['#markup' => 'Rebuilt editor', '#attached' => ['library' => ['core/drupal.dialog.ajax']]];
@@ -272,6 +315,9 @@ class ChecklistItemReaderTest extends KernelTestBase {
       $this->assertStringContainsString('Context value: Updated during callback', $panes[0]['data']);
       $this->assertContains('core/drupal.dialog.ajax', $response->getAttachments()['library']);
       $this->assertSame($custom_response ? 'invoke' : 'insert', $commands[0]['command']);
+      if ($custom_response) {
+        $this->assertSame('startNextItem', end($commands)['command']);
+      }
       $host->setUsername('Before callback');
     }
 
@@ -280,7 +326,7 @@ class ChecklistItemReaderTest extends KernelTestBase {
     $response = $this->container->get('form_ajax_response_builder')->buildResponse(
       Request::create('/'), [], $state, []
     );
-    $this->assertCount(1, $response->getCommands());
+    $this->assertCount(2, $response->getCommands());
     $this->assertSame('#editor', $response->getCommands()[0]['selector']);
   }
 

@@ -173,6 +173,48 @@
     }
   };
 
+  Drupal.AjaxCommands.prototype.checklistItemState = function (ajax, response) {
+    document.querySelectorAll(response.selector).forEach(function (table) {
+      var row = Array.from(table.querySelectorAll('tr[data-ciname]')).find(function (candidate) {
+        return candidate.dataset.ciname === response.ciname;
+      });
+      if (!row) {
+        return;
+      }
+      if (!response.state.visible) {
+        Drupal.detachBehaviors(row, drupalSettings, 'unload');
+        row.remove();
+        return;
+      }
+      var state = response.state;
+      ['complete', 'failed', 'applicable', 'required', 'actionable'].forEach(function (flag) {
+        row.classList.toggle('ci-' + flag, state[flag]);
+      });
+      row.classList.toggle('ci-inapplicable', !state.applicable);
+      row.classList.toggle('ci-optional', !state.required);
+      row.classList.toggle('ci-inactionable', !state.actionable);
+      row.dataset.isComplete = state.complete ? 'true' : 'false';
+      row.dataset.isFailed = state.failed ? 'true' : 'false';
+      row.dataset.isActionable = state.actionable ? 'true' : 'false';
+      if (!state.actionable) {
+        row.classList.remove('ci-inprogress');
+        var action = row.querySelector('.action-form-container');
+        if (action) {
+          Drupal.detachBehaviors(action, drupalSettings, 'unload');
+          action.replaceChildren();
+        }
+        // Completed reversible items retain the row form's reverse control.
+        if (!state.complete || !state.contexts_available) {
+          row.querySelectorAll('.ci-row-form input, .ci-row-form button').forEach(function (control) {
+            if (control.type !== 'hidden') {
+              control.disabled = true;
+            }
+          });
+        }
+      }
+    });
+  };
+
   Drupal.AjaxCommands.prototype.startNextItem = function (ajax, response, status) {
     if (!response.selector) {
       return false;

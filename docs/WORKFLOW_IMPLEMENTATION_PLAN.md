@@ -463,6 +463,9 @@ and action completion callbacks. Job resources now enter the shared pane through
 the existing task resource manager, preserving task contexts, access checks and
 cache metadata. Plugin-specific Form API AJAX rebuilds now refresh resources after the callback,
 preserving custom commands, attachments and the selected resource when available.
+Existing rows now refresh their controls and readiness after each item AJAX response,
+including prerequisite reversal; newly blocked action forms close while still-actionable
+forms retain edits. Inserting newly generated rows remains open.
 Desktop uses a 50/50 split and resource tabs; mobile uses bottom navigation and
 a remaining-resource accordion. Attempts/ownership projection and precise cache
 aggregation remain open; read
