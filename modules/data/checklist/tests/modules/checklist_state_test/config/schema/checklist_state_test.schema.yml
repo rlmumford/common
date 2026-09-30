@@ -1,0 +1,9 @@
+checklist_item_handler.single_step_test:
+  type: checklist_item_handler
+  mapping:
+    context_mapping:
+      type: sequence
+      sequence:
+        type: string
+checklist_item_handler.background_step_test:
+  type: checklist_item_handler.single_step_test

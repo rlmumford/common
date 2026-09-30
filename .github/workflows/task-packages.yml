@@ -65,7 +65,9 @@ jobs:
         env:
           SIMPLETEST_DB: ${{ matrix.database == 'mysql' && 'mysql://root:testing@127.0.0.1:3306/task_consumer' || 'sqlite://localhost/:memory:' }}
           SYMFONY_DEPRECATIONS_HELPER: weak
-        run: vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/task/tests/src/Kernel
+        run: |
+          vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/task/tests/src/Kernel
+          vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/task/contrib/job/tests/src/Kernel/VersionedJobChecklistTest.php
       - name: Test the service module
         working-directory: /tmp/task-consumer
         env:

@@ -65,7 +65,7 @@ class ChecklistProcessor {
     do {
       $progress = FALSE;
       foreach ($checklist->getOrderedItems() as $name => $item) {
-        if (isset($visited[$name]) || $item->isComplete() || $item->get('status')->value === ChecklistItemInterface::STATUS_NA) {
+        if (isset($visited[$name]) || $item->isComplete() || $item->isFailed() || $item->get('status')->value === ChecklistItemInterface::STATUS_NA) {
           continue;
         }
         $before = $item->toArray();

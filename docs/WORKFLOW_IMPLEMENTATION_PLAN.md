@@ -612,3 +612,12 @@ Keep this plan current as implementation PRs land. For each phase, record its PR
 validated package versions, test evidence and unresolved limitations. A phase is
 complete only when its acceptance criteria pass, not when its interfaces exist.
 No phases above are marked complete by the initial task-port tests.
+
+### Active task saves and checklist result wake-ups
+
+Implemented the next P7 increment: transactional processing requests for active
+task saves and item result changes, bounded coalescing/dispatch, a whole-checklist
+queue worker, and fresh readiness/access checks. Existing task dependencies wake
+newly active dependants. See [TASK_CHECKLIST_PROCESSING.md](TASK_CHECKLIST_PROCESSING.md)
+for execution identity, upgrade steps, tests, cron latency and delivery limits.
+Generalised entity/event dependency implementation remains separate.
