@@ -108,6 +108,9 @@ class ChecklistItemReader {
     $events = $attempt ? $this->journal->history($attempt->id, $after_version, $limit) : [];
     return [
       'item' => $item_name,
+      'title' => $item->get('title')->value,
+      'status' => $item->get('status')->value,
+      'completed' => $item->get('completed')->isEmpty() ? NULL : (int) $item->get('completed')->value,
       'attempt' => $attempt ? [
         'id' => $attempt->id,
         'previous' => $attempt->previous,

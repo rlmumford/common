@@ -76,7 +76,7 @@ table.interactive-checklist tbody {
 }
 table.interactive-checklist tr.ci {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   background: #fff;
   border: 1px solid #cbd5df;
@@ -182,4 +182,11 @@ table.interactive-checklist td.checklist-item-progress-cell {
   width: 100%;
   max-width: 24rem;
   accent-color: #285b7a;
+}
+
+/* Keep history small and separate from primary action controls. */
+table.interactive-checklist td.checklist-item-history-cell {
+  grid-column: 3;
+  grid-row: 1;
+  font-size: 0.875rem;
 }

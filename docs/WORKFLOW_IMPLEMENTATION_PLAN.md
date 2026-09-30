@@ -487,6 +487,9 @@ Clients can pin an attempt while paging and follow predecessor IDs; working stat
 execution bindings and claim tokens are excluded. This covers recorded durable
 attempts, not unjournaled legacy synchronous actions. See
 `modules/data/checklist/docs/operational-history.md`.
+Saved items now offer a small History link opening an access-controlled off-canvas
+panel with completion time, bounded events and previous-attempt navigation. The
+panel preserves open form input and adapts events to labelled cards on mobile.
 Desktop uses a 50/50 split and resource tabs; mobile uses bottom navigation and
 a remaining-resource accordion. Attempts/ownership projection and precise cache
 aggregation remain open; read

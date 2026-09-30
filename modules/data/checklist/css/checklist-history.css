@@ -1,0 +1,61 @@
+.checklist-history {
+  max-width: 70rem;
+}
+:is(.checklist-history, #drupal-off-canvas-wrapper .checklist-history) .checklist-history-events {
+  overflow-x: auto;
+}
+:is(.checklist-history, #drupal-off-canvas-wrapper .checklist-history) .checklist-history-events th,
+:is(.checklist-history, #drupal-off-canvas-wrapper .checklist-history) .checklist-history-events td {
+  vertical-align: top;
+}
+:is(.checklist-history, #drupal-off-canvas-wrapper .checklist-history) .checklist-history-events td:last-child {
+  min-width: 12rem;
+  overflow-wrap: anywhere;
+}
+:is(.checklist-history, #drupal-off-canvas-wrapper .checklist-history) .checklist-history-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-block: 1.5rem;
+}
+@media (max-width: 600px) {
+  :is(.checklist-history, #drupal-off-canvas-wrapper .checklist-history) .checklist-history-events thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  :is(.checklist-history, #drupal-off-canvas-wrapper .checklist-history) .checklist-history-events table,
+  :is(.checklist-history, #drupal-off-canvas-wrapper .checklist-history) .checklist-history-events tbody,
+  :is(.checklist-history, #drupal-off-canvas-wrapper .checklist-history) .checklist-history-events tr,
+  :is(.checklist-history, #drupal-off-canvas-wrapper .checklist-history) .checklist-history-events td {
+    display: block;
+    width: auto;
+  }
+  :is(.checklist-history, #drupal-off-canvas-wrapper .checklist-history) .checklist-history-events tr {
+    margin-block: 1rem;
+    border: 1px solid #d3d4d9;
+  }
+  :is(.checklist-history, #drupal-off-canvas-wrapper .checklist-history) .checklist-history-events td {
+    padding: 0.5rem 0.75rem;
+    min-width: 0;
+    border: 0;
+  }
+  :is(.checklist-history, #drupal-off-canvas-wrapper .checklist-history) .checklist-history-events td::before {
+    display: block;
+    content: attr(data-label);
+    font-weight: bold;
+  }
+}
+
+:is(.checklist-history, #drupal-off-canvas-wrapper .checklist-history) .checklist-history-events table {
+  width: 100%;
+  margin-inline: 0;
+  border: 0;
+}
+:is(.checklist-history, #drupal-off-canvas-wrapper .checklist-history) .checklist-history-events td,
+:is(.checklist-history, #drupal-off-canvas-wrapper .checklist-history) .checklist-history-events th {
+  padding: 0.5rem;
+}
+

@@ -9,3 +9,8 @@ interactive_checklist:
     - core/drupal
     - core/drupal.ajax
     - core/once
+
+history:
+  css:
+    theme:
+      css/checklist-history.css: {}

@@ -29,3 +29,16 @@ checklist.refresh:
   requirements:
     # The controller authorizes the fresh host and field through the resolver.
     _access: 'TRUE'
+
+checklist.item.history_page:
+  path: '/checklist/{entity_type}/{entity_id}/{checklist}/{item_name}/history/view'
+  defaults:
+    _controller: '\Drupal\checklist\Controller\ChecklistHistoryController::view'
+    _title: 'Checklist item history'
+  methods: [GET, POST]
+  requirements:
+    # The reader checks host, field and item access before returning history.
+    _access: 'TRUE'
+  options:
+    no_cache: 'TRUE'
+    _admin_route: TRUE
