@@ -315,3 +315,14 @@ Required tests include:
   task. Task readiness still gates execution and access changes are rechecked.
 - Upgrading existing dependencies preserves target identity and existing
   satisfaction; unresolved legacy references register for future resolution. Retargeting history and blocking reasons do not disclose hidden data.
+
+## Implemented follow-up: configurable trigger actions
+
+Job event matching now dispatches a configurable action, defaulting to task
+creation. `task_dependency_job` provides an explicit entity-replacement event and
+an action which retargets unmet dependencies on unfinished tasks of the configured
+logical job. Its original/replacement mappings use the standard context handler.
+There is no per-dependency replacement flag. The source workflow remains
+responsible for reporting replacements in its transaction. See the
+[job integration guide](../modules/data/task/contrib/dependency/modules/job/README.md)
+for configuration, dispatch order, extension points and delivery limitations.

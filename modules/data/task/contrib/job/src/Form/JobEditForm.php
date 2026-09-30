@@ -5,6 +5,7 @@ namespace Drupal\task_job\Form;
 use Drupal\checklist\ChecklistItemHandlerManager;
 use Drupal\Component\Serialization\Json;
 use Drupal\Component\Utility\Html;
+use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\RemoveCommand;
 use Drupal\Core\Entity\EntityInterface;
@@ -23,6 +24,7 @@ use Drupal\task_job\Plugin\EntityTemplate\BlueprintProvider\BlueprintStorageJobT
 use Drupal\task_job\Plugin\JobTrigger\JobTriggerManager;
 use Drupal\task_job\Plugin\JobTrigger\Missing;
 use Drupal\task_job\TaskJobTempstoreRepository;
+use Drupal\task_job\TriggerActionManager;
 use Drupal\typed_data\Context\ContextDefinition;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -105,7 +107,8 @@ class JobEditForm extends JobForm {
       $container->get('entity_template.blueprint_tempstore_repository'),
       $container->get('plugin_form.factory'),
       $container->get('plugin.manager.task_job.trigger'),
-      $container->get('task_job.version_resolver')
+      $container->get('task_job.version_resolver'),
+      $container->get('plugin.manager.task_job.trigger_action')
     );
   }
 
@@ -126,6 +129,8 @@ class JobEditForm extends JobForm {
    *   The job trigger manager service.
    * @param \Drupal\task_job\JobVersionResolverInterface $job_version_resolver
    *   The job version resolver.
+   * @param \Drupal\task_job\TriggerActionManager $triggerActionManager
+   *   The trigger action manager.
    */
   public function __construct(
     TaskJobTempstoreRepository $tempstore_repository,
@@ -135,6 +140,7 @@ class JobEditForm extends JobForm {
     PluginFormFactoryInterface $plugin_form_factory,
     JobTriggerManager $job_trigger_manager,
     JobVersionResolverInterface $job_version_resolver,
+    protected TriggerActionManager $triggerActionManager,
   ) {
     $this->tempstoreRepository = $tempstore_repository;
     $this->blueprintTempstoreRepository = $blueprint_tempstore_repository;
@@ -529,7 +535,7 @@ class JobEditForm extends JobForm {
     $form['triggers'] = [
       '#type' => 'details',
       '#title' => $this->t('Triggers'),
-      '#description' => $this->t('What triggers tasks of this job?'),
+      '#description' => $this->t('Choose the events and actions for this job.'),
       '#tree' => TRUE,
     ];
     $form['triggers']['__add'] = [
@@ -555,6 +561,7 @@ class JobEditForm extends JobForm {
         '#prefix' => '<div id="' . $wrapper_id . '">',
         '#suffix' => '</div>',
         '#title' => $trigger->getLabel(),
+        '#open' => isset($form_state->getUserInput()['triggers'][$key]['action']),
         '#description' => $trigger->getDescription(),
       ];
       $element['remove'] = [
@@ -574,10 +581,40 @@ class JobEditForm extends JobForm {
           '::formSubmitRemoveTrigger',
         ],
       ];
+      $action_config = $this->actionConfiguration($trigger, $key, $form_state);
+      $options = [];
+      foreach ($this->triggerActionManager->getDefinitions() as $id => $definition) {
+        if ($trigger->getPluginId() !== 'manual' || $id === 'create_task') {
+          $options[$id] = $definition['label'];
+        }
+      }
+      $element['action'] = [
+        '#type' => 'container',
+        '#tree' => TRUE,
+        '#parents' => ['triggers', $key, 'action'],
+      ];
+      $element['action']['plugin'] = [
+        '#type' => 'select',
+        '#title' => $this->t('Action'),
+        '#options' => $options,
+        '#default_value' => $action_config['plugin'],
+        '#required' => TRUE,
+        '#ajax' => ['callback' => [static::class, 'formAjaxTriggerAction'], 'wrapper' => $wrapper_id],
+      ];
+      $element['action']['configuration'] = [
+        '#type' => 'container',
+        '#parents' => ['triggers', $key, 'action', 'configuration'],
+      ];
+      $action = $this->triggerActionManager->createInstance($action_config['plugin'], $action_config['configuration']);
+      $form_state->set('available_contexts', $trigger->getContexts());
+      $element['action']['configuration'] = $action->buildConfigurationForm(
+        $element['action']['configuration'],
+        SubformState::createForSubform($element['action']['configuration'], $form, $form_state)
+      );
       $element['template'] = [
         '#type' => 'container',
         '#title' => $this->t('Template'),
-        '#description' => $this->t('Configure how a task gets created with this job'),
+        '#description' => $this->t('Configure when the action applies and, for creation, how the task is built.'),
         '#open' => TRUE,
         '#parents' => ['triggers', $key, 'template'],
       ];
@@ -613,10 +650,11 @@ class JobEditForm extends JobForm {
 
         // Change the empty content for the conditions table.
         $element['template']['conditions']['table']['#empty'] = $this->t(
-          'The task will always be created on this trigger.',
+          'The action will always run when this trigger matches.',
         );
         $element['template']['conditions']['__add']['#weight'] = 10;
 
+        $element['template']['components']['#access'] = $action_config['plugin'] === 'create_task';
         $element['template']['components']['__add']['#weight'] = 10;
         $element['template']['components']['__add']['#title'] = $this->t('Add Template Component');
       }
@@ -690,6 +728,44 @@ class JobEditForm extends JobForm {
   }
 
   /**
+   * Gets posted action settings, falling back to the stored trigger definition.
+   */
+  protected function actionConfiguration($trigger, string $key, FormStateInterface $form_state): array {
+    $input = $form_state->getUserInput() ?? [];
+    $submitted = NestedArray::getValue($input, ['triggers', $key, 'action']);
+    $stored = $trigger->getConfiguration()['action'] ?? ['plugin' => 'create_task', 'configuration' => []];
+    $configuration = is_array($submitted) ? $submitted + $stored : $stored;
+    if ($trigger->getPluginId() === 'manual') {
+      $configuration = ['plugin' => 'create_task', 'configuration' => []];
+    }
+    return $configuration + ['configuration' => []];
+  }
+
+  /**
+   * Rebuilds the trigger panel when its action plugin changes.
+   */
+  public static function formAjaxTriggerAction(array $form, FormStateInterface $form_state): array {
+    $parents = $form_state->getTriggeringElement()['#array_parents'];
+    return $form['triggers'][$parents[1]];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    $entity = parent::validateForm($form, $form_state);
+    if (!$form_state->isSubmitted() || $form_state->getLimitValidationErrors() === []) {
+      return $entity;
+    }
+    foreach ($this->blueprintStorages as $key => $storage) {
+      $configuration = $this->actionConfiguration($storage->getTrigger(), $key, $form_state);
+      $action = $this->triggerActionManager->createInstance($configuration['plugin'], $configuration['configuration']);
+      $action->validateConfigurationForm($form['triggers'][$key]['action']['configuration'], SubformState::createForSubform($form['triggers'][$key]['action']['configuration'], $form, $form_state));
+    }
+    return $entity;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
@@ -724,10 +800,14 @@ class JobEditForm extends JobForm {
     }
 
     $triggers_config = [];
-    foreach ($this->blueprintStorages as $storage) {
+    foreach ($this->blueprintStorages as $key => $storage) {
       $trigger = $storage->getTrigger();
+      $action_config = $this->actionConfiguration($trigger, $key, $form_state);
+      $action = $this->triggerActionManager->createInstance($action_config['plugin'], $action_config['configuration']);
+      $action->submitConfigurationForm($form['triggers'][$key]['action']['configuration'], SubformState::createForSubform($form['triggers'][$key]['action']['configuration'], $form, $form_state));
 
       $triggers_config[$key] = [
+        'action' => ['plugin' => $action_config['plugin'], 'configuration' => $action->getConfiguration()],
         'id' => $trigger instanceof Missing ? $trigger->getIntendedPluginId() : $trigger->getPluginId(),
         'key' => $trigger->getKey(),
         'template' => $storage->getTemplate('default')->getConfiguration(),

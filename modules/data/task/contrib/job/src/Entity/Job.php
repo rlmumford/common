@@ -415,6 +415,18 @@ class Job extends ConfigEntityBase implements JobInterface, EntityWithPluginColl
    */
   public function calculateDependencies() {
     parent::calculateDependencies();
+    $actions = \Drupal::service('plugin.manager.task_job.trigger_action');
+    foreach ($this->getTriggersConfiguration() as $trigger) {
+      $configuration = $trigger['action'] ?? [];
+      $action = $actions->createInstance($configuration['plugin'] ?? 'create_task', $configuration['configuration'] ?? []);
+      $dependencies = $action instanceof DependentPluginInterface ? $action->calculateDependencies() : [];
+      $dependencies['module'][] = $action->getPluginDefinition()['provider'];
+      foreach ($dependencies as $type => $names) {
+        foreach ($names as $name) {
+          $this->addDependency($type, $name);
+        }
+      }
+    }
     $manager = \Drupal::service('plugin.manager.checklist_item_handler');
     foreach ($this->getChecklistItems() as $item) {
       $handler = $manager->createInstance($item['handler'], $item['handler_configuration']);
