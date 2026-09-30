@@ -93,7 +93,11 @@ not the same relationship as a service container or a dependency.
 Required behavior:
 
 - A future start date or a draft service prevents activation.
-- Any dependency that is not resolved blocks the task.
+- Any unsatisfied dependency blocks the task. Existing task dependencies require
+  `status = resolved`; the [extended design](TASK_DEPENDENCIES_AND_EVENTS.md) adds
+  entity-state/event requirements, explicit replacement following and shared trigger
+  matching. Current versus remembered group satisfaction remains under discussion;
+  it must not be inferred from task-only terminal-resolution behaviour.
 - Dependency resolution and service activation re-evaluate affected tasks.
 - Pending, active, dependency-blocked and manually held work must remain
   distinguishable. Final machine values and precedence when several gates apply
