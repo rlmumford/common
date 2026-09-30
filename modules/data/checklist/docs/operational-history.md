@@ -49,3 +49,54 @@ context snapshots, execution bindings and claim tokens.
 This endpoint exposes **recorded durable attempts**, currently used by iterative
 automatic items. It does not invent history for legacy synchronous actions that
 have not entered the attempt journal, nor does it offer retry/reset operations.
+
+## Example: automatic extraction requests input
+
+This illustrative timeline represents one attempt, not multiple attempts:
+
+| Time | Transition | Actor | Meaning |
+| --- | --- | --- | --- |
+| 10:00:00 | → queued | Initiator | Work was submitted. |
+| 10:00:01 | queued → running | Executor | A worker began the first iteration. |
+| 10:00:03 | running → waiting | Executor | The handler paused; its action state requests input. |
+| 10:02:00 | waiting → queued | Staff member | Requested input supplied. |
+| 10:02:01 | queued → running | Executor | A worker began the continuation. |
+| 10:02:04 | running → succeeded | Executor | The attempt completed successfully. |
+
+Each transition has its own monotonically increasing version and timestamp.
+The public API represents actors as numeric user IDs. A `waiting` transition
+alone does not distinguish waiting for a person from waiting for a provider;
+use the item's current action state for its live progress/input requirement.
+History is an audit of attempt transitions, not a trace of every internal handler
+step or every progress update.
+
+For example, the input event could be returned as:
+
+```json
+{
+  "version": 4,
+  "from_status": "waiting",
+  "to_status": "queued",
+  "actor": 14,
+  "created": 1790762520,
+  "reason": "Requested input supplied."
+}
+```
+
+If an attempt fails, that failure remains in its history. A separately created
+resume/fresh attempt has its own ID and events, linked through `previous`.
+Reading history neither creates that successor nor retries the action.
+
+## Relationship to an item completion timestamp
+
+History complements a single item-level completion/actioned timestamp: the latter
+answers when the item was completed, while history explains the recorded execution
+attempts leading to that result. For a journaled successful attempt, its
+`succeeded` event gives that attempt's completion time. It does not necessarily
+represent the current item disposition after subsequent reopening or manual edits.
+
+The current D10 checklist item defines status and completion method but does not
+have a dedicated `actioned`/completion datetime field. This PR does not add or
+remove one. History cannot currently substitute for such a field across all items:
+manual decisions and other unjournaled synchronous actions are not covered. A
+consistent completion timestamp for all completion paths remains separate work.
