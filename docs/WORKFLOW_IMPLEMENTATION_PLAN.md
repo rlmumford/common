@@ -393,12 +393,13 @@ It reloads and rechecks host/field/item access, conditions and mapped contexts b
 execution and result application. Typed result changes, item disposition and attempt
 history commit under the claim. Waiting preserves state and the attempt identity;
 success clears state; failure retains it. Legacy processing excludes iterative
-handlers. This first adapter supports saved autonomous items on single-value,
-untranslatable fields of non-revisionable hosts and initial action attempts only.
-Authorized retry resets, unsaved workspaces and interactive ownership remain open. Kernel tests exercise cross-request continuation, failure,
+handlers. This adapter supports saved autonomous items on single-value,
+untranslatable, non-revisionable checklist fields (including on revisionable
+hosts), with initial and explicitly retried action attempts. Unsaved workspaces
+and interactive ownership remain open. Kernel tests exercise continuation, failure,
 identity restoration and in-flight changes to permissions, contexts and state.
 
-Queue API delivery now schedules already-authorized initial action attempts from
+Queue API delivery now schedules already-authorized automatic action attempts from
 cron through `checklist.item_iteration_scheduler`. Selection/reservation is behind
 `ChecklistAttemptDispatchStorageInterface`, with a default SQL implementation; the
 scheduler depends only on that contract and the queue transport. Journal/claim
@@ -422,7 +423,10 @@ enforces the same account, binding, access, context and gate checks as the worke
 failures are not implicitly retried. Submission inside an outer transaction is journal-only and rolls back with it;
 standalone submission can finish inline. Generated-item materialization, automatic evaluation on
 task save/result changes, alternate executor policies, Messenger deployment, workspace
-ownership and retry/reset remain open.
+ownership and retry UI/API adapters remain open. Explicit failed-automatic-item
+resume/fresh retries now use the item executor: a caller-authorized successor and
+state reset commit together, preserving predecessor history. Queue delivery and
+input requests support those successors; ordinary submission never retries.
 
 ## P5 — Templates, providers and derivative items
 

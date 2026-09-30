@@ -57,9 +57,15 @@ class ChecklistInputProgressTest extends ChecklistItemExecutionTestBase {
    *
    * @dataProvider inputPaths
    */
-  public function testInputContinuation(string $path): void {
+  public function testInputContinuation(string $path, ?string $mode = NULL): void {
     [$host, $item, $attempt] = $this->inputWork();
     $executor = $this->container->get('checklist.item_executor');
+    if ($mode !== NULL) {
+      $failed = $this->container->get('checklist.attempt_journal')->transition($attempt, ChecklistAttempt::FAILED, 1);
+      $item->setFailed()->save();
+      $attempt = $executor->retry($item, $failed, $mode);
+      $item = $this->reload($item);
+    }
     $this->assertSame(ChecklistAttempt::WAITING, $attempt->status);
     // A worker delivery must not re-run the provider or advance its journal.
     $this->assertSame($attempt->version, $executor->run($attempt)->version);
@@ -131,7 +137,7 @@ class ChecklistInputProgressTest extends ChecklistItemExecutionTestBase {
    * The same domain operation backs HTML and API submissions.
    */
   public static function inputPaths(): array {
-    return [['form'], ['operation'], ['api']];
+    return [['form'], ['operation'], ['api'], ['form', ChecklistAttempt::RESUME], ['api', ChecklistAttempt::FRESH]];
   }
 
   /**

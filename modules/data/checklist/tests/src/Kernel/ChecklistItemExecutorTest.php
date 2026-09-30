@@ -492,15 +492,13 @@ class ChecklistItemExecutorTest extends ChecklistItemExecutionTestBase {
   }
 
   /**
-   * Cancellation, other paths and successor intents prevent dispatch.
+   * Cancellation and nonautomatic paths prevent dispatch.
    */
   public function testDispatchScope(): void {
-    [, $item, $attempt] = $this->work();
+    [, , $attempt] = $this->work();
     $journal = $this->container->get('checklist.attempt_journal');
-    $cancelled = $journal->transition($attempt, ChecklistAttempt::CANCELLED, 1);
+    $journal->transition($attempt, ChecklistAttempt::CANCELLED, 1);
     $scheduler = $this->container->get('checklist.item_iteration_scheduler');
-    $this->assertSame(0, $scheduler->dispatch());
-    $journal->create($item, 1, 1, ChecklistAttempt::ACTION, mode: ChecklistAttempt::FRESH, previous: $cancelled->id);
     $this->assertSame(0, $scheduler->dispatch());
     foreach ([ChecklistAttempt::ACTION_FORM, ChecklistAttempt::ACTION_OPERATION] as $path) {
       $other = ChecklistItem::create(['checklist_type' => 'context_test']);
