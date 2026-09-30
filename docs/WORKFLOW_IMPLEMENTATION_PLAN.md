@@ -508,6 +508,12 @@ API invocation produces the same state/outcomes as the interactive path.
 
 ## P7 — Durable dispatch, user identity and parallel workers
 
+The whole-checklist processor now checks host/field update access before processing
+and completion, and item execution access before legacy synchronous automatic
+actions. Authorization failures do not become handler failures. Iterative items
+retain their existing fresh-load and commit-time authorization. See
+`modules/data/checklist/docs/processing-access.md`.
+
 Deliverables:
 
 - Generic execution/dispatch interface and optional Messenger adapter. Messages

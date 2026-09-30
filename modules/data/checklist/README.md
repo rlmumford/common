@@ -855,3 +855,8 @@ in CLI workers with appropriate limits, not web cron subject to PHP-FPM timeouts
 Run database updates: `checklist_update_10004()` adds `dispatch_expires`, defaulting
 to zero so existing due attempts can be dispatched. It preserves all attempt versions,
 working state and history, and does not invent delivery or execution events.
+
+Whole-checklist processing runs as the current account and requires host/field
+update access plus item execution access for automatic actions. See
+[Processing access](docs/processing-access.md) for synchronous and iterative
+execution boundaries and worker-account requirements.

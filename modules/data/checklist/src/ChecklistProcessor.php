@@ -24,12 +24,15 @@ class ChecklistProcessor {
    *   Reloads persisted item results into the checklist's context graph.
    * @param \Drupal\Component\Datetime\TimeInterface $time
    *   Measures the remaining request budget.
+   * @param \Drupal\checklist\ChecklistResolver $resolver
+   *   Checks access to the host and its checklist field.
    */
   public function __construct(
     protected ChecklistContextPreparer $contextPreparer,
     protected ChecklistItemExecutor $executor,
     protected EntityTypeManagerInterface $entityTypeManager,
     protected TimeInterface $time,
+    protected ChecklistResolver $resolver,
   ) {}
 
   /**
@@ -53,6 +56,7 @@ class ChecklistProcessor {
     if (!is_finite($budget_seconds) || $budget_seconds < 0) {
       throw new \InvalidArgumentException('The checklist budget must be finite and nonnegative.');
     }
+    $this->authorize($checklist);
     if (!$checklist->getOrderedItems()) {
       return NULL;
     }
@@ -83,6 +87,10 @@ class ChecklistProcessor {
         }
         // Legacy synchronous handlers retain their existing action contract.
         // They cannot safely be put on the result-based worker path implicitly.
+        $this->authorize($checklist);
+        if (!$item->access('execute iteration')) {
+          continue;
+        }
         if ($defer || !$this->contextPreparer->prepare($checklist, $item) || $item->isApplicable() !== TRUE || $item->getMethod() !== ChecklistItemInterface::METHOD_AUTO || !$item->isActionable()) {
           continue;
         }
@@ -101,11 +109,26 @@ class ChecklistProcessor {
       }
     } while ($progress);
 
+    $this->authorize($checklist);
     $resolvable = $checklist->isCompletable();
     if ($resolvable) {
       $checklist->complete();
     }
     return $resolvable;
+  }
+
+  /**
+   * Authorizes the attached working graph without saving or replacing it.
+   */
+  protected function authorize(ChecklistInterface $checklist): void {
+    [$field_name, $delta] = array_pad(explode(':', $checklist->getKey(), 2), 2, '0');
+    if (!ctype_digit($delta)) {
+      throw new \InvalidArgumentException('The checklist key must identify a field and optional numeric delta.');
+    }
+    $resolved = $this->resolver->resolve($checklist->getEntity(), $field_name, (int) $delta, 'update');
+    if ($resolved->getType()->getPluginId() !== $checklist->getType()->getPluginId()) {
+      throw new \InvalidArgumentException('The working checklist type does not match its host field.');
+    }
   }
 
 }

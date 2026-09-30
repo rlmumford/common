@@ -62,7 +62,7 @@ services:
     arguments: ['@entity_type.manager', '@checklist.resolver', '@checklist.context_preparer']
   checklist.processor:
     class: Drupal\checklist\ChecklistProcessor
-    arguments: ['@checklist.context_preparer', '@checklist.item_executor', '@entity_type.manager', '@datetime.time']
+    arguments: ['@checklist.context_preparer', '@checklist.item_executor', '@entity_type.manager', '@datetime.time', '@checklist.resolver']
   checklist.item_iteration_scheduler:
     class: Drupal\checklist\Execution\ChecklistItemIterationScheduler
     arguments: ['@checklist.attempt_dispatch_storage', '@queue', '@logger.channel.checklist']

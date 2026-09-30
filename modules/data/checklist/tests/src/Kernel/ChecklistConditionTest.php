@@ -74,6 +74,7 @@ class ChecklistConditionTest extends KernelTestBase {
       ],
     ]);
     $owner->save();
+    $this->container->get('current_user')->setAccount($owner);
     return $owner->work->checklist;
   }
 
@@ -144,7 +145,7 @@ class ChecklistConditionTest extends KernelTestBase {
     $condition = [
       'id' => 'user_role',
       'roles' => ['authenticated'],
-      'context_mapping' => ['user' => '@user.current_user_context:current_user'],
+      'context_mapping' => ['user' => 'item:source:user'],
     ];
     $checklist = $this->checklist(['applicability' => $condition]);
     $this->assertNull($checklist->getItem('target')->isApplicable());

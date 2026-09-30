@@ -5,6 +5,8 @@ namespace Drupal\Tests\checklist\Kernel;
 use Drupal\checklist\ChecklistInterface;
 use Drupal\Core\Form\FormState;
 use Drupal\entity_test\Entity\EntityTest;
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\user\Entity\User;
 
@@ -34,6 +36,8 @@ class CreatedEntityOutcomeTest extends KernelTestBase {
       $this->installEntitySchema($type);
     }
     $this->installConfig(['system', 'user']);
+    FieldStorageConfig::create(['field_name' => 'checklist', 'entity_type' => 'user', 'type' => 'checklist'])->save();
+    FieldConfig::create(['field_name' => 'checklist', 'entity_type' => 'user', 'bundle' => 'user'])->save();
     entity_test_create_bundle('record', 'Record');
   }
 
@@ -57,7 +61,10 @@ class CreatedEntityOutcomeTest extends KernelTestBase {
         ],
       ],
     ]);
-    return $type->getChecklist($owner, 'checklist');
+    $owner->set('checklist', ['id' => 'context_test', 'configuration' => $type->getConfiguration()]);
+    $owner->save();
+    $this->container->get('current_user')->setAccount($owner);
+    return $owner->checklist->checklist;
   }
 
   /**
