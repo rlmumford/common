@@ -64,6 +64,26 @@ class ChecklistApiController extends ControllerBase {
   }
 
   /**
+   * Returns an item's attempt metadata and bounded transition history.
+   */
+  public function history(Request $request, string $entity_type, string $entity_id, string $checklist, string $item_name): JsonResponse {
+    $entity = $this->loadEntity($entity_type, $entity_id);
+    [$field_name, $delta] = $this->parseChecklistAddress($checklist);
+    $query = $request->query->all();
+    $after = filter_var($query['after_version'] ?? 0, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+    $limit = filter_var($query['limit'] ?? 50, FILTER_VALIDATE_INT, [
+      'options' => ['min_range' => 1, 'max_range' => 100],
+    ]);
+    $attempt = $query['attempt'] ?? NULL;
+    if ($after === FALSE || $limit === FALSE || ($attempt !== NULL && (!is_string($attempt) || $attempt === ''))) {
+      return new JsonResponse(['error' => 'Provide an attempt ID, a nonnegative after_version and a limit from 1 to 100.'], 400, ['Cache-Control' => 'private, no-store']);
+    }
+    $history = $this->itemReader->readHistory($entity, $field_name, $delta, $item_name, $attempt, $after, $limit);
+    $history['instance_uuid'] = $entity->get($field_name)->get($delta)->getPersistedInstanceUuid();
+    return new JsonResponse($history, 200, ['Cache-Control' => 'private, no-store']);
+  }
+
+  /**
    * Returns operations currently available for an item.
    */
   public function operations(string $entity_type, string $entity_id, string $checklist, string $item_name): JsonResponse {
