@@ -56,7 +56,9 @@ function task_checklist_form_task_configuration_form_alter(array &$form, FormSta
  * Submit to save task checklist settings.
  *
  * @param array $form
+ *   The task configuration form.
  * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The submitted form state.
  */
 function task_checklist_form_task_configuration_form_submit(array $form, FormStateInterface $form_state) {
   \Drupal::configFactory()->getEditable('task_checklist.defaults')
