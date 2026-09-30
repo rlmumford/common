@@ -828,13 +828,13 @@ Use `retry()` rather than creating automatic successors directly in the journal:
 journal writes alone neither reset state nor authorize execution.
 
 The interactive formatter now offers **Retry…** on failed, saved automatic items
-with an eligible attempt and execution access. It opens a 520-pixel off-canvas
-confirmation (full width on mobile), defaults to Resume, and explains what Start
-fresh discards. Opening it does not change state. The server-side form state pins
+with an eligible attempt and execution access. It expands an inline confirmation
+within the item, defaults to Resume, and explains what Start fresh discards. Opening it does not change state. The server-side form state pins
 the reviewed attempt; Form API supplies CSRF protection. Submission queues work
-through this method, closes the panel and refreshes rows without replacing other
-open action forms. A stale confirmation explains that the attempt changed and
-cannot restart a successor. Permissions and gates are rechecked at submission.
+through this method and replaces the retry controls with progress, without
+replacing other open action forms. Cancel collapses the controls without changing
+state. Row refreshes retain the choice while the same failed attempt is current.
+A stale confirmation explains that the attempt changed and cannot restart a successor. Permissions and gates are rechecked at submission.
 
 Queued retries with retained input-required state keep polling; input controls
 are offered only once the new attempt is waiting. This prevents an old input

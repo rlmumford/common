@@ -46,7 +46,7 @@ checklist.item.history_page:
 checklist.item.retry:
   path: '/checklist/item/{item_uuid}/attempt/{attempt_id}/retry'
   defaults:
-    _form: '\Drupal\checklist\Form\ChecklistItemRetryForm'
+    _controller: '\Drupal\checklist\Controller\ChecklistRetryController::view'
     _title: 'Retry checklist item'
   requirements:
     # The form authorizes the fresh binding before looking up the attempt.

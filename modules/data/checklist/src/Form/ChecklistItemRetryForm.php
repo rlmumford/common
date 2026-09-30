@@ -12,7 +12,6 @@ use Drupal\checklist\Execution\ChecklistItemExecutor;
 use Drupal\checklist\Execution\ChecklistItemNotReadyException;
 use Drupal\Component\Utility\Html;
 use Drupal\Core\Ajax\AjaxResponse;
-use Drupal\Core\Ajax\CloseDialogCommand;
 use Drupal\Core\Ajax\MessageCommand;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -84,7 +83,7 @@ class ChecklistItemRetryForm extends FormBase {
     // executor rejects its stale attempt; the rebuild then removes controls.
     $submitting = !$form_state->isRebuilding() && ($form_state->getUserInput()['form_id'] ?? NULL) === $this->getFormId();
     if (!$submitting && ($latest?->id !== $attempt_id || $attempt->status !== ChecklistAttempt::FAILED || $attempt->path !== ChecklistAttempt::ACTION || $item->isComplete())) {
-      $form['changed'] = ['#markup' => $this->t('This failed attempt is no longer available to retry. Close this panel and refresh the checklist.')];
+      $form['changed'] = ['#markup' => $this->t('This failed attempt is no longer available to retry. Refresh the checklist before trying again.')];
       return $form;
     }
     // Server-side form state, never a hidden value supplied by the browser.
@@ -113,6 +112,12 @@ class ChecklistItemRetryForm extends FormBase {
       '#button_type' => 'primary',
       '#ajax' => ['callback' => '::ajaxSubmit', 'wrapper' => $wrapper],
     ];
+    $form['actions']['cancel'] = [
+      '#type' => 'html_tag',
+      '#tag' => 'button',
+      '#value' => $this->t('Cancel'),
+      '#attributes' => ['type' => 'button', 'class' => ['checklist-retry-cancel']],
+    ];
     return $form;
   }
 
@@ -130,13 +135,13 @@ class ChecklistItemRetryForm extends FormBase {
       $form_state->set('retry_queued', TRUE);
     }
     catch (ChecklistAttemptConflictException) {
-      $this->messenger()->addError($this->t('This attempt has changed. No retry was queued. Close this panel and refresh the checklist.'));
+      $this->messenger()->addError($this->t('This attempt has changed. No retry was queued. Refresh the checklist before trying again.'));
     }
     catch (ChecklistItemNotReadyException) {
       $this->messenger()->addError($this->t('This item is not ready to run. Resolve its requirements before retrying.'));
     }
     catch (\DomainException) {
-      $this->messenger()->addError($this->t('This item can no longer be retried. Close this panel and refresh the checklist.'));
+      $this->messenger()->addError($this->t('This item can no longer be retried. Refresh the checklist before trying again.'));
     }
     $form_state->setRebuild();
   }
@@ -151,7 +156,6 @@ class ChecklistItemRetryForm extends FormBase {
     [$checklist] = $this->loadItem($form_state->get('retry_expected')->itemUuid);
     $checklist = $this->tempstore->get($checklist);
     $response = new AjaxResponse();
-    $response->addCommand(new CloseDialogCommand('#drupal-off-canvas'));
     $this->rowUpdater->refresh($response, $checklist);
     $response->addCommand(new MessageCommand($this->t('Retry queued. Progress will update as it runs.')));
     return $response;

@@ -1,14 +1,14 @@
-#drupal-off-canvas-wrapper .checklist-item-retry-form {
+.checklist-item-retry-form {
   line-height: 1.5;
   hyphens: none;
 }
-#drupal-off-canvas-wrapper .checklist-item-retry-form .form-item-mode {
+.checklist-item-retry-form .form-item-mode {
   margin-block: 1.25rem;
 }
-#drupal-off-canvas-wrapper .checklist-item-retry-form .form-actions {
+.checklist-item-retry-form .form-actions {
   margin-top: 1.25rem;
 }
-#drupal-off-canvas-wrapper .checklist-item-retry-form .button {
+.checklist-item-retry-form .button--primary {
   min-height: 2.75rem;
   padding: 0.6rem 1.25rem;
   border: 1px solid #1261a0;
@@ -16,5 +16,32 @@
   background: #1261a0;
   color: #fff;
   font-weight: 600;
+  cursor: pointer;
+}
+
+.checklist-item-retry-form {
+  padding-block: 1rem;
+  color: #232429;
+}
+.checklist-item-retry-form .form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+.checklist-item-retry-cell:has(.checklist-item-retry-form) > div > a {
+  display: none;
+}
+
+.interactive-checklist .checklist-item-retry-form .form-type--boolean {
+  margin-inline-start: 1.75rem;
+  margin-block: 0.5rem;
+}
+.checklist-item-retry-form .checklist-retry-cancel {
+  padding: 0.5rem;
+  border: 0;
+  background: transparent;
+  color: #1261a0;
+  text-decoration: underline;
   cursor: pointer;
 }

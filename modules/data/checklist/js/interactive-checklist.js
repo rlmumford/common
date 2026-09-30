@@ -124,6 +124,7 @@
         var workspace = pane.closest('.checklist-workspace');
         var selected = pane.querySelector('details[open][data-resource-key]');
         if (workspace) {
+          workspace._checklistHistoryPanels = Array.from(pane.querySelectorAll('[data-checklist-history]'));
           if (selected) {
             workspace.dataset.checklistResourceKey = selected.dataset.resourceKey;
           }
@@ -136,6 +137,15 @@
     attach: function (context) {
       once('checklist-resource-pane', '.checklist-workspace', context).forEach(function (workspace) {
         workspace.addEventListener('click', function (event) {
+          var cancel = event.target.closest('.checklist-retry-cancel');
+          if (cancel) {
+            var slot = cancel.closest('.checklist-retry-slot');
+            if (slot) {
+              Drupal.detachBehaviors(slot, drupalSettings, 'unload');
+              slot.replaceChildren();
+              slot.parentElement.querySelector('a').focus();
+            }
+          }
           var viewControl = event.target.closest('.checklist-workspace-mobile-tab');
           if (viewControl && workspace.contains(viewControl)) {
             var view = viewControl.dataset.checklistWorkspaceView;
@@ -169,8 +179,54 @@
 
       var workspace = context.matches && context.matches('.checklist-workspace') ? context : context.closest && context.closest('.checklist-workspace');
       (workspace ? [workspace] : context.querySelectorAll ? context.querySelectorAll('.checklist-workspace') : [])
-        .forEach(buildMobileNavigation);
+        .forEach(function (workspace) {
+          var pane = workspace.querySelector('.checklist-resource-pane');
+          var histories = workspace._checklistHistoryPanels || [];
+          delete workspace._checklistHistoryPanels;
+          histories.forEach(function (panel) {
+            pane.appendChild(panel);
+            Drupal.attachBehaviors(panel, drupalSettings);
+          });
+          if (pane && pane.querySelector('.checklist-resource-content')) {
+            pane.hidden = false;
+            pane.dataset.hasResources = 'true';
+            pane.dataset.checklistWorkspacePanel = 'resources';
+            pane.setAttribute('role', 'complementary');
+            pane.setAttribute('aria-label', Drupal.t('Checklist resources'));
+            workspace.classList.add('checklist-workspace--resources');
+          }
+          buildMobileNavigation(workspace);
+        });
     }
+  };
+
+  Drupal.AjaxCommands.prototype.checklistOpenResource = function (ajax, response) {
+    var parsed = document.createElement('template');
+    parsed.innerHTML = response.data;
+    document.querySelectorAll(response.selector).forEach(function (workspace) {
+      var pane = workspace.querySelector('.checklist-resource-pane');
+      var panel = parsed.content.querySelector('.checklist-resource-content').cloneNode(true);
+      var previous = Array.from(pane.querySelectorAll('.checklist-resource-content'))
+        .find(function (candidate) { return candidate.dataset.resourceKey === panel.dataset.resourceKey; });
+      if (previous) {
+        Drupal.detachBehaviors(previous, drupalSettings, 'unload');
+        previous.replaceWith(panel);
+      }
+      else {
+        pane.appendChild(panel);
+      }
+      pane.hidden = false;
+      pane.dataset.hasResources = 'true';
+      pane.dataset.checklistWorkspacePanel = 'resources';
+      pane.setAttribute('role', 'complementary');
+      pane.setAttribute('aria-label', Drupal.t('Checklist resources'));
+      workspace.classList.add('checklist-workspace--resources');
+      workspace.dataset.checklistWorkspaceView = 'resource:' + panel.dataset.resourceKey;
+      setActiveResource(workspace, panel.dataset.resourceKey);
+      Drupal.attachBehaviors(panel, response.settings || drupalSettings);
+      buildMobileNavigation(workspace);
+      panel.querySelector('summary').focus();
+    });
   };
 
   Drupal.AjaxCommands.prototype.checklistReconcileRows = function (ajax, response) {
@@ -192,6 +248,11 @@
           if (action && destination && action.children.length && row.classList.contains('ci-actionable') && row.dataset.inputRequired !== 'false') {
             destination.replaceWith(action);
             row.classList.toggle('ci-inprogress', previous.classList.contains('ci-inprogress'));
+          }
+          var retry = previous.querySelector('.checklist-retry-slot');
+          var retryDestination = row.querySelector('.checklist-retry-slot');
+          if (retry && retryDestination && retry.id === retryDestination.id && retry.children.length) {
+            retryDestination.replaceWith(retry);
           }
           Drupal.detachBehaviors(previous, drupalSettings, 'unload');
           previous.remove();

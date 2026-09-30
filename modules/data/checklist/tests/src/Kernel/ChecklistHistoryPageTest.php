@@ -32,7 +32,7 @@ class ChecklistHistoryPageTest extends ChecklistItemExecutionTestBase {
     $this->assertSame(0, $page['#cache']['max-age']);
     $query = $page['navigation']['next']['#url']->getOption('query');
     $this->assertSame(['attempt' => $attempt->id, 'after_version' => 25], $query);
-    $this->assertSame('off_canvas', $page['navigation']['next']['#attributes']['data-dialog-renderer']);
+    $this->assertSame([], $page['navigation']['next']['#attributes']);
     $html = (string) $this->container->get('renderer')->renderRoot($page);
     $this->assertStringNotContainsString('<script>private()', $html);
     $this->assertStringContainsString('&lt;script&gt;private()', $html);
@@ -51,6 +51,21 @@ class ChecklistHistoryPageTest extends ChecklistItemExecutionTestBase {
   }
 
   /**
+   * AJAX history opens one resource while retaining the rest of the workspace.
+   */
+  public function testHistoryResource(): void {
+    [$host] = $this->work();
+    $request = Request::create('/', 'GET', ['_wrapper_format' => 'drupal_ajax']);
+    $response = ChecklistHistoryController::create($this->container)->view($request, 'user', $host->id(), 'work', 'worker');
+    $commands = $response->getCommands();
+    $this->assertCount(1, $commands);
+    $this->assertSame('checklistOpenResource', $commands[0]['command']);
+    $this->assertStringContainsString('data-checklist-history', $commands[0]['data']);
+    $this->assertStringContainsString('history:worker', $commands[0]['data']);
+    $this->assertSame([], Iteration::$calls);
+  }
+
+  /**
    * Completion dates remain useful even without recorded attempts.
    */
   public function testNoAttemptAndHistoryLink(): void {
@@ -61,7 +76,7 @@ class ChecklistHistoryPageTest extends ChecklistItemExecutionTestBase {
     $this->assertArrayHasKey('empty', $page);
     $this->assertStringContainsString('Completed', (string) $page['completion']['#value']);
     $row = $this->container->get('checklist.row_builder')->build($host->work->checklist, $item);
-    $this->assertSame('off_canvas', $row['history']['#attributes']['data-dialog-renderer']);
+    $this->assertArrayNotHasKey('data-dialog-renderer', $row['history']['#attributes']);
     $this->assertSame('checklist.item.history_page', $row['history']['#url']->getRouteName());
   }
 

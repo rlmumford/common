@@ -153,15 +153,9 @@ class ChecklistRowBuilder {
         ]),
         '#attributes' => [
           'class' => ['use-ajax'],
-          'data-dialog-type' => 'dialog',
-          'data-dialog-renderer' => 'off_canvas',
-          'data-dialog-options' => json_encode([
-            'width' => 640,
-            'classes' => ['ui-dialog' => 'checklist-history-dialog'],
-          ]),
           'aria-label' => new TranslatableMarkup('History for @item', ['@item' => $checklist_item->get('title')->value ?: $name]),
         ],
-        '#attached' => ['library' => ['core/drupal.dialog.ajax']],
+        '#attached' => ['library' => ['checklist/interactive_checklist']],
         '#wrapper_attributes' => ['class' => ['checklist-item-history-cell']],
       ];
     }
@@ -175,6 +169,14 @@ class ChecklistRowBuilder {
           '#type' => 'container',
           '#wrapper_attributes' => ['class' => ['checklist-item-retry-cell']],
           'message' => ['#plain_text' => new TranslatableMarkup('This item failed.')],
+          'editor' => [
+            '#type' => 'container',
+            '#weight' => 10,
+            '#attributes' => [
+              'id' => 'checklist-retry-slot-' . $attempt->id,
+              'class' => ['checklist-retry-slot'],
+            ],
+          ],
           'link' => [
             '#type' => 'link',
             '#title' => new TranslatableMarkup('Retry…'),
@@ -184,11 +186,8 @@ class ChecklistRowBuilder {
             ]),
             '#attributes' => [
               'class' => ['use-ajax'],
-              'data-dialog-type' => 'dialog',
-              'data-dialog-renderer' => 'off_canvas',
-              'data-dialog-options' => json_encode(['width' => 520]),
             ],
-            '#attached' => ['library' => ['core/drupal.dialog.ajax']],
+            '#attached' => ['library' => ['checklist/interactive_checklist']],
           ],
         ];
       }

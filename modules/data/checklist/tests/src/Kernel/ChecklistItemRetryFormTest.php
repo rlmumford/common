@@ -48,7 +48,7 @@ class ChecklistItemRetryFormTest extends ChecklistItemExecutionTestBase {
     $saved = $this->reload($item);
     $this->assertSame($mode === ChecklistAttempt::RESUME ? 'failed-run' : NULL, $saved->get('state')->get('run_id')->getValue());
     $commands = $form_object->ajaxSubmit($form, $state)->getCommands();
-    $this->assertSame('closeDialog', $commands[0]['command']);
+    $this->assertNotContains('closeDialog', array_column($commands, 'command'));
     $this->assertContains('checklistReconcileRows', array_column($commands, 'command'));
     $this->assertTrue($saved->isIncomplete());
     $row = $this->container->get('checklist.row_builder')->build($host->work->checklist, $saved);

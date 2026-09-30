@@ -427,8 +427,7 @@ ownership and a retry API adapter remain open. Explicit failed-automatic-item
 resume/fresh retries now use the item executor: a caller-authorized successor and
 state reset commit together, preserving predecessor history. Queue delivery and
 input requests support those successors; ordinary submission never retries.
-Failed automatic rows now offer a pinned Resume/Start fresh confirmation in an
-off-canvas panel. Form API queues the authorized retry, rechecks current access,
+Failed automatic rows now offer a pinned inline Resume/Start fresh confirmation. Form API queues the authorized retry, rechecks current access,
 and refreshes rows. Retained input state cannot stop polling a queued successor.
 
 ## P5 — Templates, providers and derivative items
@@ -494,9 +493,8 @@ Clients can pin an attempt while paging and follow predecessor IDs; working stat
 execution bindings and claim tokens are excluded. This covers recorded durable
 attempts, not unjournaled legacy synchronous actions. See
 `modules/data/checklist/docs/operational-history.md`.
-Saved items now offer a small History link opening an access-controlled off-canvas
-panel with completion time, bounded events and previous-attempt navigation. The
-panel preserves open form input and adapts events to labelled cards on mobile.
+Saved items now offer a small History link opening an access-controlled resource tab with completion time, bounded events and previous-attempt navigation. The
+resource preserves open form input and adapts events to labelled cards on mobile.
 Desktop uses a 50/50 split and resource tabs; mobile uses bottom navigation and
 a remaining-resource accordion. Attempts/ownership projection and precise cache
 aggregation remain open; read
