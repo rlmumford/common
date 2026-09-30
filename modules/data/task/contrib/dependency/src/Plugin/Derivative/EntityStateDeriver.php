@@ -10,7 +10,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Defines state events with a concrete entity context, shared by both consumers.
+ * Defines concrete entity contexts shared by jobs and dependencies.
  */
 class EntityStateDeriver extends DeriverBase implements ContainerDeriverInterface {
   use StringTranslationTrait;
