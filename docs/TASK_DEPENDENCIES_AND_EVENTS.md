@@ -1,6 +1,24 @@
 # Task dependencies, workflow events and replacement work
 
-Design record — 30 September 2026. No implementation is claimed by this document.
+Design record — 30 September 2026.
+
+## Implemented first slice
+
+See [Task event dependencies](../modules/data/task/contrib/dependency/README.md)
+for the actual APIs, integrations and tests. UUID subscriptions and indexed
+bindings now support `activate` and `invalidate` actions, remembered match
+receipts, ordinary job-trigger/template creation, Flexiform HTML/API editing and
+explicit synchronous replacement migration selected by the caller. There is no
+per-dependency replacement-following setting. Conditions are deferred.
+
+The implementation is specifically the remembered-occurrence subscription model
+with a persisted `met` flag. It does **not** implement continuous prerequisites or
+prove simultaneous group satisfaction. Generic replacement matching requires
+retargeting before the successor transition; durable replay and asynchronous
+replacement-pending resolution remain future work. The broader alternatives below
+are retained as design considerations, not claims about implemented behavior.
+
+## Broader design record
 
 This extends [Workflow architecture](WORKFLOW_ARCHITECTURE.md) and the P2/P7 work
 in [the implementation plan](WORKFLOW_IMPLEMENTATION_PLAN.md). It records the
