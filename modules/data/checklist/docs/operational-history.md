@@ -113,3 +113,26 @@ resaving them does not invent a historical date. Reopening and completing them
 again records that new completion. Attempt events remain unchanged. Manual and
 synchronous completions now have this timestamp, but do not gain attempt history
 unless their execution path also writes to the journal.
+
+## Checklist UI
+
+Saved items have a small **History** link beside their title. It opens this same
+read-only history in a 640-pixel off-canvas panel (full width on narrow screens),
+without navigating away from the checklist or submitting an open action form.
+Event times use the viewer's time zone. Actor names are shown only when the
+viewer can view those accounts; otherwise the numeric audit identity is used.
+
+The panel loads up to 25 events at a time, with links to later events, the first
+page, the previous attempt and the latest attempt. Those links remain in the
+panel. A completed manual item with no attempts still shows its completion time
+and an explanation that no execution attempts were recorded. Unknown historical
+completion times are explicitly described as unknown.
+
+The HTML route lives in the base module; JSON routes remain in optional Checklist
+API. The HTML route accepts GET for its page fallback and POST for Drupal's
+standard AJAX off-canvas renderer. Both are read-only and use the item reader's
+access checks; neither changes state or acquires an execution/editing lease.
+
+History responses also include the item's current `title`, `status` and
+`completed` metadata alongside the attempt, allowing adapters to explain current
+completion independently of the selected historical attempt.

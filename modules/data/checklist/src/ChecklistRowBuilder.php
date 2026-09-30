@@ -135,6 +135,30 @@ class ChecklistRowBuilder {
         ],
       ],
     ];
+    if (!$checklist->getEntity()->isNew() && !$checklist_item->isNew()) {
+      $row['history'] = [
+        '#type' => 'link',
+        '#title' => new TranslatableMarkup('History'),
+        '#url' => Url::fromRoute('checklist.item.history_page', [
+          'entity_type' => $checklist->getEntity()->getEntityTypeId(),
+          'entity_id' => $checklist->getEntity()->id(),
+          'checklist' => $checklist->getKey(),
+          'item_name' => $name,
+        ]),
+        '#attributes' => [
+          'class' => ['use-ajax'],
+          'data-dialog-type' => 'dialog',
+          'data-dialog-renderer' => 'off_canvas',
+          'data-dialog-options' => json_encode([
+            'width' => 640,
+            'classes' => ['ui-dialog' => 'checklist-history-dialog'],
+          ]),
+          'aria-label' => new TranslatableMarkup('History for @item', ['@item' => $checklist_item->get('title')->value ?: $name]),
+        ],
+        '#attached' => ['library' => ['core/drupal.dialog.ajax']],
+        '#wrapper_attributes' => ['class' => ['checklist-item-history-cell']],
+      ];
+    }
     $input_required = FALSE;
     if ($available && $handler instanceof ActionStateChecklistItemHandlerInterface && ($progress = $handler->getActionState())) {
       $input_required = $progress->inputRequired;
