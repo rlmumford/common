@@ -6,6 +6,7 @@
  */
 
 use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Session\AccountInterface;
@@ -18,4 +19,23 @@ function checklist_resolver_test_entity_field_access($operation, FieldDefinition
   return in_array($operation, $denied[$field_definition->getName()] ?? [], TRUE)
     ? AccessResult::forbidden()->setCacheMaxAge(0)
     : AccessResult::neutral();
+}
+
+/**
+ * Implements hook_checklist_item_access().
+ */
+function checklist_resolver_test_checklist_item_access(EntityInterface $entity, $operation, AccountInterface $account) {
+  $denied = \Drupal::state()->get('checklist_resolver_test.denied_iteration_items', []);
+  return $operation === 'execute iteration' && in_array($entity->getName(), $denied, TRUE)
+    ? AccessResult::forbidden()->setCacheMaxAge(0)
+    : AccessResult::neutral();
+}
+
+/**
+ * Implements hook_checklist_item_update().
+ */
+function checklist_resolver_test_checklist_item_update(EntityInterface $entity) {
+  if (\Drupal::state()->get('checklist_resolver_test.revoke_after_item') === $entity->getName()) {
+    \Drupal::state()->set('checklist_resolver_test.denied_field_operations', ['work' => ['edit']]);
+  }
 }
