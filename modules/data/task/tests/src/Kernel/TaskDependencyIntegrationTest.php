@@ -1,0 +1,229 @@
+<?php
+
+namespace Drupal\Tests\task\Kernel;
+
+use Drupal\Core\Form\FormState;
+use Drupal\entity_test\Entity\EntityTest;
+use Drupal\task\Entity\Task;
+use Drupal\task_job\Entity\Job;
+
+/**
+ * Tests task-creation templates and shared HTML/API dependency editing.
+ *
+ * @group task
+ */
+class TaskDependencyIntegrationTest extends TaskDependencyTest {
+
+  /**
+   * {@inheritdoc}
+   */
+  protected static $modules = [
+    'system', 'user', 'field', 'text', 'filter', 'options', 'datetime', 'entity',
+    'task', 'task_dependency', 'entity_test', 'task_dependency_template',
+    'task_dependency_flexiform', 'task_dependency_job', 'task_job',
+    'entity_template', 'typed_data', 'typed_data_plus', 'typed_data_context_assignment',
+    'ctools', 'token', 'flexiform', 'field_ui', 'views', 'checklist',
+    'plugin_reference', 'typed_data_reference', 'inline_entity_form', 'task_checklist', 'task_context', 'checklist_state_test',
+  ];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    parent::setUp();
+    $this->installSchema('task_job', ['task_job_trigger_index']);
+    $this->installSchema('task_checklist', ['task_checklist_request']);
+    $this->installSchema('checklist', [
+      'checklist_attempt',
+      'checklist_attempt_head',
+      'checklist_attempt_event',
+    ]);
+    $this->installEntitySchema('checklist_item');
+  }
+
+  /**
+   * A document request trigger creates a task waiting for that document.
+   */
+  public function testTriggerCreatesDependency(): void {
+    $job = Job::create([
+      'id' => 'document_review',
+      'label' => 'Review approved document',
+      'triggers' => [
+        'requested' => [
+          'id' => 'entity_op:entity_test.insert',
+          'key' => 'requested',
+          'template' => [
+            'id' => 'default',
+            'uuid' => 'requested',
+            'label' => 'Review',
+            'components' => [
+              'dependency' => [
+                'id' => 'task_dependency',
+                'uuid' => 'dependency',
+                'entity_type' => 'entity_test',
+                'trigger' => 'entity.state',
+                'context_mapping' => ['target' => 'entity_test'],
+                'field' => 'name',
+                'property' => 'value',
+                'value' => 'approved',
+                'action' => 'activate',
+                'follow_replacement' => TRUE,
+              ],
+            ],
+          ],
+        ],
+      ],
+    ]);
+    $job->save();
+    $document = EntityTest::create(['name' => 'requested']);
+    $document->save();
+    $tasks = $this->container->get('entity_type.manager')->getStorage('task')->loadByProperties(['job' => $job->id()]);
+    $this->assertCount(1, $tasks);
+    $task = reset($tasks);
+    $this->assertSame('waiting', $task->status->value);
+    $this->assertSame($document->uuid(), $task->event_dependencies->entity->bindings->first()->entity_uuid);
+    $document->set('name', 'approved')->save();
+    $this->drain();
+    $this->assertSame('active', $this->fresh($task)->status->value);
+  }
+
+  /**
+   * Flexiform API input retains working data until the ordinary save step.
+   */
+  public function testFlexiformApi(): void {
+    $source = Task::create(['title' => 'Prerequisite', 'description' => 'Source']);
+    $source->save();
+    $task = Task::create(['title' => 'Work', 'description' => 'Work']);
+    $task->save();
+    $form = $this->container->get('flexiform.form_factory')->create([
+      'data' => [
+        'task' => [
+          'plugin' => 'provided',
+          'entity_type' => 'task',
+          'bundle' => 'task',
+          'save_on_submit' => TRUE,
+        ],
+      ],
+      'components' => ['dependencies' => ['component_type' => 'task_dependencies', 'context' => 'task']],
+    ]);
+    $store = $this->container->get('flexiform.instance_store');
+    $uuid = $this->container->get('uuid');
+    $id = $uuid->generate();
+    $store->start($id, $form, ['task' => $task], ['host' => 'test']);
+    $view = $store->getRepresentation($id);
+    $this->assertSame('ready', $view['status'], json_encode($view));
+    $this->assertTrue($view['supported']);
+    $this->assertSame('array', $view['schema']['properties']->dependencies['type']);
+    $store->act($id, 1, $uuid->generate(), 'update', [
+      'dependencies' => [[
+        'trigger' => 'task.resolved',
+        'action' => 'activate',
+        'entity_type' => 'task',
+        'entity_id' => (string) $source->id(),
+      ],
+      ],
+    ]);
+    $this->assertTrue($this->fresh($task)->event_dependencies->isEmpty());
+    $view = $store->getRepresentation($id);
+    $this->assertCount(1, $view['data']->dependencies);
+    $this->assertSame((string) $source->id(), $view['data']->dependencies[0]['entity_id']);
+    $result = $store->act($id, 2, $uuid->generate(), 'submit', []);
+    $this->assertSame('complete', $result['status']);
+    $this->assertSame('waiting', $this->fresh($task)->status->value);
+  }
+
+  /**
+   * The field widget and Flexiform use the same unsaved dependency records.
+   */
+  public function testHtmlWidget(): void {
+    $source = Task::create(['title' => 'Prerequisite']);
+    $source->save();
+    $task = Task::create(['title' => 'Work']);
+    $widget = $this->container->get('plugin.manager.field.widget')->getInstance([
+      'field_definition' => $task->get('event_dependencies')->getFieldDefinition(),
+      'configuration' => ['type' => 'task_dependencies', 'settings' => []],
+    ]);
+    $state = new FormState();
+    $form = ['#parents' => []];
+    $widget->form($task->event_dependencies, $form, $state);
+    $state->setValues([
+      'event_dependencies' => [[
+        'id' => '',
+        'trigger' => 'task.resolved',
+        'action' => 'activate',
+        'entity_type' => 'task',
+        'entity_id' => (string) $source->id(),
+        'field' => 'status',
+        'property' => 'value',
+        'value' => '',
+        'follow_replacement' => 0,
+      ],
+      ],
+    ]);
+    $widget->extractFormValues($task->event_dependencies, $form, $state);
+    $this->assertSame([], $state->getErrors());
+    $this->assertTrue($task->event_dependencies->entity->isNew());
+    $task->save();
+    $this->assertSame('waiting', $task->status->value);
+  }
+
+  /**
+   * Shared task-resolution matching also creates new work through job triggers.
+   */
+  public function testSharedJobEvent(): void {
+    $job = Job::create([
+      'id' => 'follow_up',
+      'label' => 'Follow up',
+      'triggers' => [
+        'resolved' => [
+          'id' => 'dependency_event:task.resolved',
+          'key' => 'resolved',
+          'template' => ['id' => 'default', 'uuid' => 'resolved', 'label' => 'Follow up', 'components' => []],
+        ],
+      ],
+    ]);
+    $job->save();
+    $source = Task::create(['title' => 'Prerequisite']);
+    $source->save();
+    $source->resolve()->save();
+    $source->save();
+    $tasks = $this->container->get('entity_type.manager')->getStorage('task')->loadByProperties(['job' => $job->id()]);
+    $this->assertCount(1, $tasks);
+  }
+
+  /**
+   * Dependency matching activates automatic work and the task resolves itself.
+   */
+  public function testAutomaticCompletionChain(): void {
+    $source = Task::create(['title' => 'Prerequisite']);
+    $source->save();
+    $job = Job::create([
+      'id' => 'automatic',
+      'label' => 'Automatic work',
+      'default_checklist' => [
+        'run' => [
+          'label' => 'Run',
+          'handler' => 'single_step_test',
+          'handler_configuration' => ['context_mapping' => ['value' => 'checklist:entity.title.value']],
+        ],
+      ],
+    ]);
+    $job->save();
+    $task = Task::create(['title' => 'Follow up', 'job' => $job]);
+    $task->event_dependencies[] = ['entity' => $this->container->get('task_dependency.manager')->create($task, 'task.resolved', [], 'activate', $source)];
+    $task->save();
+    $source->resolve()->save();
+    $this->drain();
+    $this->container->get('task_checklist.scheduler')->dispatch();
+    $queue = $this->container->get('queue')->get('task_checklist_process');
+    $worker = $this->container->get('plugin.manager.queue_worker')->createInstance('task_checklist_process');
+    while ($message = $queue->claimItem()) {
+      $worker->processItem($message->data);
+      $queue->deleteItem($message);
+    }
+    $saved = $this->fresh($task);
+    $this->assertSame('resolved', $saved->status->value);
+    $this->assertSame('complete', $saved->resolution->value);
+  }
+
+}

@@ -1,0 +1,30 @@
+entity_template.component.plugin.task_dependency:
+  type: entity_template.component.context_aware_plugin
+  label: 'Task dependency component'
+  mapping:
+    trigger:
+      type: string
+      label: Event
+    action:
+      type: string
+      label: Action
+    entity_type:
+      type: string
+      label: 'Target entity type'
+    field:
+      type: string
+      label: 'State field'
+    property:
+      type: string
+      label: 'State property'
+    value:
+      type: string
+      label: 'Qualifying value'
+    context_mapping:
+      type: sequence
+      label: 'Context mapping'
+      sequence:
+        type: string
+    follow_replacement:
+      type: boolean
+      label: 'Follow replacements'
