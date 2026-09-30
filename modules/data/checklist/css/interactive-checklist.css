@@ -190,3 +190,13 @@ table.interactive-checklist td.checklist-item-history-cell {
   grid-row: 1;
   font-size: 0.875rem;
 }
+
+/* Retry is available only on failed automatic work. */
+table.interactive-checklist td.checklist-item-retry-cell {
+  grid-column: 2 / -1;
+  color: #8a2525;
+  font-size: 0.9rem;
+}
+table.interactive-checklist td.checklist-item-retry-cell a {
+  margin-inline-start: 0.5rem;
+}

@@ -43,8 +43,13 @@ class ChecklistActionResourcePaneUpdater {
     $response->addAttachments($pane['#attached'] ?? []);
     $response->addCommand(new ReplaceCommand('#' . $this->builder->getPaneId($checklist), $markup));
     $method = $resources ? 'addClass' : 'removeClass';
+    // Client-opened history tabs also need the split layout after refresh.
+    $selector = '#' . $this->builder->getWorkspaceId($checklist);
+    if (!$resources) {
+      $selector .= ':not(:has(.checklist-resource-content))';
+    }
     $response->addCommand(new InvokeCommand(
-      '#' . $this->builder->getWorkspaceId($checklist),
+      $selector,
       $method,
       ['checklist-workspace--resources']
     ));

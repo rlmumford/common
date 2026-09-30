@@ -3,6 +3,9 @@
 namespace Drupal\checklist;
 
 use Drupal\checklist\Entity\ChecklistItemInterface;
+use Drupal\checklist\Attempt\ChecklistAttempt;
+use Drupal\checklist\Attempt\ChecklistAttemptJournal;
+use Drupal\checklist\Plugin\ChecklistItemHandler\IterativeChecklistItemHandlerInterface;
 use Drupal\checklist\Plugin\ChecklistItemHandler\ActionStateChecklistItemHandlerInterface;
 use Drupal\checklist\Form\ChecklistItemRowForm;
 use Drupal\checklist\Form\ChecklistItemActionForm;
@@ -34,6 +37,8 @@ class ChecklistRowBuilder {
    *   Builds row controls.
    * @param \Drupal\typed_data\PlaceholderResolverInterface $placeholderResolver
    *   Resolves labels against current typed data.
+   * @param \Drupal\checklist\Attempt\ChecklistAttemptJournal $journal
+   *   Provides retry targets and current input-request attempt metadata.
    */
   public function __construct(
     protected ChecklistContextPreparer $contextPreparer,
@@ -41,6 +46,7 @@ class ChecklistRowBuilder {
     protected ClassResolverInterface $classResolver,
     protected FormBuilderInterface $formBuilder,
     protected PlaceholderResolverInterface $placeholderResolver,
+    protected ChecklistAttemptJournal $journal,
   ) {}
 
   /**
@@ -147,20 +153,65 @@ class ChecklistRowBuilder {
         ]),
         '#attributes' => [
           'class' => ['use-ajax'],
-          'data-dialog-type' => 'dialog',
-          'data-dialog-renderer' => 'off_canvas',
-          'data-dialog-options' => json_encode([
-            'width' => 640,
-            'classes' => ['ui-dialog' => 'checklist-history-dialog'],
-          ]),
           'aria-label' => new TranslatableMarkup('History for @item', ['@item' => $checklist_item->get('title')->value ?: $name]),
         ],
-        '#attached' => ['library' => ['core/drupal.dialog.ajax']],
+        '#attached' => ['library' => ['checklist/interactive_checklist']],
         '#wrapper_attributes' => ['class' => ['checklist-item-history-cell']],
       ];
     }
+    if ($checklist_item->isFailed() && !$checklist_item->isNew() && !$checklist->getEntity()->isNew()
+      && $handler instanceof IterativeChecklistItemHandlerInterface
+      && $checklist_item->getMethod() === ChecklistItemInterface::METHOD_AUTO
+      && $checklist_item->access('execute iteration')) {
+      $attempt = $this->journal->latest($checklist_item);
+      if ($attempt?->status === ChecklistAttempt::FAILED && $attempt->path === ChecklistAttempt::ACTION) {
+        $row['retry'] = [
+          '#type' => 'container',
+          '#wrapper_attributes' => ['class' => ['checklist-item-retry-cell']],
+          'message' => ['#plain_text' => new TranslatableMarkup('This item failed.')],
+          'editor' => [
+            '#type' => 'container',
+            '#weight' => 10,
+            '#attributes' => [
+              'id' => 'checklist-retry-slot-' . $attempt->id,
+              'class' => ['checklist-retry-slot'],
+            ],
+          ],
+          'link' => [
+            '#type' => 'link',
+            '#title' => new TranslatableMarkup('Retry…'),
+            '#url' => Url::fromRoute('checklist.item.retry', [
+              'item_uuid' => $checklist_item->uuid(),
+              'attempt_id' => $attempt->id,
+            ]),
+            '#attributes' => [
+              'class' => ['use-ajax'],
+            ],
+            '#attached' => ['library' => ['checklist/interactive_checklist']],
+          ],
+        ];
+      }
+    }
     $input_required = FALSE;
     if ($available && $handler instanceof ActionStateChecklistItemHandlerInterface && ($progress = $handler->getActionState())) {
+      // Retained input state may survive failure or a newly queued retry. Only
+      // a waiting attempt can accept it; keep polling queued retries instead.
+      if ($progress->inputRequired && $handler instanceof IterativeChecklistItemHandlerInterface && !$checklist_item->isNew()) {
+        $input_attempt = $attempt ?? $this->journal->latest($checklist_item);
+        if ($input_attempt?->status !== ChecklistAttempt::WAITING) {
+          $progress = new ChecklistActionState(
+            $progress->stage,
+            match ($input_attempt?->status) {
+              ChecklistAttempt::QUEUED => new TranslatableMarkup('Waiting to run.'),
+              ChecklistAttempt::RUNNING => new TranslatableMarkup('Processing…'),
+              default => new TranslatableMarkup('Automatic processing stopped.'),
+            },
+            $progress->completed,
+            $progress->total,
+            $progress->updatedAt,
+          );
+        }
+      }
       $input_required = $progress->inputRequired;
       $progress_build = $this->buildProgress($progress);
       if ($progress_build) {

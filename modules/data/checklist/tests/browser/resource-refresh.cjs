@@ -121,8 +121,48 @@ const path = require('node:path');
     assert.equal(await page.locator('#dynamic input').inputValue(), 'Unsaved reference');
     await page.evaluate(() => inputRow(false));
     assert.equal(await page.locator('#dynamic input').count(), 0);
+    // History opens alongside existing resources, retaining their live inputs.
+    await page.evaluate(() => {
+      replacePane(['a', 'b']);
+      document.querySelector('#a').insertAdjacentHTML('beforeend', '<input value="Keep resource edits">');
+      window.resourceInput = document.querySelector('#a input');
+      window.openHistory = text => Drupal.AjaxCommands.prototype.checklistOpenResource(null, {
+        selector: '.checklist-workspace',
+        data: `<details id="history" name="resources" class="checklist-resource-content" data-checklist-history="true" data-resource-key="history:worker" data-resource-label="History: Worker"><summary>History: Worker</summary><p>${text}</p></details>`
+      });
+      openHistory('First page');
+    });
+    assert(await page.locator('#history').evaluate(panel => panel.open));
+    assert.equal(await page.locator('.checklist-workspace').getAttribute('data-checklist-workspace-view'), 'resources');
+    assert(await page.evaluate(() => document.querySelector('#a input') === window.resourceInput));
+    await page.evaluate(() => openHistory('Second page'));
+    assert.equal(await page.locator('[data-checklist-history]').count(), 1);
+    assert.equal(await page.locator('#history p').innerText(), 'Second page');
+    assert.equal(await page.locator('#a input').inputValue(), 'Keep resource edits');
+    await page.evaluate(() => replacePane(['a']));
+    assert.equal(await page.locator('#history p').innerText(), 'Second page');
+    assert(await page.locator('#history').evaluate(panel => panel.open));
+    // Row polling preserves a retry choice only for the same failed attempt.
+    await page.evaluate(() => {
+      window.retryRow = attempt => Drupal.AjaxCommands.prototype.checklistReconcileRows(null, {
+        selector: '#dynamic', completable: false,
+        data: `<table><tbody><tr data-ciname="worker"><td><div><a href="#">Retry</a><div id="retry-${attempt}" class="checklist-retry-slot"></div></div></td></tr></tbody></table>`
+      });
+      retryRow('first');
+      document.querySelector('#retry-first').innerHTML = '<form><input value="fresh"><button type="button" class="checklist-retry-cancel">Cancel</button></form>';
+      window.retryInput = document.querySelector('#retry-first input');
+      retryRow('first');
+    });
+    assert(await page.evaluate(() => document.querySelector('#retry-first input') === window.retryInput));
+    await page.locator('.checklist-retry-cancel').click();
+    assert.equal(await page.locator('#retry-first form').count(), 0);
+    await page.evaluate(() => {
+      document.querySelector('#retry-first').innerHTML = '<form><input value="fresh"></form>';
+      retryRow('successor');
+    });
+    assert.equal(await page.locator('#dynamic input').count(), 0);
     assert.deepEqual(errors, []);
-    console.log('PASS: resources, row readiness, additions/removals/reordering, retained form identity/focus/edits and completion controls.');
+    console.log('PASS: resources, row readiness, additions/removals/reordering, retained form identity/focus/edits completion controls, history tabs and inline retry cancellation/preservation.');
   }
   finally {
     await browser.close();

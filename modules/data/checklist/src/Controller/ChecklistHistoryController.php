@@ -2,7 +2,12 @@
 
 namespace Drupal\checklist\Controller;
 
+use Drupal\checklist\Ajax\OpenResourceCommand;
+use Drupal\checklist\ChecklistActionResource;
+use Drupal\checklist\ChecklistActionResourcePaneBuilder;
+use Drupal\checklist\ChecklistInterface;
 use Drupal\checklist\ChecklistItemReader;
+use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -25,19 +30,20 @@ class ChecklistHistoryController extends ControllerBase {
     protected EntityTypeManagerInterface $entityManager,
     protected ChecklistItemReader $reader,
     protected DateFormatterInterface $dateFormatter,
+    protected ChecklistActionResourcePaneBuilder $paneBuilder,
   ) {}
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    return new static($container->get('entity_type.manager'), $container->get('checklist.item_reader'), $container->get('date.formatter'));
+    return new static($container->get('entity_type.manager'), $container->get('checklist.item_reader'), $container->get('date.formatter'), $container->get('checklist.action_resource_pane_builder'));
   }
 
   /**
    * Displays a bounded page of events from one attempt.
    */
-  public function view(Request $request, string $entity_type, string $entity_id, string $checklist, string $item_name): array {
+  public function view(Request $request, string $entity_type, string $entity_id, string $checklist, string $item_name): array|AjaxResponse {
     if (!$this->entityManager->hasDefinition($entity_type) || !preg_match('/^([^:]+)(?::(0|[1-9][0-9]*))?$/D', $checklist, $parts)) {
       throw new NotFoundHttpException();
     }
@@ -70,7 +76,7 @@ class ChecklistHistoryController extends ControllerBase {
     $attempt = $history['attempt'];
     if (!$attempt) {
       $build['empty'] = ['#markup' => $this->t('No execution attempts have been recorded. Manual and synchronous actions may complete without an attempt history.')];
-      return $build;
+      return $this->respond($request, $build, $host->get($parts[1])->get((int) ($parts[2] ?? 0))->checklist, $item_name);
     }
     $account_ids = array_unique(array_merge(array_column($history['events'], 'actor'), [
       $attempt['initiator'], $attempt['executor'],
@@ -139,7 +145,29 @@ class ChecklistHistoryController extends ControllerBase {
     if ($attempt_id !== NULL || $after > 0) {
       $build['navigation']['latest'] = $this->link($this->t('Latest attempt'), $parameters);
     }
-    return $build;
+    return $this->respond($request, $build, $host->get($parts[1])->get((int) ($parts[2] ?? 0))->checklist, $item_name);
+  }
+
+  /**
+   * Opens authorized history as a resource, retaining a standalone fallback.
+   */
+  protected function respond(Request $request, array $build, ChecklistInterface $checklist, string $item_name): array|AjaxResponse {
+    if ($request->query->get('_wrapper_format') !== 'drupal_ajax') {
+      return $build;
+    }
+    foreach (array_keys($build['navigation'] ?? []) as $name) {
+      if (!str_starts_with($name, '#')) {
+        $build['navigation'][$name]['#attributes']['class'][] = 'use-ajax';
+      }
+    }
+    $key = 'history:' . $item_name;
+    $resource = new ChecklistActionResource($key, $build, (string) $build['#title']);
+    $pane = $this->paneBuilder->build([$key => ['resource' => $resource, 'owners' => [$item_name]]], $checklist);
+    $pane['panels'][$key]['#attributes']['data-checklist-history'] = 'true';
+    $pane['#attached']['library'][] = 'checklist/interactive_checklist';
+    $response = new AjaxResponse();
+    $response->addCommand(new OpenResourceCommand('#' . $this->paneBuilder->getWorkspaceId($checklist), $pane));
+    return $response;
   }
 
   /**
@@ -150,13 +178,8 @@ class ChecklistHistoryController extends ControllerBase {
       '#type' => 'link',
       '#title' => $title,
       '#url' => Url::fromRoute('checklist.item.history_page', $parameters, ['query' => $query]),
-      '#attributes' => [
-        'class' => ['use-ajax'],
-        'data-dialog-type' => 'dialog',
-        'data-dialog-renderer' => 'off_canvas',
-        'data-dialog-options' => json_encode(['width' => 640, 'classes' => ['ui-dialog' => 'checklist-history-dialog']]),
-      ],
-      '#attached' => ['library' => ['core/drupal.dialog.ajax']],
+      '#attributes' => [],
+      '#attached' => ['library' => ['checklist/interactive_checklist']],
     ];
   }
 
