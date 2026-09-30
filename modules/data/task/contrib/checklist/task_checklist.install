@@ -44,7 +44,6 @@ function task_checklist_uninstall() {
     ->setLabel(new TranslatableMarkup('Checklist'))
     ->setDisplayConfigurable('view', TRUE);
 
-
   $storage_definition_listener->onFieldStorageDefinitionDelete($definition);
   $definition_listener->onFieldDefinitionDelete($definition);
 }
