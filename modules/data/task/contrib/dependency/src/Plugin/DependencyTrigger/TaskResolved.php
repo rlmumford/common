@@ -11,7 +11,7 @@ use Drupal\Core\Entity\EntityInterface;
  *   id = "task.resolved",
  *   label = @Translation("Task resolves"),
  *   context_definitions = {
- *     "task" = @ContextDefinition("entity:task", label = @Translation("Task to wait for"))
+ *     "task" = @ContextDefinition("entity:task", label = @Translation("Resolving task"))
  *   }
  * )
  */
