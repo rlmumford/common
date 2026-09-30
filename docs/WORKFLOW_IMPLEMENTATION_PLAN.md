@@ -423,12 +423,15 @@ enforces the same account, binding, access, context and gate checks as the worke
 failures are not implicitly retried. Submission inside an outer transaction is journal-only and rolls back with it;
 standalone submission can finish inline. Generated-item materialization, automatic evaluation on
 task save/result changes, alternate executor policies, Messenger deployment, workspace
-ownership and a retry API adapter remain open. Explicit failed-automatic-item
+ownership remain open. Explicit failed-automatic-item
 resume/fresh retries now use the item executor: a caller-authorized successor and
 state reset commit together, preserving predecessor history. Queue delivery and
 input requests support those successors; ordinary submission never retries.
 Failed automatic rows now offer a pinned inline Resume/Start fresh confirmation. Form API queues the authorized retry, rechecks current access,
 and refreshes rows. Retained input state cannot stop polling a queued successor.
+The optional Checklist API now queues the same explicit retries using workspace
+owner/generation/version and reviewed-attempt ID/version fences. Admission can
+consume a workspace version before executor rejection; clients refresh after errors.
 
 ## P5 — Templates, providers and derivative items
 

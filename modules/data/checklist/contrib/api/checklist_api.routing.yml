@@ -6,6 +6,8 @@ checklist.item.state:
     no_cache: 'TRUE'
   methods: ['GET', 'HEAD']
   requirements:
+    # The controller checks host, field and item access through shared services.
+    _access: 'TRUE'
     _format: 'json'
 checklist.item.operations:
   path: '/checklist/{entity_type}/{entity_id}/{checklist}/{item_name}/operations'
@@ -15,6 +17,8 @@ checklist.item.operations:
     no_cache: 'TRUE'
   methods: ['GET', 'HEAD']
   requirements:
+    # The controller checks host, field and item access through shared services.
+    _access: 'TRUE'
     _format: 'json'
 checklist.item.operation:
   path: '/checklist/{entity_type}/{entity_id}/{checklist}/{item_name}/operation'
@@ -48,6 +52,8 @@ checklist.workspace.status:
     no_cache: 'TRUE'
   methods: ['GET', 'HEAD']
   requirements:
+    # The controller checks host, field and item access through shared services.
+    _access: 'TRUE'
     _format: 'json'
 
 checklist.workspace.renew:
@@ -82,4 +88,18 @@ checklist.item.history:
     no_cache: 'TRUE'
   methods: ['GET', 'HEAD']
   requirements:
+    # The controller checks host, field and item access through shared services.
+    _access: 'TRUE'
     _format: 'json'
+
+checklist.item.retry_api:
+  path: '/checklist/{entity_type}/{entity_id}/{checklist}/{item_name}/retry'
+  defaults:
+    _controller: '\Drupal\checklist_api\Controller\ChecklistApiController::retry'
+  options:
+    no_cache: 'TRUE'
+  methods: ['POST']
+  requirements:
+    _format: 'json'
+    _user_is_logged_in: 'TRUE'
+    _csrf_request_header_token: 'TRUE'

@@ -170,18 +170,38 @@ class ChecklistApiControllerTest extends KernelTestBase {
     $route_provider = $this->container->get('router.route_provider');
     $state_route = $route_provider->getRouteByName('checklist.item.state');
     $operation_route = $route_provider->getRouteByName('checklist.item.operation');
+    $retry_route = $route_provider->getRouteByName('checklist.item.retry_api');
+    $this->assertSame(['POST'], $retry_route->getMethods());
+    $this->assertSame('json', $retry_route->getRequirement('_format'));
+    $this->assertSame('TRUE', $retry_route->getOption('no_cache'));
     $workspace_status_route = $route_provider->getRouteByName('checklist.workspace.status');
     $workspace_acquire_route = $route_provider->getRouteByName('checklist.workspace.acquire');
     $workspace_renew_route = $route_provider->getRouteByName('checklist.workspace.renew');
     $workspace_release_route = $route_provider->getRouteByName('checklist.workspace.release');
 
+    $read_routes = [
+      'checklist.item.state', 'checklist.item.operations',
+      'checklist.item.history', 'checklist.workspace.status',
+    ];
+    foreach ($read_routes as $name) {
+      $this->assertTrue($this->container->get('access_manager')->checkNamedRoute($name, [
+        'entity_type' => 'user',
+        'entity_id' => '1',
+        'checklist' => 'work',
+        'item_name' => 'operation',
+      ]));
+    }
     $this->assertSame(['GET', 'HEAD'], $state_route->getMethods());
     $this->assertSame(['GET', 'HEAD'], $workspace_status_route->getMethods());
     $this->assertSame(['POST'], $operation_route->getMethods());
     $this->assertSame(['POST'], $workspace_acquire_route->getMethods());
     $this->assertSame(['PATCH'], $workspace_renew_route->getMethods());
     $this->assertSame(['DELETE'], $workspace_release_route->getMethods());
-    foreach ([$operation_route, $workspace_acquire_route, $workspace_renew_route, $workspace_release_route] as $write_route) {
+    $write_routes = [
+      $retry_route, $operation_route, $workspace_acquire_route,
+      $workspace_renew_route, $workspace_release_route,
+    ];
+    foreach ($write_routes as $write_route) {
       $this->assertSame('TRUE', $write_route->getRequirement('_csrf_request_header_token'));
       $this->assertSame('TRUE', $write_route->getRequirement('_user_is_logged_in'));
     }

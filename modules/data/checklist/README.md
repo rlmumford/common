@@ -839,8 +839,9 @@ A stale confirmation explains that the attempt changed and cannot restart a succ
 Queued retries with retained input-required state keep polling; input controls
 are offered only once the new attempt is waiting. This prevents an old input
 request from disabling live updates while the new attempt awaits a worker.
-The HTML form route is in Checklist itself; an optional JSON retry adapter remains
-follow-up work and must enforce its workspace ownership/version rules.
+The HTML form route is in Checklist itself. The optional `checklist_api` module
+also provides a queued retry endpoint with workspace ownership/version and
+reviewed-attempt fencing; see [Retry API](docs/retry-api.md).
 
 Resolve uncertain provider side effects before calling retry, especially after an
 expired claim: new attempt IDs alone

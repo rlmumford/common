@@ -2,7 +2,10 @@
 
 namespace Drupal\checklist_api\Controller;
 
+use Drupal\checklist\Attempt\ChecklistAttempt;
 use Drupal\checklist\Attempt\ChecklistAttemptConflictException;
+use Drupal\checklist\Attempt\ChecklistAttemptJournal;
+use Drupal\checklist\Execution\ChecklistItemExecutor;
 use Drupal\checklist\ChecklistActionOperationDispatcher;
 use Drupal\checklist\ChecklistItemReader;
 use Drupal\checklist\ChecklistOperationInputException;
@@ -35,6 +38,8 @@ class ChecklistApiController extends ControllerBase {
     protected ChecklistOperationSchemaValidator $schemaValidator,
     protected ChecklistWorkspaceStorageInterface $workspaceStorage,
     protected AccountProxyInterface $account,
+    protected ChecklistAttemptJournal $journal,
+    protected ChecklistItemExecutor $executor,
   ) {}
 
   /**
@@ -49,6 +54,8 @@ class ChecklistApiController extends ControllerBase {
       $container->get('checklist.operation_schema_validator'),
       $container->get('checklist.workspace_storage'),
       $container->get('current_user'),
+      $container->get('checklist.attempt_journal'),
+      $container->get('checklist.item_executor'),
     );
   }
 
@@ -261,6 +268,60 @@ class ChecklistApiController extends ControllerBase {
     }
     catch (ChecklistAttemptConflictException) {
       return $this->conflictResponse();
+    }
+  }
+
+  /**
+   * Queues an explicit retry fenced by workspace and reviewed attempt versions.
+   */
+  public function retry(Request $request, string $entity_type, string $entity_id, string $checklist, string $item_name): JsonResponse {
+    $payload = $this->decodeObject($request);
+    $headers = ['Cache-Control' => 'private, no-store'];
+    if (!$this->hasLeasePayload($payload)
+      || !isset($payload->expected_version) || !is_int($payload->expected_version) || $payload->expected_version < 0
+      || !isset($payload->attempt_id) || !is_string($payload->attempt_id) || $payload->attempt_id === ''
+      || !isset($payload->attempt_version) || !is_int($payload->attempt_version) || $payload->attempt_version < 1
+      || !in_array($payload->mode ?? NULL, [ChecklistAttempt::RESUME, ChecklistAttempt::FRESH], TRUE)) {
+      return new JsonResponse(['error' => 'Provide instance_uuid, generation, expected_version, attempt_id, attempt_version and mode (resume or fresh).'], 400, $headers);
+    }
+
+    try {
+      [$entity, $field_name, $delta, $checklist_object] = $this->resolveAddress($entity_type, $entity_id, $checklist);
+      $address = $this->verifiedAddress($entity, $field_name, $delta, $checklist_object->getKey(), $payload->instance_uuid);
+      $lease = $this->ownedLease($address, $payload->generation);
+      if (!$checklist_object->hasItem($item_name) || !$checklist_object->getItem($item_name)->access('view action state')) {
+        throw new NotFoundHttpException('Checklist item not found.');
+      }
+      $item = $checklist_object->getItem($item_name);
+      if (!$item->access('execute iteration')) {
+        throw new AccessDeniedHttpException('The checklist item cannot be retried.');
+      }
+      // Only look up history through the authorized item, never an arbitrary
+      // caller-supplied attempt ID belonging to another item or host.
+      $expected = $this->journal->latest($item);
+      if (!$expected || $expected->id !== $payload->attempt_id || $expected->version !== $payload->attempt_version) {
+        throw new ChecklistAttemptConflictException('The failed attempt changed.');
+      }
+      if ($expected->status !== ChecklistAttempt::FAILED || $expected->path !== ChecklistAttempt::ACTION || $item->isComplete()) {
+        throw new \DomainException('Only failed automatic work can be retried.');
+      }
+      // As with action operations, admitting a request consumes its workspace
+      // version. Later executor rejection requires a fresh workspace snapshot.
+      $updated_lease = $this->workspaceStorage->advanceVersion($lease, $payload->expected_version);
+      $attempt = $this->executor->retry($item, $expected, $payload->mode, TRUE);
+      return new JsonResponse([
+        'attempt' => [
+          'id' => $attempt->id,
+          'previous' => $attempt->previous,
+          'mode' => $attempt->mode,
+          'status' => $attempt->status,
+          'version' => $attempt->version,
+        ],
+        'workspace' => $this->workspaceResponse($updated_lease),
+      ], 202, $headers);
+    }
+    catch (ChecklistAttemptConflictException | \DomainException) {
+      return new JsonResponse(['error' => 'The checklist or failed attempt changed, or is not ready to retry. Refresh before trying again.'], 409, $headers);
     }
   }
 

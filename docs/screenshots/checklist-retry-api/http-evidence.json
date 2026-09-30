@@ -1,0 +1,37 @@
+{
+  "environment": "Local Drupal 10 DDEV with simulated document handler",
+  "request": {
+    "method": "POST",
+    "path": "/checklist/user/28242/field_progress_preview/extract/retry?_format=json",
+    "body": {
+      "instance_uuid": "954951eb-405b-487f-935c-b38c2334803e",
+      "generation": 1,
+      "expected_version": 0,
+      "attempt_id": "6ff1699e-f52f-4329-929d-e8aa78159b28",
+      "attempt_version": 3,
+      "mode": "resume"
+    }
+  },
+  "checks": {
+    "anonymous": 403,
+    "missing_csrf": 403,
+    "invalid_mode": 400,
+    "accepted": 202,
+    "replayed": 409
+  },
+  "response": {
+    "attempt": {
+      "id": "2d999d4d-d0c2-4d09-93ef-1a9f8eaf828b",
+      "previous": "6ff1699e-f52f-4329-929d-e8aa78159b28",
+      "mode": "resume",
+      "status": "queued",
+      "version": 1
+    },
+    "workspace": {
+      "instance_uuid": "954951eb-405b-487f-935c-b38c2334803e",
+      "generation": 1,
+      "version": 1,
+      "expires": 1790772158
+    }
+  }
+}
