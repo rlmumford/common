@@ -14,3 +14,8 @@ history:
   css:
     theme:
       css/checklist-history.css: {}
+
+retry:
+  css:
+    theme:
+      css/checklist-retry.css: {}

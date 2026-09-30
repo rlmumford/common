@@ -84,4 +84,4 @@ services:
     arguments: ['@checklist.row_builder', '@checklist.action_resource_pane_builder']
   checklist.row_builder:
     class: Drupal\checklist\ChecklistRowBuilder
-    arguments: ['@checklist.context_preparer', '@checklist.context_collector', '@class_resolver', '@form_builder', '@typed_data.placeholder_resolver']
+    arguments: ['@checklist.context_preparer', '@checklist.context_collector', '@class_resolver', '@form_builder', '@typed_data.placeholder_resolver', '@checklist.attempt_journal']

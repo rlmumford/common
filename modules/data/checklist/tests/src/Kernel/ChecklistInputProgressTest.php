@@ -134,6 +134,28 @@ class ChecklistInputProgressTest extends ChecklistItemExecutionTestBase {
   }
 
   /**
+   * A queued retry must poll instead of opening a stale input request.
+   */
+  public function testQueuedRetryInput(): void {
+    [$host, $item, $attempt] = $this->inputWork();
+    $failed = $this->container->get('checklist.attempt_journal')->transition($attempt, ChecklistAttempt::FAILED, 1);
+    $item->setFailed()->save();
+    $executor = $this->container->get('checklist.item_executor');
+    $next = $executor->retry($item, $failed, ChecklistAttempt::RESUME, TRUE);
+    $row_builder = $this->container->get('checklist.row_builder');
+    $row = $row_builder->build($host->work->checklist, $this->reload($item));
+    $this->assertSame('true', $row['#attributes']['data-refresh-progress']);
+    $this->assertSame('false', $row['#attributes']['data-input-required']);
+    $this->assertArrayNotHasKey('input', $row['action_form']);
+    $this->assertArrayNotHasKey('input_required', $row['progress']);
+    $executor->run($next);
+    $row = $row_builder->build($host->work->checklist, $this->reload($item));
+    $this->assertSame('false', $row['#attributes']['data-refresh-progress']);
+    $this->assertSame('true', $row['#attributes']['data-input-required']);
+    $this->assertArrayHasKey('input', $row['action_form']);
+  }
+
+  /**
    * The same domain operation backs HTML and API submissions.
    */
   public static function inputPaths(): array {

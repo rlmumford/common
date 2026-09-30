@@ -827,10 +827,23 @@ entity-storage caches before re-reading; Drupal caches are not transaction snaps
 Use `retry()` rather than creating automatic successors directly in the journal:
 journal writes alone neither reset state nor authorize execution.
 
-This is the shared PHP service contract; no retry HTTP route or UI control is added
-here. Those adapters must carry the reviewed attempt/version and enforce their
-normal form/API ownership and CSRF rules. Resolve uncertain provider side effects
-before calling retry, especially after an expired claim: new attempt IDs alone
+The interactive formatter now offers **Retry…** on failed, saved automatic items
+with an eligible attempt and execution access. It opens a 520-pixel off-canvas
+confirmation (full width on mobile), defaults to Resume, and explains what Start
+fresh discards. Opening it does not change state. The server-side form state pins
+the reviewed attempt; Form API supplies CSRF protection. Submission queues work
+through this method, closes the panel and refreshes rows without replacing other
+open action forms. A stale confirmation explains that the attempt changed and
+cannot restart a successor. Permissions and gates are rechecked at submission.
+
+Queued retries with retained input-required state keep polling; input controls
+are offered only once the new attempt is waiting. This prevents an old input
+request from disabling live updates while the new attempt awaits a worker.
+The HTML form route is in Checklist itself; an optional JSON retry adapter remains
+follow-up work and must enforce its workspace ownership/version rules.
+
+Resolve uncertain provider side effects before calling retry, especially after an
+expired claim: new attempt IDs alone
 cannot prevent an external operation from happening twice. Expired running work
 still needs explicit reconciliation and failure closure before retry is possible.
 
