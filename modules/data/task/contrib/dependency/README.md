@@ -83,7 +83,6 @@ approval:
   value: approved
   context_mapping:
     entity: document
-  follow_replacement: true
 ```
 
 Here `document` is a saved entity supplied by the trigger's template context;
@@ -123,7 +122,7 @@ HTML and API edits update working data. Only the form's normal save step writes
 the task/dependencies; Cancel or abandoning a form does not register subscriptions.
 API input is an array of rows with `id` (existing dependency UUID, omitted for a
 new row), `trigger`, `action`, `entity_id`, optional `field`,
-`property`, `value`, and boolean `follow_replacement`. `met` is never accepted as
+`property`, and `value`. `met` is never accepted as
 input. Unchanged rows retain their UUID and receipt, irrespective of JSON key
 order. Changed definitions get a new UUID and waiting boundary. Removed owned
 records are deleted on task save, with their audit retained.
@@ -140,11 +139,14 @@ configuration changes must be saved on the default task revision.
 A source integration calls:
 
 ```php
-\Drupal::service('task_dependency.manager')->retarget($old, $replacement);
+\Drupal::service('task_dependency.manager')->retarget($old, $replacement, $dependency_uuids);
 ```
 
 Call synchronously within the source replacement transaction, **before** the
-replacement's qualifying transition. Only opted-in subscriptions follow. The
+replacement's qualifying transition. The caller selects the dependency UUIDs to
+move; an empty selection moves nothing. `task_dependency` storage's
+`watching($entity_type, $id)` method provides the indexed candidates for that
+workflow to filter. There is no replacement-following flag on a dependency. The
 requirement/action stays unchanged; the old receipt is cleared, the indexed
 binding changes atomically and history records old/new identities. Late old-target
 updates no longer match. Task activation cycles and replacement loops are rejected;

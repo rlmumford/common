@@ -22,6 +22,3 @@ entity_template.component.plugin.task_dependency:
       label: 'Context mapping'
       sequence:
         type: string
-    follow_replacement:
-      type: boolean
-      label: 'Follow replacements'

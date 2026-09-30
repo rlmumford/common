@@ -7,8 +7,8 @@ with a provided task and the `task_dependencies` component.
 
 Fixture: “Arrange the employment support appointment” waits for “Confirm
 employment documents” and has an invalidation subscription to “Withdraw
-application”. Both are actual saved task targets. The first dependency follows
-explicit replacements; the second does not.
+application”. Both are actual saved task targets. Replacement migration is an explicit
+caller operation and has no checkbox in this form.
 
 - `flexiform-desktop.png`: 1440px viewport, two-column dependency cards.
 - `flexiform-mobile.png`: 390px viewport, stacked controls and no horizontal overflow.

@@ -41,7 +41,7 @@ class DependencyManager {
   /**
    * Creates an unsaved dependency; the task save commits it with its owner.
    */
-  public function create(TaskInterface $task, string $trigger, array $configuration, string $action, EntityInterface $target, bool $follow = FALSE): Dependency {
+  public function create(TaskInterface $task, string $trigger, array $configuration, string $action, EntityInterface $target): Dependency {
     $matcher = $this->triggers->createInstance($trigger, $configuration);
     $matcher->validateTarget($target);
     if (!in_array($action, ['activate', 'invalidate'], TRUE)) {
@@ -62,7 +62,6 @@ class DependencyManager {
       'configuration' => $configuration,
       'action' => $action,
       'bindings' => [$this->bind($this->triggers->bindingDefinition($trigger)[0], $target)],
-      'follow_replacement' => $follow,
     ]);
   }
 
@@ -202,9 +201,13 @@ class DependencyManager {
   }
 
   /**
-   * Explicitly follows replacement work without guessing from a status value.
+   * Retargets only the dependency UUIDs explicitly selected by the caller.
+   *
+   * The replacement workflow decides which subscriptions move. No per-record
+   * opt-in or status inference is used. An empty selection moves nothing.
+   * Terminal owners retain their result.
    */
-  public function retarget(EntityInterface $old, EntityInterface $replacement): int {
+  public function retarget(EntityInterface $old, EntityInterface $replacement, array $dependency_ids): int {
     $transaction = $this->database->startTransaction();
     try {
       $this->workflow->lockTargets([['entity_type' => 'task_dependency_graph', 'entity_id' => 'graph']]);
@@ -213,9 +216,14 @@ class DependencyManager {
       $storage->resetCache();
       $this->entities->getStorage('task')->resetCache();
       $count = 0;
-      foreach ($storage->watching($old->getEntityTypeId(), (string) $old->id()) as $dependency) {
-        if (!$dependency->get('follow_replacement')->value || $dependency->get('bindings')->first()->entity_uuid !== $old->uuid()) {
-          continue;
+      $dependencies = $storage->loadMultiple($dependency_ids);
+      if (count($dependencies) !== count(array_unique($dependency_ids))) {
+        throw new \InvalidArgumentException('A selected dependency no longer exists.');
+      }
+      foreach ($dependencies as $dependency) {
+        $binding = $dependency->get('bindings')->first();
+        if ($binding->entity_type !== $old->getEntityTypeId() || (string) $binding->entity_id !== (string) $old->id() || $binding->entity_uuid !== $old->uuid()) {
+          throw new \InvalidArgumentException('A selected dependency does not reference the original entity.');
         }
         $owners = $this->entities->getStorage('task')->loadByProperties(['uuid' => $dependency->get('owner')->value]);
         $owner = reset($owners);

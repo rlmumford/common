@@ -71,7 +71,6 @@ class Dependency extends ComponentBase implements TemplateContextAwareComponentI
       'property' => 'value',
       'value' => '',
       'context_mapping' => [],
-      'follow_replacement' => FALSE,
     ];
   }
 
@@ -89,7 +88,7 @@ class Dependency extends ComponentBase implements TemplateContextAwareComponentI
       'field',
       'property',
       'value',
-    ])), $configuration['action'], $this->getContextValue($this->triggers->bindingDefinition($configuration['trigger'])[0]), $configuration['follow_replacement']);
+    ])), $configuration['action'], $this->getContextValue($this->triggers->bindingDefinition($configuration['trigger'])[0]));
     $entity->get('event_dependencies')->appendItem(['entity' => $dependency]);
   }
 
@@ -139,11 +138,6 @@ class Dependency extends ComponentBase implements TemplateContextAwareComponentI
       '#default_value' => $config['context_mapping'][$name] ?? '',
       '#required' => TRUE,
     ];
-    $form['follow_replacement'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Follow explicit replacements'),
-      '#default_value' => $config['follow_replacement'],
-    ];
     return $form;
   }
 
@@ -161,7 +155,6 @@ class Dependency extends ComponentBase implements TemplateContextAwareComponentI
     foreach (array_keys($this->defaultConfiguration()) as $key) {
       $this->configuration[$key] = $form_state->getValue($key);
     }
-    $this->configuration['follow_replacement'] = (bool) $this->configuration['follow_replacement'];
   }
 
 }

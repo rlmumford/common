@@ -39,7 +39,6 @@ class Dependency extends ContentEntityBase {
     $fields['met'] = BaseFieldDefinition::create('boolean')->setLabel(t('Met'))->setDefaultValue(FALSE)->setReadOnly(TRUE);
     $fields['occurrence'] = BaseFieldDefinition::create('string')->setSetting('max_length', 36)->setLabel(t('Matching occurrence'))->setReadOnly(TRUE);
     $fields['met_at'] = BaseFieldDefinition::create('timestamp')->setLabel(t('Matched at'))->setReadOnly(TRUE);
-    $fields['follow_replacement'] = BaseFieldDefinition::create('boolean')->setLabel(t('Follow replacements'))->setDefaultValue(FALSE);
     return $fields;
   }
 

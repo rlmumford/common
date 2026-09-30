@@ -183,13 +183,23 @@ class TaskDependencyTest extends KernelTestBase {
       'entity' => $manager->create($task, 'entity.state:entity_test', [
         'field' => 'name',
         'value' => 'attended',
-      ], 'activate', $first, TRUE),
+      ], 'activate', $first),
     ];
     $task->save();
-    $this->assertSame(1, $manager->retarget($first, $next));
+    $unchanged = Task::create(['title' => 'Stay with the original event']);
+    $unchanged->event_dependencies[] = [
+      'entity' => $manager->create($unchanged, 'entity.state:entity_test', [
+        'field' => 'name',
+        'value' => 'attended',
+      ], 'activate', $first),
+    ];
+    $unchanged->save();
+    $this->assertSame(0, $manager->retarget($first, $next, []));
+    $this->assertSame(1, $manager->retarget($first, $next, [$task->event_dependencies->target_id]));
     $first->set('name', 'attended')->save();
     $this->drain();
     $this->assertSame('waiting', $this->fresh($task)->status->value);
+    $this->assertSame('active', $this->fresh($unchanged)->status->value);
     $next->set('name', 'attended')->save();
     $this->drain();
     $this->assertSame('active', $this->fresh($task)->status->value);
@@ -280,13 +290,13 @@ class TaskDependencyTest extends KernelTestBase {
       'entity' => $manager->create($task, 'entity.state:entity_test', [
         'field' => 'name',
         'value' => 'attended',
-      ], 'activate', $first, TRUE),
+      ], 'activate', $first),
     ];
     $task->save();
-    $manager->retarget($first, $next);
+    $manager->retarget($first, $next, [$task->event_dependencies->target_id]);
     $this->expectException(\InvalidArgumentException::class);
     $this->expectExceptionMessage('cycle');
-    $manager->retarget($next, $first);
+    $manager->retarget($next, $first, [$task->event_dependencies->target_id]);
   }
 
   /**
@@ -314,9 +324,9 @@ class TaskDependencyTest extends KernelTestBase {
     $replacement->resolve()->save();
     $task = Task::create(['title' => 'Follow up']);
     $manager = $this->container->get('task_dependency.manager');
-    $task->event_dependencies[] = ['entity' => $manager->create($task, 'task.resolved', [], 'activate', $first, TRUE)];
+    $task->event_dependencies[] = ['entity' => $manager->create($task, 'task.resolved', [], 'activate', $first)];
     $task->save();
-    $manager->retarget($first, $replacement);
+    $manager->retarget($first, $replacement, [$task->event_dependencies->target_id]);
     $this->drain();
     $this->assertSame('active', $this->fresh($task)->status->value);
   }

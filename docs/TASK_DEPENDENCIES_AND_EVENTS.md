@@ -8,7 +8,8 @@ See [Task event dependencies](../modules/data/task/contrib/dependency/README.md)
 for the actual APIs, integrations and tests. UUID subscriptions and indexed
 bindings now support `activate` and `invalidate` actions, remembered match
 receipts, ordinary job-trigger/template creation, Flexiform HTML/API editing and
-explicit synchronous replacement following. Conditions are deferred.
+explicit synchronous replacement migration selected by the caller. There is no
+per-dependency replacement-following setting. Conditions are deferred.
 
 The implementation is specifically the remembered-occurrence subscription model
 with a persisted `met` flag. It does **not** implement continuous prerequisites or

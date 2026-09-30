@@ -66,7 +66,6 @@ class TaskDependencyIntegrationTest extends TaskDependencyTest {
                 'property' => 'value',
                 'value' => 'approved',
                 'action' => 'activate',
-                'follow_replacement' => TRUE,
               ],
             ],
           ],
@@ -153,7 +152,6 @@ class TaskDependencyIntegrationTest extends TaskDependencyTest {
         'field' => 'status',
         'property' => 'value',
         'value' => '',
-        'follow_replacement' => 0,
       ],
       ],
     ]);
@@ -243,6 +241,7 @@ class TaskDependencyIntegrationTest extends TaskDependencyTest {
     $state = new FormState();
     $element = $widget->formElement($task->event_dependencies, 0, [], $form, $state);
     $this->assertArrayNotHasKey('entity_type', $element);
+    $this->assertArrayNotHasKey('follow_replacement', $element);
     $this->assertSame('task', $element['entity_id']['#target_type']);
     $this->assertEquals($task_definition->getLabel(), $element['entity_id']['#title']);
     $state->setUserInput(['event_dependencies' => [['trigger' => 'entity.state:user']]]);
@@ -253,6 +252,7 @@ class TaskDependencyIntegrationTest extends TaskDependencyTest {
     $this->assertEquals(['entity' => $user_definition], $component->getContextDefinitions());
     $config_form = $component->buildConfigurationForm([], new FormState());
     $this->assertArrayNotHasKey('entity_type', $config_form);
+    $this->assertArrayNotHasKey('follow_replacement', $config_form);
     $this->assertArrayHasKey('entity', $config_form['context_mapping']);
   }
 

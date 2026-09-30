@@ -92,7 +92,6 @@ class Dependencies extends FormComponentBase implements ContainerFactoryFormComp
     }
     $properties['trigger']['enum'] = array_keys($this->triggers->options());
     $properties['action']['enum'] = ['activate', 'invalidate'];
-    $properties['follow_replacement'] = ['type' => 'boolean'];
     return [
       'schema' => [
         'type' => 'array',

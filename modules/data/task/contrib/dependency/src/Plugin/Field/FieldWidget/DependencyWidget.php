@@ -74,7 +74,6 @@ class DependencyWidget extends WidgetBase {
       'field' => 'status',
       'property' => 'value',
       'value' => '',
-      'follow_replacement' => FALSE,
     ];
     $parents = array_merge($form['#parents'], [$items->getName(), $delta]);
     $user_input = $form_state->getUserInput() ?? [];
@@ -127,11 +126,6 @@ class DependencyWidget extends WidgetBase {
         '#access' => str_starts_with($event, 'entity.state:'),
       ];
     }
-    $element['follow_replacement'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Follow explicit replacement work'),
-      '#default_value' => $row['follow_replacement'],
-    ];
     if ($row['id']) {
       $met = (bool) $items[$delta]->entity->get('met')->value;
       $element['status'] = [
@@ -162,7 +156,6 @@ class DependencyWidget extends WidgetBase {
       }
       unset($value['remove'], $value['_weight'], $value['_original_delta'], $value['status'], $value['hint'], $value['_actions']);
       $value['entity_id'] = (string) $value['entity_id'];
-      $value['follow_replacement'] = (bool) $value['follow_replacement'];
       $rows[] = $value;
     }
     $task = $form_state->get('task_dependency.widget_task');

@@ -50,7 +50,6 @@ class DependencyEditor {
         'field' => $config['field'] ?? 'status',
         'property' => $config['property'] ?? 'value',
         'value' => (string) ($config['value'] ?? ''),
-        'follow_replacement' => (bool) $dependency->get('follow_replacement')->value,
       ];
     }
     return $rows;
@@ -76,7 +75,6 @@ class DependencyEditor {
         'field',
         'property',
         'value',
-        'follow_replacement',
       ])) {
         throw new \InvalidArgumentException('Unexpected dependency input.');
       }
@@ -85,10 +83,9 @@ class DependencyEditor {
         'field' => 'status',
         'property' => 'value',
         'value' => '',
-        'follow_replacement' => FALSE,
       ];
       foreach ($row as $key => $value) {
-        if ($key === 'follow_replacement' ? !is_bool($value) : !is_string($value)) {
+        if (!is_string($value)) {
           throw new \InvalidArgumentException('Invalid dependency value type.');
         }
       }
@@ -117,7 +114,7 @@ class DependencyEditor {
         throw new \InvalidArgumentException('Select an existing dependency target.');
       }
       $config = array_intersect_key($row, array_flip(['field', 'property', 'value']));
-      $dependency = $this->manager->create($task, $row['trigger'], $config, $row['action'], $target, (bool) ($row['follow_replacement'] ?? FALSE));
+      $dependency = $this->manager->create($task, $row['trigger'], $config, $row['action'], $target);
       $result[] = ['entity' => $dependency];
     }
     return $result;
