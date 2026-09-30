@@ -18,6 +18,20 @@ The base dependency module does not depend on Job, Entity Template or Flexiform.
 The existing task-only `dependencies` field continues to work alongside the new
 `event_dependencies` field. Activation cycle detection spans both fields.
 
+## Trigger contexts are authoritative
+
+The event plugin declares its required entity context with Drupal's standard
+`context_definitions`. `task.resolved` declares `task: entity:task`; the generic
+state-event deriver creates a concrete definition for each entity type. Job
+adapters copy these definitions from the shared event plugin. The editor builds
+its entity selector and label from the selected definition, and Entity Template
+uses those same named contexts in `context_mapping`. API inputs also derive the
+entity type server-side. There is no independent target-type setting.
+
+The resolved entity type remains in the stored binding for indexing and identity
+checks. The initial entity-save event source supports one bound entity context;
+multiple correlation contexts need an extended source/matching contract.
+
 ## Actions and event semantics
 
 `activate` is the default action. Every activation dependency must be met before
@@ -31,7 +45,7 @@ Built-in triggers:
 
 - `task.resolved`: context `task`; terminal task resolution. An already-resolved
   target qualifies when the subscription is registered or explicitly retargeted.
-- `entity.state`: context `entity`; configuration `field`, `property` (default
+- `entity.state:ENTITY_TYPE`: context `entity`; configuration `field`, `property` (default
   `value`), and scalar `value`. Matches a transition into that value after the
   dependency was saved. Creation in that value and unchanged saves do not match.
   It reads the first field item. Use a single-valued status field.
@@ -62,14 +76,13 @@ blueprint of the normal document-request job trigger:
 ```yaml
 approval:
   id: task_dependency
-  entity_type: document
-  trigger: entity.state
+  trigger: entity.state:document
   action: activate
   field: approval_status
   property: value
   value: approved
   context_mapping:
-    target: document
+    entity: document
   follow_replacement: true
 ```
 
@@ -85,7 +98,7 @@ through the ordinary `entity_op:entity_test.insert` job trigger and template
 builder, using a test entity in place of a document.
 
 The optional job adapters are `dependency_event:task.resolved` and
-`dependency_event:entity.state.ENTITY_TYPE`. The latter stores matcher settings
+`dependency_event:entity.state:ENTITY_TYPE`. The latter stores matcher settings
 under `event_configuration` (`field`, `property`, `value`). They share matcher
 code with subscriptions but retain the existing job creation/access path. Custom
 state adapter configuration is currently supplied in exported job configuration;
@@ -109,7 +122,7 @@ components:
 HTML and API edits update working data. Only the form's normal save step writes
 the task/dependencies; Cancel or abandoning a form does not register subscriptions.
 API input is an array of rows with `id` (existing dependency UUID, omitted for a
-new row), `trigger`, `action`, `entity_type`, `entity_id`, optional `field`,
+new row), `trigger`, `action`, `entity_id`, optional `field`,
 `property`, `value`, and boolean `follow_replacement`. `met` is never accepted as
 input. Unchanged rows retain their UUID and receipt, irrespective of JSON key
 order. Changed definitions get a new UUID and waiting boundary. Removed owned

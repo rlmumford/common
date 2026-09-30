@@ -4,8 +4,7 @@ namespace Drupal\task_dependency_job\Plugin\Derivative;
 
 use Drupal\Component\Plugin\Derivative\DeriverBase;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Plugin\Context\EntityContextDefinition;
+use Drupal\task_dependency\TriggerManager;
 use Drupal\Core\Plugin\Discovery\ContainerDeriverInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -18,40 +17,30 @@ class EventTriggerDeriver extends DeriverBase implements ContainerDeriverInterfa
   /**
    * Constructs the deriver.
    */
-  public function __construct(protected EntityTypeManagerInterface $entities) {}
+  public function __construct(protected TriggerManager $triggers) {}
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, $base_plugin_id) {
-    return new static($container->get('entity_type.manager'));
+    return new static($container->get('plugin.manager.task_dependency.trigger'));
   }
 
   /**
    * {@inheritdoc}
    */
   public function getDerivativeDefinitions($base_plugin_definition) {
-    foreach ($this->entities->getDefinitions() as $type => $definition) {
-      if (!$definition->entityClassImplements('Drupal\Core\Entity\FieldableEntityInterface')) {
-        continue;
-      }
-      $this->derivatives['entity.state.' . $type] = [
-        'label' => $this->t('@type enters a state', ['@type' => $definition->getLabel()]),
-        'event' => 'entity.state',
-        'context_definitions' => [
-          'entity' => EntityContextDefinition::create($type),
-          'original' => EntityContextDefinition::create($type),
+    foreach ($this->triggers->getDefinitions() as $id => $definition) {
+      [$name, $context] = $this->triggers->bindingDefinition($id);
+      $this->derivatives[$id] = [
+        'label' => $definition['label'],
+        'event' => $id,
+        'event_context' => $name,
+        'context_definitions' => $definition['context_definitions'] + [
+          'original' => clone $context,
         ],
       ] + $base_plugin_definition;
     }
-    $this->derivatives['task.resolved'] = [
-      'label' => $this->t('Task resolves'),
-      'event' => 'task.resolved',
-      'context_definitions' => [
-        'entity' => EntityContextDefinition::create('task'),
-        'original' => EntityContextDefinition::create('task'),
-      ],
-    ] + $base_plugin_definition;
     return $this->derivatives;
   }
 

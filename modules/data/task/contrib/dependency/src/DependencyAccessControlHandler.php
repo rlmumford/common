@@ -51,7 +51,7 @@ class DependencyAccessControlHandler extends EntityAccessControlHandler implemen
         return AccessResult::forbidden()->setCacheMaxAge(0);
       }
       $access = $access->andIf($target->access('view', $account, TRUE))->addCacheableDependency($target);
-      if ($entity->get('trigger')->value === 'entity.state') {
+      if (str_starts_with($entity->get('trigger')->value, 'entity.state:')) {
         $field = $entity->get('configuration')->first()->getValue()['field'];
         if (!$target->hasField($field)) {
           return AccessResult::forbidden()->setCacheMaxAge(0);

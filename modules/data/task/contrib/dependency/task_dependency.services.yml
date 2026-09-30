@@ -18,4 +18,4 @@ services:
       - { name: event_subscriber }
   task_dependency.editor:
     class: Drupal\task_dependency\DependencyEditor
-    arguments: ['@task_dependency.manager', '@entity_type.manager']
+    arguments: ['@task_dependency.manager', '@entity_type.manager', '@plugin.manager.task_dependency.trigger']

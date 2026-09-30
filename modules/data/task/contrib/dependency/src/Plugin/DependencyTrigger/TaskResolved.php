@@ -7,7 +7,13 @@ use Drupal\Core\Entity\EntityInterface;
 /**
  * Matches terminal task resolution.
  *
- * @DependencyTrigger(id = "task.resolved", label = @Translation("Task resolves"))
+ * @DependencyTrigger(
+ *   id = "task.resolved",
+ *   label = @Translation("Task resolves"),
+ *   context_definitions = {
+ *     "task" = @ContextDefinition("entity:task", label = @Translation("Task to wait for"))
+ *   }
+ * )
  */
 class TaskResolved extends EntityState {
 
@@ -16,13 +22,6 @@ class TaskResolved extends EntityState {
    */
   public function __construct(array $configuration, $plugin_id, $plugin_definition) {
     parent::__construct(['field' => 'status', 'property' => 'value', 'value' => 'resolved'], $plugin_id, $plugin_definition);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function contextName(): string {
-    return 'task';
   }
 
   /**

@@ -9,6 +9,7 @@ use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\task_dependency\DependencyEditor;
+use Drupal\task_dependency\TriggerManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -25,7 +26,7 @@ class DependencyWidget extends WidgetBase {
   /**
    * Constructs the widget.
    */
-  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, protected DependencyEditor $editor, protected EntityTypeManagerInterface $entities) {
+  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, protected DependencyEditor $editor, protected EntityTypeManagerInterface $entities, protected TriggerManager $triggers) {
     parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings);
   }
 
@@ -33,7 +34,7 @@ class DependencyWidget extends WidgetBase {
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static($plugin_id, $plugin_definition, $configuration['field_definition'], $configuration['settings'], $configuration['third_party_settings'], $container->get('task_dependency.editor'), $container->get('entity_type.manager'));
+    return new static($plugin_id, $plugin_definition, $configuration['field_definition'], $configuration['settings'], $configuration['third_party_settings'], $container->get('task_dependency.editor'), $container->get('entity_type.manager'), $container->get('plugin.manager.task_dependency.trigger'));
   }
 
   /**
@@ -69,7 +70,6 @@ class DependencyWidget extends WidgetBase {
       'id' => '',
       'trigger' => 'task.resolved',
       'action' => 'activate',
-      'entity_type' => 'task',
       'entity_id' => '',
       'field' => 'status',
       'property' => 'value',
@@ -79,13 +79,15 @@ class DependencyWidget extends WidgetBase {
     $parents = array_merge($form['#parents'], [$items->getName(), $delta]);
     $user_input = $form_state->getUserInput() ?? [];
     $trigger = $form_state->getTriggeringElement();
-    if (($trigger['#parents'] ?? []) === array_merge($parents, ['entity_type'])) {
-      // An autocomplete ID from the old entity type cannot be reused safely.
+    if (($trigger['#parents'] ?? []) === array_merge($parents, ['trigger'])) {
+      // An autocomplete ID from the previous trigger cannot be reused safely.
       NestedArray::setValue($user_input, array_merge($parents, ['entity_id']), '');
       $form_state->setUserInput($user_input);
     }
     $input = NestedArray::getValue($user_input, $parents) ?? [];
-    $type = $input['entity_type'] ?? $row['entity_type'];
+    $event = $input['trigger'] ?? $row['trigger'];
+    [, $definition] = $this->triggers->bindingDefinition($event);
+    $type = substr($definition->getDataType(), 7);
     $wrapper = 'dependency-' . substr(hash('sha256', implode(':', $parents)), 0, 16);
     $element += ['#type' => 'details', '#open' => TRUE];
     $element['#title'] = $this->t('Dependency @number', ['@number' => $delta + 1]);
@@ -97,11 +99,9 @@ class DependencyWidget extends WidgetBase {
     $element['trigger'] = [
       '#type' => 'select',
       '#title' => $this->t('When'),
-      '#options' => [
-        'task.resolved' => $this->t('Task resolves'),
-        'entity.state' => $this->t('Entity enters a state'),
-      ],
-      '#default_value' => $row['trigger'],
+      '#options' => $this->triggers->options(),
+      '#default_value' => $event,
+      '#ajax' => ['callback' => [static::class, 'rebuildRow'], 'wrapper' => $wrapper],
     ];
     $element['action'] = [
       '#type' => 'select',
@@ -112,39 +112,19 @@ class DependencyWidget extends WidgetBase {
       ],
       '#default_value' => $row['action'],
     ];
-    $types = [];
-    foreach ($this->entities->getDefinitions() as $id => $definition) {
-      if ($definition->entityClassImplements('Drupal\Core\Entity\FieldableEntityInterface') && $definition->getKey('uuid') && $id !== 'task_dependency') {
-        $types[$id] = $definition->getLabel();
-      }
-    }
-    $element['entity_type'] = [
-      '#type' => 'select',
-      '#title' => $this->t('Target type'),
-      '#options' => $types,
-      '#default_value' => $type,
-      '#ajax' => [
-        'callback' => [
-          static::class,
-          'rebuildRow',
-        ],
-        'wrapper' => $wrapper,
-      ],
-    ];
-    $target = $type === $row['entity_type'] && $row['entity_id'] !== '' ? $this->entities->getStorage($type)->load($row['entity_id']) : NULL;
+    $target = $event === $row['trigger'] && $row['entity_id'] !== '' ? $this->entities->getStorage($type)->load($row['entity_id']) : NULL;
     $element['entity_id'] = [
       '#type' => 'entity_autocomplete',
-      '#title' => $this->t('Wait on'),
-      '#target_type' => isset($types[$type]) ? $type : 'task',
+      '#title' => $definition->getLabel(),
+      '#target_type' => $type,
       '#default_value' => $target,
     ];
-    $selector = ':input[name="' . array_shift($parents) . '[' . implode('][', $parents) . '][trigger]"]';
     foreach (['field' => 'State field', 'property' => 'State property', 'value' => 'Qualifying value'] as $key => $label) {
       $element[$key] = [
         '#type' => 'textfield',
         '#title' => $label,
         '#default_value' => $row[$key],
-        '#states' => ['visible' => [$selector => ['value' => 'entity.state']]],
+        '#access' => str_starts_with($event, 'entity.state:'),
       ];
     }
     $element['follow_replacement'] = [
@@ -165,7 +145,7 @@ class DependencyWidget extends WidgetBase {
   }
 
   /**
-   * Refreshes the autocomplete after choosing another entity type.
+   * Refreshes the autocomplete after choosing another trigger.
    */
   public static function rebuildRow(array $form, FormStateInterface $form_state): array {
     return NestedArray::getValue($form, array_slice($form_state->getTriggeringElement()['#array_parents'], 0, -1));

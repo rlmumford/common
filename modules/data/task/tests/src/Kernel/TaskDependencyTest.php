@@ -105,7 +105,7 @@ class TaskDependencyTest extends KernelTestBase {
     $manager = $this->container->get('task_dependency.manager');
     foreach (['activate' => 'approved', 'invalidate' => 'cancelled'] as $action => $value) {
       $task->event_dependencies[] = [
-        'entity' => $manager->create($task, 'entity.state', [
+        'entity' => $manager->create($task, 'entity.state:entity_test', [
           'field' => 'name',
           'value' => $value,
         ], $action, $document),
@@ -133,7 +133,7 @@ class TaskDependencyTest extends KernelTestBase {
     $other->save();
     $task = Task::create(['title' => 'Await a future approval']);
     $task->event_dependencies[] = [
-      'entity' => $this->container->get('task_dependency.manager')->create($task, 'entity.state', [
+      'entity' => $this->container->get('task_dependency.manager')->create($task, 'entity.state:entity_test', [
         'field' => 'name',
         'value' => 'approved',
       ], 'activate', $document),
@@ -180,7 +180,7 @@ class TaskDependencyTest extends KernelTestBase {
     $task = Task::create(['title' => 'After attendance']);
     $manager = $this->container->get('task_dependency.manager');
     $task->event_dependencies[] = [
-      'entity' => $manager->create($task, 'entity.state', [
+      'entity' => $manager->create($task, 'entity.state:entity_test', [
         'field' => 'name',
         'value' => 'attended',
       ], 'activate', $first, TRUE),
@@ -277,7 +277,7 @@ class TaskDependencyTest extends KernelTestBase {
     $task = Task::create(['title' => 'After attendance']);
     $manager = $this->container->get('task_dependency.manager');
     $task->event_dependencies[] = [
-      'entity' => $manager->create($task, 'entity.state', [
+      'entity' => $manager->create($task, 'entity.state:entity_test', [
         'field' => 'name',
         'value' => 'attended',
       ], 'activate', $first, TRUE),

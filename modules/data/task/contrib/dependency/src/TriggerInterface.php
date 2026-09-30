@@ -3,16 +3,12 @@
 namespace Drupal\task_dependency;
 
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Plugin\ContextAwarePluginInterface;
 
 /**
  * Pure matching contract shared by event subscriptions and job adapters.
  */
-interface TriggerInterface {
-
-  /**
-   * Names the entity context to bind for this trigger.
-   */
-  public function contextName(): string;
+interface TriggerInterface extends ContextAwarePluginInterface {
 
   /**
    * Validates the target and configuration, throwing on unsupported input.

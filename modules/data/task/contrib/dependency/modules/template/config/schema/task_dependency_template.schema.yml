@@ -8,9 +8,6 @@ entity_template.component.plugin.task_dependency:
     action:
       type: string
       label: Action
-    entity_type:
-      type: string
-      label: 'Target entity type'
     field:
       type: string
       label: 'State field'

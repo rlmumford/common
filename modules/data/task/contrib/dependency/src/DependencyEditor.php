@@ -14,7 +14,7 @@ class DependencyEditor {
   /**
    * Constructs the editor.
    */
-  public function __construct(protected DependencyManager $manager, protected EntityTypeManagerInterface $entities) {}
+  public function __construct(protected DependencyManager $manager, protected EntityTypeManagerInterface $entities, protected TriggerManager $triggers) {}
 
   /**
    * Checks task and dependency-field access before disclosure or mutation.
@@ -39,14 +39,13 @@ class DependencyEditor {
         throw new AccessDeniedHttpException('A dependency target is unavailable or inaccessible.');
       }
       $config = $dependency->get('configuration')->first()?->getValue() ?? [];
-      if ($dependency->get('trigger')->value === 'entity.state' && $target->hasField($config['field'] ?? '') && !$target->get($config['field'])->access('view')) {
+      if (str_starts_with($dependency->get('trigger')->value, 'entity.state:') && $target->hasField($config['field'] ?? '') && !$target->get($config['field'])->access('view')) {
         throw new AccessDeniedHttpException('Access denied to the watched field.');
       }
       $rows[] = [
         'id' => $dependency->uuid(),
         'trigger' => $dependency->get('trigger')->value,
         'action' => $dependency->get('action')->value,
-        'entity_type' => $binding->entity_type,
         'entity_id' => (string) $binding->entity_id,
         'field' => $config['field'] ?? 'status',
         'property' => $config['property'] ?? 'value',
@@ -73,7 +72,6 @@ class DependencyEditor {
         'id',
         'trigger',
         'action',
-        'entity_type',
         'entity_id',
         'field',
         'property',
@@ -107,15 +105,14 @@ class DependencyEditor {
         $result[] = ['entity' => $entities[$id]];
         continue;
       }
-      foreach (['trigger', 'action', 'entity_type', 'entity_id'] as $key) {
+      foreach (['trigger', 'action', 'entity_id'] as $key) {
         if (!isset($row[$key]) || !is_string($row[$key]) || $row[$key] === '') {
           throw new \InvalidArgumentException('A dependency requires an event, action and saved target.');
         }
       }
-      if (!$this->entities->hasDefinition($row['entity_type'])) {
-        throw new \InvalidArgumentException('Unknown dependency entity type.');
-      }
-      $target = $this->entities->getStorage($row['entity_type'])->load($row['entity_id']);
+      [, $definition] = $this->triggers->bindingDefinition($row['trigger']);
+      $type = substr($definition->getDataType(), 7);
+      $target = $this->entities->getStorage($type)->load($row['entity_id']);
       if (!$target) {
         throw new \InvalidArgumentException('Select an existing dependency target.');
       }

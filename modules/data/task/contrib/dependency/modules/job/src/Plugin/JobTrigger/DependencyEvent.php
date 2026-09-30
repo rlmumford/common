@@ -59,7 +59,7 @@ class DependencyEvent extends JobTriggerBase {
    */
   public function access(?CacheableMetadata $cache_metadata = NULL) {
     $matcher = $this->events->createInstance($this->pluginDefinition['event'], $this->configuration['event_configuration'] ?? []);
-    return $matcher->matches($this->getContextValue('entity'), $this->getContextValue('original')) && parent::access($cache_metadata);
+    return $matcher->matches($this->getContextValue($this->pluginDefinition['event_context']), $this->getContextValue('original')) && parent::access($cache_metadata);
   }
 
 }

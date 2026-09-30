@@ -50,7 +50,7 @@ class DependencyManager {
     if (!$target->access('view')) {
       throw new AccessDeniedHttpException('Access denied to dependency target.');
     }
-    if ($trigger === 'entity.state' && (!$target->get($configuration['field'])->access('view'))) {
+    if (str_starts_with($trigger, 'entity.state:') && (!$target->get($configuration['field'])->access('view'))) {
       throw new AccessDeniedHttpException('Access denied to the watched field.');
     }
     if ($target->uuid() === $task->uuid()) {
@@ -61,7 +61,7 @@ class DependencyManager {
       'trigger' => $trigger,
       'configuration' => $configuration,
       'action' => $action,
-      'bindings' => [$this->bind($matcher->contextName(), $target)],
+      'bindings' => [$this->bind($this->triggers->bindingDefinition($trigger)[0], $target)],
       'follow_replacement' => $follow,
     ]);
   }
@@ -85,7 +85,7 @@ class DependencyManager {
     }
     $matcher = $this->triggers->createInstance($dependency->get('trigger')->value, $dependency->get('configuration')->first()?->getValue() ?? []);
     $matcher->validateTarget($target);
-    if ($binding['context'] !== $matcher->contextName() || !in_array($dependency->get('action')->value, [
+    if ($binding['context'] !== $this->triggers->bindingDefinition($dependency->get('trigger')->value)[0] || !in_array($dependency->get('action')->value, [
       'activate',
       'invalidate',
     ], TRUE)) {

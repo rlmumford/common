@@ -17,13 +17,13 @@ function task_dependency_job_entity_update(EntityInterface $entity): void {
     || ($entity instanceof ContentEntityInterface && !$entity->isDefaultRevision())) {
     return;
   }
-  $ids = ['dependency_event:entity.state.' . $entity->getEntityTypeId()];
+  $ids = ['dependency_event:entity.state:' . $entity->getEntityTypeId()];
   if ($entity->getEntityTypeId() === 'task') {
     $ids[] = 'dependency_event:task.resolved';
   }
   foreach ($ids as $id) {
     \Drupal::service('plugin.manager.task_job.trigger')->handleTrigger($id, [
-      'entity' => $entity,
+      ($id === 'dependency_event:task.resolved' ? 'task' : 'entity') => $entity,
       'original' => $entity->original,
     ]);
   }

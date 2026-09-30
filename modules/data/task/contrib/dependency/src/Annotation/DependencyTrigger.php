@@ -25,4 +25,11 @@ class DependencyTrigger extends Plugin {
    */
   public $label;
 
+  /**
+   * Named contexts required by the event.
+   *
+   * @var \Drupal\Core\Annotation\ContextDefinition[]
+   */
+  public $context_definitions = [];
+
 }

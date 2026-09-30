@@ -12,6 +12,7 @@ use Drupal\flexiform\FormComponent\FormComponentBase;
 use Drupal\flexiform\FormInterface;
 use Drupal\task\TaskInterface;
 use Drupal\task_dependency\DependencyEditor;
+use Drupal\task_dependency\TriggerManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -22,7 +23,7 @@ class Dependencies extends FormComponentBase implements ContainerFactoryFormComp
   /**
    * Constructs the component.
    */
-  public function __construct($name, array $options, FormInterface $display, protected DependencyEditor $editor, protected WidgetPluginManager $widgets) {
+  public function __construct($name, array $options, FormInterface $display, protected DependencyEditor $editor, protected WidgetPluginManager $widgets, protected TriggerManager $triggers) {
     parent::__construct($name, $options, $display);
   }
 
@@ -30,7 +31,7 @@ class Dependencies extends FormComponentBase implements ContainerFactoryFormComp
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, $name, array $options, FormInterface $display) {
-    return new static($name, $options, $display, $container->get('task_dependency.editor'), $container->get('plugin.manager.field.widget'));
+    return new static($name, $options, $display, $container->get('task_dependency.editor'), $container->get('plugin.manager.field.widget'), $container->get('plugin.manager.task_dependency.trigger'));
   }
 
   /**
@@ -86,10 +87,10 @@ class Dependencies extends FormComponentBase implements ContainerFactoryFormComp
    */
   public function describeApi(array $state): array {
     $properties = [];
-    foreach (['id', 'trigger', 'action', 'entity_type', 'entity_id', 'field', 'property', 'value'] as $key) {
+    foreach (['id', 'trigger', 'action', 'entity_id', 'field', 'property', 'value'] as $key) {
       $properties[$key] = ['type' => 'string'];
     }
-    $properties['trigger']['enum'] = ['task.resolved', 'entity.state'];
+    $properties['trigger']['enum'] = array_keys($this->triggers->options());
     $properties['action']['enum'] = ['activate', 'invalidate'];
     $properties['follow_replacement'] = ['type' => 'boolean'];
     return [
@@ -102,7 +103,6 @@ class Dependencies extends FormComponentBase implements ContainerFactoryFormComp
           'required' => [
             'trigger',
             'action',
-            'entity_type',
             'entity_id',
           ],
         ],

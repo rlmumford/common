@@ -5,26 +5,31 @@ namespace Drupal\task_dependency\Plugin\DependencyTrigger;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Plugin\PluginBase;
+use Drupal\Core\Plugin\ContextAwarePluginTrait;
 use Drupal\task_dependency\TriggerInterface;
 
 /**
  * Matches entering a configured scalar field value.
  *
- * @DependencyTrigger(id = "entity.state", label = @Translation("Entity enters a state"))
+ * @DependencyTrigger(
+ *   id = "entity.state",
+ *   label = @Translation("Entity enters a state"),
+ *   deriver = "Drupal\task_dependency\Plugin\Derivative\EntityStateDeriver"
+ * )
  */
 class EntityState extends PluginBase implements TriggerInterface {
 
-  /**
-   * {@inheritdoc}
-   */
-  public function contextName(): string {
-    return 'entity';
-  }
+  use ContextAwarePluginTrait;
 
   /**
    * {@inheritdoc}
    */
   public function validateTarget(EntityInterface $target): void {
+    $definitions = $this->getContextDefinitions();
+    $definition = reset($definitions);
+    if ($definition->getDataType() !== 'entity:' . $target->getEntityTypeId()) {
+      throw new \InvalidArgumentException('The target must match the trigger context definition.');
+    }
     $field = $this->configuration['field'] ?? '';
     $property = $this->configuration['property'] ?? 'value';
     if (!$target instanceof FieldableEntityInterface || !$target->hasField($field)

@@ -3,10 +3,10 @@
 namespace Drupal\task_dependency_template\Plugin\EntityTemplate\Component;
 
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Plugin\Context\ContextHandlerInterface;
-use Drupal\Core\Plugin\Context\EntityContextDefinition;
 use Drupal\Core\Plugin\ContextAwarePluginInterface;
 use Drupal\Core\Plugin\ContextAwarePluginTrait;
 use Drupal\entity_template\Plugin\EntityTemplate\Component\ComponentBase;
@@ -15,6 +15,7 @@ use Drupal\entity_template\Plugin\EntityTemplate\Component\TemplateContextAwareC
 use Drupal\entity_template\TemplateResult;
 use Drupal\task\TaskInterface;
 use Drupal\task_dependency\DependencyManager;
+use Drupal\task_dependency\TriggerManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -34,7 +35,7 @@ class Dependency extends ComponentBase implements TemplateContextAwareComponentI
   /**
    * Constructs the template component.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, protected DependencyManager $dependencies, protected ContextHandlerInterface $contextHandler) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, protected DependencyManager $dependencies, protected ContextHandlerInterface $contextHandler, protected TriggerManager $triggers) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
   }
 
@@ -42,14 +43,14 @@ class Dependency extends ComponentBase implements TemplateContextAwareComponentI
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static($configuration, $plugin_id, $plugin_definition, $container->get('task_dependency.manager'), $container->get('context.handler'));
+    return new static($configuration, $plugin_id, $plugin_definition, $container->get('task_dependency.manager'), $container->get('context.handler'), $container->get('plugin.manager.task_dependency.trigger'));
   }
 
   /**
    * {@inheritdoc}
    */
   public function getContextDefinitions() {
-    return ['target' => EntityContextDefinition::create($this->configuration['entity_type'] ?? 'task')->setLabel($this->t('Dependency target'))];
+    return $this->triggers->getDefinition($this->getConfiguration()['trigger'])['context_definitions'];
   }
 
   /**
@@ -66,7 +67,6 @@ class Dependency extends ComponentBase implements TemplateContextAwareComponentI
     return [
       'trigger' => 'task.resolved',
       'action' => 'activate',
-      'entity_type' => 'task',
       'field' => 'status',
       'property' => 'value',
       'value' => '',
@@ -89,7 +89,7 @@ class Dependency extends ComponentBase implements TemplateContextAwareComponentI
       'field',
       'property',
       'value',
-    ])), $configuration['action'], $this->getContextValue('target'), $configuration['follow_replacement']);
+    ])), $configuration['action'], $this->getContextValue($this->triggers->bindingDefinition($configuration['trigger'])[0]), $configuration['follow_replacement']);
     $entity->get('event_dependencies')->appendItem(['entity' => $dependency]);
   }
 
@@ -98,14 +98,21 @@ class Dependency extends ComponentBase implements TemplateContextAwareComponentI
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $config = $this->getConfiguration();
+    $input = $form_state->getUserInput() ?? [];
+    $parents = $form['#parents'] ?? [];
+    $selected = NestedArray::getValue($input, array_merge($parents, ['trigger']));
+    if (is_string($selected) && $this->triggers->hasDefinition($selected)) {
+      $config['trigger'] = $selected;
+    }
+    $wrapper = 'dependency-template-' . substr(hash('sha256', implode(':', $parents)), 0, 16);
+    $form['#prefix'] = '<div id="' . $wrapper . '">';
+    $form['#suffix'] = '</div>';
     $form['trigger'] = [
       '#type' => 'select',
       '#title' => $this->t('Event'),
-      '#options' => [
-        'task.resolved' => $this->t('Task resolves'),
-        'entity.state' => $this->t('Entity enters a state'),
-      ],
+      '#options' => $this->triggers->options(),
       '#default_value' => $config['trigger'],
+      '#ajax' => ['callback' => [static::class, 'rebuildConfiguration'], 'wrapper' => $wrapper],
     ];
     $form['action'] = [
       '#type' => 'select',
@@ -117,7 +124,6 @@ class Dependency extends ComponentBase implements TemplateContextAwareComponentI
       '#default_value' => $config['action'],
     ];
     foreach ([
-      'entity_type' => 'Target entity type',
       'field' => 'State field',
       'property' => 'State property',
       'value' => 'Qualifying value',
@@ -125,11 +131,12 @@ class Dependency extends ComponentBase implements TemplateContextAwareComponentI
       $form[$key] = ['#type' => 'textfield', '#title' => $label, '#default_value' => $config[$key]];
     }
     $form['context_mapping']['#tree'] = TRUE;
-    $form['context_mapping']['target'] = [
+    [$name, $definition] = $this->triggers->bindingDefinition($config['trigger']);
+    $form['context_mapping'][$name] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Target context selector'),
+      '#title' => $definition->getLabel(),
       '#description' => $this->t('Use a template context or Typed Data Plus selector, for example entity_current. The selected saved entity becomes the indexed binding.'),
-      '#default_value' => $config['context_mapping']['target'] ?? '',
+      '#default_value' => $config['context_mapping'][$name] ?? '',
       '#required' => TRUE,
     ];
     $form['follow_replacement'] = [
@@ -138,6 +145,13 @@ class Dependency extends ComponentBase implements TemplateContextAwareComponentI
       '#default_value' => $config['follow_replacement'],
     ];
     return $form;
+  }
+
+  /**
+   * Rebuilds the context mapping for the newly selected event definition.
+   */
+  public static function rebuildConfiguration(array $form, FormStateInterface $form_state): array {
+    return NestedArray::getValue($form, array_slice($form_state->getTriggeringElement()['#array_parents'], 0, -1));
   }
 
   /**

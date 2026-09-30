@@ -60,9 +60,8 @@ class TaskDependencyIntegrationTest extends TaskDependencyTest {
               'dependency' => [
                 'id' => 'task_dependency',
                 'uuid' => 'dependency',
-                'entity_type' => 'entity_test',
-                'trigger' => 'entity.state',
-                'context_mapping' => ['target' => 'entity_test'],
+                'trigger' => 'entity.state:entity_test',
+                'context_mapping' => ['entity' => 'entity_test'],
                 'field' => 'name',
                 'property' => 'value',
                 'value' => 'approved',
@@ -118,7 +117,6 @@ class TaskDependencyIntegrationTest extends TaskDependencyTest {
       'dependencies' => [[
         'trigger' => 'task.resolved',
         'action' => 'activate',
-        'entity_type' => 'task',
         'entity_id' => (string) $source->id(),
       ],
       ],
@@ -151,7 +149,6 @@ class TaskDependencyIntegrationTest extends TaskDependencyTest {
         'id' => '',
         'trigger' => 'task.resolved',
         'action' => 'activate',
-        'entity_type' => 'task',
         'entity_id' => (string) $source->id(),
         'field' => 'status',
         'property' => 'value',
@@ -224,6 +221,39 @@ class TaskDependencyIntegrationTest extends TaskDependencyTest {
     $saved = $this->fresh($task);
     $this->assertSame('resolved', $saved->status->value);
     $this->assertSame('complete', $saved->resolution->value);
+  }
+
+  /**
+   * Trigger context definitions determine editor types and job contexts.
+   */
+  public function testTriggerContextsDriveEditors(): void {
+    $events = $this->container->get('plugin.manager.task_dependency.trigger');
+    $jobs = $this->container->get('plugin.manager.task_job.trigger');
+    $task_definition = $events->getDefinition('task.resolved')['context_definitions']['task'];
+    $this->assertSame('entity:task', $task_definition->getDataType());
+    $this->assertEquals($task_definition, $jobs->getDefinition('dependency_event:task.resolved')['context_definitions']['task']);
+    $user_definition = $events->getDefinition('entity.state:user')['context_definitions']['entity'];
+    $this->assertEquals($user_definition, $jobs->getDefinition('dependency_event:entity.state:user')['context_definitions']['entity']);
+    $task = Task::create(['title' => 'Work']);
+    $widget = $this->container->get('plugin.manager.field.widget')->getInstance([
+      'field_definition' => $task->get('event_dependencies')->getFieldDefinition(),
+      'configuration' => ['type' => 'task_dependencies', 'settings' => []],
+    ]);
+    $form = ['#parents' => []];
+    $state = new FormState();
+    $element = $widget->formElement($task->event_dependencies, 0, [], $form, $state);
+    $this->assertArrayNotHasKey('entity_type', $element);
+    $this->assertSame('task', $element['entity_id']['#target_type']);
+    $this->assertEquals($task_definition->getLabel(), $element['entity_id']['#title']);
+    $state->setUserInput(['event_dependencies' => [['trigger' => 'entity.state:user']]]);
+    $element = $widget->formElement($task->event_dependencies, 0, [], $form, $state);
+    $this->assertSame('user', $element['entity_id']['#target_type']);
+    $this->assertEquals($user_definition->getLabel(), $element['entity_id']['#title']);
+    $component = $this->container->get('plugin.manager.entity_template.component')->createInstance('task_dependency', ['trigger' => 'entity.state:user']);
+    $this->assertEquals(['entity' => $user_definition], $component->getContextDefinitions());
+    $config_form = $component->buildConfigurationForm([], new FormState());
+    $this->assertArrayNotHasKey('entity_type', $config_form);
+    $this->assertArrayHasKey('entity', $config_form['context_mapping']);
   }
 
 }
