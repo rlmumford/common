@@ -44,13 +44,13 @@ class DependencyAccessControlHandler extends EntityAccessControlHandler implemen
     if (!$task) {
       return AccessResult::forbidden();
     }
-    $access = $task->access('view', $account, TRUE)->addCacheableDependency($entity);
+    $access = $task->access('view', $account, TRUE)->addCacheableDependency($task)->addCacheableDependency($entity);
     foreach ($entity->get('bindings') as $binding) {
       $target = $this->entities->getStorage($binding->entity_type)->load($binding->entity_id);
       if (!$target || $target->uuid() !== $binding->entity_uuid) {
         return AccessResult::forbidden()->setCacheMaxAge(0);
       }
-      $access = $access->andIf($target->access('view', $account, TRUE));
+      $access = $access->andIf($target->access('view', $account, TRUE))->addCacheableDependency($target);
       if ($entity->get('trigger')->value === 'entity.state') {
         $field = $entity->get('configuration')->first()->getValue()['field'];
         if (!$target->hasField($field)) {

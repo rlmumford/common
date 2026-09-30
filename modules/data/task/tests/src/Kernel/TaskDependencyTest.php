@@ -321,4 +321,23 @@ class TaskDependencyTest extends KernelTestBase {
     $this->assertSame('active', $this->fresh($task)->status->value);
   }
 
+  /**
+   * Direct record access respects ownership and never permits receipt edits.
+   */
+  public function testDependencyAccess(): void {
+    $source = Task::create(['title' => 'Prerequisite']);
+    $source->save();
+    $task = Task::create(['title' => 'Work']);
+    $dependency = $this->container->get('task_dependency.manager')->create($task, 'task.resolved', [], 'activate', $source);
+    $task->event_dependencies[] = ['entity' => $dependency];
+    $task->save();
+    $access = $dependency->access('view', NULL, TRUE);
+    $this->assertTrue($access->isAllowed());
+    $this->assertContains('task:' . $task->id(), $access->getCacheTags());
+    $this->assertContains('task:' . $source->id(), $access->getCacheTags());
+    $this->assertFalse($dependency->access('update'));
+    $this->assertFalse($dependency->access('delete'));
+    $this->assertFalse($dependency->access('view', new AnonymousUserSession()));
+  }
+
 }
