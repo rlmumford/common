@@ -2,12 +2,14 @@
 
 namespace Drupal\task_job\Form;
 
+use Drupal\Core\Ajax\ReplaceCommand;
 use Drupal\checklist\ChecklistItemHandlerManager;
 use Drupal\Component\Serialization\Json;
 use Drupal\Component\Utility\Html;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\RemoveCommand;
+use Drupal\Core\Ajax\InvokeCommand;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformState;
@@ -20,12 +22,13 @@ use Drupal\entity_template\BlueprintTempstoreRepository;
 use Drupal\entity_template\TemplateBlueprintProviderManager;
 use Drupal\task_job\JobInterface;
 use Drupal\task_job\JobVersionResolverInterface;
+use Drupal\task_job\JobVersionId;
 use Drupal\task_job\Plugin\EntityTemplate\BlueprintProvider\BlueprintStorageJobTriggerAdaptor;
 use Drupal\task_job\Plugin\JobTrigger\JobTriggerManager;
 use Drupal\task_job\Plugin\JobTrigger\Missing;
 use Drupal\task_job\TaskJobTempstoreRepository;
 use Drupal\task_job\TriggerActionManager;
-use Drupal\typed_data\Context\ContextDefinition;
+use Drupal\Core\Plugin\Context\ContextDefinition;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -159,24 +162,7 @@ class JobEditForm extends JobForm {
       throw new \InvalidArgumentException('This form can only be used with job entities.');
     }
 
-    if ($entity->isVersioned() && !$entity->isDirty()) {
-      $version = $entity->getVersion();
-      $dirty = $this->jobVersionResolver->load($entity->getBaseJobId(), $version);
-      if (!$dirty->isDirty()) {
-        $dirty = $this->jobVersionResolver->createDirtyVersion($entity);
-        $dirty->save();
-      }
-      $entity = $dirty;
-    }
-
-    if ($this->tempstoreRepository->has($entity)) {
-      $entity = $this->tempstoreRepository->get($entity);
-    }
-    else {
-      // Get the trigger collection before setting it to the tempstore.
-      $entity->getTriggerCollection();
-      $this->tempstoreRepository->set($entity);
-    }
+    $entity = $this->tempstoreRepository->get($entity);
 
     return parent::setEntity($entity);
   }
@@ -185,47 +171,100 @@ class JobEditForm extends JobForm {
    * {@inheritdoc}
    */
   public function form(array $form, FormStateInterface $form_state) {
-    $form = parent::form($form, $form_state);
-
+    $this->blueprintStorages = [];
+    $section = $this->section($form_state);
+    $this->tempstoreRepository->set($this->entity, $section);
+    $form['#tree'] = TRUE;
     $form['#attributes']['novalidate'] = 'novalidate';
-
-    $unchanged = $this->entityTypeManager->getStorage($this->entity->getEntityTypeId())
-      ->loadUnchanged($this->entity->id());
-    if (
-      $this->entity->toArray() !== $unchanged->toArray()
-    ) {
-      $form['changed'] = [
-        '#type' => 'container',
-        '#attributes' => [
-          'class' => ['task-job-changed', 'messages', 'messages--warning'],
-        ],
-        '#children' => $this->t('You have unsaved changes.'),
-        '#weight' => -10,
-      ];
-    }
-    if ($this->entity->uuid() !== $unchanged->uuid()) {
-      $form['uuid_error'] = [
-        '#type' => 'container',
-        '#attributes' => [
-          'class' => ['task-job-changed', 'messages', 'messages--error'],
-        ],
-        '#children' => $this->t('Your changes are no longer compatible with the stored job. Please take note of any changes, select "Cancel" at the bottom of this page and apply your changes again.'),
-        '#weight' => -12,
-      ];
-    }
-
-    $ajax_attributes = [
-      'attributes' => [
-        'class' => [
-          'use-ajax',
-        ],
-        'data-dialog-type' => 'dialog',
-        'data-dialog-renderer' => 'off_canvas',
+    $form['#attributes']['class'][] = 'task-job-editor';
+    $form['#attributes']['id'] = 'task-job-editor';
+    $form['#attached']['library'][] = 'task_job/editor';
+    $form['#cache']['max-age'] = 0;
+    $form['draft_notice'] = [
+      '#type' => 'container',
+      '#attributes' => ['class' => ['task-job-draft-notice']],
+      '#markup' => $this->tempstoreRepository->isChanged($this->entity)
+        ? $this->t('You have unsaved changes. Save commits the whole job; Discard changes restores the saved configuration.')
+        : $this->t('Changes stay in your working draft as you move between tabs. Save commits the whole job.'),
+    ];
+    $form['navigation'] = [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['task-job-tabs'],
+        'role' => 'navigation',
+        'aria-label' => $this->t('Job configuration'),
       ],
     ];
+    foreach ($this->sections() as $key => $label) {
+      $form['navigation'][$key] = [
+        '#type' => 'submit',
+        '#value' => $label,
+        '#name' => 'job_section_' . $key,
+        '#section' => $key,
+        '#submit' => ['::submitForm', '::saveDraft'],
+        '#attributes' => [
+          'class' => ['task-job-tab', $section === $key ? 'is-active' : ''],
+          'aria-current' => $section === $key ? 'page' : 'false',
+        ],
+      ];
+    }
+    $form['heading'] = ['#type' => 'html_tag', '#tag' => 'h2', '#value' => $this->sections()[$section]];
+    $ajax_attributes = [
+      'query' => $this->getDestinationArray(),
+      'attributes' => [
+        'class' => ['use-ajax'],
+        'data-dialog-type' => 'dialog',
+        'data-dialog-renderer' => 'off_canvas',
+        'data-dialog-options' => Json::encode(['width' => '650px']),
+      ],
+    ];
+    if ($section === 'settings') {
+      $form = parent::form($form, $form_state);
+      unset($form['assignment']);
+      $form['id'] = ['#type' => 'item', '#title' => $this->t('Machine name'), '#plain_text' => $this->entity->id()];
+      $form = $this->buildResources($form, $form_state, $ajax_attributes);
+    }
+    elseif ($section === 'assignment') {
+      $settings = parent::form([], $form_state);
+      $form['assignment'] = $settings['assignment'];
+    }
+    else {
+      $method = ['checklist' => 'buildChecklist', 'triggers' => 'buildTriggers', 'contexts' => 'buildContexts'][$section];
+      $form = $this->$method($form, $form_state, $ajax_attributes);
+    }
+    return $form;
+  }
 
+  /**
+   * The available job configuration areas.
+   */
+  protected function sections(): array {
+    return [
+      'checklist' => $this->t('Checklist'),
+      'triggers' => $this->t('Triggers'),
+      'contexts' => $this->t('Contexts'),
+      'assignment' => $this->t('Assignment rules'),
+      'settings' => $this->t('Settings'),
+    ];
+  }
+
+  /**
+   * Keeps the submitted form's section stable through AJAX and validation.
+   */
+  protected function section(FormStateInterface $form_state): string {
+    if (!$form_state->has('job_section')) {
+      $section = $this->getRequest()->query->get('section', 'checklist');
+      $form_state->set('job_section', isset($this->sections()[$section]) ? $section : 'checklist');
+    }
+    return $form_state->get('job_section');
+  }
+
+  /**
+   * Builds expected contexts for the job and its checklist handlers.
+   */
+  protected function buildContexts(array $form, FormStateInterface $form_state, array $ajax_attributes): array {
     $form['context_wrapper'] = [
-      '#type' => 'details',
+      '#type' => 'container',
       '#title' => $this->t('Contexts'),
       '#description' => $this->t('Configure the contexts for this job'),
       '#open' => TRUE,
@@ -233,7 +272,7 @@ class JobEditForm extends JobForm {
     if (!is_array($form_state->get('context'))) {
       $form_state->set('context', $this->entity->getContextDefinitions());
     }
-    /** @var \Drupal\typed_data\Context\ContextDefinitionInterface[] $context */
+    /** @var \Drupal\Core\Plugin\Context\ContextDefinitionInterface[] $context */
     $context = $form_state->get('context');
 
     $context_type_options = [];
@@ -378,6 +417,13 @@ class JobEditForm extends JobForm {
     ];
     $form['context_wrapper']['context']['_add_new'] = $row;
 
+    return $form;
+  }
+
+  /**
+   * Builds the resource configuration within Settings.
+   */
+  protected function buildResources(array $form, FormStateInterface $form_state, array $ajax_attributes): array {
     $form['resources'] = [
       '#type' => 'details',
       '#title' => $this->t('Resources'),
@@ -445,10 +491,17 @@ class JobEditForm extends JobForm {
       $form['resources']['table']['#rows'][] = $row;
     }
 
+    return $form;
+  }
+
+  /**
+   * Builds the checklist item management table.
+   */
+  protected function buildChecklist(array $form, FormStateInterface $form_state, array $ajax_attributes): array {
     $form['checklist'] = [
-      '#type' => 'details',
+      '#type' => 'container',
       '#title' => $this->t('Default Checklist'),
-      '#description' => $this->t('Some help text about checklists'),
+      '#description' => $this->t('Configure the items staff and automation use to complete this job.'),
       '#open' => TRUE,
     ];
 
@@ -532,8 +585,15 @@ class JobEditForm extends JobForm {
       $form['checklist']['table'][$name] = $row;
     }
 
+    return $form;
+  }
+
+  /**
+   * Builds event, action and task-creation template configuration.
+   */
+  protected function buildTriggers(array $form, FormStateInterface $form_state, array $ajax_attributes): array {
     $form['triggers'] = [
-      '#type' => 'details',
+      '#type' => 'container',
       '#title' => $this->t('Triggers'),
       '#description' => $this->t('Choose the events and actions for this job.'),
       '#tree' => TRUE,
@@ -669,34 +729,33 @@ class JobEditForm extends JobForm {
    * {@inheritdoc}
    */
   public function actions(array $form, FormStateInterface $form_state) {
-    $actions = parent::actions($form, $form_state);
-
-    if (isset($form['uuid_error'])) {
-      $actions['submit']['#disabled'] = TRUE;
-    }
-
-    if (
-      $this->entity->toArray() !==
-      $this->entityTypeManager->getStorage($this->entity->getEntityTypeId())
-        ->loadUnchanged($this->entity->id())->toArray()
-    ) {
-      $actions['cancel'] = [
-        '#type' => 'submit',
-        '#value' => $this->t('Cancel'),
-        '#submit' => ['::submitFormCancel'],
-        '#limit_validation_errors' => [],
-      ];
-    }
-
-    if ($this->entity->isDirty()) {
-      $actions['publish'] = [
-        '#type' => 'link',
-        '#title' => $this->t('Publish version'),
-        '#url' => $this->entity->toUrl('publish-form'),
-        '#attributes' => ['class' => ['button']],
-      ];
-    }
-
+    $actions = ['#type' => 'actions', '#weight' => -20, '#attributes' => ['class' => ['task-job-actions']]];
+    $actions['save'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Save'),
+      '#button_type' => 'primary',
+      '#name' => 'job_save',
+      '#submit' => ['::submitForm', '::save'],
+    ];
+    $actions['draft'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Apply to draft'),
+      '#submit' => ['::submitForm', '::saveDraft'],
+    ];
+    $actions['discard'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Discard changes'),
+      '#submit' => ['::submitFormCancel'],
+      '#limit_validation_errors' => [],
+    ];
+    $actions['open_dialog'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Apply before opening editor'),
+      '#name' => 'job_open_dialog',
+      '#attributes' => ['class' => ['task-job-open-dialog', 'js-hide']],
+      '#submit' => ['::submitForm', '::saveDraft'],
+      '#ajax' => ['callback' => '::openEditorDialog'],
+    ];
     return $actions;
   }
 
@@ -704,27 +763,22 @@ class JobEditForm extends JobForm {
    * {@inheritdoc}
    */
   protected function copyFormValuesToEntity(EntityInterface $entity, array $form, FormStateInterface $form_state) {
-    /** @var \Drupal\task_job\Entity\Job $entity */
-    $context_definitions = $entity->getContextDefinitions();
-
-    parent::copyFormValuesToEntity($entity, $form, $form_state);
-
-    // Remove the add new item added by copyFormValuesToEntity.
-    $context_values = $entity->get('context');
-    unset($context_values['_add_new']);
-    foreach ($context_values as $key => $context_value) {
-      if (isset($context_definitions[$key])) {
-        $context_definition = $context_definitions[$key];
-        $context_definition->setLabel($context_value['label']);
-        $context_definition->setMultiple(!empty($context_value['multiple']));
-        $context_definition->setRequired(!empty($context_value['required']));
-        $context_values[$key] = $context_definition->toArray();
-      }
-      else {
-        unset($context_values[$key]);
+    // Only the visible tab may change these values. Navigation controls and
+    // incomplete trigger form arrays are not entity properties.
+    foreach (['label', 'description', 'assignment'] as $property) {
+      if (isset($form[$property]) && $form_state->hasValue($property)) {
+        $entity->set($property, $form_state->getValue($property));
       }
     }
-    $entity->set('context', $context_values);
+    if (isset($form['context_wrapper'])) {
+      foreach ($form_state->getValue('context', []) as $key => $values) {
+        if ($key !== '_add_new' && isset($entity->getContextDefinitions()[$key])) {
+          $definition = $entity->getContextDefinition($key);
+          $definition->setLabel($values['label'])->setRequired(!empty($values['required']))->setMultiple(!empty($values['multiple']));
+          $entity->addContextDefinition($key, $definition);
+        }
+      }
+    }
   }
 
   /**
@@ -771,6 +825,9 @@ class JobEditForm extends JobForm {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     parent::submitForm($form, $form_state);
 
+    if (!isset($form['triggers'])) {
+      return;
+    }
     foreach (Element::children($form['triggers']) as $key) {
       if ($key === '__add') {
         continue;
@@ -814,6 +871,10 @@ class JobEditForm extends JobForm {
       ] + $trigger->getConfiguration();
     }
     $this->entity->set('triggers', $triggers_config);
+    $this->entity->getTriggerCollection()->setConfiguration($triggers_config);
+    foreach ($this->blueprintStorages as $storage) {
+      $this->blueprintTempstoreRepository->delete($storage);
+    }
     $this->entity->set('resources', $this->entity->getResourcesCollection()->getConfiguration());
   }
 
@@ -821,31 +882,53 @@ class JobEditForm extends JobForm {
    * {@inheritdoc}
    */
   public function save(array $form, FormStateInterface $form_state) {
-    $return = parent::save($form, $form_state);
-
-    foreach ($this->blueprintStorages as $storage) {
-      $this->blueprintTempstoreRepository->delete($storage);
+    $draft = $this->entity;
+    $new_override = $draft->isVersioned() && !$draft->isDirty()
+      && $this->entityTypeManager->getStorage('task_job')->loadUnchanged(JobVersionId::buildDirty($draft->getBaseJobId(), $draft->getVersion()));
+    if ($new_override || !$this->tempstoreRepository->isCurrent($draft)) {
+      $this->tempstoreRepository->set($draft);
+      $this->messenger()->addError($this->t('The saved job changed while you were editing. Your draft has been retained. Review the changes or discard the draft before saving.'));
+      return;
     }
-    $this->tempstoreRepository->delete($this->entity);
-
+    if ($draft->isVersioned() && !$draft->isDirty()) {
+      $this->entity = $this->jobVersionResolver->createDirtyVersion($draft);
+    }
+    $this->entity->save();
+    $this->tempstoreRepository->delete($draft);
     $this->messenger()->addStatus($this->t('The job has been saved.'));
-
-    return $return;
+    $form_state->setRedirect('entity.task_job.edit_form', ['task_job' => $this->entity->id()], ['query' => ['section' => $this->section($form_state)]]);
   }
 
   /**
-   * Submit the cancel button.
-   *
-   * @param array $form
-   *   The form array.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   The form state.
+   * Retains edits without changing live job configuration.
+   */
+  public function saveDraft(array $form, FormStateInterface $form_state): void {
+    $section = $form_state->getTriggeringElement()['#section'] ?? $this->section($form_state);
+    $this->tempstoreRepository->set($this->entity, $section);
+    $form_state->setRedirectUrl($this->tempstoreRepository->getEditUrl($this->entity));
+  }
+
+  /**
+   * Opens the configuration dialog after draft validation succeeds.
+   */
+  public function openEditorDialog(array $form, FormStateInterface $form_state): AjaxResponse {
+    $response = new AjaxResponse();
+    if ($form_state->hasAnyErrors()) {
+      $form['messages'] = ['#type' => 'status_messages', '#weight' => -30];
+      $response->addCommand(new ReplaceCommand('#task-job-editor', $form));
+    }
+    else {
+      $response->addCommand(new InvokeCommand('#task-job-editor', 'trigger', ['taskJobDraftSaved']));
+    }
+    return $response;
+  }
+
+  /**
+   * Discards the entire draft, including nested trigger template edits.
    */
   public function submitFormCancel(array $form, FormStateInterface $form_state) {
-    foreach ($this->blueprintStorages as $storage) {
-      $this->blueprintTempstoreRepository->delete($storage);
-    }
     $this->tempstoreRepository->delete($this->entity);
+    $form_state->setRedirect('entity.task_job.edit_form', ['task_job' => $this->entity->id()], ['query' => ['section' => $this->section($form_state)]]);
   }
 
   /**
@@ -876,11 +959,15 @@ class JobEditForm extends JobForm {
    *   The form state.
    */
   public function formSubmitAddContext(array $form, FormStateInterface $form_state) {
-    $context = $form_state->get('context');
+    $this->copyFormValuesToEntity($this->entity, $form, $form_state);
+    $context = $this->entity->getContextDefinitions();
 
     $values = $form_state->getValue(['context', '_add_new']);
 
-    $new_context = ContextDefinition::createFromArray($values);
+    $new_context = ContextDefinition::create($values['type'])
+      ->setLabel($values['label'])
+      ->setRequired(!empty($values['required']))
+      ->setMultiple(!empty($values['multiple']));
     $context[$values['key']] = $new_context;
     $this->entity->addContextDefinition($values['key'], $new_context);
 
@@ -903,7 +990,8 @@ class JobEditForm extends JobForm {
    */
   public function formSubmitRemoveContext(array $form, FormStateInterface $form_state) {
     $button = $form_state->getTriggeringElement();
-    $context = $form_state->get('context');
+    $this->copyFormValuesToEntity($this->entity, $form, $form_state);
+    $context = $this->entity->getContextDefinitions();
     unset($context[$button['#context_key']]);
     $form_state->set('context', $context);
     $this->entity->removeContextDefinition($button['#context_key']);

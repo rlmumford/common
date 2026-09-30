@@ -12,7 +12,8 @@ use Drupal\task_job\JobInterface;
 use Drupal\task_job\JobVersionId;
 use Drupal\task_job\Plugin\JobTrigger\JobTriggerInterface;
 use Drupal\task_job\Plugin\JobTrigger\LazyJobTriggerCollection;
-use Drupal\typed_data\Context\ContextDefinition;
+use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\Core\Plugin\Context\ContextDefinitionInterface;
 
 /**
  * Entity class for the Job entity.
@@ -357,7 +358,11 @@ class Job extends ConfigEntityBase implements JobInterface, EntityWithPluginColl
     $definitions = [];
 
     foreach ($this->context as $key => $context) {
-      $definitions[$key] = ContextDefinition::createFromArray($context);
+      $definitions[$key] = ContextDefinition::create($context['type'])
+        ->setLabel($context['label'])
+        ->setRequired($context['required'] ?? TRUE)
+        ->setMultiple($context['multiple'] ?? FALSE)
+        ->setDescription($context['description'] ?? '');
     }
 
     return $definitions;
@@ -367,14 +372,20 @@ class Job extends ConfigEntityBase implements JobInterface, EntityWithPluginColl
    * {@inheritdoc}
    */
   public function getContextDefinition(string $key) {
-    return isset($this->context[$key]) ? ContextDefinition::createFromArray($this->context[$key]) : NULL;
+    return $this->getContextDefinitions()[$key] ?? NULL;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function addContextDefinition(string $key, ContextDefinition $context_definition) {
-    $this->context[$key] = $context_definition->toArray();
+  public function addContextDefinition(string $key, ContextDefinitionInterface $context_definition) {
+    $this->context[$key] = [
+      'type' => $context_definition->getDataType(),
+      'label' => (string) $context_definition->getLabel(),
+      'required' => $context_definition->isRequired(),
+      'multiple' => $context_definition->isMultiple(),
+      'description' => (string) $context_definition->getDescription(),
+    ];
   }
 
   /**
