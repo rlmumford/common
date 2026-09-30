@@ -136,6 +136,12 @@ Acceptance:
 
 ## P2 — Nested services and task lifecycle
 
+The [dependency and event design](TASK_DEPENDENCIES_AND_EVENTS.md) extends this
+phase with generalised entity dependencies, replacement following and shared event/context
+matching with job triggers. Mixed-dependency temporal semantics (current truth versus
+remembered individual/group occurrences) remain an explicit design decision. It also sequences the P7 active-task-save and
+item-result processing work. These extensions are designed, not implemented.
+
 Traversal foundation implemented: `service.hierarchy` and lazy `service_reference`
 `all`/`root` properties share cycle-safe resolution, explicit missing-parent errors,
 and support unsaved graphs. The service kernel suite covers multilevel trees,
