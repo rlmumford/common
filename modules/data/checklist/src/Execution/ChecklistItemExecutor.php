@@ -7,6 +7,7 @@ use Drupal\checklist\Attempt\ChecklistAttemptClaims;
 use Drupal\checklist\Attempt\ChecklistAttemptConflictException;
 use Drupal\checklist\Attempt\ChecklistAttemptJournal;
 use Drupal\checklist\Entity\ChecklistItemInterface;
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Session\AccountSwitcherInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\checklist\Plugin\ChecklistItemHandler\BackgroundChecklistItemHandlerInterface;
@@ -31,6 +32,8 @@ class ChecklistItemExecutor {
    *   The iteration claim coordinator.
    * @param \Drupal\Core\Session\AccountProxyInterface $currentUser
    *   The submitting caller, never an arbitrary executor supplied by a client.
+   * @param \Drupal\Core\Database\Connection $database
+   *   The journal and item storage connection for atomic retry preparation.
    */
   public function __construct(
     protected ChecklistItemExecutionPreparer $preparer,
@@ -38,6 +41,7 @@ class ChecklistItemExecutor {
     protected ChecklistAttemptJournal $journal,
     protected ChecklistAttemptClaims $claims,
     protected AccountProxyInterface $currentUser,
+    protected Connection $database,
   ) {}
 
   /**
@@ -95,13 +99,86 @@ class ChecklistItemExecutor {
   }
 
   /**
+   * Explicitly retries a failed automatic attempt with retained or fresh state.
+   *
+   * The expected ID/version must still identify the latest failed attempt for
+   * this saved item. RESUME retains working state; FRESH clears it. Outcomes
+   * and predecessor history are preserved. Both modes authorize the current
+   * caller as the new initiator/executor, just like initial submission.
+   *
+   * Resetting the item and creating its successor commit together before any
+   * inline provider call. An outer transaction forces deferral. Callers must
+   * reconcile uncertain external effects before requesting either mode; a new
+   * attempt ID does not undo effects from its predecessor.
+   *
+   * @param \Drupal\checklist\Entity\ChecklistItemInterface $item
+   *   A saved autonomous item, used only as an identity handle.
+   * @param \Drupal\checklist\Attempt\ChecklistAttempt $expected
+   *   The failed attempt snapshot shown to the requesting caller.
+   * @param string $mode
+   *   ChecklistAttempt::RESUME or ChecklistAttempt::FRESH, explicitly chosen.
+   * @param bool $defer
+   *   TRUE to queue the successor without running its first iteration inline.
+   *
+   * @return \Drupal\checklist\Attempt\ChecklistAttempt
+   *   The new queued, waiting or finished attempt.
+   */
+  public function retry(ChecklistItemInterface $item, ChecklistAttempt $expected, string $mode, bool $defer = FALSE): ChecklistAttempt {
+    if ($item->isNew() || !in_array($mode, [ChecklistAttempt::RESUME, ChecklistAttempt::FRESH], TRUE)) {
+      throw new \InvalidArgumentException('Retry requires a saved item and an explicit resume or fresh mode.');
+    }
+    $account = $this->preparer->executor((int) $this->currentUser->id());
+    $this->accountSwitcher->switchTo($account);
+    try {
+      // Authorize before consulting history, then serialize successor creation
+      // through the journal's conditional update of the latest-attempt pointer.
+      $this->preparer->load($item->uuid());
+      $transaction = $this->database->startTransaction();
+      try {
+        $previous = $this->journal->latest($item);
+        if (!$previous || $previous->id !== $expected->id || $previous->version !== $expected->version) {
+          throw new ChecklistAttemptConflictException('The failed attempt has changed.');
+        }
+        if ($previous->path !== ChecklistAttempt::ACTION || $previous->status !== ChecklistAttempt::FAILED) {
+          throw new \DomainException('Only failed automatic attempts can be retried.');
+        }
+        $attempt = $this->journal->create($item, (int) $account->id(), (int) $account->id(), ChecklistAttempt::ACTION, mode: $mode, previous: $previous->id);
+        // Reload after winning the predecessor fence, before resetting state.
+        [$checklist, $fresh] = $this->preparer->load($item->uuid());
+        if ($fresh->isComplete()) {
+          throw new \DomainException('A completed item cannot be retried.');
+        }
+        $fresh->setIncomplete();
+        $fresh->set('failure_method', []);
+        if ($mode === ChecklistAttempt::FRESH) {
+          $fresh->clearWorkingState();
+        }
+        $this->preparer->prepareItem($checklist, $fresh);
+        $fresh->save();
+      }
+      catch (\Throwable $exception) {
+        $transaction->rollBack();
+        throw $exception;
+      }
+      unset($transaction);
+      if ($defer || $fresh->getHandler() instanceof BackgroundChecklistItemHandlerInterface || !$this->claims->canAcquireCommittedClaim()) {
+        return $attempt;
+      }
+      return $this->run($attempt);
+    }
+    finally {
+      $this->accountSwitcher->switchBack();
+    }
+  }
+
+  /**
    * Executes one due iteration for an explicitly authorized automatic attempt.
    *
    * Internal worker entry point, not a user-facing dispatch API. The submitting
    * adapter authorizes the initial work/executor binding. This runner checks
    * the stored executor's current permissions, not the invoking cron account's.
-   * Only initial action attempts on persisted autonomous items are supported.
-   * Successors require the future explicit resume/fresh-state coordinator.
+   * Supports initial and explicitly retried action attempts on saved autonomous
+   * items. Retry preparation is handled by retry(), never by worker delivery.
    *
    * @param \Drupal\checklist\Attempt\ChecklistAttempt $expected
    *   The expected attempt/version; all other metadata is reloaded.
@@ -120,8 +197,8 @@ class ChecklistItemExecutor {
     if (!$attempt || $attempt->version !== $expected->version) {
       throw new ChecklistAttemptConflictException('The attempt version has changed.');
     }
-    if ($attempt->path !== ChecklistAttempt::ACTION || $attempt->mode !== ChecklistAttempt::INITIAL) {
-      throw new \DomainException('This runner supports initial automatic action attempts only.');
+    if ($attempt->path !== ChecklistAttempt::ACTION) {
+      throw new \DomainException('This runner supports automatic action attempts only.');
     }
     $this->accountSwitcher->switchTo($this->preparer->executor($attempt->executor));
     try {
@@ -143,7 +220,7 @@ class ChecklistItemExecutor {
    * or provider runs here; the existing scheduler picks up the continuation.
    */
   public function acceptInput(ChecklistItemInterface $item, ChecklistAttempt $expected, array $state): ChecklistAttempt {
-    if ($expected->itemUuid !== $item->uuid() || $expected->path !== ChecklistAttempt::ACTION || $expected->mode !== ChecklistAttempt::INITIAL) {
+    if ($expected->itemUuid !== $item->uuid() || $expected->path !== ChecklistAttempt::ACTION) {
       throw new \DomainException('Input requires the matching automatic attempt.');
     }
     $prepare = function () use ($item): ChecklistItemInterface {

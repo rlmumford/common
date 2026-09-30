@@ -57,7 +57,6 @@ class DatabaseChecklistAttemptDispatchStorage implements ChecklistAttemptDispatc
    */
   protected function eligible($query, int $now): void {
     $query->condition('path', ChecklistAttempt::ACTION)
-      ->condition('mode', ChecklistAttempt::INITIAL)
       ->condition('status', [ChecklistAttempt::QUEUED, ChecklistAttempt::WAITING], 'IN')
       ->isNull('claim_token')->condition('available', $now, '<=')
       ->condition('dispatch_expires', $now, '<=');

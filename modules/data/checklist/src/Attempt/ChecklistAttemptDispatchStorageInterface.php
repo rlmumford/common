@@ -15,11 +15,12 @@ interface ChecklistAttemptDispatchStorageInterface {
   /**
    * Selects due work and atomically reserves each returned delivery.
    *
-   * Select only committed initial action attempts that are queued/waiting, due,
-   * unclaimed and not reserved for dispatch. Recheck eligibility and version
-   * when reserving: concurrent callers must not reserve the same version while
-   * its reservation is live. Reservations expire after five minutes so a crash
-   * before enqueue or a lost message can be repaired by a later scan.
+   * Select committed action attempts (initial or retry) that are queued or
+   * waiting, due, unclaimed and not reserved for dispatch. Recheck eligibility
+   * and version when reserving: concurrent callers must not reserve the same
+   * version while its reservation is live. Reservations expire after five
+   * minutes so a crash before enqueue or a lost message can be repaired by a
+   * later scan.
    *
    * Order by dispatch expiry (zero first), then due time, creation time and
    * attempt UUID. A waiting commit resets dispatch expiry to zero. This is

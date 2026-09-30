@@ -704,11 +704,11 @@ This first runner is for **persisted autonomous items** on single-value,
 untranslatable, non-revisionable checklist fields. Revisionable hosts, including
 tasks, are supported when their checklist field is shared across revisions. The
 runner reloads the host's current default revision for context/access checks;
-host changes still invalidate an in-flight input snapshot. It accepts initial
-`action` attempts only; it does not perform resume/fresh resets. Interactive/form
+host changes still invalidate an in-flight input snapshot. It accepts initial and
+explicitly retried `action` attempts; the retry method below prepares state resets. Interactive/form
 and action-operation handlers are excluded until workspace ownership is integrated.
 Unsaved workspaces, multivalue checklist identity, translated/revision-specific
-bindings and retry authorization need explicit adapters. These restrictions are
+bindings need explicit adapters. These restrictions are
 checked before handler invocation, rather than inferring a draft or delta binding.
 The UUID-based journal/claims themselves still support unsaved item identities.
 
@@ -786,9 +786,57 @@ adapter still needs coalescing, identity/access policy and result/progress reads
 the current queue carries individual item attempts. Results are persisted, rather
 than returned across threads into a live original PHP request.
 
+## Explicit retries after failure
+
+Use the same executor for a caller-requested retry of a saved automatic item:
+
+```php
+$next = $executor->retry($item, $failed_attempt, ChecklistAttempt::RESUME);
+// Or explicitly discard working state and start a new attempt:
+$next = $executor->retry($item, $failed_attempt, ChecklistAttempt::FRESH, TRUE);
+```
+
+The final argument defers execution when TRUE. Background handlers and calls inside
+an outer transaction always defer. Otherwise the first iteration can run inline,
+after the retry transaction commits, through the normal claim/result path. After
+rolling back an outer transaction, discard loaded entities and reset affected
+entity-storage caches before re-reading; Drupal caches are not transaction snapshots.
+
+- Pass the failed attempt ID/version that the caller actually reviewed. The
+  executor reloads authoritative metadata; a stale version or replaced predecessor
+  is a conflict, not permission to retry whatever is currently latest.
+- Only the latest **failed automatic attempt** can be retried. Queued, waiting,
+  running, cancelled, superseded and successful attempts are not retry targets.
+  An item already completed by another path is never reopened. A failed attempt
+  whose result was rejected can leave the item incomplete; retry supports that too.
+- Resume retains working state. Start fresh clears all working-state values.
+  Both preserve published outcomes and the previous attempt's immutable history.
+  State is not copied into history: choosing fresh discards the retained working
+  values, and neither choice reverses external effects.
+- The requesting active user must currently have host/field update and item
+  execution access. As with `submit()`, this caller becomes the **new** attempt's
+  initiator and executor. The old attempt's identities remain unchanged; an adapter
+  cannot supply an arbitrary executor ID.
+- The new attempt and item reset commit together. Current contexts, applicability
+  and actionability must allow the reset item to run, or the reset rolls back.
+  Delayed/duplicate old worker messages cannot apply to the successor. Worker
+  execution and human input continue to use the successor's ID/version fences.
+- Ordinary `submit()`, checklist processing and cron never retry a failure.
+  A new attempt can itself wait, request input or fail, retaining its own history.
+
+Use `retry()` rather than creating automatic successors directly in the journal:
+journal writes alone neither reset state nor authorize execution.
+
+This is the shared PHP service contract; no retry HTTP route or UI control is added
+here. Those adapters must carry the reviewed attempt/version and enforce their
+normal form/API ownership and CSRF rules. Resolve uncertain provider side effects
+before calling retry, especially after an expired claim: new attempt IDs alone
+cannot prevent an external operation from happening twice. Expired running work
+still needs explicit reconciliation and failure closure before retry is possible.
+
 ## Queue and cron scheduling
 
-`checklist.item_iteration_scheduler::dispatch($limit = 50)` sends due initial `action`
+`checklist.item_iteration_scheduler::dispatch($limit = 50)` sends due `action`
 attempts to the `checklist_item_iteration` Queue API queue. `checklist_cron()` dispatches
 one batch; Drupal cron then runs the queue worker with a 15-second queue budget.
 Each message contains only the attempt UUID and expected journal version. Handlers,
@@ -810,8 +858,8 @@ with those operations; merely maintaining a separate Redis index would not prese
 the commit/version guarantees. Moving the whole attempt system needs corresponding
 journal, claim and result-persistence integration.
 
-The default storage preserves the existing selection policy: initial automatic
-action attempts, queued/waiting, due, unclaimed and without a live dispatch
+The default storage preserves the existing selection policy: automatic
+action attempts (initial or explicitly retried), queued/waiting, due, unclaimed and without a live dispatch
 reservation. Ordering is dispatch expiry (zero first), due time, creation time,
 then attempt UUID. This is not strict FIFO; newly yielded continuations reset their
 reservation to zero. Selection does not evaluate permissions or checklist gates. Dispatch must run outside any
@@ -836,8 +884,8 @@ and least-recently-dispatched work so blocked items cannot monopolize every batc
 
 The scheduler does not create attempts, choose executors, reset failed work, or
 resolve the containing task. Consumers must authorize initial submissions and use
-the runner's supported saved autonomous bindings. Unsupported paths and successor
-modes are not dispatched. Continue running the scheduler even when queue consumption
+the runner's supported saved autonomous bindings. Interactive/form and
+action-operation paths are not dispatched. Continue running the scheduler even when queue consumption
 is moved to a separate worker: this recovers missed deliveries and schedules delayed
 continuations. A five-second item delay means *eligible after five seconds*; actual
 latency depends on the dispatch/worker cadence.

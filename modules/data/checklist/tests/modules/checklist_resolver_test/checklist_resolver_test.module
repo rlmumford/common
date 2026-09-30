@@ -35,6 +35,9 @@ function checklist_resolver_test_checklist_item_access(EntityInterface $entity, 
  * Implements hook_checklist_item_update().
  */
 function checklist_resolver_test_checklist_item_update(EntityInterface $entity) {
+  if (\Drupal::state()->get('checklist_resolver_test.fail_item_save')) {
+    throw new \RuntimeException('Test item save failure');
+  }
   if (\Drupal::state()->get('checklist_resolver_test.revoke_after_item') === $entity->getName()) {
     \Drupal::state()->set('checklist_resolver_test.denied_field_operations', ['work' => ['edit']]);
   }

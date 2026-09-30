@@ -51,7 +51,7 @@ class ChecklistItemIteration extends QueueWorkerBase implements ContainerFactory
     if (
       !$attempt || $attempt->version !== $data['version'] ||
       !in_array($attempt->status, [ChecklistAttempt::QUEUED, ChecklistAttempt::WAITING], TRUE) ||
-      $attempt->path !== ChecklistAttempt::ACTION || $attempt->mode !== ChecklistAttempt::INITIAL
+      $attempt->path !== ChecklistAttempt::ACTION
     ) {
       return;
     }
