@@ -480,6 +480,9 @@ Resources keep action-triggered refresh to preserve resource form input.
 This consumes producer changes to the working checklist; provider expansion itself
 remains within P5.
 The item reader and optional API now expose bounded, authorized attempt history.
+Items also record a nullable `completed` timestamp across manual, interactive and
+automatic completion paths. Reopening clears it; historical unknown dates remain
+NULL through the field upgrade. Item-state reads expose it independently of history.
 Clients can pin an attempt while paging and follow predecessor IDs; working state,
 execution bindings and claim tokens are excluded. This covers recorded durable
 attempts, not unjournaled legacy synchronous actions. See

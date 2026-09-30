@@ -73,7 +73,10 @@ interface ChecklistItemInterface extends EntityInterface {
   public function isIncomplete() : bool;
 
   /**
-   * Set complete.
+   * Sets complete, recording the time only when entering completion.
+   *
+   * Repeated calls preserve the completion time, including an unknown date on
+   * historical completed items.
    *
    * @return \Drupal\checklist\Entity\ChecklistItemInterface
    *   The updated checklist item entity.
@@ -81,7 +84,7 @@ interface ChecklistItemInterface extends EntityInterface {
   public function setComplete(string $type = self::METHOD_INTERACTIVE) : ChecklistItemInterface;
 
   /**
-   * Set Incomplete.
+   * Sets incomplete and clears the current completion time.
    *
    * @return \Drupal\checklist\Entity\ChecklistItemInterface
    *   The updated checklist item entity.

@@ -112,10 +112,13 @@ class ChecklistInputProgressTest extends ChecklistItemExecutionTestBase {
     $this->assertSame([], $dispatcher->discover($checklist, 'extract'));
     $row = $this->container->get('checklist.row_builder')->build($checklist, $fresh);
     $this->assertArrayNotHasKey('input', $row['action_form']);
+    $before_completion = $this->container->get('datetime.time')->getCurrentTime();
     $done = $executor->run($queued);
     $this->assertSame(ChecklistAttempt::SUCCEEDED, $done->status);
     $fresh = $this->reload($item);
     $this->assertTrue($fresh->isComplete());
+    $this->assertGreaterThanOrEqual($before_completion, (int) $fresh->get('completed')->value);
+    $this->assertLessThanOrEqual($this->container->get('datetime.time')->getCurrentTime(), (int) $fresh->get('completed')->value);
     $this->assertTrue($fresh->get('state')->isEmpty());
     $this->assertSame('DOC-42', $fresh->get('outcomes')->get('reference')->getValue());
     $history = $this->container->get('checklist.attempt_journal')->history($attempt->id);

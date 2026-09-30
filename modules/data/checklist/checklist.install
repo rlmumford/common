@@ -190,3 +190,16 @@ function checklist_update_10006() {
     }
   }
 }
+
+/**
+ * Adds completion times, leaving historical completion dates unknown.
+ */
+function checklist_update_10007() {
+  $manager = \Drupal::entityDefinitionUpdateManager();
+  if (!$manager->getFieldStorageDefinition('completed', 'checklist_item')) {
+    $definition = ChecklistItem::baseFieldDefinitions(
+      \Drupal::entityTypeManager()->getDefinition('checklist_item')
+    )['completed'];
+    $manager->installFieldStorageDefinition('completed', 'checklist_item', 'checklist', $definition);
+  }
+}

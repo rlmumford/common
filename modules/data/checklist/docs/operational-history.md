@@ -95,8 +95,21 @@ attempts leading to that result. For a journaled successful attempt, its
 `succeeded` event gives that attempt's completion time. It does not necessarily
 represent the current item disposition after subsequent reopening or manual edits.
 
-The current D10 checklist item defines status and completion method but does not
-have a dedicated `actioned`/completion datetime field. This PR does not add or
-remove one. History cannot currently substitute for such a field across all items:
-manual decisions and other unjournaled synchronous actions are not covered. A
-consistent completion timestamp for all completion paths remains separate work.
+The item now has a nullable `completed` timestamp alongside status and completion
+method. It records the current completion across manual, interactive and automatic
+paths. Item-state API responses expose it as Unix seconds, or `null`. Core field
+formatters and Views can use the timestamp without scanning attempt history.
+
+Calling `setComplete()` stamps a transition into completion using current time
+(including in a long-running worker). Calling it again on a completed item retains
+the date. Reopening or failing clears the date; completing again records a new one.
+Storage also normalizes direct status changes after presave hooks. A fresh item
+saved already complete receives a timestamp on save. This field is read-only in
+normal form editing and is not itself an audit trail.
+
+Update `checklist_update_10007()` installs the field on existing sites. Previously
+completed items remain `null` because their completion time is unknown; merely
+resaving them does not invent a historical date. Reopening and completing them
+again records that new completion. Attempt events remain unchanged. Manual and
+synchronous completions now have this timestamp, but do not gain attempt history
+unless their execution path also writes to the journal.

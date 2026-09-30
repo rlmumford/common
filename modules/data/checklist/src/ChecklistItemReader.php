@@ -140,6 +140,7 @@ class ChecklistItemReader {
       'name' => $item->getName(),
       'title' => $item->get('title')->value,
       'status' => $item->get('status')->value,
+      'completed' => $item->get('completed')->isEmpty() ? NULL : (int) $item->get('completed')->value,
       'contexts_available' => $contexts_available,
       'applicable' => $applicable,
       'required' => $contexts_available ? $item->isRequired() : TRUE,

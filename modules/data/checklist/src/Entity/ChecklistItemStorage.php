@@ -6,7 +6,7 @@ use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\Sql\SqlContentEntityStorage;
 
 /**
- * Persists checklist items and clears successful work's intermediate state.
+ * Persists checklist lifecycle metadata and cleans up completed working state.
  */
 class ChecklistItemStorage extends SqlContentEntityStorage {
 
@@ -20,6 +20,17 @@ class ChecklistItemStorage extends SqlContentEntityStorage {
       if ($names && !in_array('state', $names, TRUE)) {
         $names[] = 'state';
       }
+    }
+    // Direct status writes and presave hooks must obey the same lifecycle as
+    // setComplete()/setIncomplete(). Leave legacy completed rows undated.
+    if (!$entity->isComplete()) {
+      $entity->set('completed', []);
+    }
+    elseif ($entity->get('completed')->isEmpty() && (!isset($entity->original) || !$entity->original->isComplete())) {
+      $entity->set('completed', \Drupal::time()->getCurrentTime());
+    }
+    if ($names && !in_array('completed', $names, TRUE)) {
+      $names[] = 'completed';
     }
     parent::doSaveFieldItems($entity, $names);
   }

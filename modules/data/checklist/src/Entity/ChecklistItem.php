@@ -78,6 +78,12 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
       ->setLabel(new TranslatableMarkup('Status'))
       ->setDisplayConfigurable('view', TRUE);
 
+    $fields['completed'] = BaseFieldDefinition::create('timestamp')
+      ->setLabel(new TranslatableMarkup('Completed'))
+      ->setDescription(new TranslatableMarkup('When the item most recently became complete; empty when incomplete or historically unknown.'))
+      ->setReadOnly(TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
     $fields['estimate'] = BaseFieldDefinition::create('integer')
       ->setLabel(new TranslatableMarkup('Estimate'));
 
@@ -160,6 +166,9 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
    * {@inheritdoc}
    */
   public function setComplete(string $method = self::METHOD_INTERACTIVE): ChecklistItemInterface {
+    if (!$this->isComplete()) {
+      $this->completed = \Drupal::time()->getCurrentTime();
+    }
     $this->status = static::STATUS_COMPLETE;
     $this->completion_method = $method;
     $this->finalizePlaceholders();
@@ -171,6 +180,7 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
    * {@inheritdoc}
    */
   public function setIncomplete(): ChecklistItemInterface {
+    $this->completed = [];
     $this->status = static::STATUS_INCOMPLETE;
     $this->completion_method = [];
     return $this;
@@ -187,6 +197,7 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
    * {@inheritdoc}
    */
   public function setFailed(string $method = self::METHOD_INTERACTIVE): ChecklistItemInterface {
+    $this->completed = [];
     $this->status = static::STATUS_FAILED;
     $this->failure_method = $method;
     return $this;

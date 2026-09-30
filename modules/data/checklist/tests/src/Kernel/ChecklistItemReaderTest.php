@@ -125,6 +125,7 @@ class ChecklistItemReaderTest extends KernelTestBase {
       'name' => 'progress',
       'title' => 'Process content',
       'status' => 'incomplete',
+      'completed' => NULL,
       'contexts_available' => TRUE,
       'applicable' => TRUE,
       'required' => TRUE,
