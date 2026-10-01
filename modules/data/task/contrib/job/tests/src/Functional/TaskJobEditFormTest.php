@@ -179,4 +179,55 @@ class TaskJobEditFormTest extends BrowserTestBase {
     $this->assertSame('Follow up', $this->saved()->label());
   }
 
+  /**
+   * Named groups and item dialogs use the same draft and save boundary.
+   */
+  public function testChecklistTemplates(): void {
+    $this->drupalGet('/admin/config/task/job/follow_up/edit/templates');
+    $this->submitForm([
+      'new_template[name]' => 'appointment',
+      'new_template[label]' => 'Appointment preparation',
+    ], 'Add template');
+    $this->assertSame([], $this->saved()->get('checklist_templates'));
+    $this->clickLink('Add Checklist Item');
+    $this->clickLink('Simple Checkbox');
+    $this->assertStringContainsString('template=appointment', $this->getSession()->getCurrentUrl());
+    $this->submitForm(['name' => 'confirm', 'label' => 'Confirm appointment'], 'Add');
+    $this->assertSession()->addressEquals('/admin/config/task/job/follow_up/edit/templates');
+    $this->assertSession()->pageTextContains('Confirm appointment');
+    $this->clickLink('configure');
+    $this->submitForm(['label' => 'Confirm appointment details'], 'Update');
+    $this->submitForm([], 'Apply to draft');
+    $this->clickLink('Checklist');
+    $this->submitForm(['checklist_includes[appointment]' => 'appointment'], 'Apply to draft');
+    $this->assertSame([], $this->saved()->getExpandedChecklistItems());
+    $this->clickLink('Checklist templates');
+    $this->submitForm([], 'Remove template');
+    $this->assertSession()->pageTextContains('Remove this template from the Checklist tab before deleting it.');
+    $this->submitForm([], 'Save');
+    $job = $this->saved();
+    $this->assertSame([], $job->getChecklistItems());
+    $this->assertSame('Confirm appointment details', $job->getExpandedChecklistItems()['confirm']['label']);
+    $this->assertSame(['appointment'], $job->get('checklist_includes'));
+    $this->clickLink('configure');
+    $this->submitForm(['label' => 'Unsaved replacement label'], 'Update');
+    $this->submitForm([], 'Discard changes');
+    $this->assertSession()->pageTextContains('Confirm appointment details');
+    $this->assertSession()->pageTextNotContains('Unsaved replacement label');
+    $this->clickLink('Checklist');
+    $this->clickLink('Add Checklist Item');
+    $this->clickLink('Simple Checkbox');
+    $this->submitForm(['name' => 'confirm', 'label' => 'Conflicting default item'], 'Add');
+    $this->submitForm([], 'Save');
+    $this->assertSession()->pageTextContains('occurs more than once');
+    $this->assertSame([], $this->saved()->getChecklistItems());
+    $this->submitForm([], 'Discard changes');
+    $this->submitForm(['checklist_includes[appointment]' => FALSE], 'Apply to draft');
+    $this->clickLink('Checklist templates');
+    $this->submitForm([], 'Remove template');
+    $this->assertSession()->pageTextNotContains('Confirm appointment details');
+    $this->submitForm([], 'Discard changes');
+    $this->assertSession()->pageTextContains('Confirm appointment details');
+  }
+
 }

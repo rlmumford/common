@@ -208,7 +208,12 @@ class JobEditForm extends JobForm {
       $form['assignment'] = $settings['assignment'];
     }
     else {
-      $method = ['checklist' => 'buildChecklist', 'triggers' => 'buildTriggers', 'contexts' => 'buildContexts'][$section];
+      $method = [
+        'checklist' => 'buildChecklist',
+        'triggers' => 'buildTriggers',
+        'contexts' => 'buildContexts',
+        'templates' => 'buildTemplates',
+      ][$section];
       $form = $this->$method($form, $form_state, $ajax_attributes);
     }
     return $form;
@@ -222,6 +227,7 @@ class JobEditForm extends JobForm {
       'checklist' => $this->t('Checklist'),
       'triggers' => $this->t('Triggers'),
       'contexts' => $this->t('Contexts'),
+      'templates' => $this->t('Checklist templates'),
       'assignment' => $this->t('Assignment rules'),
       'settings' => $this->t('Settings'),
     ];
@@ -447,7 +453,7 @@ class JobEditForm extends JobForm {
                 'uuid' => $uuid,
               ],
               [
-                'query' => $this->getDestinationArray(),
+                'query' => ($ajax_attributes['query'] ?? []) + $this->getDestinationArray(),
               ] + $ajax_attributes,
             ),
           ],
@@ -460,7 +466,7 @@ class JobEditForm extends JobForm {
                 'uuid' => $uuid,
               ],
               [
-                'query' => $this->getDestinationArray(),
+                'query' => ($ajax_attributes['query'] ?? []) + $this->getDestinationArray(),
               ] + $ajax_attributes
             ),
           ],
@@ -476,7 +482,27 @@ class JobEditForm extends JobForm {
   /**
    * Builds the checklist item management table.
    */
-  protected function buildChecklist(array $form, FormStateInterface $form_state, array $ajax_attributes): array {
+  protected function buildChecklist(array $form, FormStateInterface $form_state, array $ajax_attributes, ?string $template = NULL): array {
+    if ($template !== NULL) {
+      $ajax_attributes['query']['template'] = $template;
+    }
+    else {
+      $options = [];
+      foreach ($this->entity->get('checklist_templates') ?: [] as $name => $definition) {
+        $options[$name] = $definition['label'];
+      }
+      foreach ($this->entity->get('checklist_includes') ?: [] as $name) {
+        $options[$name] ??= $this->t('Missing template: @name', ['@name' => $name]);
+      }
+      $form['checklist_includes'] = [
+        '#type' => 'checkboxes',
+        '#title' => $this->t('Include checklist templates'),
+        '#description' => $this->t('Selected templates add their items after the default items. Item names must be unique across the resulting checklist.'),
+        '#options' => $options,
+        '#default_value' => $this->entity->get('checklist_includes') ?: [],
+        '#access' => !empty($options),
+      ];
+    }
     $form['checklist'] = [
       '#type' => 'container',
       '#title' => $this->t('Default Checklist'),
@@ -514,7 +540,7 @@ class JobEditForm extends JobForm {
     $configure_ajax_attributes['attributes']['data-dialog-options'] = Json::encode([
       'width' => '650px',
     ]);
-    foreach ($this->entity->getChecklistItems() as $name => $definition) {
+    foreach ($this->entity->getChecklistItems($template) as $name => $definition) {
       /** @var \Drupal\checklist\Plugin\ChecklistItemHandler\ChecklistItemHandlerInterface $plugin */
       $plugin = $this->manager->createInstance(
         $definition['handler'],
@@ -541,7 +567,7 @@ class JobEditForm extends JobForm {
                 'name' => $name,
               ],
               [
-                'query' => $this->getDestinationArray(),
+                'query' => ($ajax_attributes['query'] ?? []) + $this->getDestinationArray(),
               ] + $configure_ajax_attributes,
             ),
           ],
@@ -554,7 +580,7 @@ class JobEditForm extends JobForm {
                 'name' => $name,
               ],
               [
-                'query' => $this->getDestinationArray(),
+                'query' => ($ajax_attributes['query'] ?? []) + $this->getDestinationArray(),
               ] + $ajax_attributes
             ),
           ],
@@ -565,6 +591,98 @@ class JobEditForm extends JobForm {
     }
 
     return $form;
+  }
+
+  /**
+   * Edits named definitions within the same job working copy.
+   */
+  protected function buildTemplates(array $form, FormStateInterface $form_state, array $ajax_attributes): array {
+    $form['template_help'] = ['#markup' => $this->t('Define named groups of checklist items here, then select them on the Checklist tab. Templates share this job version and its contexts. Item names share the checklist namespace.')];
+    foreach ($this->entity->get('checklist_templates') ?: [] as $name => $template) {
+      $element = [
+        '#type' => 'details',
+        '#title' => $template['label'],
+        '#open' => TRUE,
+        'machine_name' => ['#type' => 'item', '#title' => $this->t('Machine name'), '#plain_text' => $name],
+        'label' => [
+          '#type' => 'textfield',
+          '#title' => $this->t('Template label'),
+          '#default_value' => $template['label'],
+          '#required' => TRUE,
+        ],
+      ];
+      $element = $this->buildChecklist($element, $form_state, $ajax_attributes, $name);
+      $element['remove'] = [
+        '#type' => 'submit',
+        '#value' => $this->t('Remove template'),
+        '#name' => 'remove_template_' . $name,
+        '#template_name' => $name,
+        '#validate' => ['::validateTemplateRemoval'],
+        '#submit' => ['::submitForm', '::removeTemplate'],
+      ];
+      $form['templates'][$name] = $element;
+    }
+    $form['new_template'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Add checklist template'),
+      '#open' => TRUE,
+      'name' => ['#type' => 'textfield', '#title' => $this->t('Template machine name')],
+      'label' => ['#type' => 'textfield', '#title' => $this->t('New template label')],
+      'add' => [
+        '#type' => 'submit',
+        '#value' => $this->t('Add template'),
+        '#validate' => ['::validateTemplateName'],
+        '#submit' => ['::submitForm', '::addTemplate'],
+      ],
+    ];
+    return $form;
+  }
+
+  /**
+   * Validates a new template name.
+   */
+  public function validateTemplateName(array &$form, FormStateInterface $form_state): void {
+    $name = $form_state->getValue(['new_template', 'name'], '');
+    $templates = $this->entity->get('checklist_templates') ?: [];
+    if (!preg_match('/^[a-z][a-z0-9_]*$/D', $name) || isset($templates[$name])) {
+      $form_state->setError($form['new_template']['name'], $this->t('Use a unique machine name starting with a lowercase letter, followed by lowercase letters, digits or underscores.'));
+    }
+    if (trim($form_state->getValue(['new_template', 'label'], '')) === '') {
+      $form_state->setError($form['new_template']['label'], $this->t('Enter a template label.'));
+    }
+  }
+
+  /**
+   * Adds a named definition to the draft, never the saved job.
+   */
+  public function addTemplate(array &$form, FormStateInterface $form_state): void {
+    $templates = $this->entity->get('checklist_templates') ?: [];
+    $templates[$form_state->getValue(['new_template', 'name'])] = [
+      'label' => $form_state->getValue(['new_template', 'label']),
+      'items' => [],
+    ];
+    $this->entity->set('checklist_templates', $templates);
+    $this->saveDraft($form, $form_state);
+  }
+
+  /**
+   * Requires references to be removed before deleting their definition.
+   */
+  public function validateTemplateRemoval(array &$form, FormStateInterface $form_state): void {
+    $name = $form_state->getTriggeringElement()['#template_name'];
+    if (in_array($name, $this->entity->get('checklist_includes') ?: [], TRUE)) {
+      $form_state->setError($form['templates'][$name]['remove'], $this->t('Remove this template from the Checklist tab before deleting it.'));
+    }
+  }
+
+  /**
+   * Removes an unused definition from the draft.
+   */
+  public function removeTemplate(array &$form, FormStateInterface $form_state): void {
+    $templates = $this->entity->get('checklist_templates');
+    unset($templates[$form_state->getTriggeringElement()['#template_name']]);
+    $this->entity->set('checklist_templates', $templates);
+    $this->saveDraft($form, $form_state);
   }
 
   /**
@@ -749,6 +867,16 @@ class JobEditForm extends JobForm {
         $entity->set($property, $form_state->getValue($property));
       }
     }
+    if (isset($form['checklist_includes'])) {
+      $entity->set('checklist_includes', array_values(array_filter($form_state->getValue('checklist_includes', []))));
+    }
+    if (isset($form['templates'])) {
+      $templates = $entity->get('checklist_templates');
+      foreach ($form_state->getValue('templates', []) as $name => $values) {
+        $templates[$name]['label'] = $values['label'];
+      }
+      $entity->set('checklist_templates', $templates);
+    }
     if (isset($form['context_wrapper'])) {
       foreach ($form_state->getValue('context', []) as $key => $values) {
         if ($key !== '_add_new' && isset($entity->getContextDefinitions()[$key])) {
@@ -789,6 +917,16 @@ class JobEditForm extends JobForm {
     $entity = parent::validateForm($form, $form_state);
     if (!$form_state->isSubmitted() || $form_state->getLimitValidationErrors() === []) {
       return $entity;
+    }
+    if (($form_state->getTriggeringElement()['#name'] ?? '') === 'job_save') {
+      $candidate = clone $this->entity;
+      $this->copyFormValuesToEntity($candidate, $form, $form_state);
+      try {
+        $candidate->getExpandedChecklistItems();
+      }
+      catch (\InvalidArgumentException $exception) {
+        $form_state->setErrorByName('checklist_includes', $exception->getMessage());
+      }
     }
     foreach ($this->blueprintStorages as $key => $storage) {
       $configuration = $this->actionConfiguration($storage->getTrigger(), $key, $form_state);
