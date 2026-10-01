@@ -44,6 +44,13 @@ interface ChecklistInterface {
   public function getItems() : array;
 
   /**
+   * Whether the item's branch still exists and all its decisions select it.
+   *
+   * Inactive work retains its status, outcomes, attempts and completion time.
+   */
+  public function isItemActive(ChecklistItemInterface $item): bool;
+
+  /**
    * Get the ordered items.
    *
    * @return \Drupal\checklist\Entity\ChecklistItemInterface[]

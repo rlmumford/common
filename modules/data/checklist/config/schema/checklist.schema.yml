@@ -65,6 +65,14 @@ checklist_item_handler.decision:
           label:
             type: label
             label: 'Label'
+          template:
+            type: string
+            label: 'Checklist template activated by this choice'
+          context_mapping:
+            type: sequence
+            label: 'Template context mapping'
+            sequence:
+              type: string
           require_reason:
             type: boolean
             label: 'Require a reason'

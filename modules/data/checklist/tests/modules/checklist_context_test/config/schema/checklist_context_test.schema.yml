@@ -1,0 +1,7 @@
+checklist_item_handler.context_consumer:
+  type: checklist_item_handler
+  mapping:
+    context_mapping:
+      type: sequence
+      sequence:
+        type: string

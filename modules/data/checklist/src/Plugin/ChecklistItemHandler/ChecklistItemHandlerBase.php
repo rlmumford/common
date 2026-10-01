@@ -145,7 +145,8 @@ abstract class ChecklistItemHandlerBase extends PluginBase implements ChecklistI
     }
     return $this->conditionEvaluator->evaluate(
       $this->getItem()->get('checklist')->checklist,
-      $conditions[$gate]
+      $conditions[$gate],
+      $this->getItem()
     );
   }
 

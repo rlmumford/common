@@ -40,6 +40,13 @@ class Checklist implements ChecklistInterface {
   protected $items = NULL;
 
   /**
+   * Names supplied by the current definition catalog.
+   *
+   * @var array
+   */
+  protected array $definedItems = [];
+
+  /**
    * Items removed from the checklist.
    *
    * @var \Drupal\checklist\Entity\ChecklistItemInterface[]
@@ -123,8 +130,12 @@ class Checklist implements ChecklistInterface {
       }
     }
 
-    // Fill in gaps.
+    // Fill in gaps, retaining persisted work and its identity.
     foreach ($this->getType()->getDefaultItems() as $name => $item) {
+      $this->definedItems[$name] = TRUE;
+      if (isset($items[$name]) && !$item->get('derivation')->isEmpty()) {
+        $items[$name]->set('derivation', $item->get('derivation')->getValue());
+      }
       if (!isset($items[$item->getName()])) {
         $item->checklist = [
           'entity' => $this->getEntity(),
@@ -147,9 +158,30 @@ class Checklist implements ChecklistInterface {
   /**
    * {@inheritdoc}
    */
+  public function isItemActive(ChecklistItemInterface $item): bool {
+    $derivation = $item->get('derivation')->first()?->getValue() ?? [];
+    if (!$derivation) {
+      return TRUE;
+    }
+    $items = $this->getItems();
+    if (!isset($this->definedItems[$item->getName()])) {
+      return FALSE;
+    }
+    foreach ($derivation['requirements'] ?? [] as $parent => $choice) {
+      $source = $items[$parent] ?? NULL;
+      if (!$source || !$source->isComplete() || $source->get('outcomes')->get('decision')?->getValue() !== $choice) {
+        return FALSE;
+      }
+    }
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getOrderedItems(): array {
-    // @todo Implement sorting
-    return $this->getItems();
+    $items = $this->getItems();
+    return array_replace(array_intersect_key($this->definedItems, $items), $items);
   }
 
   /**
@@ -165,7 +197,7 @@ class Checklist implements ChecklistInterface {
    */
   public function getItem(string $name): ?ChecklistItemInterface {
     $this->getItems();
-    return $this->items[$name];
+    return $this->items[$name] ?? NULL;
   }
 
   /**
@@ -180,6 +212,7 @@ class Checklist implements ChecklistInterface {
    * {@inheritdoc}
    */
   public function setItem(string $name, ChecklistItemInterface $item) {
+    $this->getItems();
     if ($item->name->isEmpty()) {
       $item->name = $name;
     }
@@ -228,7 +261,7 @@ class Checklist implements ChecklistInterface {
     $context_preparer = \Drupal::service('checklist.context_preparer');
     $completable = TRUE;
     foreach ($this->getItems() as $item) {
-      if ($item->isComplete() || $item->get('status')->value === ChecklistItemInterface::STATUS_NA) {
+      if (!$this->isItemActive($item) || $item->isComplete() || $item->get('status')->value === ChecklistItemInterface::STATUS_NA) {
         continue;
       }
       if (!$context_preparer->prepare($this, $item)) {

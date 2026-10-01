@@ -167,11 +167,11 @@ abstract class TemplateItemBase extends ContextAwareChecklistItemHandlerBase imp
     foreach ($this->getContextDefinitions() as $name => $definition) {
       $this->setContext($name, new Context($definition));
     }
-    $this->contextHandler->applyContextMapping($this, $this->collector->collectRuntimeContexts($checklist));
+    $this->contextHandler->applyContextMapping($this, $this->collector->collectRuntimeContexts($checklist, $this->getItem()));
     $available = [];
     foreach ($this->getTemplates() as $key => $template) {
       $settings = $this->getConfiguration()['templates'][$key];
-      if (isset($settings['condition']) && $this->conditionEvaluator->evaluate($checklist, $settings['condition']) !== TRUE) {
+      if (isset($settings['condition']) && $this->conditionEvaluator->evaluate($checklist, $settings['condition'], $this->getItem()) !== TRUE) {
         continue;
       }
       foreach ($template->getContextDefinitions() as $name => $definition) {

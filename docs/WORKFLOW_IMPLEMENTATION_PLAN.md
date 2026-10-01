@@ -450,9 +450,11 @@ configuration examples and coverage.
 First static slice: jobs store named checklist templates and ordered static
 references in their versioned configuration. The Checklist templates tab reuses
 item dialogs and the shared draft. Runtime expansion rejects collisions and
-missing references; persisted items are preserved. Conditional expansion,
-multiple scoped instances and orphan reconciliation remain open. See the
-Task Job README for configuration and lifecycle details.
+missing references; persisted items are preserved. Decision-driven expansion
+now adds scoped template instances, nested branches and local outcome aliases.
+Inactive branches retain their work and history. See
+[Decision checklist templates](DECISION_CHECKLIST_TEMPLATES.md). General provider
+assembly and explicit orphan-management actions remain open.
 
 Deliverables:
 

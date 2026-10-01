@@ -133,8 +133,9 @@ class ChecklistItemReader {
    * Projects a visible item's current gates and optional handler progress.
    */
   protected function snapshot(ChecklistInterface $checklist, ChecklistItemInterface $item): array {
-    $contexts_available = $this->contextPreparer->prepare($checklist, $item);
-    $applicable = $contexts_available ? $item->isApplicable() : NULL;
+    $branch_active = $checklist->isItemActive($item);
+    $contexts_available = $branch_active && $this->contextPreparer->prepare($checklist, $item);
+    $applicable = !$branch_active ? FALSE : ($contexts_available ? $item->isApplicable() : NULL);
     $handler = $item->getHandler();
     $action_state = $contexts_available && $handler instanceof ActionStateChecklistItemHandlerInterface
       ? $handler->getActionState()?->toArray()

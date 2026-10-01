@@ -113,7 +113,8 @@ class Decision extends ChecklistItemHandlerBase implements InteractiveChecklistI
   protected function optionAvailable(array $option): bool {
     return !array_key_exists('available', $option) || $this->conditionEvaluator->evaluate(
       $this->getItem()->get('checklist')->checklist,
-      $option['available']
+      $option['available'],
+      $this->getItem()
     ) === TRUE;
   }
 
