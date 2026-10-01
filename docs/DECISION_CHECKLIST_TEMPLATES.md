@@ -112,9 +112,10 @@ Long-running items continue through the existing attempt and scheduling system.
 No new queue or execution facade is introduced.
 
 Template definitions come from the job version selected by the task, including
-that version's dirty overlay. Existing stored item handler configurations retain
-their current snapshot behavior; this change preserves their records rather
-than resetting completed work when definitions change.
+that version's dirty overlay. Persisted unfinished items read their labels and
+handler configuration from that definition on reload, preserving identity, state
+and history. Completed items retain their recorded configuration. See
+[LIVE_JOB_CHECKLIST_CONFIGURATION.md](LIVE_JOB_CHECKLIST_CONFIGURATION.md).
 
 Run `drush updatedb` to install the new provenance field on existing sites.
 `DecisionChecklistTemplatesTest` covers API choice, scoped and later outcomes,

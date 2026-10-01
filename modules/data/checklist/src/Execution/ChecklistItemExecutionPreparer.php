@@ -90,8 +90,9 @@ class ChecklistItemExecutionPreparer {
     if ($checklist->getType()->getPluginId() !== $item->bundle() || !$checklist->hasItem($item->getName()) || $checklist->getItem($item->getName())->uuid() !== $item->uuid()) {
       throw new \DomainException('The item no longer belongs to the addressed checklist.');
     }
-    $reference->entity = $host;
-    $checklist->setItem($item->getName(), $item);
+    // The checklist may resolve current configuration from its source. Do not
+    // replace that authoritative item with the raw database snapshot.
+    $item = $checklist->getItem($item->getName());
     if (!$item->access($automatic ? 'execute iteration' : 'execute action operation')) {
       throw new AccessDeniedHttpException('The item cannot be executed.');
     }
