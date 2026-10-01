@@ -42,6 +42,10 @@ class ChecklistContextPreparer {
    *   TRUE if every required context has a value.
    */
   public function prepare(ChecklistInterface $checklist, ChecklistItemInterface $item): bool {
+    // Inactive branches need no input. Applicability prevents execution.
+    if (!$checklist->isItemActive($item)) {
+      return TRUE;
+    }
     $handler = $item->getHandler();
     if (!$handler instanceof ContextAwarePluginInterface) {
       return TRUE;
@@ -52,7 +56,7 @@ class ChecklistContextPreparer {
       $handler->setContext($name, new Context($definition));
     }
     try {
-      $this->contextHandler->applyContextMapping($handler, $this->collector->collectRuntimeContexts($checklist));
+      $this->contextHandler->applyContextMapping($handler, $this->collector->collectRuntimeContexts($checklist, $item));
     }
     catch (MissingValueContextException) {
       return FALSE;

@@ -37,6 +37,9 @@ class ChecklistActionResourceCollector implements ChecklistActionResourceCollect
         continue;
       }
 
+      if (!$checklist->isItemActive($item)) {
+        continue;
+      }
       $contexts_available = $this->contextPreparer->prepare($checklist, $item);
       $terminal = $item->isComplete() || $item->isFailed();
       if (!$terminal) {

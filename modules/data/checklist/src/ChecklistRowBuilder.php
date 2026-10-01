@@ -14,6 +14,7 @@ use Drupal\checklist\PluginForm\CustomFormObjectClassInterface;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
 use Drupal\Core\Entity\Plugin\DataType\EntityAdapter;
 use Drupal\Core\Form\FormBuilderInterface;
+use Drupal\Core\Form\FormState;
 use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
@@ -56,12 +57,16 @@ class ChecklistRowBuilder {
     if (!$checklist_item->access('view action state')) {
       return NULL;
     }
+    if (!$checklist->isItemActive($checklist_item) && $checklist_item->isNew()) {
+      return NULL;
+    }
     $name = $checklist_item->getName();
     $id = $checklist->getEntity()->getEntityTypeId() . '--' . str_replace(':', '--', $checklist->getKey());
     $handler = $checklist_item->getHandler();
 
-    $available = $this->contextPreparer->prepare($checklist, $checklist_item);
-    $contexts = $this->contextCollector->collectRuntimeContexts($checklist);
+    $branch_active = $checklist->isItemActive($checklist_item);
+    $available = $branch_active && $this->contextPreparer->prepare($checklist, $checklist_item);
+    $contexts = $this->contextCollector->collectRuntimeContexts($checklist, $branch_active ? $checklist_item : NULL);
     $placeholder_datas = [$checklist->getEntity()->getEntityTypeId() => EntityAdapter::createFromEntity($checklist->getEntity())];
     foreach ($contexts as $key => $context) {
       $placeholder_datas[$key] = $context->getContextData();
@@ -108,7 +113,9 @@ class ChecklistRowBuilder {
           'item_name' => $checklist_item->getName(),
         ]
       ));
-      $controls = $this->formBuilder->getForm($form_obj);
+      // Reconciliation renders controls; it must not replay the current POST.
+      $display_state = (new FormState())->setUserInput([]);
+      $controls = $this->formBuilder->buildForm($form_obj, $display_state);
     }
 
     // @todo Estimates
@@ -159,7 +166,7 @@ class ChecklistRowBuilder {
         '#wrapper_attributes' => ['class' => ['checklist-item-history-cell']],
       ];
     }
-    if ($checklist_item->isFailed() && !$checklist_item->isNew() && !$checklist->getEntity()->isNew()
+    if ($branch_active && $checklist_item->isFailed() && !$checklist_item->isNew() && !$checklist->getEntity()->isNew()
       && $handler instanceof IterativeChecklistItemHandlerInterface
       && $checklist_item->getMethod() === ChecklistItemInterface::METHOD_AUTO
       && $checklist_item->access('execute iteration')) {
@@ -250,7 +257,8 @@ class ChecklistRowBuilder {
           'checklist' => $checklist->getKey(),
           'item_name' => $name,
         ]));
-        $row['action_form']['input'] = $this->formBuilder->getForm($form);
+        $display_state = (new FormState())->setUserInput([]);
+        $row['action_form']['input'] = $this->formBuilder->buildForm($form, $display_state);
       }
     }
     return $row;

@@ -3,6 +3,8 @@
 namespace Drupal\checklist\PluginForm;
 
 use Drupal\checklist\Form\ConditionConfigurationForm;
+use Drupal\checklist\ChecklistContextMapping;
+use Drupal\Core\Plugin\Context\ContextHandlerInterface;
 use Drupal\checklist\Form\ConfigurationForm;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -18,13 +20,13 @@ class DecisionItemConfigureForm extends PluginFormBase implements ContainerInjec
 
   use StringTranslationTrait;
 
-  public function __construct(protected ConditionConfigurationForm $conditions) {}
+  public function __construct(protected ConditionConfigurationForm $conditions, protected ContextHandlerInterface $contextHandler) {}
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    return new static($container->get('checklist.condition_configuration_form'));
+    return new static($container->get('checklist.condition_configuration_form'), $container->get('context.handler'));
   }
 
   /**
@@ -70,6 +72,41 @@ class DecisionItemConfigureForm extends PluginFormBase implements ContainerInjec
         '#title' => $this->t('Require a reason'),
         '#default_value' => $option['require_reason'] ?? FALSE,
       ];
+      $templates = $form_state->getTemporaryValue('checklist_templates') ?? [];
+      if ($templates || !empty($option['template'])) {
+        $element['template'] = [
+          '#type' => 'select',
+          '#title' => $this->t('Checklist template'),
+          '#description' => $this->t('Activate these items when this choice is selected. Each choice has its own work and history.'),
+          '#options' => array_map(static fn(array $template) => $template['label'], $templates),
+          '#empty_option' => $this->t('- No additional items -'),
+          '#empty_value' => '',
+          '#default_value' => $option['template'] ?? '',
+        ];
+        $definitions = $form_state->getTemporaryValue('branch_context_definitions') ?? [];
+        $mapping = ChecklistContextMapping::fromDefinitions($definitions, $option['context_mapping'] ?? []);
+        $contexts = $form_state->getTemporaryValue('gathered_contexts') ?? [];
+        $element['context_mapping'] = ['#tree' => TRUE];
+        if (method_exists($this->contextHandler, 'getContextAssignmentElement')) {
+          $element['context_mapping'] = $this->contextHandler->getContextAssignmentElement($mapping, $contexts);
+        }
+        else {
+          foreach ($definitions as $name => $definition) {
+            $matches = $this->contextHandler->getMatchingContexts($contexts, $definition);
+            $element['context_mapping'][$name] = [
+              '#type' => 'select',
+              '#title' => $definition->getLabel(),
+              '#options' => array_map(static fn($context) => $context->getContextDefinition()->getLabel(), $matches),
+              '#empty_option' => $this->t('- Inherit -'),
+              '#empty_value' => '',
+              '#default_value' => $option['context_mapping'][$name] ?? '',
+            ];
+          }
+        }
+        $element['context_mapping']['#type'] = 'details';
+        $element['context_mapping']['#title'] = $this->t('Template context mapping');
+        $element['context_mapping']['#description'] = $this->t('Leave empty to inherit the job contexts.');
+      }
       $element['remove'] = ['#type' => 'checkbox', '#title' => $this->t('Remove choice')];
       $element['available'] = [
         '#type' => 'details',
@@ -106,6 +143,11 @@ class DecisionItemConfigureForm extends PluginFormBase implements ContainerInjec
         $form_state->setError($form['options'][$index]['label'], $this->t('Enter a label for this choice.'));
       }
       $options[$name] = ['label' => $label, 'require_reason' => (bool) $row['require_reason']] + ($saved[$index] ?? []);
+      unset($options[$name]['template'], $options[$name]['context_mapping']);
+      if (!empty($row['template'])) {
+        $options[$name]['template'] = $row['template'];
+        $options[$name]['context_mapping'] = array_filter($row['context_mapping'] ?? []);
+      }
       $element = &$form['options'][$index]['available'];
       $condition = $this->conditions->configuration($element, SubformState::createForSubform($element, $form, $form_state));
       unset($options[$name]['available']);

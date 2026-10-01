@@ -107,6 +107,10 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
       ->setSetting('allowed_values', $method_values)
       ->setDisplayConfigurable('view', TRUE);
 
+    $fields['derivation'] = BaseFieldDefinition::create('map')
+      ->setLabel(new TranslatableMarkup('Branch provenance'))
+      ->setDescription(new TranslatableMarkup('Decision requirements and context scopes for generated items.'));
+
     $fields['outcomes'] = BaseFieldDefinition::create('typed_data_reference')
       ->setLabel(new TranslatableMarkup('Contexts'))
       ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED);
@@ -139,6 +143,9 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
    * {@inheritdoc}
    */
   public function isApplicable(): ?bool {
+    if (!$this->get('checklist')->checklist->isItemActive($this)) {
+      return FALSE;
+    }
     if ($this->isComplete()) {
       return TRUE;
     }

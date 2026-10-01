@@ -563,4 +563,30 @@ class ChecklistItemReaderTest extends KernelTestBase {
     ], (new ChecklistActionState())->toArray());
   }
 
+  /**
+   * Reconciliation does not process the POST that caused an AJAX refresh.
+   */
+  public function testRowReconciliationDoesNotReplaySubmittedInput(): void {
+    $host = $this->host();
+    $checklist = $this->container->get('checklist.resolver')->resolve($host, 'work');
+    $request = Request::create('/checklist', 'POST', [
+      'form_id' => 'ci_' . $checklist->getKey() . '__decision_row_form',
+      'checkbox' => 1,
+      'start' => 'Start',
+    ]);
+    $request->setSession($this->container->get('request_stack')->getCurrentRequest()->getSession());
+    $request->query->set('ajax_form', 1);
+    $stack = $this->container->get('request_stack');
+    $stack->push($request);
+    try {
+      $row = $this->container->get('checklist.row_builder')->build($checklist, $checklist->getItem('decision'));
+      $this->assertArrayHasKey('checkbox', $row);
+      $this->assertFalse((bool) $row['checkbox']['checkbox']['#value']);
+      $this->assertTrue($checklist->getItem('decision')->isIncomplete());
+    }
+    finally {
+      $stack->pop();
+    }
+  }
+
 }

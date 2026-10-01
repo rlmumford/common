@@ -68,6 +68,7 @@ jobs:
         run: |
           vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/task/tests/src/Kernel
           vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/task/contrib/job/tests/src/Kernel/VersionedJobChecklistTest.php
+          vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/task/contrib/job/tests/src/Kernel/DecisionChecklistTemplatesTest.php
           vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/task/contrib/job/tests/src/Kernel/AssignmentRulesTest.php
       - name: Test the service module
         working-directory: /tmp/task-consumer

@@ -2,6 +2,8 @@
 
 namespace Drupal\checklist;
 
+use Drupal\checklist\Entity\ChecklistItemInterface;
+
 /**
  * Interface for the checklist context collector service.
  */
@@ -25,10 +27,12 @@ interface ChecklistContextCollectorInterface {
    *
    * @param \Drupal\checklist\ChecklistInterface $checklist
    *   The checklist to collect runtime contexts for.
+   * @param \Drupal\checklist\Entity\ChecklistItemInterface|null $item
+   *   An item whose branch inputs and local outcome aliases should be applied.
    *
    * @return \Drupal\Core\Plugin\Context\ContextInterface[]
    *   An array of contexts.
    */
-  public function collectRuntimeContexts(ChecklistInterface $checklist) : array;
+  public function collectRuntimeContexts(ChecklistInterface $checklist, ?ChecklistItemInterface $item = NULL) : array;
 
 }

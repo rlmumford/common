@@ -104,7 +104,7 @@ class ChecklistController extends ControllerBase {
     if ($handler instanceof ContextAwarePluginInterface) {
       $this->contextHandler->applyContextMapping(
         $handler,
-        $this->contextCollector->collectRuntimeContexts($checklist)
+        $this->contextCollector->collectRuntimeContexts($checklist, $item)
       );
     }
 

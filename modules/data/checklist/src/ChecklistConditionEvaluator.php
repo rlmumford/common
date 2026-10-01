@@ -2,6 +2,7 @@
 
 namespace Drupal\checklist;
 
+use Drupal\checklist\Entity\ChecklistItemInterface;
 use Drupal\Component\Plugin\Exception\MissingValueContextException;
 use Drupal\Core\Condition\ConditionManager;
 use Drupal\Core\Condition\ConditionInterface;
@@ -40,15 +41,17 @@ class ChecklistConditionEvaluator {
    *   The checklist whose current contexts should be used.
    * @param array $configuration
    *   A Drupal condition configuration, including its plugin ID.
+   * @param \Drupal\checklist\Entity\ChecklistItemInterface|null $item
+   *   The item whose branch context scope should be used.
    *
    * @return bool|null
    *   The condition result, or NULL for unavailable required contexts.
    */
-  public function evaluate(ChecklistInterface $checklist, array $configuration): ?bool {
+  public function evaluate(ChecklistInterface $checklist, array $configuration, ?ChecklistItemInterface $item = NULL): ?bool {
     if (!is_string($configuration['id'] ?? NULL) || $configuration['id'] === '') {
       throw new \InvalidArgumentException('Checklist conditions require a plugin ID.');
     }
-    $contexts = $this->collector->collectRuntimeContexts($checklist);
+    $contexts = $this->collector->collectRuntimeContexts($checklist, $item);
     // Provide a simple root name for condition-string property traversal.
     $contexts['checklist'] = $contexts['checklist:entity'];
     $condition = $this->createCondition($configuration, $contexts);

@@ -251,7 +251,7 @@ class ChecklistItemRowForm extends ChecklistItemFormBase {
       try {
         $this->contextHandler->applyContextMapping(
           $handler,
-          $this->contextCollector->collectRuntimeContexts($checklist)
+          $this->contextCollector->collectRuntimeContexts($checklist, $this->item)
         );
       }
       catch (ContextException $e) {

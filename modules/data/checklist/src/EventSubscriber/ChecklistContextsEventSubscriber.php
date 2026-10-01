@@ -98,11 +98,12 @@ class ChecklistContextsEventSubscriber implements EventSubscriberInterface {
     foreach ($event->getChecklist()->getItems() as $name => $item) {
       /** @var \Drupal\typed_data_reference\TypedDataReferenceItemList $outcomes */
       $outcomes = $item->get('outcomes');
+      $active = $event->getChecklist()->isItemActive($item);
 
       foreach ($outcomes->getPropertyDefinitions() as $outcome_name => $definition) {
         $context = new Context(
           DataContextDefinition::fromDataDefinition($definition),
-          $outcomes->get($outcome_name)
+          $active ? $outcomes->get($outcome_name) : NULL
         );
         $context->addCacheableDependency($item);
         $event->addContext("item:{$name}:{$outcome_name}", $context);
@@ -126,7 +127,7 @@ class ChecklistContextsEventSubscriber implements EventSubscriberInterface {
       $definition->setPropertyDefinition($name, MapDataDefinition::create()
         ->setPropertyDefinition('status', DataDefinition::create('string'))
         ->setPropertyDefinition('outcomes', $outcome_definition));
-      if (!$event instanceof ChecklistCollectConfigContextsEvent) {
+      if (!$event instanceof ChecklistCollectConfigContextsEvent && $event->getChecklist()->isItemActive($item)) {
         $values[$name] = [
           'status' => $item->get('status')->value,
           'outcomes' => $outcomes->toArray(),

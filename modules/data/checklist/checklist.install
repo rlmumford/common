@@ -203,3 +203,16 @@ function checklist_update_10007() {
     $manager->installFieldStorageDefinition('completed', 'checklist_item', 'checklist', $definition);
   }
 }
+
+/**
+ * Adds branch provenance without changing existing checklist work.
+ */
+function checklist_update_10008() {
+  $manager = \Drupal::entityDefinitionUpdateManager();
+  if (!$manager->getFieldStorageDefinition('derivation', 'checklist_item')) {
+    $definition = ChecklistItem::baseFieldDefinitions(
+      \Drupal::entityTypeManager()->getDefinition('checklist_item')
+    )['derivation'];
+    $manager->installFieldStorageDefinition('derivation', 'checklist_item', 'checklist', $definition);
+  }
+}
