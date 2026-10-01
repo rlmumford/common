@@ -75,7 +75,7 @@ class JobAuthoringTest extends BrowserTestBase {
     $this->drupalGet('/admin/config/task/job/authoring/checklist/review/configure');
     $this->assertSession()->fieldValueEquals('plugin_configuration[options][1][name]', 'reject');
     $this->submitForm(['plugin_configuration[question]' => 'Revised question'], 'Update');
-    $this->submitForm([], 'Cancel');
+    $this->submitForm([], 'Discard changes');
     $this->drupalGet('/admin/config/task/job/authoring/checklist/review/configure');
     $this->assertSession()->fieldValueEquals('plugin_configuration[question]', 'Approve this document?');
   }
