@@ -64,8 +64,10 @@ class JobAssignmentRuleForm extends FormBase {
       '#default_value' => $configuration['label'] ?? '',
     ];
     $contexts = $this->rules->contexts($job);
-    $definition = (new AssignmentRule([]))->getContextDefinition('assignee');
-    $form['context_mapping']['assignee'] = $this->contextHandler->getContextSelectElement($contexts, $definition, $configuration['context_mapping']['assignee'] ?? '');
+    $consumer = new AssignmentRule($configuration);
+    $form['context_mapping'] = method_exists($this->contextHandler, 'getContextAssignmentElement')
+      ? $this->contextHandler->getContextAssignmentElement($consumer, $contexts)
+      : ['assignee' => $this->contextHandler->getContextSelectElement($contexts, $consumer->getContextDefinition('assignee'), $configuration['context_mapping']['assignee'] ?? '')];
     $form['context_mapping']['assignee']['#description'] = $this->t('Select an account from the task, its job contexts, or a global context provider. A matched rule with a missing or blocked account leaves the task unassigned.');
     $form['condition'] = $this->conditions->build([
       '#type' => 'fieldset',

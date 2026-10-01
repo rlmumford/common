@@ -1,6 +1,8 @@
 # Job assignment rules
 
 Real Drupal 10/Claro screenshots captured with Playwright at 1440×1050.
+The condition editor has no Task selector: `task` is supplied by the caller.
+The Assignee field uses Typed Data Plus autocomplete, not a select list.
 Both screenshots were opened and visually inspected; no mockups are used.
 
 To reproduce, open a job's Assignment rules tab and choose Add assignment rule.

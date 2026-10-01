@@ -127,4 +127,53 @@ class ConditionConfigurationFormTest extends KernelTestBase {
     $this->assertTrue($state->hasAnyErrors());
   }
 
+  /**
+   * Caller sources are fixed; actual plugin inputs use the enhanced widget.
+   */
+  public function testFixedSourcesAndMappingWidget(): void {
+    $editor = $this->container->get('checklist.condition_configuration_form');
+    $state = new FormState();
+    $contexts = ['source' => new Context(new ContextDefinition('string', 'Source', FALSE), 'yes')];
+    $element = $editor->build(['#parents' => ['gate']], $state, [
+      'id' => 'condition_string',
+      'condition_string' => 'source == "yes"',
+      'context_mapping' => ['source' => 'other'],
+    ], $contexts);
+    $this->assertArrayNotHasKey('source', $element['settings']['context_mapping']);
+    $this->assertArrayHasKey('condition_string', $element['settings']);
+    $element = $editor->build(['#parents' => ['gate']], $state, [
+      'id' => 'user_role',
+      'context_mapping' => ['user' => '@user.current_user_context:current_user'],
+    ], $contexts);
+    $input = $element['settings']['context_mapping']['user'];
+    $this->assertSame('textfield', $input['#type']);
+    $this->assertSame('typed_data_context_assignment.data_select_autocomplete', $input['#autocomplete_route_name']);
+    $this->assertSame('@user.current_user_context:current_user', $input['#default_value']);
+  }
+
+  /**
+   * Saved mappings cannot redirect caller-supplied contexts inside groups.
+   */
+  public function testNestedFixedContexts(): void {
+    $contexts = [
+      'source' => new Context(new ContextDefinition('string', 'Source', FALSE), 'yes'),
+      'other' => new Context(new ContextDefinition('string', 'Other', FALSE), 'no'),
+    ];
+    $condition = $this->container->get('checklist.condition_evaluator')->createCondition([
+      'id' => 'condition_and',
+      'context_mapping' => ['source' => 'other'],
+      'conditions' => [
+        [
+          'id' => 'condition_string',
+          'condition_string' => 'source == "yes"',
+          'context_mapping' => ['source' => 'other'],
+        ],
+      ],
+    ], $contexts);
+    $condition->setRuntimeContexts($contexts);
+    $this->assertTrue($condition->execute());
+    $this->assertArrayNotHasKey('source', $condition->getContextMapping());
+    $this->assertArrayNotHasKey('source', $condition->getConfiguration()['conditions'][0]['context_mapping']);
+  }
+
 }

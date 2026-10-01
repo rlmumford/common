@@ -31,4 +31,4 @@ services:
     arguments: ['@task_job.tempstore_repository', '@current_route_match']
   task_job.assignment_rules:
     class: Drupal\task_job\AssignmentRules
-    arguments: ['@plugin.manager.condition', '@context.handler']
+    arguments: ['@checklist.condition_evaluator', '@context.handler']

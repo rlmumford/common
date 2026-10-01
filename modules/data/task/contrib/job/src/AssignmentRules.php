@@ -3,7 +3,7 @@
 namespace Drupal\task_job;
 
 use Drupal\Component\Plugin\Exception\MissingValueContextException;
-use Drupal\Core\Condition\ConditionManager;
+use Drupal\checklist\ChecklistConditionEvaluator;
 use Drupal\Core\Plugin\Context\Context;
 use Drupal\Core\Plugin\Context\ContextDefinition;
 use Drupal\Core\Plugin\Context\ContextHandlerInterface;
@@ -20,7 +20,7 @@ class AssignmentRules {
   /**
    * Constructs the rule evaluator.
    */
-  public function __construct(protected ConditionManager $conditions, protected ContextHandlerInterface $contextHandler) {}
+  public function __construct(protected ChecklistConditionEvaluator $conditions, protected ContextHandlerInterface $contextHandler) {}
 
   /**
    * Supplies definitions for authoring, or current values when a task is given.
@@ -46,10 +46,9 @@ class AssignmentRules {
       return TRUE;
     }
     $config = $configuration['condition'];
-    $condition = $this->conditions->createInstance($config['id'], $config);
+    $condition = $this->conditions->createCondition($config, $contexts);
     try {
       if ($condition instanceof ContextAwareCondition) {
-        $condition->setExpectedContexts(array_map(static fn($context) => (clone $context->getContextDefinition())->setRequired(FALSE), $contexts));
         $condition->setRuntimeContexts($contexts);
       }
       else {

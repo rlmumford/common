@@ -142,7 +142,12 @@ editing a job does not reassign already assigned tasks.
 
 The available contexts are `task`, plus each declared job context as
 `task_context:NAME`. A simple `NAME` alias is also supplied for condition strings,
-except that `task` always means the task entity. Definitions come from the edited
+except that `task` always means the task entity. Caller-supplied contexts are fixed
+sources, including within nested condition groups: the condition editor does not
+ask users to map them again, and stored mappings cannot redirect them. Actual
+plugin inputs (such as User Role’s user input) and the assignee use the enhanced
+Typed Data Plus autocomplete widget when context assignment is enabled, supporting
+property paths and filters. Definitions come from the edited
 job during configuration; runtime values come from that task. Global providers
 remain available through `@provider:context` mappings. For example:
 
@@ -165,8 +170,8 @@ assignment_rules:
 
 Rule keys are stable identifiers (the editor generates UUIDs); sequence order is
 evaluation order. To use the service manager directly in a rule, map to
-`task.service.entity.manager.entity`. The selector UI exposes bounded paths;
-longer/filter selectors can be supplied in configuration. Current user means the
+`task.service.entity.manager.entity`. Autocomplete suggests selectors; property paths and filters can also be entered
+directly. Current user means the
 account performing the save, including a worker's execution account, so use a
 stable task/job context when assignment must not depend on the caller.
 

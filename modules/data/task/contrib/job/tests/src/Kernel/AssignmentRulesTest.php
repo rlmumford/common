@@ -53,7 +53,12 @@ class AssignmentRulesTest extends KernelTestBase {
     $job->addContextDefinition('reviewer', ContextDefinition::create('entity:user')->setLabel('Reviewer')->setRequired(FALSE));
     $special = [
       'label' => 'Urgent reviewer',
-      'condition' => ['id' => 'condition_string', 'condition_string' => 'task.title.value == "Urgent"'],
+      'condition' => [
+        'id' => 'condition_string',
+        'condition_string' => 'task.title.value == "Urgent"',
+        // Imported stale mappings must not replace the task being assigned.
+        'context_mapping' => ['task' => 'other_task'],
+      ],
       'context_mapping' => ['assignee' => 'task_context:reviewer'],
     ];
     $fallback = ['label' => 'Creator rule', 'context_mapping' => ['assignee' => 'task.creator.entity']];

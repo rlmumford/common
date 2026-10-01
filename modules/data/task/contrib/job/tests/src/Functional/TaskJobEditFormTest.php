@@ -262,11 +262,13 @@ class TaskJobEditFormTest extends BrowserTestBase {
     $this->submitForm([], 'Apply to draft');
     $this->assertSession()->statusCodeEquals(200);
     $this->clickLink('Add assignment rule');
+    $this->assertSession()->elementAttributeContains('css', '[name="context_mapping[assignee]"]', 'data-autocomplete-path', 'typed_data_context_assignment_autocomplete');
     $this->submitForm([
       'label' => 'Urgent creator',
       'context_mapping[assignee]' => 'task.creator.0.entity',
       'condition[id]' => 'condition_string',
     ], 'Update condition');
+    $this->assertSession()->fieldNotExists('condition[settings][context_mapping][task]');
     $this->submitForm(['condition[settings][condition_string]' => 'task.title.value == "Urgent"'], 'Add rule');
     $this->assertSession()->addressEquals('/admin/config/task/job/follow_up/edit/assignment');
     $this->assertSession()->pageTextContains('Urgent creator');
