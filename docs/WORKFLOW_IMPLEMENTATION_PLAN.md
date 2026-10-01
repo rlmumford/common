@@ -441,6 +441,13 @@ consume a workspace version before executor rejection; clients refresh after err
 
 ## P5 — Templates, providers and derivative items
 
+First static slice: jobs store named checklist templates and ordered static
+references in their versioned configuration. The Checklist templates tab reuses
+item dialogs and the shared draft. Runtime expansion rejects collisions and
+missing references; persisted items are preserved. Conditional expansion,
+multiple scoped instances and orphan reconciliation remain open. See the
+Task Job README for configuration and lifecycle details.
+
 Deliverables:
 
 - Named job checklist templates, static inclusion and decision-driven expansion.

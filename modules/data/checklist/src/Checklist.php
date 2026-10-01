@@ -103,7 +103,7 @@ class Checklist implements ChecklistInterface {
       return $this->items;
     }
 
-    $this->items = [];
+    $items = [];
 
     // Load first if the entity has an id to load by.
     if ($this->getEntity()->id()) {
@@ -119,28 +119,29 @@ class Checklist implements ChecklistInterface {
       /** @var \Drupal\checklist\Entity\ChecklistItemInterface $item */
       foreach ($this->getType()->itemStorage()->loadMultiple($ids_to_load) as $item) {
         $item->get('checklist')->entity = $this->getEntity();
-        $this->items[$item->getName()] = $item;
+        $items[$item->getName()] = $item;
       }
     }
 
     // Fill in gaps.
     foreach ($this->getType()->getDefaultItems() as $name => $item) {
-      if (!isset($this->items[$item->getName()])) {
+      if (!isset($items[$item->getName()])) {
         $item->checklist = [
           'entity' => $this->getEntity(),
           'checklist_key' => $this->getKey(),
         ];
 
-        $this->items[$item->getName()] = $item;
+        $items[$item->getName()] = $item;
       }
     }
 
     // Unset any removed items.
     foreach (array_keys($this->removedItems) as $name) {
-      unset($this->items[$name]);
+      unset($items[$name]);
     }
 
-    return $this->items;
+    // Publish the cache only after all definitions have loaded successfully.
+    return $this->items = $items;
   }
 
   /**
