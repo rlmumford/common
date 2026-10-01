@@ -14,28 +14,6 @@
   border-inline-start: 4px solid #0678be;
   background: #f0f6fa;
 }
-.task-job-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .25rem;
-  border-bottom: 2px solid #d3d4d9;
-  margin-bottom: 1.5rem;
-}
-.task-job-tabs .task-job-tab {
-  margin: 0 0 -2px;
-  padding: .8rem 1.1rem;
-  color: #2d3b45;
-  background: transparent;
-  box-shadow: none;
-  border: 0;
-  border-bottom: 4px solid transparent;
-  border-radius: 0;
-}
-.task-job-tabs .task-job-tab.is-active {
-  color: #005a91;
-  border-bottom-color: #0678be;
-  background: #f0f6fa;
-}
 .task-job-editor h2 {
   margin: 1.5rem 0;
 }
@@ -43,9 +21,6 @@
   width: 100%;
 }
 @media (max-width: 600px) {
-  .task-job-tabs .task-job-tab {
-    padding: .65rem .7rem;
-  }
   .task-job-editor table {
     display: block;
     overflow-x: auto;

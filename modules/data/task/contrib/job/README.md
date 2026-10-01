@@ -6,13 +6,27 @@ rendered. Settings includes the label, description and resources. Assignment
 currently exposes the existing default rule. Reusable checklist chunks and richer
 assignment rules are separate follow-up work; there is no placeholder template tab.
 
+## Routes and local tasks
+
+Tabs are Drupal local tasks declared in `task_job.links.task.yml`. Checklist uses
+the entity's existing `entity.task_job.edit_form` route (`/edit`). The other routes
+are declared in `task_job.routing.yml`: `entity.task_job.edit_triggers`,
+`entity.task_job.edit_contexts`, `entity.task_job.edit_assignment`, and
+`entity.task_job.edit_settings`, at `/edit/triggers`, `/edit/contexts`,
+`/edit/assignment`, and `/edit/settings` beneath the job URL.
+
+Each route uses the same entity edit form and update access check. Its
+`_job_section` default selects the fields to build. There is no `section` query
+parameter or separate form-button navigation. Drupal renders and themes the tabs.
+
 ## Working draft and save
 
 All tabs and child configuration forms use `task_job.tempstore_repository`.
-Switching tabs submits the current tab to the draft without saving configuration.
-**Apply to draft** does the same without leaving the tab. With JavaScript enabled,
-opening an off-canvas editor first validates and retains the parent tab's fields;
-without JavaScript, use Apply to draft before following a configuration link.
+With JavaScript enabled, following a tab link or opening an off-canvas editor
+first validates and retains the current tab's fields without saving configuration.
+Validation errors keep the editor on the current tab. **Apply to draft** does the
+same without leaving the tab. Without JavaScript (or before opening a tab in a
+new browser window), use Apply to draft before following a link.
 Nested Entity Template edits are folded into the same job draft when it is next
 loaded. Closing a dialog without submitting it does not apply that dialog's edits.
 

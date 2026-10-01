@@ -1,7 +1,8 @@
 # Tabbed job configuration
 
 These are real Playwright screenshots from the local Drupal 10 preview running
-this branch with Claro. They show the normal job editor and its actual off-canvas
+this branch with Claro, using Drupal local-task links and distinct edit routes.
+They show the normal job editor and its actual off-canvas
 item form. Desktop viewport: 1440×1050; mobile viewport: 390×844. Full-page captures
 include content below the viewport. No mock HTML or generated artwork is used.
 All four images were opened and visually inspected before committing.
@@ -19,8 +20,9 @@ To reproduce on a disposable development site:
    form. Update modifies the draft; Save on the parent editor persists the job.
 
 Playwright also verified retention of settings through tab changes, Discard,
-pending trigger fields retained before a nested condition dialog, and mobile
-width. Functional tests separately verify persisted configuration, explicit
+pending trigger fields retained before a nested condition dialog, validation
+blocking tab navigation until corrected (including after AJAX replaces the form),
+and mobile width. Functional tests separately verify persisted configuration, explicit
 version saves, external-change conflicts and draft ownership.
 
 - [Checklist tab](job-editor-checklist.png)

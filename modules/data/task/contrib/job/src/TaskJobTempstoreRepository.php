@@ -120,10 +120,10 @@ class TaskJobTempstoreRepository {
   /**
    * Returns dialogs to the tab from which they were opened.
    */
-  public function getEditUrl(JobInterface $job): Url {
-    return Url::fromRoute('entity.task_job.edit_form', ['task_job' => $job->id()], [
-      'query' => ['section' => $this->entry($job)['section'] ?? 'checklist'],
-    ]);
+  public function getEditUrl(JobInterface $job, ?string $section = NULL): Url {
+    $section ??= $this->entry($job)['section'] ?? 'checklist';
+    $route = $section === 'checklist' ? 'entity.task_job.edit_form' : 'entity.task_job.edit_' . $section;
+    return Url::fromRoute($route, ['task_job' => $job->id()]);
   }
 
   /**

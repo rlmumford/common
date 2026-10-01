@@ -187,27 +187,6 @@ class JobEditForm extends JobForm {
         ? $this->t('You have unsaved changes. Save commits the whole job; Discard changes restores the saved configuration.')
         : $this->t('Changes stay in your working draft as you move between tabs. Save commits the whole job.'),
     ];
-    $form['navigation'] = [
-      '#type' => 'container',
-      '#attributes' => [
-        'class' => ['task-job-tabs'],
-        'role' => 'navigation',
-        'aria-label' => $this->t('Job configuration'),
-      ],
-    ];
-    foreach ($this->sections() as $key => $label) {
-      $form['navigation'][$key] = [
-        '#type' => 'submit',
-        '#value' => $label,
-        '#name' => 'job_section_' . $key,
-        '#section' => $key,
-        '#submit' => ['::submitForm', '::saveDraft'],
-        '#attributes' => [
-          'class' => ['task-job-tab', $section === $key ? 'is-active' : ''],
-          'aria-current' => $section === $key ? 'page' : 'false',
-        ],
-      ];
-    }
     $form['heading'] = ['#type' => 'html_tag', '#tag' => 'h2', '#value' => $this->sections()[$section]];
     $ajax_attributes = [
       'query' => $this->getDestinationArray(),
@@ -253,7 +232,7 @@ class JobEditForm extends JobForm {
    */
   protected function section(FormStateInterface $form_state): string {
     if (!$form_state->has('job_section')) {
-      $section = $this->getRequest()->query->get('section', 'checklist');
+      $section = $this->getRouteMatch()->getRouteObject()->getDefault('_job_section') ?? 'checklist';
       $form_state->set('job_section', isset($this->sections()[$section]) ? $section : 'checklist');
     }
     return $form_state->get('job_section');
@@ -896,20 +875,20 @@ class JobEditForm extends JobForm {
     $this->entity->save();
     $this->tempstoreRepository->delete($draft);
     $this->messenger()->addStatus($this->t('The job has been saved.'));
-    $form_state->setRedirect('entity.task_job.edit_form', ['task_job' => $this->entity->id()], ['query' => ['section' => $this->section($form_state)]]);
+    $form_state->setRedirectUrl($this->tempstoreRepository->getEditUrl($this->entity, $this->section($form_state)));
   }
 
   /**
    * Retains edits without changing live job configuration.
    */
   public function saveDraft(array $form, FormStateInterface $form_state): void {
-    $section = $form_state->getTriggeringElement()['#section'] ?? $this->section($form_state);
+    $section = $this->section($form_state);
     $this->tempstoreRepository->set($this->entity, $section);
     $form_state->setRedirectUrl($this->tempstoreRepository->getEditUrl($this->entity));
   }
 
   /**
-   * Opens the configuration dialog after draft validation succeeds.
+   * Confirms a valid draft before client-side tab navigation or a dialog.
    */
   public function openEditorDialog(array $form, FormStateInterface $form_state): AjaxResponse {
     $response = new AjaxResponse();
@@ -928,7 +907,7 @@ class JobEditForm extends JobForm {
    */
   public function submitFormCancel(array $form, FormStateInterface $form_state) {
     $this->tempstoreRepository->delete($this->entity);
-    $form_state->setRedirect('entity.task_job.edit_form', ['task_job' => $this->entity->id()], ['query' => ['section' => $this->section($form_state)]]);
+    $form_state->setRedirectUrl($this->tempstoreRepository->getEditUrl($this->entity, $this->section($form_state)));
   }
 
   /**

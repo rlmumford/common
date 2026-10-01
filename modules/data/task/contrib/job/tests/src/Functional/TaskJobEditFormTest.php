@@ -21,13 +21,14 @@ class TaskJobEditFormTest extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['task_job', 'task_dependency_job'];
+  protected static $modules = ['block', 'task_job', 'task_dependency_job'];
 
   /**
    * Creates a job with an editable trigger and logs in its administrator.
    */
   protected function setUp(): void {
     parent::setUp();
+    $this->drupalPlaceBlock('local_tasks_block');
     $this->drupalLogin($this->drupalCreateUser(['administer task jobs']));
     Job::create([
       'id' => 'follow_up',
@@ -58,14 +59,32 @@ class TaskJobEditFormTest extends BrowserTestBase {
   }
 
   /**
+   * Without JavaScript, apply edits explicitly before following a local task.
+   */
+  protected function switchTab(array $values, string $label): void {
+    $this->submitForm($values, 'Apply to draft');
+    $this->clickLink($label);
+    $this->assertSession()->statusCodeEquals(200);
+    $section = [
+      'Checklist' => '',
+      'Triggers' => '/triggers',
+      'Contexts' => '/contexts',
+      'Assignment rules' => '/assignment',
+      'Settings' => '/settings',
+    ][$label];
+    $this->assertStringEndsWith('/edit' . $section, parse_url($this->getSession()->getCurrentUrl(), PHP_URL_PATH));
+    $this->assertSession()->linkExists($label);
+  }
+
+  /**
    * Tab changes and child forms retain edits; Save is the only config write.
    */
   public function testDraftAcrossTabs(): void {
-    $this->drupalGet('/admin/config/task/job/follow_up/edit', ['query' => ['section' => 'settings']]);
-    $this->submitForm(['label' => 'Draft label'], 'Triggers');
+    $this->drupalGet('/admin/config/task/job/follow_up/edit/settings');
+    $this->switchTab(['label' => 'Draft label'], 'Triggers');
     $this->assertSame('Follow up', $this->saved()->label());
     $this->assertSession()->fieldNotExists('label');
-    $this->submitForm([
+    $this->switchTab([
       'triggers[replacement][action][configuration][dependency_action]' => 'invalidate',
     ], 'Contexts');
     $this->submitForm([
@@ -73,8 +92,8 @@ class TaskJobEditFormTest extends BrowserTestBase {
       'context[_add_new][key]' => 'document',
       'context[_add_new][type]' => 'entity:task',
     ], 'Add');
-    $this->submitForm([], 'Assignment rules');
-    $this->submitForm(['assignment' => 'creator'], 'Checklist');
+    $this->switchTab([], 'Assignment rules');
+    $this->switchTab(['assignment' => 'creator'], 'Checklist');
     $this->clickLink('Add Checklist Item');
     $this->clickLink('Simple Checkbox');
     $this->submitForm(['name' => 'review', 'label' => 'Review replacement work'], 'Add');
@@ -82,7 +101,7 @@ class TaskJobEditFormTest extends BrowserTestBase {
     $this->assertSession()->pageTextContains('Review replacement work');
     $this->assertSame([], $this->saved()->getChecklistItems());
     $this->assertSame([], $this->saved()->getContextDefinitions());
-    $this->submitForm([], 'Settings');
+    $this->switchTab([], 'Settings');
     $this->assertSession()->fieldValueEquals('label', 'Draft label');
     $this->submitForm([], 'Save');
     $this->assertSession()->pageTextContains('The job has been saved.');
@@ -92,8 +111,8 @@ class TaskJobEditFormTest extends BrowserTestBase {
     $this->assertSame('entity:task', $job->getContextDefinition('document')->getDataType());
     $this->assertSame('Review replacement work', $job->getChecklistItems()['review']['label']);
     $this->assertSame('invalidate', $job->getTriggersConfiguration()['replacement']['action']['configuration']['dependency_action']);
-    $this->submitForm(['label' => 'Discard this label'], 'Triggers');
-    $this->submitForm([
+    $this->switchTab(['label' => 'Discard this label'], 'Triggers');
+    $this->switchTab([
       'triggers[replacement][action][configuration][dependency_action]' => 'activate',
     ], 'Checklist');
     $this->clickLink('configure');
@@ -101,9 +120,9 @@ class TaskJobEditFormTest extends BrowserTestBase {
     $this->submitForm([], 'Discard changes');
     $this->assertSession()->pageTextContains('Review replacement work');
     $this->assertSession()->pageTextNotContains('Discard this item title');
-    $this->submitForm([], 'Settings');
+    $this->switchTab([], 'Settings');
     $this->assertSession()->fieldValueEquals('label', 'Draft label');
-    $this->submitForm([], 'Triggers');
+    $this->switchTab([], 'Triggers');
     $this->assertSession()->fieldValueEquals('triggers[replacement][action][configuration][dependency_action]', 'invalidate');
   }
 
@@ -114,9 +133,9 @@ class TaskJobEditFormTest extends BrowserTestBase {
     $version = $this->container->get('task_job.version_resolver')->createVersion($this->saved(), '6');
     $version->save();
     $dirty_id = JobVersionId::buildDirty('follow_up', '6');
-    $this->drupalGet($version->toUrl('edit-form'), ['query' => ['section' => 'settings']]);
+    $this->drupalGet('/admin/config/task/job/' . $version->id() . '/edit/settings');
     $this->assertNull($this->saved($dirty_id));
-    $this->submitForm(['description' => 'Working version'], 'Checklist');
+    $this->switchTab(['description' => 'Working version'], 'Checklist');
     $this->assertNull($this->saved($dirty_id));
     $this->submitForm([], 'Save');
     $this->assertSession()->pageTextContains('The job has been saved.');
@@ -136,7 +155,7 @@ class TaskJobEditFormTest extends BrowserTestBase {
    * Configuration imports cannot be silently overwritten by an older draft.
    */
   public function testChangedConfiguration(): void {
-    $this->drupalGet('/admin/config/task/job/follow_up/edit', ['query' => ['section' => 'settings']]);
+    $this->drupalGet('/admin/config/task/job/follow_up/edit/settings');
     $this->submitForm(['label' => 'My working label'], 'Apply to draft');
     $this->saved()->set('label', 'Imported label')->save();
     $this->submitForm([], 'Save');
@@ -151,7 +170,7 @@ class TaskJobEditFormTest extends BrowserTestBase {
    * One administrator cannot read or overwrite another's working copy.
    */
   public function testDraftOwnership(): void {
-    $this->drupalGet('/admin/config/task/job/follow_up/edit', ['query' => ['section' => 'settings']]);
+    $this->drupalGet('/admin/config/task/job/follow_up/edit/settings');
     $this->submitForm(['label' => 'Private working label'], 'Apply to draft');
     $this->drupalLogin($this->drupalCreateUser(['administer task jobs']));
     $this->drupalGet('/admin/config/task/job/follow_up/edit');
