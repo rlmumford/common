@@ -3,6 +3,8 @@
 namespace Drupal\checklist\Form;
 
 use Drupal\Core\Condition\ConditionManager;
+use Drupal\checklist\ChecklistConditionEvaluator;
+use Drupal\Core\Plugin\Context\ContextHandlerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformState;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -17,7 +19,7 @@ class ConditionConfigurationForm {
 
   use StringTranslationTrait;
 
-  public function __construct(protected ConditionManager $manager) {}
+  public function __construct(protected ConditionManager $manager, protected ChecklistConditionEvaluator $evaluator, protected ContextHandlerInterface $contextHandler) {}
 
   /**
    * Builds a condition from definitions only; it never evaluates live data.
@@ -53,6 +55,17 @@ class ConditionConfigurationForm {
     $state->setTemporaryValue('gathered_contexts', $contexts);
     $element['settings'] = $plugin->buildConfigurationForm($element['settings'], $substate);
     $state->setTemporaryValue('gathered_contexts', $previous);
+    if (isset($element['settings']['context_mapping'])) {
+      if (method_exists($this->contextHandler, 'getContextAssignmentElement')) {
+        $element['settings']['context_mapping'] = $this->contextHandler->getContextAssignmentElement($plugin, $contexts);
+      }
+      if ($plugin instanceof ContextAwareCondition) {
+        $fixed = array_diff_key($contexts, $plugin->getPluginDefinition()['context_definitions'] ?? []);
+        foreach ($fixed as $name => $context) {
+          unset($element['settings']['context_mapping'][$name]);
+        }
+      }
+    }
     if ($plugin instanceof ConditionGroup) {
       $children = $element['#condition_configuration']['conditions'] ?? [];
       $parents = [...$element['#parents'], 'children'];
@@ -77,11 +90,7 @@ class ConditionConfigurationForm {
    * Creates the plugin with its containing checklist's expected contexts.
    */
   protected function plugin(array $element) {
-    $plugin = $this->manager->createInstance($element['#condition_id'], $element['#condition_configuration']);
-    if ($plugin instanceof ContextAwareCondition) {
-      $plugin->setExpectedContexts(array_map(static fn($context) => (clone $context->getContextDefinition())->setRequired(FALSE), $element['#condition_contexts']));
-    }
-    return $plugin;
+    return $this->evaluator->createCondition(['id' => $element['#condition_id']] + $element['#condition_configuration'], $element['#condition_contexts']);
   }
 
   /**

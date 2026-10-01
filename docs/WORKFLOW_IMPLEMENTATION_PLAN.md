@@ -439,6 +439,12 @@ The optional Checklist API now queues the same explicit retries using workspace
 owner/generation/version and reviewed-attempt ID/version fences. Admission can
 consume a workspace version before executor rejection; clients refresh after errors.
 
+Job assignment now supports ordered condition-plugin rules and context-mapped
+assignees, edited through the shared job draft. First match wins; no match uses
+the existing fallback. Explicit assignments are preserved and pinned tasks use
+their named version's saved dirty rules. See the Task Job README for semantics,
+configuration examples and coverage.
+
 ## P5 — Templates, providers and derivative items
 
 First static slice: jobs store named checklist templates and ordered static
