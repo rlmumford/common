@@ -7,3 +7,4 @@ dependencies:
   - checklist:checklist
   - entity_template:entity_template
   - flexiform:flexiform
+  - checklist:checklist_flexiform

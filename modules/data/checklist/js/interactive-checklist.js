@@ -243,6 +243,9 @@
         var row = source.cloneNode(true);
         var previous = current.get(row.dataset.ciname);
         if (previous) {
+          // Keep retained forms connected while Drupal removes old AJAX
+          // instances; disconnected elements are treated as expired globally.
+          previous.before(row);
           var action = previous.querySelector('.action-form-container');
           var destination = row.querySelector('.action-form-container');
           if (action && destination && action.children.length && row.classList.contains('ci-actionable') && row.dataset.inputRequired !== 'false') {

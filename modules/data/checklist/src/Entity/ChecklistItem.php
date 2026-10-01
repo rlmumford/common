@@ -133,7 +133,7 @@ class ChecklistItem extends ContentEntityBase implements ChecklistItemInterface 
     $checklist_type_definition = \Drupal::service('plugin.manager.checklist_type')
       ->getDefinition($bundle);
 
-    $fields['checklist'] = $base_field_definitions['checklist'];
+    $fields['checklist'] = clone $base_field_definitions['checklist'];
     $fields['checklist']->setSetting('target_type', $checklist_type_definition['entity_type']);
 
     return $fields;

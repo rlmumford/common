@@ -639,3 +639,14 @@ queue worker, and fresh readiness/access checks. Existing task dependencies wake
 newly active dependants. See [TASK_CHECKLIST_PROCESSING.md](TASK_CHECKLIST_PROCESSING.md)
 for execution identity, upgrade steps, tests, cron latency and delivery limits.
 Generalised entity/event dependency implementation remains separate.
+
+### Dedicated Flexiform checklist input
+
+The optional `checklist_flexiform` module adds its own interactive item type,
+with an optional authoring UI. Embedded/referenced standard forms and wizards
+share checklist-owned working state across HTML and action operations. Wizard
+navigation retains data; final submission performs configured local provider
+saves and publishes typed outcomes. Manual items remain instruction plus
+confirmation. Entity Template's prepared-entity editors reuse the same form
+coordinator. See the [module guide](../modules/data/checklist/contrib/flexiform/README.md)
+for configuration, API operations and current provider/component restrictions.

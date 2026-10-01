@@ -83,7 +83,7 @@ jobs:
           SYMFONY_DEPRECATIONS_HELPER: weak
         run: vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/checklist/tests/src/Kernel
 
-      - name: Test job authoring and checklist Entity Template integration
+      - name: Test job authoring and checklist form integrations
         working-directory: /tmp/task-consumer/web
         env:
           SIMPLETEST_DB: ${{ matrix.database == 'mysql' && 'mysql://root:testing@127.0.0.1:3306/task_consumer' || 'sqlite://localhost/tmp/task-consumer/browser.sqlite' }}
@@ -96,6 +96,7 @@ jobs:
           server_pid=$!
           trap 'kill "$server_pid"' EXIT
           ../vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php modules/contrib/checklist/contrib/entity_template/tests/src
+          ../vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php modules/contrib/checklist/contrib/flexiform/tests/src
           ../vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php modules/contrib/task/contrib/job/tests/src/Functional
       - name: Show the browser server log on failure
         if: failure()

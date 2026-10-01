@@ -27,7 +27,7 @@ class ApplyTemplateToEntityTest extends ChecklistItemExecutionTestBase {
    */
   protected static $modules = [
     'ctools', 'token', 'flexiform', 'entity_test', 'entity_template',
-    'checklist_entity_template', 'checklist_template_test',
+    'checklist_entity_template', 'checklist_flexiform', 'checklist_template_test',
   ];
 
   /**
