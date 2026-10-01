@@ -47,3 +47,16 @@ entity.task_job.edit_templates:
   options:
     attributes:
       data-task-job-section: 'templates'
+
+task_job.templates.add:
+  title: 'Add'
+  route_name: entity.task_job.edit_templates
+  parent_id: entity.task_job.edit_templates
+  weight: 1000
+  options:
+    attributes:
+      data-task-job-section: 'templates'
+task_job.templates.template:
+  title: 'Template'
+  route_name: entity.task_job.edit_template
+  parent_id: entity.task_job.edit_templates

@@ -193,7 +193,7 @@ class TaskJobEditFormTest extends BrowserTestBase {
     $this->clickLink('Simple Checkbox');
     $this->assertStringContainsString('template=appointment', $this->getSession()->getCurrentUrl());
     $this->submitForm(['name' => 'confirm', 'label' => 'Confirm appointment'], 'Add');
-    $this->assertSession()->addressEquals('/admin/config/task/job/follow_up/edit/templates');
+    $this->assertSession()->addressEquals('/admin/config/task/job/follow_up/edit/templates/appointment');
     $this->assertSession()->pageTextContains('Confirm appointment');
     $this->clickLink('configure');
     $this->submitForm(['label' => 'Confirm appointment details'], 'Update');
@@ -202,6 +202,7 @@ class TaskJobEditFormTest extends BrowserTestBase {
     $this->submitForm(['checklist_includes[appointment]' => 'appointment'], 'Apply to draft');
     $this->assertSame([], $this->saved()->getExpandedChecklistItems());
     $this->clickLink('Checklist templates');
+    $this->clickLink('Appointment preparation');
     $this->submitForm([], 'Remove template');
     $this->assertSession()->pageTextContains('Remove this template from the Checklist tab before deleting it.');
     $this->submitForm([], 'Save');
@@ -224,10 +225,33 @@ class TaskJobEditFormTest extends BrowserTestBase {
     $this->submitForm([], 'Discard changes');
     $this->submitForm(['checklist_includes[appointment]' => FALSE], 'Apply to draft');
     $this->clickLink('Checklist templates');
+    $this->clickLink('Appointment preparation');
     $this->submitForm([], 'Remove template');
     $this->assertSession()->pageTextNotContains('Confirm appointment details');
     $this->submitForm([], 'Discard changes');
+    $this->clickLink('Appointment preparation');
     $this->assertSession()->pageTextContains('Confirm appointment details');
+    $this->clickLink('Add');
+    $this->assertSession()->fieldExists('new_template[name]');
+    $this->assertSession()->pageTextNotContains('Confirm appointment details');
+    $this->submitForm([
+      'new_template[name]' => 'follow_up',
+      'new_template[label]' => 'Follow-up work',
+    ], 'Add template');
+    $this->assertSession()->addressEquals('/admin/config/task/job/follow_up/edit/templates/follow_up');
+    $this->assertSession()->linkExists('Appointment preparation');
+    $this->assertSession()->linkExists('Follow-up work');
+    $this->assertSession()->linkExists('Add');
+    $this->submitForm(['templates[follow_up][label]' => 'Renamed follow-up'], 'Apply to draft');
+    $this->clickLink('Appointment preparation');
+    $this->assertSession()->pageTextContains('Confirm appointment details');
+    $this->clickLink('Renamed follow-up');
+    $this->assertSession()->fieldValueEquals('templates[follow_up][label]', 'Renamed follow-up');
+    $this->submitForm([], 'Discard changes');
+    $this->assertSession()->addressEquals('/admin/config/task/job/follow_up/edit/templates');
+    $this->assertSession()->linkNotExists('Renamed follow-up');
+    $this->assertSession()->linkExists('Appointment preparation');
+
   }
 
 }

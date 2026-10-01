@@ -14,7 +14,10 @@ are declared in `task_job.routing.yml`: `entity.task_job.edit_triggers`,
 `entity.task_job.edit_contexts`, `entity.task_job.edit_assignment`, and
 `entity.task_job.edit_settings`, at `/edit/triggers`, `/edit/contexts`,
 `/edit/assignment`, and `/edit/settings` beneath the job URL. The template tab uses
-`entity.task_job.edit_templates` at `/edit/templates`.
+`entity.task_job.edit_templates` at `/edit/templates` for Add, with a secondary
+local task for each template at `/edit/templates/{template}`
+(`entity.task_job.edit_template`). These links reflect the current draft, including
+unsaved templates and labels, without caching them in shared plugin discovery.
 
 Each route uses the same entity edit form and update access check. Its
 `_job_section` default selects the fields to build. There is no `section` query
@@ -67,7 +70,10 @@ See repository `docs/screenshots/task-trigger-actions` for real browser evidence
 
 ## Named checklist templates
 
-On **Checklist templates**, add a machine name and label, then use the existing
+On **Checklist templates**, use the **Add** secondary tab to add a machine name
+and label. Each template has its own secondary tab, reusing the main checklist
+table builder and item dialogs. Changes stay in the shared job draft as you
+switch templates. Use the existing
 checklist item chooser and configuration dialogs to build the group. On
 **Checklist**, select groups to include. Definitions and references belong to the
 same job configuration, draft and named version. A template cannot be removed

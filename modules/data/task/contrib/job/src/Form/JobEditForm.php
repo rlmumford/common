@@ -30,6 +30,7 @@ use Drupal\task_job\TaskJobTempstoreRepository;
 use Drupal\task_job\TriggerActionManager;
 use Drupal\Core\Plugin\Context\ContextDefinition;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Form to edit a job.
@@ -173,7 +174,10 @@ class JobEditForm extends JobForm {
   public function form(array $form, FormStateInterface $form_state) {
     $this->blueprintStorages = [];
     $section = $this->section($form_state);
-    $this->tempstoreRepository->set($this->entity, $section);
+    if (!$form_state->has('selected_template')) {
+      $form_state->set('selected_template', $this->getRouteMatch()->getParameter('template'));
+    }
+    $this->tempstoreRepository->set($this->entity, $section, $form_state->get('selected_template'));
     $form['#tree'] = TRUE;
     $form['#attributes']['novalidate'] = 'novalidate';
     $form['#attributes']['class'][] = 'task-job-editor';
@@ -598,11 +602,16 @@ class JobEditForm extends JobForm {
    */
   protected function buildTemplates(array $form, FormStateInterface $form_state, array $ajax_attributes): array {
     $form['template_help'] = ['#markup' => $this->t('Define named groups of checklist items here, then select them on the Checklist tab. Templates share this job version and its contexts. Item names share the checklist namespace.')];
-    foreach ($this->entity->get('checklist_templates') ?: [] as $name => $template) {
+    $name = $form_state->get('selected_template');
+    if ($name !== NULL) {
+      $templates = $this->entity->get('checklist_templates') ?: [];
+      if (!isset($templates[$name])) {
+        throw new NotFoundHttpException();
+      }
+      $template = $templates[$name];
+      $form['heading']['#value'] = $template['label'];
       $element = [
-        '#type' => 'details',
-        '#title' => $template['label'],
-        '#open' => TRUE,
+        '#type' => 'container',
         'machine_name' => ['#type' => 'item', '#title' => $this->t('Machine name'), '#plain_text' => $name],
         'label' => [
           '#type' => 'textfield',
@@ -621,11 +630,11 @@ class JobEditForm extends JobForm {
         '#submit' => ['::submitForm', '::removeTemplate'],
       ];
       $form['templates'][$name] = $element;
+      return $form;
     }
+    $form['heading']['#value'] = $this->t('Add checklist template');
     $form['new_template'] = [
-      '#type' => 'details',
-      '#title' => $this->t('Add checklist template'),
-      '#open' => TRUE,
+      '#type' => 'container',
       'name' => ['#type' => 'textfield', '#title' => $this->t('Template machine name')],
       'label' => ['#type' => 'textfield', '#title' => $this->t('New template label')],
       'add' => [
@@ -662,6 +671,7 @@ class JobEditForm extends JobForm {
       'items' => [],
     ];
     $this->entity->set('checklist_templates', $templates);
+    $form_state->set('selected_template', $form_state->getValue(['new_template', 'name']));
     $this->saveDraft($form, $form_state);
   }
 
@@ -682,6 +692,7 @@ class JobEditForm extends JobForm {
     $templates = $this->entity->get('checklist_templates');
     unset($templates[$form_state->getTriggeringElement()['#template_name']]);
     $this->entity->set('checklist_templates', $templates);
+    $form_state->set('selected_template', NULL);
     $this->saveDraft($form, $form_state);
   }
 
@@ -1013,7 +1024,7 @@ class JobEditForm extends JobForm {
     $this->entity->save();
     $this->tempstoreRepository->delete($draft);
     $this->messenger()->addStatus($this->t('The job has been saved.'));
-    $form_state->setRedirectUrl($this->tempstoreRepository->getEditUrl($this->entity, $this->section($form_state)));
+    $form_state->setRedirectUrl($this->tempstoreRepository->getEditUrl($this->entity, $this->section($form_state), $form_state->get('selected_template')));
   }
 
   /**
@@ -1021,7 +1032,7 @@ class JobEditForm extends JobForm {
    */
   public function saveDraft(array $form, FormStateInterface $form_state): void {
     $section = $this->section($form_state);
-    $this->tempstoreRepository->set($this->entity, $section);
+    $this->tempstoreRepository->set($this->entity, $section, $form_state->get('selected_template'));
     $form_state->setRedirectUrl($this->tempstoreRepository->getEditUrl($this->entity));
   }
 
@@ -1045,7 +1056,8 @@ class JobEditForm extends JobForm {
    */
   public function submitFormCancel(array $form, FormStateInterface $form_state) {
     $this->tempstoreRepository->delete($this->entity);
-    $form_state->setRedirectUrl($this->tempstoreRepository->getEditUrl($this->entity, $this->section($form_state)));
+    $this->entity = $this->entityTypeManager->getStorage('task_job')->loadUnchanged($this->entity->id());
+    $form_state->setRedirectUrl($this->tempstoreRepository->getEditUrl($this->entity, $this->section($form_state), $form_state->get('selected_template')));
   }
 
   /**
