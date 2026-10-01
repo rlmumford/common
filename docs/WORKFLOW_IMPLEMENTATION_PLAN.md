@@ -454,7 +454,10 @@ missing references; persisted items are preserved. Decision-driven expansion
 now adds scoped template instances, nested branches and local outcome aliases.
 Inactive branches retain their work and history. See
 [Decision checklist templates](DECISION_CHECKLIST_TEMPLATES.md). General provider
-assembly and explicit orphan-management actions remain open.
+assembly and explicit orphan-management actions remain open. Unfinished persisted
+items now refresh configuration from their pinned job version, including dirty
+overlays and restored HTML workspaces, while completed records stay intact. See
+[Live job checklist configuration](LIVE_JOB_CHECKLIST_CONFIGURATION.md).
 
 Deliverables:
 

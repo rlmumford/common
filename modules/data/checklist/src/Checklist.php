@@ -130,11 +130,20 @@ class Checklist implements ChecklistInterface {
       }
     }
 
+    // Publish the cache only after all definitions have loaded successfully.
+    return $this->items = $this->applyItemDefinitions($items);
+  }
+
+  /**
+   * Merges current definitions into loaded or restored working items.
+   */
+  protected function applyItemDefinitions(array $items): array {
+    $this->definedItems = [];
     // Fill in gaps, retaining persisted work and its identity.
     foreach ($this->getType()->getDefaultItems() as $name => $item) {
       $this->definedItems[$name] = TRUE;
-      if (isset($items[$name]) && !$item->get('derivation')->isEmpty()) {
-        $items[$name]->set('derivation', $item->get('derivation')->getValue());
+      if (isset($items[$name])) {
+        $this->applyItemDefinition($items[$name], $item);
       }
       if (!isset($items[$item->getName()])) {
         $item->checklist = [
@@ -151,8 +160,19 @@ class Checklist implements ChecklistInterface {
       unset($items[$name]);
     }
 
-    // Publish the cache only after all definitions have loaded successfully.
-    return $this->items = $items;
+    return $items;
+  }
+
+  /**
+   * Reconciles a stored item with its current checklist definition.
+   *
+   * Checklist types may extend this to resolve configuration from their source.
+   * The default preserves stored configuration and updates branch membership.
+   */
+  protected function applyItemDefinition(ChecklistItemInterface $stored, ChecklistItemInterface $definition): void {
+    if (!$definition->get('derivation')->isEmpty()) {
+      $stored->set('derivation', $definition->get('derivation')->getValue());
+    }
   }
 
   /**
