@@ -111,13 +111,25 @@ class FlexiformItemTest extends ChecklistItemExecutionTestBase {
     [$host, $first] = $this->formWork(persist: FALSE);
     $fresh = $this->container->get('entity_type.manager')->getStorage('user')->loadUnchanged($host->id());
     $second = $fresh->work->checklist->getItem('form');
+    $repository = $this->container->get('checklist.tempstore_repository');
+    $host->work->checklist->getItem('consumer')->set('title', 'Unsaved label');
+    $repository->set($host->work->checklist);
     $editor = $this->container->get('checklist_flexiform.editor');
     $this->assertSame('new', $editor->describe($first)['status']);
     $this->assertTrue($first->isNew());
     $ready = $editor->operate($first, 'start', ['revision' => 0]);
     $this->assertSame($ready['id'], $editor->describe($second)['id']);
+    $restored = $repository->get($fresh->work->checklist)->getItem('form');
+    $this->assertFalse($restored->isNew());
+    $this->assertSame($ready['id'], $restored->uuid());
+    $this->assertFalse($restored->get('state')->isEmpty());
     $storage = $this->container->get('entity_type.manager')->getStorage('checklist_item');
     $this->assertCount(1, $storage->loadByProperties(['uuid' => $ready['id']]));
+    $editor->operate($restored, 'form/submit', ['revision' => $ready['revision'], 'input' => []]);
+    $restored = $repository->get($fresh->work->checklist);
+    $this->assertTrue($restored->getItem('form')->isComplete());
+    $this->assertTrue($restored->getItem('form')->get('state')->isEmpty());
+    $this->assertSame('Unsaved label', $restored->getItem('consumer')->get('title')->value);
     $this->expectException(\DomainException::class);
     $editor->operate($second, 'start', ['revision' => 0]);
   }

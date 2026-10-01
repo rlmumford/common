@@ -48,18 +48,23 @@ class ChecklistTempstoreRepository {
       // Iterative items commit through their claim coordinator. A legacy
       // tempstore copy cannot replace their authoritative working state or
       // completion. Keep unrelated unsaved item/host edits in this workspace.
-      $ids = [];
-      foreach ($checklist->getItems() as $item) {
-        if (!$item->isNew() && $item->getHandler() instanceof IterativeChecklistItemHandlerInterface) {
-          $ids[] = $item->id();
+      $names = [];
+      foreach ($checklist->getItems() as $name => $item) {
+        if ($item->getHandler() instanceof IterativeChecklistItemHandlerInterface) {
+          $names[] = $name;
         }
       }
-      if ($ids) {
-        $storage = $this->entityTypeManager->getStorage('checklist_item');
-        $storage->resetCache($ids);
-        foreach ($storage->loadMultiple($ids) as $item) {
-          $item->get('checklist')->entity = $checklist->getEntity();
-          $checklist->setItem($item->getName(), $item);
+      if ($names && !$checklist->getEntity()->isNew()) {
+        $this->entityTypeManager->getStorage('checklist_item')->resetCache();
+        // A first interaction can persist an item that was still virtual in
+        // this workspace. Resolve by checklist/name, not its old database ID.
+        // Rebuilding also applies current job configuration to unfinished work.
+        $fresh = $checklist->getType()->getChecklist($checklist->getEntity(), $checklist->getKey());
+        foreach ($names as $name) {
+          $item = $fresh->getItem($name);
+          if ($item && !$item->isNew()) {
+            $checklist->setItem($name, $item);
+          }
         }
       }
     }
