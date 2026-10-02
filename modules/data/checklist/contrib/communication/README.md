@@ -2,7 +2,7 @@
 
 Enable `checklist_communication` for runtime handlers and
 `checklist_communication_ui` for job configuration controls. Communication must
-include its deferred-operation API ([Communication !11](https://git.drupalcode.org/project/communication/-/merge_requests/11)). The API routes remain in optional
+use `2.0.x-dev`, which includes the merged deferred-operation API. The API routes remain in optional
 `checklist_api`; this module does not add routes.
 
 ## One authored item, selected template and follow-up
