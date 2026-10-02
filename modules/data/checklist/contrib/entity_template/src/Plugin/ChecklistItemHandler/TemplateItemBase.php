@@ -276,7 +276,7 @@ abstract class TemplateItemBase extends ContextAwareChecklistItemHandlerBase imp
     }
     $available = $this->available();
     $key = array_key_first($available);
-    return count($available) !== 1 || !empty($this->getConfiguration()['templates'][$key]['editor']) ? ChecklistItemInterface::METHOD_INTERACTIVE : ChecklistItemInterface::METHOD_AUTO;
+    return count($available) !== 1 || !empty($this->editorConfiguration($key)) ? ChecklistItemInterface::METHOD_INTERACTIVE : ChecklistItemInterface::METHOD_AUTO;
   }
 
   /**
@@ -340,6 +340,22 @@ abstract class TemplateItemBase extends ContextAwareChecklistItemHandlerBase imp
   }
 
   /**
+   * Uses a candidate override or the referenced template builder's shared form.
+   */
+  protected function editorConfiguration(string $key): array {
+    if (!empty($this->getConfiguration()['templates'][$key]['editor'])) {
+      return $this->getConfiguration()['templates'][$key]['editor'];
+    }
+    $template = $this->getTemplates()[$key];
+    if ($template instanceof BlueprintTemplateInterface) {
+      $id = $template->getBlueprint()->getBuilder()->getPluginDefinition()['template_builder'] ?? NULL;
+      $builder = $id ? $this->entityTypes->getStorage('entity_template_builder')->load($id) : NULL;
+      return $builder?->getThirdPartySetting('entity_template_flexiform', 'form', []) ?? [];
+    }
+    return [];
+  }
+
+  /**
    * Returns the captured template and execution, or initializes a new pass.
    */
   protected function execution(): array {
@@ -356,7 +372,7 @@ abstract class TemplateItemBase extends ContextAwareChecklistItemHandlerBase imp
     if ($key === NULL || !isset($available[$key])) {
       throw new \DomainException('Choose an available template before execution.');
     }
-    $editor = $this->getConfiguration()['templates'][$key]['editor'] ?? [];
+    $editor = $this->editorConfiguration($key);
     $editor = $editor ? $this->editor->form($editor) : NULL;
     $selection = [
       'key' => $key,
@@ -491,10 +507,10 @@ abstract class TemplateItemBase extends ContextAwareChecklistItemHandlerBase imp
   public function calculateDependencies() {
     $dependencies = parent::calculateDependencies() + ['module' => [], 'config' => []];
     $dependencies['module'][] = 'checklist_entity_template';
-    foreach ($this->getConfiguration()['templates'] as $settings) {
+    foreach ($this->getConfiguration()['templates'] as $key => $settings) {
       $sources = [$this->sources->calculateDependencies($settings['template'])];
-      if (!empty($settings['editor'])) {
-        $sources[] = $this->editor->form($settings['editor'])->calculateDependencies();
+      if ($editor = $this->editorConfiguration($key)) {
+        $sources[] = $this->editor->form($editor)->calculateDependencies();
       }
       if (isset($settings['condition'])) {
         $sources[] = $this->sources->conditionDependencies($settings['condition']);

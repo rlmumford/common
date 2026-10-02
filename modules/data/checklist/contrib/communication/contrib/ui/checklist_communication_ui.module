@@ -1,0 +1,17 @@
+<?php
+
+/**
+ * @file
+ * Optional authoring forms for communication checklist handlers.
+ */
+
+use Drupal\checklist_communication_ui\PluginForm\CommunicationTemplateConfigureForm;
+use Drupal\checklist_communication_ui\PluginForm\CommunicationOperationConfigureForm;
+
+/**
+ * Implements hook_checklist_item_handler_info_alter().
+ */
+function checklist_communication_ui_checklist_item_handler_info_alter(array &$definitions) {
+  $definitions['entity_template__create_communication']['forms']['configure'] = CommunicationTemplateConfigureForm::class;
+  $definitions['communication_operation']['forms']['configure'] = CommunicationOperationConfigureForm::class;
+}

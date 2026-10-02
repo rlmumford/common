@@ -60,9 +60,10 @@ class ChecklistTempstoreRepository {
         // this workspace. Resolve by checklist/name, not its old database ID.
         // Rebuilding also applies current job configuration to unfinished work.
         $fresh = $checklist->getType()->getChecklist($checklist->getEntity(), $checklist->getKey());
-        foreach ($names as $name) {
-          $item = $fresh->getItem($name);
-          if ($item && !$item->isNew()) {
+        foreach ($fresh->getItems() as $name => $item) {
+          // A completed iteration can create required follow-up work that did
+          // not exist when this HTML workspace was opened.
+          if (!$item->isNew() && ($item->getHandler() instanceof IterativeChecklistItemHandlerInterface || in_array($name, $names, TRUE))) {
             $checklist->setItem($name, $item);
           }
         }

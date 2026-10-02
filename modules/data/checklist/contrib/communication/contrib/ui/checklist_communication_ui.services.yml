@@ -1,0 +1,4 @@
+services:
+  checklist_communication_ui.operation_configuration:
+    class: Drupal\checklist_communication_ui\Form\OperationConfiguration
+    arguments: ['@plugin.manager.communication.operation', '@plugin.manager.communication.operation_variant']

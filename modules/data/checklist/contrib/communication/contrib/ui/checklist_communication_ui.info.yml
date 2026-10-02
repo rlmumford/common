@@ -1,0 +1,8 @@
+name: Checklist Communication UI
+type: module
+description: Configure communication templates and their follow-up operations.
+core_version_requirement: ^10 || ^11
+package: RLMumford
+dependencies:
+  - checklist:checklist_communication
+  - checklist:checklist_entity_template_ui
