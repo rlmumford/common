@@ -152,6 +152,71 @@ class CommunicationChecklistTest extends ChecklistItemExecutionTestBase {
   }
 
   /**
+   * Saved messages share a read-only resource before and after delivery.
+   */
+  public function testCommunicationResource(): void {
+    [$host, $parent] = $this->communicationWork(['default' => $this->candidate('Review this message')]);
+    $collector = $this->container->get('checklist.action_resource_collector');
+    $this->assertSame([], $collector->collect($this->checklist($host)));
+    $executor = $this->container->get('checklist.item_executor');
+    $executor->submit($parent);
+    $checklist = $this->checklist($host);
+    $resources = $collector->collect($checklist);
+    $this->assertCount(1, $resources);
+    $entry = reset($resources);
+    $this->assertCount(2, $entry['owners']);
+    $communications = Communication::loadMultiple();
+    $communication = reset($communications);
+    $this->assertSame('communication:' . $communication->uuid(), $entry['resource']->getKey());
+    $content = $entry['resource']->getContent();
+    $html = (string) $this->container->get('renderer')->renderRoot($content);
+    $this->assertStringContainsString('Review this message', $html);
+    $this->assertSame([], Recorded::$calls);
+    $child = array_values($checklist->getItems())[1];
+    $executor->submit($child);
+    $resources = $collector->collect($this->checklist($host));
+    $this->assertCount(1, $resources);
+    $this->assertCount(2, reset($resources)['owners']);
+    $resource = $this->container->get('checklist_communication.resource')->build($communication);
+    $content = $resource->getContent();
+    $this->assertSame('sent', $content['message']['#communication']->get('status')->value);
+    $this->assertCount(1, Recorded::$calls);
+    $this->container->get('state')->set('checklist_communication_test.deny', TRUE);
+    $this->container->get('entity_type.manager')->getAccessControlHandler('communication')->resetCache();
+    $this->assertSame([], $collector->collect($this->checklist($host)));
+  }
+
+  /**
+   * Review respects field access and never publishes unsaved working values.
+   */
+  public function testResourceFieldAccess(): void {
+    $builder = $this->container->get('checklist_communication.resource');
+    $communication = Communication::create([
+      'mode' => 'email',
+      'subject' => 'Private subject',
+      'body_plain' => 'Private message',
+    ]);
+    $this->assertNull($builder->build($communication));
+    $communication->save();
+    $communication->set('subject', 'Unsaved working subject');
+    $content = $builder->build($communication)->getContent();
+    $html = (string) $this->container->get('renderer')->renderRoot($content);
+    $this->assertStringContainsString('Private subject', $html);
+    $this->assertStringContainsString('Private message', $html);
+    $this->assertStringNotContainsString('Unsaved working subject', $html);
+    $this->container->get('state')->set('checklist_communication_test.hide_content', TRUE);
+    $this->container->get('entity_type.manager')->getAccessControlHandler('communication')->resetCache();
+    $this->container->get('cache.render')->deleteAll();
+    $content = $builder->build($communication)->getContent();
+    $html = (string) $this->container->get('renderer')->renderRoot($content);
+    $this->assertStringNotContainsString('Private subject', $html);
+    $this->assertStringNotContainsString('Private message', $html);
+    $communication->delete();
+    $this->assertNull($builder->build($communication));
+    $this->assertSame([], Recorded::$calls);
+  }
+
+  /**
    * Template choice selects its editor and operation; confirmation queues once.
    */
   public function testSelectedEditorAndConfirmation(): void {

@@ -18,3 +18,13 @@ function checklist_communication_test_entity_access(EntityInterface $entity, $op
   }
   return AccessResult::neutral();
 }
+
+/**
+ * Implements hook_entity_field_access().
+ */
+function checklist_communication_test_entity_field_access($operation, \Drupal\Core\Field\FieldDefinitionInterface $field_definition, AccountInterface $account, ?\Drupal\Core\Field\FieldItemListInterface $items = NULL) {
+  if ($operation === 'view' && $field_definition->getTargetEntityTypeId() === 'communication' && in_array($field_definition->getName(), ['subject', 'body_plain']) && \Drupal::state()->get('checklist_communication_test.hide_content')) {
+    return AccessResult::forbidden()->setCacheMaxAge(0);
+  }
+  return AccessResult::neutral();
+}
