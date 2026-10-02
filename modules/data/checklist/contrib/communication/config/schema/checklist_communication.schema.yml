@@ -1,0 +1,48 @@
+checklist_item_handler.entity_template__create_communication:
+  type: checklist_item_handler.entity_template__create
+  label: Create and operate on a communication
+  mapping:
+    templates:
+      type: sequence
+      label: Communication template alternatives
+      sequence:
+        type: checklist_communication.candidate
+
+checklist_communication.candidate:
+  type: checklist_entity_template.candidate
+  mapping:
+    operation:
+      type: mapping
+      label: Operation after saving the communication
+      mapping:
+        id:
+          type: string
+          label: Operation plugin
+        variant:
+          type: string
+          label: Variant plugin
+        confirm:
+          type: boolean
+          label: Require confirmation
+        label:
+          type: label
+          label: Follow-up item title
+
+checklist_item_handler.communication_operation:
+  type: checklist_item_handler
+  label: Communication operation
+  mapping:
+    operation:
+      type: string
+      label: Operation plugin
+    variant:
+      type: string
+      label: Variant plugin
+    confirm:
+      type: boolean
+      label: Require confirmation
+    context_mapping:
+      type: sequence
+      label: Communication context mapping
+      sequence:
+        type: string

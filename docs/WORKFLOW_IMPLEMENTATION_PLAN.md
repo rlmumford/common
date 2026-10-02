@@ -650,3 +650,18 @@ saves and publishes typed outcomes. Manual items remain instruction plus
 confirmation. Entity Template's prepared-entity editors reuse the same form
 coordinator. See the [module guide](../modules/data/checklist/contrib/flexiform/README.md)
 for configuration, API operations and current provider/component restrictions.
+
+### Communication template/editor and required operation
+
+The optional `checklist_communication` integration composes preparation, the
+selected Flexiform editor, and a required operation follow-up from one authored
+item. Candidates retain their operation alongside their selected template/editor;
+referenced templates inherit their builder's configured form unless overridden.
+Saving the communication and adding its child are atomic. HTML/API confirmation
+continues the same audited attempt. Provider calls use Communication's deferred
+persistence API; failures require explicit reconciliation/retry. The HTML tempstore
+also discovers newly committed follow-ups. See the
+[module guide](../modules/data/checklist/contrib/communication/README.md) for
+configuration, transport scope, access and failure guarantees. Initial supported
+transport: Drupal mail-system send; native resend and other providers need their
+own deferred-operation implementation. Phone/chat integrations remain separate.

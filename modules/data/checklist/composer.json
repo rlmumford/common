@@ -4,6 +4,7 @@
     "type": "drupal-module",
     "license": "GPL-2.0-or-later",
     "suggest": {
+        "drupal/communication": "Required by checklist_communication; needs the deferred operation API from Communication MR !11.",
         "drupal/flexiform": "Required by checklist_flexiform and checklist_entity_template; use 3.0.x-dev for shared sessions.",
         "drupal/entity_template": "Required by checklist_entity_template; use 1.0.x-dev for resumable execution."
     },

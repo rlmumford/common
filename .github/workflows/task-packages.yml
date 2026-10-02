@@ -41,6 +41,7 @@ jobs:
           composer config minimum-stability dev
           composer config repositories.typed-data-plus vcs https://git.drupalcode.org/project/typed_data_plus.git
           composer config repositories.entity-template vcs https://git.drupalcode.org/project/entity_template.git
+          composer config repositories.communication vcs https://git.drupalcode.org/project/communication.git
           composer config repositories.flexiform vcs https://git.drupalcode.org/project/flexiform.git
           composer config repositories.common-data path "$GITHUB_WORKSPACE/modules/data/*"
           composer config repositories.common-util path "$GITHUB_WORKSPACE/modules/util/*"
@@ -59,7 +60,7 @@ jobs:
           PY
           # Drupal 10.6.17 permits Twig 3.30, which currently breaks rendering
           # input.html.twig; keep this consumer on the latest compatible Twig.
-          composer require rlmumford/task:2.x-dev rlmumford/service:2.x-dev rlmumford/note:2.x-dev drupal/entity_template:1.0.x-dev drupal/flexiform:3.0.x-dev drupal/core-dev:^10 twig/twig:3.29.0 --with-all-dependencies --no-interaction
+          composer require rlmumford/task:2.x-dev rlmumford/service:2.x-dev rlmumford/note:2.x-dev drupal/entity_template:1.0.x-dev drupal/flexiform:3.0.x-dev drupal/communication:dev-feature/deferred-operation-persistence drupal/core-dev:^10 twig/twig:3.29.0 --with-all-dependencies --no-interaction
       - name: Test the installed task packages
         working-directory: /tmp/task-consumer
         env:
@@ -97,6 +98,7 @@ jobs:
           trap 'kill "$server_pid"' EXIT
           ../vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php modules/contrib/checklist/contrib/entity_template/tests/src
           ../vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php modules/contrib/checklist/contrib/flexiform/tests/src
+          ../vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php modules/contrib/checklist/contrib/communication/tests/src
           ../vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php modules/contrib/task/contrib/job/tests/src/Functional
       - name: Show the browser server log on failure
         if: failure()

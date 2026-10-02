@@ -1,0 +1,20 @@
+<?php
+
+/**
+ * @file
+ * Access denial fixtures for communication checklist tests.
+ */
+
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Session\AccountInterface;
+
+/**
+ * Implements hook_entity_access().
+ */
+function checklist_communication_test_entity_access(EntityInterface $entity, $operation, AccountInterface $account) {
+  if ($entity->getEntityTypeId() === 'communication' && \Drupal::state()->get('checklist_communication_test.deny')) {
+    return AccessResult::forbidden()->setCacheMaxAge(0);
+  }
+  return AccessResult::neutral();
+}

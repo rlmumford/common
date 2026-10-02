@@ -113,7 +113,7 @@ class TemplateItemConfigureForm extends PluginFormBase implements ContainerInjec
       ];
       $substate = SubformState::createForSubform($element['condition'], $form, $form_state);
       $element['condition'] = $this->conditions->build($element['condition'], $substate, $settings['condition'] ?? [], $contexts);
-      $options = ['' => $this->t('- No editor -')];
+      $options = ['' => $this->t('- Use template builder form, if configured -')];
       foreach ($this->formPlugins->getDefinitions() as $id => $definition) {
         if (isset($definition['forms']['configure'])) {
           $options[$id] = $definition['label'];
@@ -209,7 +209,7 @@ class TemplateItemConfigureForm extends PluginFormBase implements ContainerInjec
           }
         }
       }
-      $configuration['templates'][$name] = $candidate;
+      $configuration['templates'][$name] = $this->candidateConfiguration($candidate, $row, $element, $form_state);
     }
     if (!$configuration['templates']) {
       $form_state->setError($form['templates'], $this->t('Configure at least one template choice.'));
@@ -229,6 +229,13 @@ class TemplateItemConfigureForm extends PluginFormBase implements ContainerInjec
         $form_state->setError($form['templates'], $exception->getMessage());
       }
     }
+  }
+
+  /**
+   * Lets specialised items validate and retain their per-template settings.
+   */
+  protected function candidateConfiguration(array $candidate, array $row, array &$element, FormStateInterface $form_state): array {
+    return $candidate;
   }
 
   /**
