@@ -1,0 +1,4 @@
+services:
+  checklist_communication.resource:
+    class: Drupal\checklist_communication\CommunicationResource
+    arguments: ['@entity_type.manager']

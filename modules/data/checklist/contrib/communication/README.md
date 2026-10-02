@@ -78,6 +78,23 @@ or uncertain result blocks completion and is not replayed by ordinary queue
 redelivery. Review operational history and reconcile with the provider before
 using explicit retry. There is no claim of exactly-once external delivery.
 
+## Saved communication review
+
+The preparation item and its operation share a pinned resource tab keyed by the
+communication UUID. After the editor saves, the message appears beside the
+checklist, including while confirmation is pending. The same resource remains
+available after completion. Mobile users open it from the bottom navigation.
+Standalone communication-operation items also expose this resource.
+
+The resource reloads the saved communication on each collection and uses its
+Drupal `default` view display for status, participants and body fields. Configure
+that display to choose the fields and formatters shown. The subject heading has
+its own field-access check. Communication view access and normal field access
+apply independently of access to the task. Deleted, inaccessible and unsaved
+communications have no resource. Reading the pane never saves or runs an operation.
+This is a review of saved entity data, not a preview of unsaved editor values or
+a guarantee of the transport's final MIME rendering.
+
 ## Coverage and walkthrough
 
 Kernel tests cover automatic handoff, conditional choices, editor confirmation,
