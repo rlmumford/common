@@ -17,7 +17,12 @@ class SharedEditorTest extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['checklist_entity_template', 'checklist_template_test', 'entity_test'];
+  protected static $modules = [
+    'checklist_entity_template',
+    'checklist_flexiform',
+    'checklist_template_test',
+    'entity_test',
+  ];
 
   /**
    * {@inheritdoc}

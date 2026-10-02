@@ -88,6 +88,12 @@ const path = require('node:path');
       document.querySelector('.checklist-workspace').insertAdjacentHTML('beforeend', '<table id="dynamic"><tbody><tr data-ciname="existing" class="ci ci-actionable ci-inprogress"><td>Old controls</td><td>Existing</td><td class="action-form-container"><textarea>Keep these edits</textarea></td></tr><tr data-ciname="removed"><td>Removed</td></tr></tbody></table><button data-checklist-complete>Complete</button>');
       window.liveAction = document.querySelector('#dynamic textarea');
       window.liveAction.focus();
+      // Core AJAX detach removes every disconnected instance, not only those
+      // inside its context. Retained forms must remain connected throughout.
+      window.retainedAjax = true;
+      Drupal.detachBehaviors = () => {
+        if (!window.liveAction.isConnected) window.retainedAjax = false;
+      };
       window.reconcile = (names, completable) => {
         const data = '<table><tbody>' + names.map(name => `<tr data-ciname="${name}" class="ci ci-actionable"><td>New controls</td><td>${name}</td><td class="action-form-container"></td></tr>`).join('') + '</tbody></table>';
         Drupal.AjaxCommands.prototype.checklistReconcileRows(null, { selector: '#dynamic', data, completable });
@@ -97,6 +103,8 @@ const path = require('node:path');
     assert.deepEqual(await page.locator('#dynamic tr').evaluateAll(rows => rows.map(row => row.dataset.ciname)), ['generated', 'existing']);
     assert(await page.evaluate(() => document.querySelector('#dynamic textarea') === window.liveAction));
     assert.equal(await page.locator('#dynamic textarea').inputValue(), 'Keep these edits');
+    assert(await page.evaluate(() => window.retainedAjax), 'Keep retained form AJAX instances alive');
+    await page.evaluate(() => { Drupal.detachBehaviors = () => {}; });
     assert(await page.evaluate(() => document.activeElement === window.liveAction));
     assert(await page.locator('[data-checklist-complete]').isDisabled());
     await page.evaluate(() => reconcile(['existing', 'generated'], true));

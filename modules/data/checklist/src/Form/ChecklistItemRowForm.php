@@ -15,6 +15,7 @@ use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\DependencyInjection\ClassResolverInterface;
 use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Form\FormState;
 use Drupal\Core\Plugin\Context\ContextHandlerInterface;
 use Drupal\Core\Plugin\ContextAwarePluginInterface;
 use Drupal\Core\Plugin\PluginFormFactoryInterface;
@@ -141,6 +142,8 @@ class ChecklistItemRowForm extends ChecklistItemFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    // Rebuilds may restore a fresh handler from job configuration or storage.
+    $this->contextPreparer->prepare($this->item->checklist->checklist, $this->item);
     $wrapper_id = "checklist-row--" . $this->item->checklist->checklist->getKey() . "--" . $this->item->getName();
     $form['#prefix'] = '<div id="' . $wrapper_id . '" class="checklist-item-row-form-wrapper">';
     $form['#suffix'] = '</div>';
@@ -278,7 +281,9 @@ class ChecklistItemRowForm extends ChecklistItemFormBase {
       ]
     ));
 
-    $form = $this->formBuilder->getForm($form_object);
+    // Rendering the next form must not replay the row-opening AJAX request.
+    $display_state = (new FormState())->setUserInput([]);
+    $form = $this->formBuilder->buildForm($form_object, $display_state);
     $form_html = $this->renderer->renderRoot($form);
     $response->addAttachments($form['#attached']);
     $response->addCommand(new HtmlCommand($selector, $form_html));

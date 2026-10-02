@@ -3,6 +3,7 @@
 namespace Drupal\checklist_entity_template\Plugin\ChecklistItemHandler;
 
 use Drupal\checklist\Attempt\ChecklistAttempt;
+use Drupal\checklist_flexiform\Plugin\ChecklistItemHandler\FormItemHandlerInterface;
 use Drupal\checklist\Plugin\ChecklistItemHandler\InteractiveChecklistItemHandlerInterface;
 use Drupal\checklist\Plugin\ChecklistItemHandler\ActionOperationsChecklistItemHandlerInterface;
 use Drupal\checklist_entity_template\PreparedEntityEditor;
@@ -43,7 +44,7 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 /**
  * Shares template selection, preparation and editing across entity operations.
  */
-abstract class TemplateItemBase extends ContextAwareChecklistItemHandlerBase implements IterativeChecklistItemHandlerInterface, StatefulChecklistItemHandlerInterface, ExpectedOutcomeChecklistItemHandlerInterface, ActionStateChecklistItemHandlerInterface, DependentPluginInterface, InteractiveChecklistItemHandlerInterface, ActionOperationsChecklistItemHandlerInterface {
+abstract class TemplateItemBase extends ContextAwareChecklistItemHandlerBase implements FormItemHandlerInterface, IterativeChecklistItemHandlerInterface, StatefulChecklistItemHandlerInterface, ExpectedOutcomeChecklistItemHandlerInterface, ActionStateChecklistItemHandlerInterface, DependentPluginInterface, InteractiveChecklistItemHandlerInterface, ActionOperationsChecklistItemHandlerInterface {
 
   /**
    * Resolves reusable and embedded template sources.
@@ -210,6 +211,24 @@ abstract class TemplateItemBase extends ContextAwareChecklistItemHandlerBase imp
    * Checks target identity, persistence state and current authorization.
    */
   abstract protected function checkTarget(FieldableEntityInterface $entity, array $selection): void;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function editorChoices(): ?array {
+    $choices = [];
+    foreach ($this->available() as $key => $template) {
+      $choices[$key] = (string) $template->label();
+    }
+    return $choices;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function selectEditorChoice(string $key): void {
+    $this->select($key);
+  }
 
   /**
    * Pins an explicitly chosen, currently available candidate for this pass.

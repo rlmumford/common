@@ -1,0 +1,15 @@
+<?php
+
+/**
+ * @file
+ * Optional configuration UI for Flexiform checklist items.
+ */
+
+use Drupal\checklist_flexiform_ui\PluginForm\FlexiformConfigureForm;
+
+/**
+ * Implements hook_checklist_item_handler_info_alter().
+ */
+function checklist_flexiform_ui_checklist_item_handler_info_alter(array &$definitions) {
+  $definitions['flexiform']['forms']['configure'] = FlexiformConfigureForm::class;
+}

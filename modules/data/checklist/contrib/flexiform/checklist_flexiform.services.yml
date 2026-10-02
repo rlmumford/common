@@ -1,0 +1,4 @@
+services:
+  checklist_flexiform.editor:
+    class: Drupal\checklist_flexiform\ChecklistFormEditor
+    arguments: ['@checklist.item_execution_preparer', '@checklist.attempt_journal', '@checklist.attempt_claims', '@checklist.item_executor', '@current_user', '@account_switcher', '@entity_type.manager', '@checklist.resolver', '@lock']

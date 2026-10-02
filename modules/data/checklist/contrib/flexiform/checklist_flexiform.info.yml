@@ -1,0 +1,8 @@
+name: Checklist Flexiform
+description: Dedicated Flexiform checklist items with shared HTML and API sessions.
+type: module
+core_version_requirement: ^10 || ^11
+package: RLMumford
+dependencies:
+  - checklist:checklist
+  - flexiform:flexiform

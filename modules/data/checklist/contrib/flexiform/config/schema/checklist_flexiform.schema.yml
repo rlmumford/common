@@ -1,0 +1,17 @@
+checklist_item_handler.flexiform:
+  type: checklist_item_handler
+  label: Flexiform checklist item
+  mapping:
+    form:
+      type: flexiform.form_configuration
+      label: Referenced or embedded form
+    context_mapping:
+      type: sequence
+      label: Provided form data
+      sequence:
+        type: string
+    outcomes:
+      type: sequence
+      label: Published form bindings keyed by outcome name
+      sequence:
+        type: string
