@@ -2,21 +2,24 @@
 
 namespace Drupal\checklist_communication\Plugin\ChecklistItemHandler;
 
+use Drupal\Core\Entity\TypedData\EntityDataDefinition;
+use Drupal\Core\TypedData\DataDefinition;
 use Drupal\checklist\Attempt\ChecklistAttempt;
 use Drupal\checklist\Attempt\ChecklistAttemptConflictException;
 use Drupal\checklist\Attempt\ChecklistAttemptJournal;
+use Drupal\checklist\ChecklistActionResource;
 use Drupal\checklist\ChecklistActionState;
 use Drupal\checklist\Execution\ChecklistItemExecutor;
 use Drupal\checklist\Execution\ChecklistItemResult;
-use Drupal\checklist\Plugin\ChecklistItemHandler\AutomaticChecklistItemHandlerBase;
 use Drupal\checklist\Plugin\ChecklistItemHandler\ActionOperationsChecklistItemHandlerInterface;
+use Drupal\checklist\Plugin\ChecklistItemHandler\ActionResourceChecklistItemHandlerInterface;
 use Drupal\checklist\Plugin\ChecklistItemHandler\ActionStateChecklistItemHandlerInterface;
+use Drupal\checklist\Plugin\ChecklistItemHandler\AutomaticChecklistItemHandlerBase;
 use Drupal\checklist\Plugin\ChecklistItemHandler\ExpectedOutcomeChecklistItemHandlerInterface;
 use Drupal\checklist\Plugin\ChecklistItemHandler\StatefulChecklistItemHandlerInterface;
+use Drupal\checklist_communication\CommunicationResource;
 use Drupal\communication\Entity\CommunicationInterface;
 use Drupal\communication\Plugin\Communication\Operation\DeferredSaveOperationInterface;
-use Drupal\Core\Entity\TypedData\EntityDataDefinition;
-use Drupal\Core\TypedData\DataDefinition;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
@@ -35,11 +38,16 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
  *   }
  * )
  */
-class CommunicationOperation extends AutomaticChecklistItemHandlerBase implements StatefulChecklistItemHandlerInterface, ExpectedOutcomeChecklistItemHandlerInterface, ActionStateChecklistItemHandlerInterface, ActionOperationsChecklistItemHandlerInterface {
+class CommunicationOperation extends AutomaticChecklistItemHandlerBase implements StatefulChecklistItemHandlerInterface, ExpectedOutcomeChecklistItemHandlerInterface, ActionStateChecklistItemHandlerInterface, ActionOperationsChecklistItemHandlerInterface, ActionResourceChecklistItemHandlerInterface {
 
   use OperationDependenciesTrait {
     create as protected createWithOperations;
   }
+
+  /**
+   * The shared saved-communication resource builder.
+   */
+  protected CommunicationResource $resource;
 
   /**
    * The fenced item executor.
@@ -55,9 +63,18 @@ class CommunicationOperation extends AutomaticChecklistItemHandlerBase implement
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = static::createWithOperations($container, $configuration, $plugin_id, $plugin_definition);
+    $instance->resource = $container->get('checklist_communication.resource');
     $instance->executor = $container->get('checklist.item_executor');
     $instance->journal = $container->get('checklist.attempt_journal');
     return $instance;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getActionResource(): ?ChecklistActionResource {
+    $communication = $this->getContext('communication')->hasContextValue() ? $this->getContextValue('communication') : NULL;
+    return $this->resource->build($communication);
   }
 
   /**

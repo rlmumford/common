@@ -2,10 +2,14 @@
 
 namespace Drupal\checklist_communication\Plugin\ChecklistItemHandler;
 
+use Drupal\Core\Entity\FieldableEntityInterface;
+use Drupal\checklist\ChecklistActionResource;
 use Drupal\checklist\Execution\ChecklistItemResult;
+use Drupal\checklist\Plugin\ChecklistItemHandler\ActionResourceChecklistItemHandlerInterface;
+use Drupal\checklist_communication\CommunicationResource;
 use Drupal\checklist_entity_template\Plugin\ChecklistItemHandler\CreateFromTemplate;
 use Drupal\communication\Entity\CommunicationInterface;
-use Drupal\Core\Entity\FieldableEntityInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Prepares a communication and atomically records its selected follow-up work.
@@ -20,9 +24,33 @@ use Drupal\Core\Entity\FieldableEntityInterface;
  *   }
  * )
  */
-class CreateCommunication extends CreateFromTemplate {
+class CreateCommunication extends CreateFromTemplate implements ActionResourceChecklistItemHandlerInterface {
 
-  use OperationDependenciesTrait;
+  use OperationDependenciesTrait {
+    create as protected createWithOperations;
+  }
+
+  /**
+   * The shared saved-communication resource builder.
+   */
+  protected CommunicationResource $resource;
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    $instance = static::createWithOperations($container, $configuration, $plugin_id, $plugin_definition);
+    $instance->resource = $container->get('checklist_communication.resource');
+    return $instance;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getActionResource(): ?ChecklistActionResource {
+    $entity = $this->item->get('outcomes')->get('entity')->getValue();
+    return $this->resource->build($entity instanceof CommunicationInterface ? $entity : NULL);
+  }
 
   /**
    * {@inheritdoc}

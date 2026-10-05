@@ -82,6 +82,8 @@ class CommunicationAuthoringTest extends BrowserTestBase {
     $this->assertSession()->pageTextContains('Entity saved.');
     $this->drupalGet('/task/' . $task->id());
     $this->assertSession()->pageTextContains('Confirm welcome email');
+    $this->assertSession()->elementsCount('css', '[data-resource-key^="communication:"]', 1);
+    $this->assertSession()->elementTextContains('css', '.checklist-communication-review', 'Welcome Alex');
     $storage = $this->container->get('entity_type.manager')->getStorage('checklist_item');
     $children = $storage->loadByProperties(['name' => 'communication__' . str_replace('-', '', $item->uuid())]);
     $this->assertCount(1, $children);
@@ -94,6 +96,9 @@ class CommunicationAuthoringTest extends BrowserTestBase {
     $attempt = $this->container->get('checklist.attempt_journal')->latest($child);
     $this->container->get('checklist.item_executor')->run($attempt);
     $this->assertTrue($storage->loadUnchanged($child->id())->isComplete());
+    $this->drupalGet('/task/' . $task->id());
+    $this->assertSession()->elementsCount('css', '[data-resource-key^="communication:"]', 1);
+    $this->assertSession()->elementTextContains('css', '.checklist-communication-review', 'Sent');
   }
 
 }

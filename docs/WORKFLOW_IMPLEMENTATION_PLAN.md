@@ -665,3 +665,13 @@ also discovers newly committed follow-ups. See the
 configuration, transport scope, access and failure guarantees. Initial supported
 transport: Drupal mail-system send; native resend and other providers need their
 own deferred-operation implementation. Phone/chat integrations remain separate.
+
+### Saved communication review resource
+
+Communication preparation and operation items now share one pinned resource tab
+using the saved communication UUID. The current saved entity is rendered through
+its normal Drupal view display with entity and field access checks, before
+confirmation and after delivery. The existing desktop split and mobile resource
+navigation are reused. Unsaved editor values stay within the editor. Kernel tests
+cover deduplication, fresh status, access, deletion and absence of side effects;
+browser coverage checks the tab through the preparation/delivery lifecycle.
