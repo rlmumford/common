@@ -79,7 +79,7 @@ class ChecklistHistoryController extends ControllerBase {
       return $this->respond($request, $build, $host->get($parts[1])->get((int) ($parts[2] ?? 0))->checklist, $item_name);
     }
     $account_ids = array_unique(array_merge(array_column($history['events'], 'actor'), [
-      $attempt['initiator'], $attempt['executor'],
+      $attempt['initiator'], $attempt['executor'], $attempt['authorization']['authorizer'] ?? $attempt['initiator'],
     ]));
     $accounts = $this->entityManager->getStorage('user')->loadMultiple($account_ids);
     $actor_label = fn(int $id) => isset($accounts[$id]) && $accounts[$id]->access('view') ? $accounts[$id]->label() : $this->t('User @id', ['@id' => $id]);
@@ -93,6 +93,21 @@ class ChecklistHistoryController extends ControllerBase {
         '@executor' => $actor_label($attempt['executor']),
       ]),
     ];
+    if (!empty($attempt['authorization'])) {
+      $authorization = $attempt['authorization'];
+      $build['authorization'] = [
+        '#type' => 'html_tag',
+        '#tag' => 'p',
+        '#value' => $this->t('Execution authorized by @authorizer. Source: @source.', [
+          '@authorizer' => $actor_label($authorization['authorizer']),
+          '@source' => match ($authorization['source']) {
+            'self' => $this->t('Self-execution'),
+            'task_job' => $authorization['job'],
+            default => $authorization['source'],
+          },
+        ]),
+      ];
+    }
     $build['explanation'] = [
       '#type' => 'html_tag',
       '#tag' => 'p',

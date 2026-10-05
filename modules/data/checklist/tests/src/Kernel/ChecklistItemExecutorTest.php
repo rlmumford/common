@@ -22,6 +22,16 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 class ChecklistItemExecutorTest extends ChecklistItemExecutionTestBase {
 
   /**
+   * A journal row alone does not authorize impersonation of another account.
+   */
+  public function testLegacyDelegationWithoutAuthorityIsRejected(): void {
+    [$host, $item] = $this->work(record_attempt: FALSE);
+    $attempt = $this->container->get('checklist.attempt_journal')->create($item, 1, (int) $host->id(), ChecklistAttempt::ACTION);
+    $this->expectException(AccessDeniedHttpException::class);
+    $this->container->get('checklist.item_executor')->run($attempt);
+  }
+
+  /**
    * Two requests share an attempt and restore state, contexts and identity.
    */
   public function testContinuation(): void {

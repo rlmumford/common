@@ -119,6 +119,7 @@ class ChecklistItemReader {
         'version' => $attempt->version,
         'initiator' => $attempt->initiator,
         'executor' => $attempt->executor,
+        'authorization' => $attempt->authorization,
         'path' => $attempt->path,
         'operation' => $attempt->operation,
         'created' => $attempt->created,

@@ -34,6 +34,8 @@ class ChecklistItemExecutor {
    *   The submitting caller, never an arbitrary executor supplied by a client.
    * @param \Drupal\Core\Database\Connection $database
    *   The journal and item storage connection for atomic retry preparation.
+   * @param \Drupal\checklist\Execution\ChecklistExecutionAuthorizer $authorizer
+   *   Establishes and rechecks server-side execution authority.
    */
   public function __construct(
     protected ChecklistItemExecutionPreparer $preparer,
@@ -42,6 +44,7 @@ class ChecklistItemExecutor {
     protected ChecklistAttemptClaims $claims,
     protected AccountProxyInterface $currentUser,
     protected Connection $database,
+    protected ChecklistExecutionAuthorizer $authorizer,
   ) {}
 
   /**
@@ -65,12 +68,19 @@ class ChecklistItemExecutor {
     if ($item->isNew()) {
       throw new \DomainException('Save the checklist item before submitting it.');
     }
+    $delegated = FALSE;
     $account = $this->preparer->executor((int) $this->currentUser->id());
     $this->accountSwitcher->switchTo($account);
     try {
       [$checklist, $fresh] = $this->preparer->load($item->uuid());
       if ($existing = $this->journal->latest($fresh)) {
         return $existing;
+      }
+      $authorization = $this->authorizer->authorize($checklist, $fresh, (int) $account->id());
+      if ($authorization->executor !== (int) $account->id()) {
+        $this->accountSwitcher->switchTo($this->preparer->executor($authorization->executor));
+        $delegated = TRUE;
+        [$checklist, $fresh] = $this->preparer->load($item->uuid());
       }
       try {
         [, $snapshot] = $this->preparer->prepareItem($checklist, $fresh);
@@ -79,7 +89,7 @@ class ChecklistItemExecutor {
         return NULL;
       }
       try {
-        $attempt = $this->journal->create($fresh, (int) $account->id(), (int) $account->id(), ChecklistAttempt::ACTION);
+        $attempt = $this->journal->create($fresh, (int) $account->id(), $authorization->executor, ChecklistAttempt::ACTION, authorization: $authorization->provenance);
       }
       catch (ChecklistAttemptConflictException $exception) {
         $existing = $this->journal->latest($fresh);
@@ -91,9 +101,17 @@ class ChecklistItemExecutor {
       if ($defer || $fresh->getHandler() instanceof BackgroundChecklistItemHandlerInterface || !$this->claims->canAcquireCommittedClaim()) {
         return $attempt;
       }
+      if ($authorization->provenance['source'] !== 'self') {
+        // Preparation may have refreshed the job or resolved dynamic contexts.
+        // Recheck delegated authority immediately before invoking the handler.
+        $this->authorizer->authorize($checklist, $fresh, $attempt->initiator, $attempt);
+      }
       return $this->execute($attempt, $fresh, $snapshot);
     }
     finally {
+      if ($delegated) {
+        $this->accountSwitcher->switchBack();
+      }
       $this->accountSwitcher->switchBack();
     }
   }
@@ -104,7 +122,7 @@ class ChecklistItemExecutor {
    * The expected ID/version must still identify the latest failed attempt for
    * this saved item. RESUME retains working state; FRESH clears it. Outcomes
    * and predecessor history are preserved. Both modes authorize the current
-   * caller as the new initiator/executor, just like initial submission.
+   * caller as initiator and reauthorize the executor, as on initial submission.
    *
    * Resetting the item and creating its successor commit together before any
    * inline provider call. An outer transaction forces deferral. Callers must
@@ -127,12 +145,18 @@ class ChecklistItemExecutor {
     if ($item->isNew() || !in_array($mode, [ChecklistAttempt::RESUME, ChecklistAttempt::FRESH], TRUE)) {
       throw new \InvalidArgumentException('Retry requires a saved item and an explicit resume or fresh mode.');
     }
+    $delegated = FALSE;
     $account = $this->preparer->executor((int) $this->currentUser->id());
     $this->accountSwitcher->switchTo($account);
     try {
       // Authorize before consulting history, then serialize successor creation
       // through the journal's conditional update of the latest-attempt pointer.
-      $this->preparer->load($item->uuid());
+      [$checklist, $fresh] = $this->preparer->load($item->uuid());
+      $authorization = $this->authorizer->authorize($checklist, $fresh, (int) $account->id());
+      if ($authorization->executor !== (int) $account->id()) {
+        $this->accountSwitcher->switchTo($this->preparer->executor($authorization->executor));
+        $delegated = TRUE;
+      }
       $transaction = $this->database->startTransaction();
       try {
         $previous = $this->journal->latest($item);
@@ -142,7 +166,7 @@ class ChecklistItemExecutor {
         if ($previous->path !== ChecklistAttempt::ACTION || $previous->status !== ChecklistAttempt::FAILED) {
           throw new \DomainException('Only failed automatic attempts can be retried.');
         }
-        $attempt = $this->journal->create($item, (int) $account->id(), (int) $account->id(), ChecklistAttempt::ACTION, mode: $mode, previous: $previous->id);
+        $attempt = $this->journal->create($item, (int) $account->id(), $authorization->executor, ChecklistAttempt::ACTION, mode: $mode, previous: $previous->id, authorization: $authorization->provenance);
         // Reload after winning the predecessor fence, before resetting state.
         [$checklist, $fresh] = $this->preparer->load($item->uuid());
         if ($fresh->isComplete()) {
@@ -167,6 +191,9 @@ class ChecklistItemExecutor {
       return $this->run($attempt);
     }
     finally {
+      if ($delegated) {
+        $this->accountSwitcher->switchBack();
+      }
       $this->accountSwitcher->switchBack();
     }
   }
@@ -202,7 +229,9 @@ class ChecklistItemExecutor {
     }
     $this->accountSwitcher->switchTo($this->preparer->executor($attempt->executor));
     try {
-      [$item, $snapshot] = $this->preparer->prepare($attempt->itemUuid);
+      [$checklist, $item] = $this->preparer->load($attempt->itemUuid);
+      $this->authorizer->authorize($checklist, $item, $attempt->initiator, $attempt);
+      [, $snapshot] = $this->preparer->prepareItem($checklist, $item);
       return $this->execute($attempt, $item, $snapshot, $lease_seconds);
     }
     finally {
@@ -223,8 +252,10 @@ class ChecklistItemExecutor {
     if ($expected->itemUuid !== $item->uuid() || $expected->path !== ChecklistAttempt::ACTION) {
       throw new \DomainException('Input requires the matching automatic attempt.');
     }
-    $prepare = function () use ($item): ChecklistItemInterface {
-      [$fresh] = $this->preparer->prepare($item->uuid(), FALSE);
+    $prepare = function () use ($item, $expected): ChecklistItemInterface {
+      [$checklist, $fresh] = $this->preparer->load($item->uuid(), FALSE);
+      $this->authorizer->authorize($checklist, $fresh, $expected->initiator, $expected);
+      $this->preparer->prepareItem($checklist, $fresh);
       $handler = $fresh->getHandler();
       if ($fresh->getMethod() !== ChecklistItemInterface::METHOD_AUTO || !$handler instanceof IterativeChecklistItemHandlerInterface || !$handler instanceof ActionStateChecklistItemHandlerInterface || !$handler->getActionState()?->inputRequired) {
         throw new \DomainException('The automatic item is not requesting input.');
@@ -264,7 +295,9 @@ class ChecklistItemExecutor {
         // Account changes during the provider call must affect result access.
         $this->accountSwitcher->switchTo($this->preparer->executor($attempt->executor));
         try {
-          [$fresh, $current] = $this->preparer->prepare($attempt->itemUuid);
+          [$checklist, $fresh] = $this->preparer->load($attempt->itemUuid);
+          $this->authorizer->authorize($checklist, $fresh, $attempt->initiator, $attempt);
+          [, $current] = $this->preparer->prepareItem($checklist, $fresh);
           if ($current !== $snapshot) {
             throw new ChecklistAttemptConflictException('The item or its execution inputs changed.');
           }

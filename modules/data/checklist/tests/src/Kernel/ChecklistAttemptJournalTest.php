@@ -342,6 +342,24 @@ class ChecklistAttemptJournalTest extends KernelTestBase {
   }
 
   /**
+   * Adding authorization preserves legacy records without inventing approval.
+   */
+  public function testAuthorizationUpgrade(): void {
+    $item = $this->item();
+    $attempt = $this->journal->create($item, 11, 11, ChecklistAttempt::ACTION);
+    $schema = $this->container->get('database')->schema();
+    $schema->dropField('checklist_attempt', 'authorization');
+    $this->container->get('module_handler')->loadInclude('checklist', 'install');
+    checklist_update_10009();
+    checklist_update_10009();
+    $this->assertEquals($attempt, $this->journal->load($attempt->id));
+    $this->assertCount(1, $this->journal->history($attempt->id));
+    $grant = ['source' => 'self', 'authorizer' => 11];
+    $new = $this->journal->create($this->item(), 11, 11, ChecklistAttempt::ACTION, authorization: $grant);
+    $this->assertSame($grant, $this->journal->load($new->id)->authorization);
+  }
+
+  /**
    * Invalid metadata is rejected before any journal writes.
    */
   public function testInvalidMetadata(): void {

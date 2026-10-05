@@ -83,7 +83,7 @@ abstract class ChecklistItemExecutionTestBase extends KernelTestBase {
     $item = $host->work->checklist->getItem('worker');
     $item->save();
     $attempt = $record_attempt
-      ? $this->container->get('checklist.attempt_journal')->create($item, 1, $executor ?? (int) $host->id(), ChecklistAttempt::ACTION)
+      ? $this->container->get('checklist.attempt_journal')->create($item, $executor ?? (int) $host->id(), $executor ?? (int) $host->id(), ChecklistAttempt::ACTION)
       : NULL;
     return [$host, $item, $attempt];
   }

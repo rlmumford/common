@@ -429,7 +429,7 @@ class ChecklistApiControllerTest extends KernelTestBase {
     $this->assertTrue($response->headers->hasCacheControlDirective('no-store'));
     $this->assertSame($host->get('work')->first()->getPersistedInstanceUuid(), $page['instance_uuid']);
     $this->assertSame([
-      'id', 'previous', 'mode', 'status', 'version', 'initiator', 'executor',
+      'id', 'previous', 'mode', 'status', 'version', 'initiator', 'executor', 'authorization',
       'path', 'operation', 'created', 'changed',
     ], array_keys($page['attempt']));
 
