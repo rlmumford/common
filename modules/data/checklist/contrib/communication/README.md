@@ -106,3 +106,17 @@ Screenshots in `docs/screenshots/communication-checklist` were captured using
 Playwright against the isolated Drupal preview site. They use the test-only
 `recorded` transport: no real email was sent. Communication's upstream unit tests
 exercise the actual Drupal transport with a mocked mail manager.
+
+## Drupal mail integration proof
+
+The real `send` / `send_email_mailsystem` path is covered with Drupal's
+`test_mail_collector`, including a recipient plus CC. Confirmation does not send;
+the worker delivers, saves the sent status and event, and completes its item.
+Repeated ordinary submission does not deliver again. Missing recipients and
+invalid addresses introduced after confirmation fail before the mail manager and
+leave the checklist incomplete. Correcting data requires an explicit retry of the
+failed attempt; transport uncertainty still requires reconciliation first.
+
+These tests require [Communication !13](https://git.drupalcode.org/project/communication/-/merge_requests/13),
+which implements participant validation, fixes dropped CC/BCC headers and corrects
+the computed all-participants list's cardinality. CI consumes these fixes from Communication’s `2.0.x-dev` branch.

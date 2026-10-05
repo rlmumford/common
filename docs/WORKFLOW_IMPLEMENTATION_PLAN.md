@@ -675,3 +675,13 @@ confirmation and after delivery. The existing desktop split and mobile resource
 navigation are reused. Unsaved editor values stay within the editor. Kernel tests
 cover deduplication, fresh status, access, deletion and absence of side effects;
 browser coverage checks the tab through the preparation/delivery lifecycle.
+
+### Drupal mail delivery integration
+
+The communication checklist now has transport-level integration tests using the
+real Drupal mail hook with a collecting backend. They cover confirmation, saved
+recipient/body routing, sent status/event/outcomes, and changed or missing
+recipients blocking delivery with durable failed attempts. Communication !13 owns
+the validation and routing fixes, including unlimited computed participants.
+This closes the first Drupal-mail send proof; additional providers, resend and
+native operation forms remain separate slices.

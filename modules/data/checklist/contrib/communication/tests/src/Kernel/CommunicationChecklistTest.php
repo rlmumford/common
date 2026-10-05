@@ -6,6 +6,7 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Drupal\checklist\Attempt\ChecklistAttempt;
 use Drupal\checklist_communication_test\Plugin\Communication\Operation\Recorded;
 use Drupal\communication\Entity\Communication;
+use Drupal\communication\Entity\CommunicationParticipant;
 use Drupal\entity_template\Entity\TemplateBuilder;
 use Drupal\entity_template\Entity\TemplateBlueprint;
 use Drupal\Tests\checklist\Kernel\ChecklistItemExecutionTestBase;
@@ -214,6 +215,114 @@ class CommunicationChecklistTest extends ChecklistItemExecutionTestBase {
     $communication->delete();
     $this->assertNull($builder->build($communication));
     $this->assertSame([], Recorded::$calls);
+  }
+
+  /**
+   * Creates a real Drupal-mail follow-up with optional recipients.
+   */
+  protected function drupalMailWork(bool $recipient = TRUE): array {
+    $this->config('system.site')->set('mail', 'site@example.com')->save();
+    $this->config('system.mail')->set('interface.default', 'test_mail_collector')->save();
+    $this->config('communication.mode.email')->set('enabled_op_variants.send', ['send_email_mailsystem'])->save();
+    $candidate = $this->candidate('Welcome Alex', FALSE, TRUE);
+    $candidate['operation']['id'] = 'send';
+    $candidate['operation']['variant'] = 'send_email_mailsystem';
+    $candidate['template']['configuration']['components']['body'] = [
+      'id' => 'property_value',
+      'path' => 'body_plain.0.value',
+      'value' => 'Your appointment is Tuesday.',
+    ];
+    [$host, $parent] = $this->communicationWork(['default' => $candidate]);
+    $executor = $this->container->get('checklist.item_executor');
+    $this->assertSame(ChecklistAttempt::SUCCEEDED, $executor->submit($parent)->status);
+    $communication = $this->reload($parent)->get('outcomes')->get('entity')->getValue();
+    if ($recipient) {
+      foreach (['to' => 'alex@example.com', 'cc' => 'coordinator@example.com'] as $role => $email) {
+        CommunicationParticipant::create([
+          'type' => 'email',
+          'communication' => $communication,
+          'role' => $role,
+          'email' => $email,
+        ])->save();
+      }
+    }
+    $child = array_values($this->checklist($host)->getItems())[1];
+    return [$host, $child, $communication];
+  }
+
+  /**
+   * The real send operation publishes mail, outcomes and its sent event once.
+   */
+  public function testDrupalMailHandoff(): void {
+    [$host, $child, $communication] = $this->drupalMailWork();
+    $executor = $this->container->get('checklist.item_executor');
+    $attempt = $executor->submit($child);
+    $this->assertSame(ChecklistAttempt::WAITING, $attempt->status);
+    $this->assertSame([], $this->container->get('state')->get('system.test_mail_collector', []));
+    $child = $this->checklist($host)->getItem($child->getName());
+    $this->container->get('checklist.context_preparer')->prepare($this->checklist($host), $child);
+    $child->getHandler()->confirm($attempt->id, $attempt->version);
+    $queued = $this->container->get('checklist.attempt_journal')->latest($child);
+    $this->assertSame(ChecklistAttempt::SUCCEEDED, $executor->run($queued)->status);
+    $messages = $this->container->get('state')->get('system.test_mail_collector', []);
+    $this->assertCount(1, $messages);
+    $this->assertSame('alex@example.com', $messages[0]['to']);
+    $this->assertSame('coordinator@example.com', $messages[0]['headers']['Cc']);
+    $this->assertSame('Welcome Alex', $messages[0]['subject']);
+    $this->assertStringContainsString('Your appointment is Tuesday.', $messages[0]['body']);
+    $this->assertSame('sent', Communication::load($communication->id())->get('status')->value);
+    $events = $this->container->get('entity_type.manager')->getStorage('communication_event');
+    $this->assertCount(1, $events->loadByProperties(['communication' => $communication->id(), 'type' => 'sent']));
+    $this->assertTrue($this->checklist($host)->isCompletable());
+    $executor->submit($child);
+    $this->assertCount(1, $this->container->get('state')->get('system.test_mail_collector', []));
+  }
+
+  /**
+   * A recipient changed after confirmation is revalidated by the worker.
+   */
+  public function testDrupalMailRevalidatesRecipient(): void {
+    [$host, $child, $communication] = $this->drupalMailWork();
+    $executor = $this->container->get('checklist.item_executor');
+    $attempt = $executor->submit($child);
+    $checklist = $this->checklist($host);
+    $child = $checklist->getItem($child->getName());
+    $this->container->get('checklist.context_preparer')->prepare($checklist, $child);
+    $child->getHandler()->confirm($attempt->id, $attempt->version);
+    $participants = $this->container->get('entity_type.manager')->getStorage('communication_participant');
+    foreach ($participants->loadByProperties(['communication' => $communication->id(), 'role' => 'to']) as $participant) {
+      $participant->set('email', 'not-an-email')->save();
+    }
+    $queued = $this->container->get('checklist.attempt_journal')->latest($child);
+    try {
+      $executor->run($queued);
+      $this->fail('Changed recipients must be revalidated before delivery.');
+    }
+    catch (\DomainException $exception) {
+      $this->assertStringContainsString('not currently valid', $exception->getMessage());
+    }
+    $this->assertSame(ChecklistAttempt::FAILED, $this->container->get('checklist.attempt_journal')->latest($child)->status);
+    $this->assertSame([], $this->container->get('state')->get('system.test_mail_collector', []));
+    $this->assertFalse($this->checklist($host)->isCompletable());
+  }
+
+  /**
+   * A missing recipient fails before confirmation or transport side effects.
+   */
+  public function testDrupalMailMissingRecipient(): void {
+    [$host, $child, $communication] = $this->drupalMailWork(FALSE);
+    $executor = $this->container->get('checklist.item_executor');
+    try {
+      $executor->submit($child);
+      $this->fail('Missing recipients must fail validation.');
+    }
+    catch (\DomainException $exception) {
+      $this->assertStringContainsString('not currently valid', $exception->getMessage());
+    }
+    $this->assertSame(ChecklistAttempt::FAILED, $executor->submit($child)->status);
+    $this->assertSame([], $this->container->get('state')->get('system.test_mail_collector', []));
+    $this->assertSame('draft', Communication::load($communication->id())->get('status')->value);
+    $this->assertFalse($this->checklist($host)->isCompletable());
   }
 
   /**
