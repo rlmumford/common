@@ -13,9 +13,12 @@ not authorize impersonation. There is no client-facing executor override.
 
 A user with both job administration access and the restricted **Authorize
 delegated checklist execution** permission can select **Execution identity** on
-an automatic, iterative job checklist item. The standard context assignment
-widget selects the execution user; Typed Data Plus supplies property traversal,
-filters and global provider contexts when its context handler is enabled.
+any job checklist handler supporting automatic iterations, including template
+handlers that may also request interaction. The policy applies only to automatic
+execution; configuration never evaluates a handler's runtime method. The
+standard context assignment widget selects the execution user; Typed Data Plus
+supplies property traversal, filters and global provider contexts when its
+context handler is enabled.
 
 For example, this job item runs as the task assignee:
 

@@ -3,7 +3,6 @@
 namespace Drupal\task_job\Form;
 
 use Drupal\checklist\ChecklistContextCollectorInterface;
-use Drupal\checklist\Entity\ChecklistItemInterface;
 use Drupal\checklist\Plugin\ChecklistItemHandler\IterativeChecklistItemHandlerInterface;
 use Drupal\checklist\Form\ConditionConfigurationForm;
 use Drupal\Core\Form\FormStateInterface;
@@ -138,14 +137,17 @@ class JobAddChecklistItemForm extends JobPluginFormBase {
     }
     $execution = $form_state->get('execution_configuration') ?? ['mode' => 'self'];
     $plugin = $form_state->get('configured_plugin');
-    $automatic = $plugin instanceof IterativeChecklistItemHandlerInterface && $plugin->getMethod() === ChecklistItemInterface::METHOD_AUTO;
+    // Mixed handlers choose their method from live item state and contexts.
+    // Authoring has neither: configure iteration capability here and let the
+    // execution preparer enforce the automatic method at runtime.
+    $supports_iterations = $plugin instanceof IterativeChecklistItemHandlerInterface;
     $consumer = new ExecutionRule($execution);
     $form['execution'] = [
       '#type' => 'details',
       '#title' => $this->t('Execution identity'),
       '#tree' => TRUE,
       '#open' => ($execution['mode'] ?? 'self') === 'context',
-      '#access' => $automatic && $this->currentUser()->hasPermission(JobExecutionAuthorization::PERMISSION),
+      '#access' => $supports_iterations && $this->currentUser()->hasPermission(JobExecutionAuthorization::PERMISSION),
       'mode' => [
         '#type' => 'select',
         '#title' => $this->t('Run automatic work as'),
