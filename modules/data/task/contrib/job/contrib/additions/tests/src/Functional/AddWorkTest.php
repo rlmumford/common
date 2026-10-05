@@ -74,9 +74,14 @@ class AddWorkTest extends BrowserTestBase {
     $task->save();
     $this->drupalGet($task->toUrl());
     $this->assertSession()->fieldExists('template');
+    $request_id = $this->assertSession()->elementExists('css', 'input[name=request_id]')->getValue();
     $this->submitForm(['template' => 'review'], 'Add selected work');
     $this->assertSession()->pageTextContains('The checklist work has been added.');
     $this->assertSession()->pageTextContains('Confirm evidence reviewed');
+    // A repeated POST keeps the original request ID after the form was rebuilt.
+    $this->assertSession()->elementExists('css', 'input[name=request_id]')->setValue($request_id);
+    $this->submitForm(['template' => 'review'], 'Add selected work');
+    $this->assertCount(1, $this->container->get('task_job_additions.storage')->forTask($task->uuid()));
     $this->submitForm(['template' => 'review'], 'Add selected work');
     $this->assertCount(2, $this->container->get('task_job_additions.storage')->forTask($task->uuid()));
     $this->drupalLogin($this->drupalCreateUser(['view any tasks', 'update any tasks']));

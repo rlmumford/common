@@ -79,8 +79,9 @@ Malformed input returns 400; denied access or unapproved work returns 403; an
 occupied worker lock, conflicting UUID or addition limit returns 409. Refresh
 choices after an access/configuration change. A 409 caused by active processing
 can be retried using the same request UUID. Discovery and receipt responses are
-private and uncached. HTML uses this same addition service and keeps its request
-UUID in server-side form state.
+private and uncached. HTML uses this same addition service. It generates a request UUID for the form
+and posts it back as an idempotency key, so a repeated POST remains harmless even
+after the successful form cache is discarded. The UUID does not confer access.
 
 ## Verification
 

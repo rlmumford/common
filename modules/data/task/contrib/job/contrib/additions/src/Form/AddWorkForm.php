@@ -42,6 +42,13 @@ class AddWorkForm extends FormBase {
     if (!$form_state->has('addition_request')) {
       $form_state->set('addition_request', $this->uuid->generate());
     }
+    // Preserve the request identity across repeated POSTs, even after Drupal
+    // discards the successfully submitted form cache. This is an idempotency
+    // key, not authority: the manager rechecks its task, template and actor.
+    $form['request_id'] = [
+      '#type' => 'hidden',
+      '#default_value' => $form_state->get('addition_request'),
+    ];
     $form['work'] = [
       '#type' => 'details',
       '#title' => $this->t('Add work'),
@@ -68,11 +75,11 @@ class AddWorkForm extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     $task = $form_state->getBuildInfo()['args'][0];
     try {
-      $this->manager->add($task, $form_state->getValue('template'), $form_state->get('addition_request'));
+      $this->manager->add($task, $form_state->getValue('template'), $form_state->getValue('request_id'));
       $this->messenger()->addStatus($this->t('The checklist work has been added.'));
       $form_state->setRedirectUrl($task->toUrl());
     }
-    catch (HttpException $exception) {
+    catch (HttpException | \InvalidArgumentException $exception) {
       $this->messenger()->addError($exception->getMessage());
       $form_state->setRebuild();
     }
