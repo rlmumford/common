@@ -25,9 +25,16 @@ function task_job_additions_form_alter(array &$form, FormStateInterface $form_st
   $templates = $object->getEntity()->get('checklist_templates') ?: [];
   $form['templates'][$name]['allow_addition'] = [
     '#type' => 'checkbox',
-    '#title' => t('Allow staff to add this template to existing tasks'),
-    '#description' => t('Staff also need permission to add checklist templates and edit the task. Each addition gets independent items and uses this task’s job version and contexts.'),
+    '#title' => t('Expose template as an addition'),
+    '#description' => t('Users also need permission to add checklist templates and edit the task. Each addition gets independent items and uses this task’s job version and contexts.'),
     '#default_value' => !empty($templates[$name]['allow_addition']),
+    '#weight' => -2,
+  ];
+  $form['templates'][$name]['addition_label'] = [
+    '#type' => 'textfield',
+    '#title' => t('Addition label'),
+    '#description' => t('Shown in Add work. Leave blank to use the template label.'),
+    '#default_value' => $templates[$name]['addition_label'] ?? '',
     '#weight' => -1,
   ];
   $form['#entity_builders'][] = 'task_job_additions_build_job';
@@ -41,6 +48,7 @@ function task_job_additions_build_job($entity_type, EntityInterface $entity, arr
   foreach ($form_state->getValue('templates', []) as $name => $values) {
     if (isset($templates[$name]) && isset($form['templates'][$name]['allow_addition'])) {
       $templates[$name]['allow_addition'] = !empty($values['allow_addition']);
+      $templates[$name]['addition_label'] = trim($values['addition_label'] ?? '');
     }
   }
   $entity->set('checklist_templates', $templates);

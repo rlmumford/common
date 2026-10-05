@@ -76,7 +76,7 @@ class AdditionManager {
     $templates = [];
     foreach ($job->get('checklist_templates') ?: [] as $name => $definition) {
       if (!empty($definition['allow_addition']) && !empty($definition['items'])) {
-        $templates[$name] = ['label' => $definition['label']];
+        $templates[$name] = ['label' => trim($definition['addition_label'] ?? '') ?: $definition['label']];
       }
     }
     return ['templates' => $templates, 'additions' => array_values($this->storage->forTask($task->uuid()))];

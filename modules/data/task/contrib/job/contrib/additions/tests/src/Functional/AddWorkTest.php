@@ -62,18 +62,22 @@ class AddWorkTest extends BrowserTestBase {
   public function testAuthorAndAddWork(): void {
     $url = '/admin/config/task/job/support/edit/templates/review';
     $this->drupalGet($url);
-    $this->submitForm(['templates[review][allow_addition]' => TRUE], 'Apply to draft');
+    $this->submitForm([
+      'templates[review][allow_addition]' => TRUE,
+      'templates[review][addition_label]' => 'Request an evidence review',
+    ], 'Apply to draft');
     $storage = $this->container->get('entity_type.manager')->getStorage('task_job');
     $this->assertFalse($storage->loadUnchanged('support')->get('checklist_templates')['review']['allow_addition']);
     $this->clickLink('Settings');
     $this->drupalGet($url);
     $this->assertSession()->checkboxChecked('templates[review][allow_addition]');
+    $this->assertSession()->fieldValueEquals('templates[review][addition_label]', 'Request an evidence review');
     $this->submitForm([], 'Save');
     $this->assertTrue($storage->loadUnchanged('support')->get('checklist_templates')['review']['allow_addition']);
     $task = Task::create(['title' => 'Review task', 'job' => 'support', 'start' => '2000-01-01T00:00:00']);
     $task->save();
     $this->drupalGet($task->toUrl());
-    $this->assertSession()->fieldExists('template');
+    $this->assertSession()->optionExists('template', 'Request an evidence review');
     $request_id = $this->assertSession()->elementExists('css', 'input[name=request_id]')->getValue();
     $this->submitForm(['template' => 'review'], 'Add selected work');
     $this->assertSession()->pageTextContains('The checklist work has been added.');

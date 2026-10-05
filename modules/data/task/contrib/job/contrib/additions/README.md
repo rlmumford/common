@@ -1,7 +1,8 @@
 # Add reusable job work to an existing task
 
 Enable `task_job_additions`. In a job's **Checklist templates** tab, open a
-named template and select **Allow staff to add this template to existing tasks**.
+named template and select **Expose template as an addition**. Set an optional **Addition label** for the
+Add work selector; leave it blank to use the template label.
 The option is part of the shared job draft: Apply keeps it in the draft; Save
 publishes it alongside the rest of that job version.
 
