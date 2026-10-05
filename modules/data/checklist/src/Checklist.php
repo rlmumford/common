@@ -140,7 +140,7 @@ class Checklist implements ChecklistInterface {
   protected function applyItemDefinitions(array $items): array {
     $this->definedItems = [];
     // Fill in gaps, retaining persisted work and its identity.
-    foreach ($this->getType()->getDefaultItems() as $name => $item) {
+    foreach ($this->getDefaultItems() as $name => $item) {
       $this->definedItems[$name] = TRUE;
       if (isset($items[$name])) {
         $this->applyItemDefinition($items[$name], $item);
@@ -161,6 +161,13 @@ class Checklist implements ChecklistInterface {
     }
 
     return $items;
+  }
+
+  /**
+   * Loads definitions for this checklist's host.
+   */
+  protected function getDefaultItems(): array {
+    return $this->getType()->getDefaultItems();
   }
 
   /**

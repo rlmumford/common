@@ -71,6 +71,7 @@ jobs:
           vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/task/contrib/job/tests/src/Kernel/VersionedJobChecklistTest.php
           vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/task/contrib/job/tests/src/Kernel/DecisionChecklistTemplatesTest.php
           vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/task/contrib/job/tests/src/Kernel/AssignmentRulesTest.php
+          vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/task/contrib/job/contrib/additions/tests/src/Kernel
       - name: Test the service module
         working-directory: /tmp/task-consumer
         env:
@@ -100,6 +101,7 @@ jobs:
           ../vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php modules/contrib/checklist/contrib/flexiform/tests/src
           ../vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php modules/contrib/checklist/contrib/communication/tests/src
           ../vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php modules/contrib/task/contrib/job/tests/src/Functional
+          ../vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php modules/contrib/task/contrib/job/contrib/additions/tests/src/Functional
       - name: Show the browser server log on failure
         if: failure()
         run: tail -n 200 /tmp/checklist-browser.log

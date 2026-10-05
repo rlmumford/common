@@ -79,3 +79,14 @@ checklist_item_handler.decision:
           available:
             type: condition.plugin.[id]
             label: 'Availability condition'
+
+field.formatter.settings.checklist_interactive:
+  type: mapping
+  label: 'Interactive checklist formatter settings'
+  mapping:
+    form_container_selector:
+      type: string
+      label: 'Form container selector'
+    resource_container_selector:
+      type: string
+      label: 'Resource container selector'
