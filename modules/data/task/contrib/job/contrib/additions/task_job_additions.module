@@ -94,6 +94,8 @@ function task_job_additions_entity_view(array &$build, EntityInterface $entity, 
     return;
   }
   $build['checklist'][0]['actions']['add_work'] = \Drupal::service('task_job_additions.workspace')->build($entity);
+  $build['checklist'][0]['actions']['add_work']['#weight'] = 1;
+  $build['checklist'][0]['actions']['completion_form']['#weight'] = 2;
 }
 
 /**
