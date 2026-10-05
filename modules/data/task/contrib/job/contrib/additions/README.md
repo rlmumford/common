@@ -52,6 +52,18 @@ or resumes an attempt. The receipt records who added the work; the attempt keeps
 its initiator, executor and job authorizer as distinct identities. Later processing
 may be initiated by another authorized task save without rewriting the receipt.
 
+## Compact task controls
+
+Available additions appear in an **Other Actions** dropbutton. Each named action
+submits directly through Drupal Form API, keeping its CSRF protection and the
+same server-side availability/access checks as the API.
+
+Up to five additions fit in the menu. With more choices, the first four remain
+there and **Do something else** opens an inline chooser in the checklist action
+area. The chooser lists all available additions and has Add and Cancel actions.
+Opening or cancelling it does not persist a checklist item or addition receipt.
+The chooser also works without JavaScript through an ordinary form rebuild.
+
 ## Optional HTTP API
 
 Enable `task_job_additions_api` to expose:

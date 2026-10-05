@@ -1,4 +1,7 @@
 workspace:
+  css:
+    component:
+      css/additions.css: {}
   js:
     js/additions.js: {}
   dependencies:
