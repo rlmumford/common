@@ -685,3 +685,16 @@ recipients blocking delivery with durable failed attempts. Communication !13 own
 the validation and routing fixes, including unlimited computed participants.
 This closes the first Drupal-mail send proof; additional providers, resend and
 native operation forms remain separate slices.
+
+### Authorized staff additions from reusable job templates
+
+PR #125 supplied local job execution approval and distinct initiator, executor and
+authorizer identities. The next increment adds optional `task_job_additions`:
+configurers explicitly expose named job templates for staff to add to existing
+tasks. Separate UUID receipts preserve source job/version and the initiating user;
+scoped items retain independent outcomes and use the existing dirty-version policy.
+The task workspace provides Add work; `task_job_additions_api` separately enables
+HTTP discovery and idempotent creation. Neither surface accepts execution policy
+or handler configuration. See the [module guide](../modules/data/task/contrib/job/contrib/additions/README.md)
+for authorization, transaction behavior, limits and tests. Per-addition input
+context overrides and management/removal of whole additions remain separate work.

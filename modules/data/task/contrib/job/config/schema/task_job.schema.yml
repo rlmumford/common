@@ -71,6 +71,9 @@ task_job.task_job.*:
           label:
             type: label
             label: 'Template label'
+          allow_addition:
+            type: boolean
+            label: 'Available for staff addition'
           items:
             type: sequence
             label: 'Checklist items'
