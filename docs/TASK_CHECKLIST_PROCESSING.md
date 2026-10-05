@@ -11,6 +11,8 @@ work: resolving a prerequisite saves its dependants, and newly active tasks
 request processing. Generalised entity/event dependencies remain a separate
 slice; their design is in [TASK_DEPENDENCIES_AND_EVENTS.md](TASK_DEPENDENCIES_AND_EVENTS.md).
 
+Job items can opt into [locally authorized delegated execution](CHECKLIST_EXECUTION_AUTHORIZATION.md). The request account remains the initiator; approved items may execute as a separately selected user.
+
 ## Save, dispatch and execution
 
 `task_checklist.request_storage` records requests in the same SQL transaction as

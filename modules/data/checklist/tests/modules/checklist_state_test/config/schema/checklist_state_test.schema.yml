@@ -7,3 +7,5 @@ checklist_item_handler.single_step_test:
         type: string
 checklist_item_handler.background_step_test:
   type: checklist_item_handler.single_step_test
+checklist_item_handler.iteration_test:
+  type: checklist_item_handler.single_step_test

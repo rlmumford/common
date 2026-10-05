@@ -104,7 +104,8 @@ class ChecklistHistoryPageTest extends ChecklistItemExecutionTestBase {
    * Actor names are not exposed when the viewer cannot view their profiles.
    */
   public function testPrivateActorName(): void {
-    [$host] = $this->work();
+    [$host, $item] = $this->work(record_attempt: FALSE);
+    $this->container->get('checklist.attempt_journal')->create($item, 1, 1, ChecklistAttempt::ACTION);
     $this->container->get('current_user')->setAccount($host);
     $page = ChecklistHistoryController::create($this->container)->view(Request::create('/'), 'user', $host->id(), 'work', 'worker');
     $this->assertStringContainsString('User 1', (string) $page['summary']['#value']);

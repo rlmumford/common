@@ -50,6 +50,8 @@ final class ChecklistAttempt {
    *   Creation timestamp.
    * @param int $changed
    *   Last transition timestamp.
+   * @param array $authorization
+   *   Server-established authorization provenance, never client input.
    */
   public function __construct(
     public readonly string $id,
@@ -64,6 +66,7 @@ final class ChecklistAttempt {
     public readonly ?string $operation,
     public readonly int $created,
     public readonly int $changed,
+    public readonly array $authorization = [],
   ) {}
 
   /**

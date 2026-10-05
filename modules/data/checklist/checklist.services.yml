@@ -54,9 +54,12 @@ services:
   checklist.attempt_claims:
     class: Drupal\checklist\Attempt\ChecklistAttemptClaims
     arguments: ['@database', '@checklist.attempt_journal', '@uuid', '@datetime.time']
+  checklist.execution_authorizer:
+    class: Drupal\checklist\Execution\ChecklistExecutionAuthorizer
+    arguments: ['@event_dispatcher']
   checklist.item_executor:
     class: Drupal\checklist\Execution\ChecklistItemExecutor
-    arguments: ['@checklist.item_execution_preparer', '@account_switcher', '@checklist.attempt_journal', '@checklist.attempt_claims', '@current_user', '@database']
+    arguments: ['@checklist.item_execution_preparer', '@account_switcher', '@checklist.attempt_journal', '@checklist.attempt_claims', '@current_user', '@database', '@checklist.execution_authorizer']
   checklist.item_execution_preparer:
     class: Drupal\checklist\Execution\ChecklistItemExecutionPreparer
     arguments: ['@entity_type.manager', '@checklist.resolver', '@checklist.context_preparer']

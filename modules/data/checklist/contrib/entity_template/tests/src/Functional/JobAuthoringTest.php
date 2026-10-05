@@ -86,6 +86,10 @@ class JobAuthoringTest extends BrowserTestBase {
   public function testTemplate(): void {
     $this->drupalGet('/admin/config/task/job/authoring/checklist/add/entity_template__create');
     $this->assertSession()->statusCodeEquals(200);
+    // Template handlers have no runtime item during configuration. Their
+    // automatic execution policy must still be configurable at this point.
+    $this->assertSession()->fieldExists('execution[mode]');
+    $this->assertSession()->fieldValueEquals('execution[mode]', 'self');
     $prefix = 'plugin_configuration[templates][0]';
     $source = $prefix . '[template][configuration]';
     $this->submitForm([

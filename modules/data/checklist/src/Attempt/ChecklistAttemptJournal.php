@@ -56,6 +56,8 @@ class ChecklistAttemptJournal {
    *   Initial, resume or fresh intent.
    * @param string|null $previous
    *   Expected predecessor UUID, required for resume/fresh.
+   * @param array $authorization
+   *   Authorization provenance established by the execution coordinator.
    *
    * @return \Drupal\checklist\Attempt\ChecklistAttempt
    *   The new queued attempt.
@@ -65,7 +67,7 @@ class ChecklistAttemptJournal {
    * @throws \DomainException
    *   When a predecessor cannot be succeeded in the requested mode.
    */
-  public function create(ChecklistItemInterface $item, int $initiator, int $executor, string $path, ?string $operation = NULL, string $mode = ChecklistAttempt::INITIAL, ?string $previous = NULL): ChecklistAttempt {
+  public function create(ChecklistItemInterface $item, int $initiator, int $executor, string $path, ?string $operation = NULL, string $mode = ChecklistAttempt::INITIAL, ?string $previous = NULL, array $authorization = []): ChecklistAttempt {
     $item_uuid = $item->uuid();
     if (!Uuid::isValid($item_uuid) || $initiator < 0 || $executor < 0) {
       throw new \InvalidArgumentException('An item UUID and nonnegative account IDs are required.');
@@ -120,6 +122,7 @@ class ChecklistAttemptJournal {
         'version' => 1,
         'initiator' => $initiator,
         'executor' => $executor,
+        'authorization' => json_encode($authorization, JSON_THROW_ON_ERROR),
         'path' => $path,
         'operation' => $operation,
         'created' => $now,
@@ -209,6 +212,7 @@ class ChecklistAttemptJournal {
       $row['status'], (int) $row['version'], (int) $row['initiator'],
       (int) $row['executor'], $row['path'], $row['operation'],
       (int) $row['created'], (int) $row['changed'],
+      empty($row['authorization']) ? [] : json_decode($row['authorization'], TRUE, 512, JSON_THROW_ON_ERROR),
     ) : NULL;
   }
 
