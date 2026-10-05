@@ -698,3 +698,13 @@ HTTP discovery and idempotent creation. Neither surface accepts execution policy
 or handler configuration. See the [module guide](../modules/data/task/contrib/job/contrib/additions/README.md)
 for authorization, transaction behavior, limits and tests. Per-addition input
 context overrides and management/removal of whole additions remain separate work.
+
+### Conditional availability of additions
+
+The next additions increment adds an optional native condition configuration to
+exposed job templates. The existing condition editor/evaluator supplies task/job
+contexts, outcomes, global providers and condition groups. UI/API discovery and
+creation share the rule; creation rechecks fresh task data. Rules control new
+additions, preserving existing work and harmless request replay. The rule stays
+inside the job draft/version and its plugin dependencies join the job dependency
+calculation. Per-addition input contexts remain separate work.
