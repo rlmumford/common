@@ -119,5 +119,4 @@ failed attempt; transport uncertainty still requires reconciliation first.
 
 These tests require [Communication !13](https://git.drupalcode.org/project/communication/-/merge_requests/13),
 which implements participant validation, fixes dropped CC/BCC headers and corrects
-the computed all-participants list's cardinality. The CI dependency temporarily
-tracks that MR branch; return it to `2.0.x-dev` after the upstream merge.
+the computed all-participants list's cardinality. CI consumes these fixes from Communication’s `2.0.x-dev` branch.
