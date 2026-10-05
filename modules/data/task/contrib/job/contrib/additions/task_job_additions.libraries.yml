@@ -1,0 +1,5 @@
+workspace:
+  js:
+    js/additions.js: {}
+  dependencies:
+    - core/drupal.ajax
