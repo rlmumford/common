@@ -719,3 +719,14 @@ existing receipts use the default button. Configuration remains part of named/
 dirty job versions and execution approval. API callers cannot supply mappings.
 Decision choices also map into declared template inputs. A future expansion item
 will own invocation mappings; looping and interactive input capture are deferred.
+
+
+### Automatic checklist-template invocation
+
+The `task_job` Add checklist template item now owns a single invocation's input
+mapping. It reuses stable scoped definitions and activates its children immediately
+after audited parent completion. Nested templates, independent invocations,
+required-input blocking, replay/retry, execution approval and named/dirty versions
+are covered by kernel tests; a browser test covers configuration through the job
+draft. Existing decision expansion remains supported. Looping is still deferred.
+See the [job module guide](../modules/data/task/contrib/job/README.md#add-checklist-template-item).

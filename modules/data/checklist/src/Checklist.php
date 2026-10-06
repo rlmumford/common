@@ -196,7 +196,9 @@ class Checklist implements ChecklistInterface {
     }
     foreach ($derivation['requirements'] ?? [] as $parent => $choice) {
       $source = $items[$parent] ?? NULL;
-      if (!$source || !$source->isComplete() || $source->get('outcomes')->get('decision')?->getValue() !== $choice) {
+      $outcome = is_array($choice) ? $choice['outcome'] : 'decision';
+      $expected = is_array($choice) ? $choice['value'] : $choice;
+      if (!$source || !$source->isComplete() || $source->get('outcomes')->get($outcome)?->getValue() !== $expected) {
         return FALSE;
       }
     }
