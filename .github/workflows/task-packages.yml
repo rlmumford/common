@@ -103,6 +103,7 @@ jobs:
           php -S 127.0.0.1:8888 /tmp/task-consumer/web/.ht.router.php > /tmp/checklist-browser.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid"' EXIT
+          ../vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php modules/contrib/document/contrib/checklist/tests/src/Functional
           ../vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php modules/contrib/checklist/contrib/entity_template/tests/src
           ../vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php modules/contrib/checklist/contrib/flexiform/tests/src
           ../vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php modules/contrib/checklist/contrib/communication/tests/src
