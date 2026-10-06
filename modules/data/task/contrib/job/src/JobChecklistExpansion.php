@@ -22,7 +22,7 @@ final class JobChecklistExpansion {
   /**
    * Expands a separately recorded template instance with local outcome aliases.
    */
-  public static function instance(string $template, array $templates, string $prefix): array {
+  public static function instance(string $template, array $templates, string $prefix, array $context_mapping = []): array {
     if (!isset($templates[$template])) {
       return [];
     }
@@ -32,7 +32,8 @@ final class JobChecklistExpansion {
       $aliases[$name] = $prefix . $name;
     }
     $result = [];
-    self::append($result, $items, $templates, $prefix, [], [['aliases' => $aliases, 'context_mapping' => []]], [$template]);
+    $scope = ['aliases' => $aliases, 'context_mapping' => $context_mapping];
+    self::append($result, $items, $templates, $prefix, [], [$scope], [$template]);
     return $result;
   }
 

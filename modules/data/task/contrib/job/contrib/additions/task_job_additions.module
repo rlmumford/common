@@ -5,6 +5,7 @@
  * Authoring and task workspace integration for explicitly available additions.
  */
 
+use Drupal\checklist\ChecklistContextMapping;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -39,6 +40,38 @@ function task_job_additions_form_alter(array &$form, FormStateInterface $form_st
   ];
   $checklist = JobConfigurationChecklist::createFromJob($object->getEntity());
   $contexts = \Drupal::service('checklist.context_collector')->collectConfigContexts($checklist);
+  $definitions = [];
+  foreach ($object->getEntity()->getContextDefinitions() as $key => $definition) {
+    $definitions['task_context:' . $key] = (clone $definition)->setRequired(FALSE);
+  }
+  if ($definitions) {
+    $configuration = $templates[$name]['addition_context_mapping'] ?? [];
+    $mapping = ChecklistContextMapping::fromDefinitions($definitions, $configuration);
+    $handler = \Drupal::service('context.handler');
+    $element = ['#tree' => TRUE];
+    if (method_exists($handler, 'getContextAssignmentElement')) {
+      $element = $handler->getContextAssignmentElement($mapping, $contexts);
+    }
+    else {
+      foreach ($definitions as $key => $definition) {
+        $matches = $handler->getMatchingContexts($contexts, $definition);
+        $element[$key] = [
+          '#type' => 'select',
+          '#title' => $definition->getLabel(),
+          '#options' => array_map(static fn($context) => $context->getContextDefinition()->getLabel(), $matches),
+          '#empty_option' => t('- Inherit -'),
+          '#empty_value' => '',
+          '#default_value' => $configuration[$key] ?? '',
+        ];
+      }
+    }
+    $element['#type'] = 'details';
+    $element['#title'] = t('Addition context mapping');
+    $element['#description'] = t('Leave empty to inherit the task’s job contexts. Mapped values apply only to this addition and its children, using current task contexts when the items run. Availability conditions still use the parent task contexts.');
+    $element['#open'] = !empty($configuration);
+    $element['#weight'] = -1;
+    $form['templates'][$name]['addition_context_mapping'] = $element;
+  }
   $form['templates'][$name]['addition_condition'] = \Drupal::service('checklist.condition_configuration_form')->build([
     '#type' => 'details',
     '#title' => t('Addition availability'),
@@ -75,6 +108,11 @@ function task_job_additions_build_job($entity_type, EntityInterface $entity, arr
     if (isset($templates[$name]) && isset($form['templates'][$name]['allow_addition'])) {
       $templates[$name]['allow_addition'] = !empty($values['allow_addition']);
       $templates[$name]['addition_label'] = trim($values['addition_label'] ?? '');
+      $mapping = array_filter($values['addition_context_mapping'] ?? [], static fn($value) => $value !== '');
+      unset($templates[$name]['addition_context_mapping']);
+      if ($mapping) {
+        $templates[$name]['addition_context_mapping'] = $mapping;
+      }
       if ($form_state->has('addition_condition_configuration')) {
         unset($templates[$name]['addition_condition']);
         if ($condition = $form_state->get('addition_condition_configuration')) {

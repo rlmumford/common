@@ -95,6 +95,38 @@ class AddWorkTest extends BrowserTestBase {
   }
 
   /**
+   * Mapping uses the shared widget and stays in the job draft until Save.
+   */
+  public function testAdditionMappingAuthoring(): void {
+    $job = Job::load('support');
+    $job->set('context', [
+      'subject' => ['type' => 'string', 'label' => 'Subject', 'required' => TRUE],
+      'contact' => ['type' => 'entity:user', 'label' => 'Contact', 'required' => FALSE],
+    ]);
+    $templates = $job->get('checklist_templates');
+    $templates['review']['addition_condition'] = [
+      'id' => 'condition_string',
+      'condition_string' => 'checklist.title.value == "More work"',
+    ];
+    $job->set('checklist_templates', $templates)->save();
+    $url = '/admin/config/task/job/support/edit/templates/review';
+    $field = 'templates[review][addition_context_mapping][task_context:subject]';
+    $this->drupalGet($url);
+    $this->assertSession()->elementAttributeContains('css', '[name="' . $field . '"]', 'data-autocomplete-path', 'typed_data_context_assignment_autocomplete');
+    $this->assertSession()->fieldNotExists('templates[review][addition_context_mapping][checklist:entity]');
+    $this->submitForm([$field => 'checklist:entity.title.value'], 'Apply to draft');
+    $storage = $this->container->get('entity_type.manager')->getStorage('task_job');
+    $this->assertArrayNotHasKey('addition_context_mapping', $storage->loadUnchanged('support')->get('checklist_templates')['review']);
+    $this->clickLink('Settings');
+    $this->drupalGet($url);
+    $this->assertSession()->fieldValueEquals($field, 'checklist:entity.title.value');
+    $this->submitForm([], 'Save');
+    $this->assertSame(['task_context:subject' => 'checklist:entity.title.value'], $storage->loadUnchanged('support')->get('checklist_templates')['review']['addition_context_mapping']);
+    $this->submitForm([$field => ''], 'Save');
+    $this->assertArrayNotHasKey('addition_context_mapping', $storage->loadUnchanged('support')->get('checklist_templates')['review']);
+  }
+
+  /**
    * Long lists open a cancellable chooser without adding work on navigation.
    */
   public function testOverflowChooser(): void {

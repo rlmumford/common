@@ -96,6 +96,102 @@ class ChecklistAdditionsTest extends KernelTestBase {
   }
 
   /**
+   * Authored mappings scope inputs without rewriting task or sibling contexts.
+   */
+  public function testAdditionContextMapping(): void {
+    [$job, $task] = $this->work();
+    $job->set('context', ['subject' => ['type' => 'string', 'label' => 'Subject', 'required' => FALSE]]);
+    $templates = $job->get('checklist_templates');
+    $templates['review']['addition_context_mapping'] = ['task_context:subject' => 'checklist:entity.title.value'];
+    $templates['review']['items']['record']['handler_configuration']['context_mapping']['value'] = 'task_context:subject';
+    $templates['inherited'] = $templates['review'];
+    unset($templates['inherited']['addition_context_mapping']);
+    $templates['review']['items']['decision']['handler_configuration']['options']['yes']['template'] = 'child';
+    $templates['child'] = ['label' => 'Nested', 'items' => ['record' => $templates['review']['items']['record']]];
+    $job->set('checklist_templates', $templates)->save();
+    $task = $this->reload($task);
+    $task->get('context')->set('subject', 'Inherited subject');
+    $task->save();
+    $manager = $this->container->get('task_job_additions.manager');
+    $a = $this->container->get('uuid')->generate();
+    $b = $this->container->get('uuid')->generate();
+    $manager->add($task, 'review', $a);
+    $manager->add($task, 'inherited', $b);
+    $checklist = $this->reload($task)->checklist->checklist;
+    $preparer = $this->container->get('checklist.context_preparer');
+    foreach ([$a => 'Support task', $b => 'Inherited subject'] as $id => $expected) {
+      $item = $checklist->getItem(AdditionDefinitions::prefix($id) . 'record');
+      $this->assertTrue($preparer->prepare($checklist, $item));
+      $this->assertSame($expected, $item->getHandler()->getContextValue('value'));
+    }
+    $this->container->get('checklist.action_operation_dispatcher')->execute($checklist, AdditionDefinitions::prefix($a) . 'decision', 'choose', ['choice' => 'yes']);
+    $child = $checklist->getItem(AdditionDefinitions::prefix($a) . 'decision__yes__child__record');
+    $this->assertTrue($preparer->prepare($checklist, $child));
+    $this->assertSame('Support task', $child->getHandler()->getContextValue('value'));
+    $this->assertSame('Inherited subject', $this->reload($task)->get('context')->get('subject')->getValue());
+    // Inputs are resolved afresh, rather than snapshotted when added.
+    $task->set('title', 'Updated title')->save();
+    $checklist = $this->reload($task)->checklist->checklist;
+    $item = $checklist->getItem(AdditionDefinitions::prefix($a) . 'record');
+    $this->assertTrue($preparer->prepare($checklist, $item));
+    $this->assertSame('Updated title', $item->getHandler()->getContextValue('value'));
+  }
+
+  /**
+   * Missing outcomes block consumers; provider values use normal resolution.
+   */
+  public function testAdditionOutcomeAndProviderInputs(): void {
+    [$job, $task] = $this->work();
+    $job->set('context', [
+      'subject' => ['type' => 'string', 'label' => 'Subject', 'required' => FALSE],
+      'owner' => ['type' => 'entity:user', 'label' => 'Owner', 'required' => FALSE],
+    ]);
+    $job->set('default_checklist', [
+      'source' => [
+        'label' => 'Source decision',
+        'handler' => 'decision',
+        'handler_configuration' => ['options' => ['yes' => ['label' => 'Yes']]],
+      ],
+    ]);
+    $templates = $job->get('checklist_templates');
+    $templates['review']['addition_context_mapping'] = [
+      'task_context:subject' => 'item:source:decision',
+      'task_context:owner' => '@user.current_user_context:current_user',
+    ];
+    $templates['review']['items']['record']['handler_configuration']['context_mapping']['value'] = 'task_context:subject';
+    $job->set('checklist_templates', $templates)->save();
+    $id = $this->container->get('uuid')->generate();
+    $this->container->get('task_job_additions.manager')->add($task, 'review', $id);
+    $checklist = $this->reload($task)->checklist->checklist;
+    $item = $checklist->getItem(AdditionDefinitions::prefix($id) . 'record');
+    $preparer = $this->container->get('checklist.context_preparer');
+    $this->assertFalse($preparer->prepare($checklist, $item));
+    $this->container->get('checklist.action_operation_dispatcher')->execute($checklist, 'source', 'choose', ['choice' => 'yes']);
+    $this->assertTrue($preparer->prepare($checklist, $item));
+    $this->assertSame('yes', $item->getHandler()->getContextValue('value'));
+    $contexts = $this->container->get('checklist.context_collector')->collectRuntimeContexts($checklist, $item);
+    $this->assertSame($this->container->get('current_user')->id(), $contexts['task_context:owner']->getContextValue()->id());
+  }
+
+  /**
+   * Authored mappings cannot replace the fixed host or undeclared contexts.
+   */
+  public function testInvalidAdditionMappingDestination(): void {
+    [$job, $task] = $this->work();
+    $templates = $job->get('checklist_templates');
+    $templates['review']['addition_context_mapping'] = ['checklist:entity' => '@user.current_user_context:current_user'];
+    $job->set('checklist_templates', $templates)->save();
+    try {
+      $this->container->get('task_job_additions.manager')->add($task, 'review', $this->container->get('uuid')->generate());
+      $this->fail('Host context replacement must be rejected.');
+    }
+    catch (\InvalidArgumentException $exception) {
+      $this->assertStringContainsString('declared job inputs', $exception->getMessage());
+      $this->assertSame([], $this->container->get('task_job_additions.storage')->forTask($task->uuid()));
+    }
+  }
+
+  /**
    * Row refreshes add and remove choices as current task conditions change.
    */
   public function testWorkspaceRefresh(): void {
@@ -162,9 +258,13 @@ class ChecklistAdditionsTest extends KernelTestBase {
    */
   public function testVersionedDefinitionsAndRetainedReceipts(): void {
     [$job, $task] = $this->work();
+    $job->set('context', ['subject' => ['type' => 'string', 'label' => 'Subject', 'required' => FALSE]])->save();
     $versions = $this->container->get('task_job.version_resolver');
     $version = $versions->createVersion($job, '6');
-    $version->save();
+    $templates = $version->get('checklist_templates');
+    $templates['review']['addition_context_mapping'] = ['task_context:subject' => 'checklist:entity.title.value'];
+    $version->set('checklist_templates', $templates)->save();
+    $task->set('description', 'Dirty mapped input');
     $task->set('job_version', '6');
     $task->set('checklist', ['id' => 'job', 'configuration' => ['job' => 'support', 'job_version' => '6']]);
     $task->save();
@@ -182,7 +282,12 @@ class ChecklistAdditionsTest extends KernelTestBase {
     $items = $latest->getChecklistItems('review');
     $items['record']['label'] = 'Wrong version';
     $latest->setChecklistItems($items, 'review');
-    $latest->save();
+    $templates = $latest->get('checklist_templates');
+    $templates['review']['addition_context_mapping'] = ['task_context:subject' => 'checklist:entity.description.value'];
+    $latest->set('checklist_templates', $templates)->save();
+    $pinned = $this->reload($task)->checklist->checklist;
+    $contexts = $this->container->get('checklist.context_collector')->collectRuntimeContexts($pinned, $pinned->getItem($prefix . 'record'));
+    $this->assertSame('Support task', $contexts['task_context:subject']->getContextValue());
     $this->assertSame('Record outcome', $this->reload($task)->checklist->checklist->getItem($prefix . 'record')->get('title')->value);
     $dirty = $versions->createDirtyVersion($version);
     $items['record']['label'] = 'Corrected outcome';
@@ -190,11 +295,14 @@ class ChecklistAdditionsTest extends KernelTestBase {
     $dirty->setChecklistItems($items, 'review');
     $templates = $dirty->get('checklist_templates');
     $templates['review']['addition_condition'] = ['id' => 'condition_constant:false'];
+    $templates['review']['addition_context_mapping'] = ['task_context:subject' => 'checklist:entity.description.value'];
     $dirty->set('checklist_templates', $templates);
     $dirty->save();
     $this->assertSame([], $manager->discover($task)['templates']);
     $checklist = $this->reload($task)->checklist->checklist;
     $this->assertSame($dirty->id(), $checklist->getType()->getJob()->id());
+    $contexts = $this->container->get('checklist.context_collector')->collectRuntimeContexts($checklist, $checklist->getItem($prefix . 'record'));
+    $this->assertSame('Dirty mapped input', $contexts['task_context:subject']->getContextValue());
     $this->assertTrue($checklist->getItem($prefix . 'record')->isIncomplete());
     $this->assertSame('Corrected outcome', $checklist->getItem($prefix . 'record')->get('title')->value);
     $this->assertSame($uuid, $checklist->getItem($prefix . 'record')->uuid());
@@ -271,15 +379,17 @@ class ChecklistAdditionsTest extends KernelTestBase {
     $worker->save();
     $this->container->get('current_user')->setAccount($author);
     $templates = $job->get('checklist_templates');
+    $job->set('context', ['worker' => ['type' => 'entity:user', 'label' => 'Worker']]);
     $templates['automatic'] = [
       'label' => 'Automatic work',
+      'addition_context_mapping' => ['task_context:worker' => 'checklist:entity.assignee.entity'],
       'allow_addition' => TRUE,
       'items' => [
         'work' => [
           'label' => 'Record task',
           'handler' => 'iteration_test',
           'handler_configuration' => ['context_mapping' => ['value' => 'checklist:entity.title.value']],
-          'execution' => ['mode' => 'context', 'context_mapping' => ['executor' => 'checklist:entity.assignee.entity']],
+          'execution' => ['mode' => 'context', 'context_mapping' => ['executor' => 'task_context:worker']],
         ],
       ],
     ];

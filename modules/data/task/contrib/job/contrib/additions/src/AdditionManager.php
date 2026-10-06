@@ -125,7 +125,7 @@ class AdditionManager {
         throw new ConflictHttpException('This task has reached its addition limit.');
       }
       // Grant approval is required before even queuing delegated child work.
-      $expanded = JobChecklistExpansion::instance($template, $definitions, AdditionDefinitions::prefix($request_id));
+      $expanded = JobChecklistExpansion::instance($template, $definitions, AdditionDefinitions::prefix($request_id), AdditionDefinitions::contextMapping($job, $template));
       foreach ($expanded as $definition) {
         if (($definition['execution']['mode'] ?? 'self') === 'context') {
           $this->authorization->approvedGrant($job);

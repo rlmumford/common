@@ -160,3 +160,48 @@ stale task objects, dirty overrides, idempotent replay and existing work staying
 active after availability changes. Row refresh tests also verify that choices
 appear/disappear and that unchanged choices retain a stable refresh signature.
 See the [real UI walkthrough](../../../../../../../docs/screenshots/job-addition-availability/README.md).
+
+## Scoped inputs for additions
+
+The **Addition context mapping** section on an exposed template maps declared
+job inputs for that addition. It uses the standard Typed Data Plus context
+assignment widget, including property/filter selectors and global providers.
+Leave an input blank to inherit the task's value. The host context and item
+outcome catalog cannot be replaced.
+
+For a job declaring a string `subject` and user `contact` context:
+
+```yaml
+checklist_templates:
+  reference:
+    label: Reference check
+    allow_addition: true
+    addition_context_mapping:
+      'task_context:subject': 'checklist:entity.title.value'
+      'task_context:contact': 'checklist:entity.creator.entity'
+    items: # Handlers consume task_context:subject / task_context:contact.
+```
+
+Mappings resolve in the enclosing task scope before addition-local outcome
+aliases are installed. They apply to the addition's items and nested decision
+branches, without changing the host task's stored contexts or sibling additions.
+Nested branch mappings can further override inherited inputs. Availability is
+still evaluated against the parent task, before an addition exists.
+
+These are live selectors, not captured values: subsequent iterations read current
+source values, and `@user.current_user_context:current_user` means the account
+active during that evaluation. Use an explicit task entity reference when the
+identity must remain stable. A missing required input blocks the consuming item
+through normal checklist context preparation. Missing inputs need not prevent
+adding the work ahead of time.
+
+The mapping belongs to the task's named job version, including dirty corrections.
+It participates in the existing whole-job execution approval fingerprint: changing
+a delegated job still requires authorization, and imports do not create approval.
+The addition API accepts no mapping or execution-policy overrides. Opening the
+menu or chooser cannot grant authority to choose a different executor.
+
+Kernel tests cover mapped/inherited sibling inputs, nested branches, current
+values, missing outcomes, global providers, pinned/dirty versions, invalid host
+replacement, and delegated execution through a mapped job input. Browser tests
+cover native mapping widgets, draft tab navigation, explicit Save and clearing.

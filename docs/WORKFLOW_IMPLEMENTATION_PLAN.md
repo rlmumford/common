@@ -708,3 +708,12 @@ creation share the rule; creation rechecks fresh task data. Rules control new
 additions, preserving existing work and harmless request replay. The rule stays
 inside the job draft/version and its plugin dependencies join the job dependency
 calculation. Per-addition input contexts remain separate work.
+
+### Authored addition context mappings
+
+Exposed templates can map declared job inputs using the standard context widget.
+Addition expansion reuses decision-branch scopes, so mapped values reach nested
+work while sibling additions and stored task contexts remain independent. Rules
+stay in named/dirty job configuration and the existing execution approval
+fingerprint. API callers cannot submit arbitrary mappings. Interactive per-instance
+input capture remains separate; these selectors resolve current source values.

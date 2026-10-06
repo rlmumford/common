@@ -4,6 +4,7 @@ namespace Drupal\task_job_additions;
 
 use Drupal\task_job\Event\JobChecklistDefinitionsEvent;
 use Drupal\task_job\JobChecklistExpansion;
+use Drupal\task_job\JobInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -31,7 +32,7 @@ class AdditionDefinitions implements EventSubscriberInterface {
       if ($receipt['job'] !== $event->job->getBaseJobId() || $receipt['job_version'] !== (string) $event->job->getVersion()) {
         continue;
       }
-      $definitions = JobChecklistExpansion::instance($receipt['template'], $event->job->get('checklist_templates') ?: [], self::prefix($receipt['id']));
+      $definitions = JobChecklistExpansion::instance($receipt['template'], $event->job->get('checklist_templates') ?: [], self::prefix($receipt['id']), self::contextMapping($event->job, $receipt['template']));
       if (array_intersect_key($event->definitions, $definitions)) {
         throw new \InvalidArgumentException('An addition collides with an existing checklist item name.');
       }
@@ -41,6 +42,21 @@ class AdditionDefinitions implements EventSubscriberInterface {
       unset($definition);
       $event->definitions += $definitions;
     }
+  }
+
+  /**
+   * Accepts only declared job inputs as addition mapping destinations.
+   */
+  public static function contextMapping(JobInterface $job, string $template): array {
+    $mapping = $job->get('checklist_templates')[$template]['addition_context_mapping'] ?? [];
+    $destinations = [];
+    foreach ($job->getContextDefinitions() as $name => $definition) {
+      $destinations['task_context:' . $name] = TRUE;
+    }
+    if (array_diff_key($mapping, $destinations)) {
+      throw new \InvalidArgumentException('Addition context mappings can only override declared job inputs.');
+    }
+    return $mapping;
   }
 
   /**
