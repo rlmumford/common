@@ -774,3 +774,16 @@ contract for future automated review, not an AI executor. Next AI work must add
 explicit run/authorization provenance, async execution and human confirmation.
 Scope changes, replacement requests and automatic aggregate status transitions
 remain separate workflow work; no one-person decision implicitly performs them.
+
+### Document review completion integration
+
+- Expose live current-version requirement counts and individual approval state in
+  document displays, including the checklist resource pane.
+- Emit completion on a review-service transition to all required approvals, with
+  evidence and transactional consumer effects; an empty required set is not an event.
+- Optional `document_task` connects the same occurrence to indexed dependencies
+  and the existing job-event adapter, without changing document workflow status.
+- Preserve remembered occurrence semantics, late-registration behavior and terminal
+  work. New revisions change live state; they do not withdraw previous receipts.
+- Test target correlation, duplicate approvals, source rollback, job creation,
+  dependency activation and fresh-review requirements after a revision.
