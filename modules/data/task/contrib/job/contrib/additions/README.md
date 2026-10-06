@@ -163,8 +163,10 @@ See the [real UI walkthrough](../../../../../../../docs/screenshots/job-addition
 
 ## Template inputs and addition buttons
 
-The **Template contexts** section declares each template input: machine name,
-label, typed-data type, requiredness and cardinality. Items consume these as
+The **Template contexts** table summarises each template input: machine name,
+label, typed-data type, requiredness and cardinality. **Add template input** and
+**Edit** open an off-canvas form. Updates remain in the shared job draft until
+**Save**; removing an input also clears its addition button mappings. Items consume these as
 `template_context:<name>`. Normal `task_context:<name>` inputs remain available
 separately; declaring a template input does not change the job's contexts.
 

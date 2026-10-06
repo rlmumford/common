@@ -700,13 +700,52 @@ class JobEditForm extends JobForm {
           '#required' => TRUE,
         ],
       ];
-      $element['context'] = TemplateContextForm::build($template['context'] ?? [], \Drupal::typedDataManager()->getDefinitions());
-      $element['context']['add'] = [
-        '#type' => 'submit',
-        '#value' => $this->t('Add template input'),
-        '#submit' => ['::submitForm', '::saveDraft'],
+      $element['context'] = [
+        '#type' => 'details',
+        '#title' => $this->t('Template contexts'),
+        '#open' => TRUE,
+        '#weight' => -2,
+        'table' => [
+          '#type' => 'table',
+          '#header' => [
+            $this->t('Input'),
+            $this->t('Machine name'),
+            $this->t('Type'),
+            $this->t('Required'),
+            $this->t('Multiple'),
+            $this->t('Operations'),
+          ],
+          '#empty' => $this->t('No template inputs defined.'),
+        ],
       ];
-      $form['#validate'][] = '::validateTemplateContexts';
+      $dialog = $ajax_attributes;
+      $dialog['attributes']['data-dialog-options'] = Json::encode(['width' => '550px']);
+      foreach ($template['context'] ?? [] as $key => $definition) {
+        $element['context']['table'][$key] = [
+          'label' => ['#plain_text' => $definition['label']],
+          'name' => ['#plain_text' => $key],
+          'type' => ['#plain_text' => $definition['type']],
+          'required' => ['#plain_text' => ($definition['required'] ?? TRUE) ? $this->t('Yes') : $this->t('No')],
+          'multiple' => ['#plain_text' => !empty($definition['multiple']) ? $this->t('Yes') : $this->t('No')],
+          'edit' => [
+            '#type' => 'link',
+            '#title' => $this->t('Edit'),
+            '#url' => Url::fromRoute('task_job.template_context.edit', [
+              'task_job' => $this->entity->id(),
+              'template' => $name,
+              'context_name' => $key,
+            ], $dialog),
+          ],
+        ];
+      }
+      $element['context']['add'] = [
+        '#type' => 'link',
+        '#title' => $this->t('Add template input'),
+        '#url' => Url::fromRoute('task_job.template_context.add', [
+          'task_job' => $this->entity->id(),
+          'template' => $name,
+        ], $dialog),
+      ];
       $element = $this->buildChecklist($element, $form_state, $ajax_attributes, $name);
       $element['remove'] = [
         '#type' => 'submit',
@@ -732,23 +771,6 @@ class JobEditForm extends JobForm {
       ],
     ];
     return $form;
-  }
-
-  /**
-   * Validates the template's own input definitions before saving its draft.
-   */
-  public function validateTemplateContexts(array &$form, FormStateInterface $form_state): void {
-    $name = $form_state->get('selected_template');
-    $values = $form_state->getValue(['templates', $name, 'context'], []);
-    foreach ($values as $key => $row) {
-      if (!is_array($row) || !empty($row['remove']) || ($key === '_new' && empty($row['name']))) {
-        continue;
-      }
-      $input = $key === '_new' ? $row['name'] : $key;
-      if (!preg_match('/^[a-z][a-z0-9_]*$/D', $input) || ($key === '_new' && isset($values[$input])) || trim($row['label'] ?? '') === '') {
-        $form_state->setError($form['templates'][$name]['context'], $this->t('Each input needs a label and a unique lowercase machine name.'));
-      }
-    }
   }
 
   /**
@@ -1012,9 +1034,6 @@ class JobEditForm extends JobForm {
       $templates = $entity->get('checklist_templates');
       foreach ($form_state->getValue('templates', []) as $name => $values) {
         $templates[$name]['label'] = $values['label'];
-        if (isset($form['templates'][$name]['context'])) {
-          $templates[$name]['context'] = TemplateContextForm::configuration($values['context'] ?? []);
-        }
       }
       $entity->set('checklist_templates', $templates);
     }

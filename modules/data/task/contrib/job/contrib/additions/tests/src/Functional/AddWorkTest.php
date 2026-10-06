@@ -100,12 +100,18 @@ class AddWorkTest extends BrowserTestBase {
   public function testAdditionMappingAuthoring(): void {
     $url = '/admin/config/task/job/support/edit/templates/review';
     $this->drupalGet($url);
+    $this->assertSession()->elementAttributeContains('css', 'a[href*="/templates/review/context/add"]', 'data-dialog-renderer', 'off_canvas');
+    $this->clickLink('Add template input');
     $this->submitForm([
-      'templates[review][context][_new][name]' => 'subject',
-      'templates[review][context][_new][label]' => 'Reference subject',
-      'templates[review][context][_new][type]' => 'string',
-      'templates[review][context][_new][required]' => TRUE,
-    ], 'Add template input');
+      'name' => 'subject',
+      'label' => 'Reference subject',
+      'type' => 'string',
+      'required' => TRUE,
+    ], 'Add input');
+    $this->assertSession()->addressEquals($url);
+    $this->assertSession()->elementTextContains('css', 'table', 'Reference subject');
+    $this->clickLink('Edit');
+    $this->submitForm(['description' => 'Subject for the reference'], 'Update input');
     $field = 'templates[review][exposures][default][context_mapping][template_context:subject]';
     $this->assertSession()->elementAttributeContains('css', '[name="' . $field . '"]', 'data-autocomplete-path', 'typed_data_context_assignment_autocomplete');
     $this->submitForm([
@@ -138,6 +144,16 @@ class AddWorkTest extends BrowserTestBase {
     $this->drupalGet($task->toUrl());
     $this->assertSession()->buttonExists('Review task title');
     $this->assertSession()->buttonExists('Review description');
+    $this->drupalGet($url);
+    $this->clickLink('Edit');
+    $this->assertSession()->fieldValueEquals('description', 'Subject for the reference');
+    $this->submitForm(['remove' => TRUE], 'Update input');
+    $this->assertSession()->pageTextContains('No template inputs defined.');
+    $this->assertArrayHasKey('subject', $storage->loadUnchanged('support')->get('checklist_templates')['review']['context']);
+    $this->submitForm([], 'Save');
+    $template = $storage->loadUnchanged('support')->get('checklist_templates')['review'];
+    $this->assertSame([], $template['context']);
+    $this->assertSame([], $template['exposures']['default']['context_mapping']);
   }
 
   /**
