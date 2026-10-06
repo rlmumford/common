@@ -62,16 +62,19 @@ class AddWorkTest extends BrowserTestBase {
   public function testAuthorAndAddWork(): void {
     $url = '/admin/config/task/job/support/edit/templates/review';
     $this->drupalGet($url);
+    $this->clickLink('Edit');
     $this->submitForm([
-      'templates[review][exposures][default][enabled]' => TRUE,
-      'templates[review][exposures][default][label]' => 'Request an evidence review',
-    ], 'Apply to draft');
+      'enabled' => TRUE,
+      'label' => 'Request an evidence review',
+    ], 'Update button');
     $storage = $this->container->get('entity_type.manager')->getStorage('task_job');
     $this->assertFalse($storage->loadUnchanged('support')->get('checklist_templates')['review']['allow_addition']);
     $this->clickLink('Settings');
     $this->drupalGet($url);
-    $this->assertSession()->checkboxChecked('templates[review][exposures][default][enabled]');
-    $this->assertSession()->fieldValueEquals('templates[review][exposures][default][label]', 'Request an evidence review');
+    $this->clickLink('Edit');
+    $this->assertSession()->checkboxChecked('enabled');
+    $this->assertSession()->fieldValueEquals('label', 'Request an evidence review');
+    $this->submitForm([], 'Update button');
     $this->submitForm([], 'Save');
     $this->assertTrue($storage->loadUnchanged('support')->get('checklist_templates')['review']['exposures']['default']['enabled']);
     $task = Task::create(['title' => 'Review task', 'job' => 'support', 'start' => '2000-01-01T00:00:00']);
@@ -112,25 +115,31 @@ class AddWorkTest extends BrowserTestBase {
     $this->assertSession()->elementTextContains('css', 'table', 'Reference subject');
     $this->clickLink('Edit');
     $this->submitForm(['description' => 'Subject for the reference'], 'Update input');
-    $field = 'templates[review][exposures][default][context_mapping][template_context:subject]';
+    $this->drupalGet('/admin/config/task/job/support/templates/review/exposure/default/edit');
+    $field = 'context_mapping[template_context:subject]';
     $this->assertSession()->elementAttributeContains('css', '[name="' . $field . '"]', 'data-autocomplete-path', 'typed_data_context_assignment_autocomplete');
     $this->submitForm([
       $field => 'checklist:entity.title.value',
-      'templates[review][exposures][default][enabled]' => TRUE,
-      'templates[review][exposures][default][label]' => 'Review task title',
-      'templates[review][exposures][_new][name]' => 'description',
-      'templates[review][exposures][_new][label]' => 'Review description',
-    ], 'Add addition button');
+      'enabled' => TRUE,
+      'label' => 'Review task title',
+    ], 'Update button');
+    $this->assertSession()->elementAttributeContains('css', 'a[href*="/exposure/add"]', 'data-dialog-renderer', 'off_canvas');
+    $this->clickLink('Add addition button');
     $this->submitForm([
-      'templates[review][exposures][description][enabled]' => TRUE,
-      'templates[review][exposures][description][context_mapping][template_context:subject]' => 'checklist:entity.description.value',
-    ], 'Apply to draft');
+      'name' => 'description',
+      'label' => 'Review description',
+      'enabled' => TRUE,
+      $field => 'checklist:entity.description.value',
+    ], 'Add button');
     $storage = $this->container->get('entity_type.manager')->getStorage('task_job');
     $this->assertArrayNotHasKey('context', $storage->loadUnchanged('support')->get('checklist_templates')['review']);
     $this->clickLink('Settings');
-    $this->drupalGet($url);
+    $this->drupalGet('/admin/config/task/job/support/templates/review/exposure/default/edit');
     $this->assertSession()->fieldValueEquals($field, 'checklist:entity.title.value');
-    $this->assertSession()->fieldValueEquals('templates[review][exposures][description][context_mapping][template_context:subject]', 'checklist:entity.description.value');
+    $this->submitForm([], 'Update button');
+    $this->drupalGet('/admin/config/task/job/support/templates/review/exposure/description/edit');
+    $this->assertSession()->fieldValueEquals($field, 'checklist:entity.description.value');
+    $this->submitForm([], 'Update button');
     $this->submitForm([], 'Save');
     $job = $storage->loadUnchanged('support');
     $template = $job->get('checklist_templates')['review'];
@@ -240,20 +249,23 @@ class AddWorkTest extends BrowserTestBase {
   public function testAvailabilityAuthoring(): void {
     $url = '/admin/config/task/job/support/edit/templates/review';
     $this->drupalGet($url);
+    $this->clickLink('Edit');
     $this->submitForm([
-      'templates[review][exposures][default][enabled]' => TRUE,
-      'templates[review][exposures][default][condition][id]' => 'condition_string',
+      'enabled' => TRUE,
+      'condition[id]' => 'condition_string',
     ], 'Update condition');
-    $this->assertSession()->fieldNotExists('templates[review][exposures][default][condition][settings][context_mapping][checklist]');
+    $this->assertSession()->fieldNotExists('condition[settings][context_mapping][checklist]');
     $expression = 'checklist.title.value == "Needs evidence"';
     $this->submitForm([
-      'templates[review][exposures][default][condition][settings][condition_string]' => $expression,
-    ], 'Apply to draft');
+      'condition[settings][condition_string]' => $expression,
+    ], 'Update button');
     $storage = $this->container->get('entity_type.manager')->getStorage('task_job');
     $this->assertArrayNotHasKey('addition_condition', $storage->loadUnchanged('support')->get('checklist_templates')['review']);
     $this->clickLink('Settings');
     $this->drupalGet($url);
-    $this->assertSession()->fieldValueEquals('templates[review][exposures][default][condition][settings][condition_string]', $expression);
+    $this->clickLink('Edit');
+    $this->assertSession()->fieldValueEquals('condition[settings][condition_string]', $expression);
+    $this->submitForm([], 'Update button');
     $this->submitForm([], 'Save');
     $this->assertSame($expression, $storage->loadUnchanged('support')->get('checklist_templates')['review']['exposures']['default']['condition']['condition_string']);
     $task = Task::create(['title' => 'Needs evidence', 'job' => 'support']);
@@ -264,14 +276,17 @@ class AddWorkTest extends BrowserTestBase {
     $this->drupalGet($task->toUrl());
     $this->assertSession()->buttonNotExists('Review evidence');
     $this->drupalGet($url);
-    $this->submitForm(['templates[review][exposures][default][condition][id]' => ''], 'Update condition');
+    $this->clickLink('Edit');
+    $this->submitForm(['condition[id]' => ''], 'Update condition');
+    $this->submitForm([], 'Update button');
     $this->submitForm([], 'Save');
     $this->assertArrayNotHasKey('condition', $storage->loadUnchanged('support')->get('checklist_templates')['review']['exposures']['default']);
     $this->drupalGet($task->toUrl());
     $this->assertSession()->buttonExists('Review evidence');
     $this->drupalGet($url);
-    $this->submitForm(['templates[review][exposures][default][condition][id]' => 'user_role'], 'Update condition');
-    $this->assertSession()->elementAttributeContains('css', '[name="templates[review][exposures][default][condition][settings][context_mapping][user]"]', 'data-autocomplete-path', 'typed_data_context_assignment_autocomplete');
+    $this->clickLink('Edit');
+    $this->submitForm(['condition[id]' => 'user_role'], 'Update condition');
+    $this->assertSession()->elementAttributeContains('css', '[name="condition[settings][context_mapping][user]"]', 'data-autocomplete-path', 'typed_data_context_assignment_autocomplete');
   }
 
 }

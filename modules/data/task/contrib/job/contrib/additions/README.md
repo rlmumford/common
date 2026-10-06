@@ -170,8 +170,10 @@ label, typed-data type, requiredness and cardinality. **Add template input** and
 `template_context:<name>`. Normal `task_context:<name>` inputs remain available
 separately; declaring a template input does not change the job's contexts.
 
-The **Exposure** section owns addition buttons. Each button has its own label,
-availability condition and context mappings. Multiple buttons can invoke the
+The **Exposure** table lists addition buttons. **Add addition button** and **Edit**
+open an off-canvas form for the label, enabled state, availability condition and
+context mappings. Condition-selection rebuilds stay inside the same panel.
+**Update button** writes the working draft; the job’s **Save** commits it. Multiple buttons can invoke the
 same template with different inputs. Mappings use the standard Typed Data Plus
 assignment widget, including property/filter selectors and global providers.
 
