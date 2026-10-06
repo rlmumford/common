@@ -52,13 +52,13 @@ class ChecklistContextPreparer {
       return TRUE;
     }
 
-    // Core mapping does not clear previous values for now-unavailable sources.
-    if ($handler instanceof ContextAwarePluginInterface) {
-      foreach ($handler->getContextDefinitions() as $name => $definition) {
-        $handler->setContext($name, new Context($definition));
-      }
-    }
     try {
+      // Clear previous values for now-unavailable sources before core mapping.
+      if ($handler instanceof ContextAwarePluginInterface) {
+        foreach ($handler->getContextDefinitions() as $name => $definition) {
+          $handler->setContext($name, new Context($definition));
+        }
+      }
       $contexts = $this->collector->collectRuntimeContexts($checklist, $item);
       if ($handler instanceof ContextAwarePluginInterface) {
         $this->contextHandler->applyContextMapping($handler, $contexts);

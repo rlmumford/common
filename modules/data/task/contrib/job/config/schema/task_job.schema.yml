@@ -243,9 +243,6 @@ checklist_item_handler.add_checklist_template:
   type: checklist_item_handler
   label: 'Add checklist template'
   mapping:
-    collection_input:
-      type: string
-      label: 'Repeat for each template input'
     template:
       type: string
       label: 'Checklist template'

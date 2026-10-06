@@ -242,14 +242,14 @@ configured as described below. See `AddChecklistTemplateTest` for runnable examp
 scope isolation, nesting, retries, authorization and named/dirty versions, and
 `TaskJobEditFormTest::testTemplateExpansionDraft` for configuration persistence.
 
-### One template invocation per collection member
+### Collections and combinations through ordinary context mappings
 
-For a document set, define a `Review Document` template with a single-valued
-`document` input (for example `entity:file`, or your application's document entity
-type). Add the template item, select **Repeat for each → Document**, update the
-inputs, and map the document collection into that input. Other inputs continue to
-use their normal mappings. The standard Typed Data Plus selector supports related
-properties and filters.
+Map a collection into a single-value template input to invoke that template once
+per member. There is no separate loop input or repeat setting. Cardinality is
+inferred from the mapped typed-data definition, including filtered selectors.
+
+For example, a Review Document template can declare single-value `document` and
+`reviewer` inputs, then be invoked with:
 
 ```yaml
 review_documents:
@@ -257,46 +257,56 @@ review_documents:
   handler: add_checklist_template
   handler_configuration:
     template: review_document
-    collection_input: template_context:document
     context_mapping:
       template_context:document: task_context:documents
+      template_context:reviewer: task_context:reviewers
 ```
 
-The task context `documents` must be declared as multiple; the template input
-`document` stays single-valued. Each template invocation receives one member. A
-manual item within the template can use a title such as
-`Review Document: {{template_context:document.filename.value}}`; its normal
-conditions, decisions, forms and resources can use that same document context.
-This feature repeats templates; it does not introduce a special document-review
-handler.
+Two documents and three reviewers produce all six document/reviewer combinations.
+A scalar mapping contributes one value without creating another dimension. An input
+explicitly declared multiple-value receives its whole collection and does not
+multiply invocations. If any iterated collection is empty, no child work is created.
 
-On successful expansion, the parent publishes a typed `members` outcome and
-atomically saves its children. Membership and ordering are then fixed. The source
-list can be reordered, extended or shortened without retargeting or removing
-existing reviews. Entity members are stored through Typed Data Reference as entity
-references, so current entity fields remain available rather than a serialized
-entity snapshot. Scalar values are retained as values. Duplicate members represent
-separate invocations. An empty collection succeeds with no children.
+Each invocation has independent contexts, outcomes and history. Its template can
+contain an ordinary manual Review Document item, decisions, forms or resource
+configuration. A title such as
+`Review Document: {{template_context:document.filename.value}} — {{template_context:reviewer}}`
+shows which combination the item concerns.
 
-Each child name includes its parent's name and its position in the **recorded**
-membership: `<parent>__member_<position>__<template>__<item>`. Replay reuses those
-identities; a failure before the atomic commit leaves no children and a fresh retry
-can read the corrected source collection. The executor's existing claim fencing
-prevents concurrent attempts from both committing. Nested invocations are supported.
+The configuration UI identifies inferred collection mappings as **For each … as
+Document**, **For each … as Reviewer**, and so on. Changing the selected template
+refreshes its inputs automatically. The rebuild-only Update template inputs button
+uses `js-hide`, remaining available when JavaScript is disabled. Neither refresh
+commits the job draft.
 
-The completed parent retains its invocation configuration. Child configuration is
-still read from the task's named job version and dirty override. Use new item names
-or job versions when changing the shape of already-executed invocations. As with
-other entity contexts, deleting a referenced entity does not choose a replacement;
-handlers must not treat a missing required document as completed review work.
+Successful expansion atomically stores the participating input names in `iterated`,
+each frozen collection in a typed `members_<input>` outcome, and its child items.
+Each collection is stored once, not once per combination. Entity values use Typed
+Data Reference's entity references; they are not serialized entity snapshots.
+Source reordering, additions or removals cannot retarget existing work. Entity
+fields remain live. Non-iterated mappings, including whole-collection inputs,
+continue to resolve their normal current values.
 
-Collections are limited to 1,000 members and the expanded checklist to 1,000 item
-definitions, including other work. Expansion rejects unsaved or inaccessible entity
-members. All children retain the existing task/item access and delegated-execution
-checks. Large expansions can use the normal worker path; this does not introduce a
-new endpoint, queue or receipt table.
+Child names include their parent's name and their position in the **recorded**
+Cartesian product: `<parent>__member_<position>__<template>__<item>`. Duplicate
+members produce distinct invocations. Without any iterated inputs the original
+single-invocation namespace is retained. Child definitions remain available in the
+authoring catalog; runtime children materialize under the parent's atomic result.
+This avoids creating every possible child before the collections are known.
 
-`AddChecklistTemplateTest` covers frozen membership, entity references, empty sets,
-nested collections, rollback/retry and named/dirty versions. The collection draft
-browser test covers repeat selection and mapping persistence. See the
+Replay reuses identities. A failure before commit leaves no partial child work;
+a fresh retry can read corrected source data. The completed parent retains its
+invocation configuration; child configuration still follows the task's named job
+version and dirty override. Use new item names or job versions when changing the
+shape of already-executed invocations. Nested invocations are supported.
+
+Each collection is limited to 1,000 members, the Cartesian product to 1,000
+combinations, and the expanded checklist to 1,000 items including other work.
+These checks happen before children are saved. Unsaved or inaccessible entity
+members are rejected. Existing execution authorization and worker processing apply.
+No new receipt table, module or endpoint is required.
+
+`AddChecklistTemplateTest` covers Cartesian products, whole-collection inputs,
+empty sets, entity references, frozen membership, nesting, rollback/retry and
+named/dirty versions. The draft browser test covers mapping persistence. See the
 [real UI captures](../../../../../docs/screenshots/checklist-template-collection/README.md).

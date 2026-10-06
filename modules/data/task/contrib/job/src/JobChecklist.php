@@ -41,7 +41,7 @@ class JobChecklist extends Checklist {
    */
   public function setItem(string $name, ChecklistItemInterface $item) {
     parent::setItem($name, $item);
-    if ($item->isComplete() && $item->get('handler')->id === 'add_checklist_template' && !empty($item->getHandler()->getConfiguration()['collection_input'])) {
+    if ($item->isComplete() && $item->get('handler')->id === 'add_checklist_template') {
       foreach ($this->getType()->itemStorage()->loadByProperties([
         'checklist_type' => $this->getType()->getPluginId(),
         'checklist.target_id' => $this->getEntity()->id(),

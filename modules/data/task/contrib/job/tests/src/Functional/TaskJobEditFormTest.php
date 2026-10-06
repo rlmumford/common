@@ -398,7 +398,6 @@ class TaskJobEditFormTest extends BrowserTestBase {
       'label' => 'Add review work',
       'plugin_configuration[template]' => 'review',
     ], 'Update template inputs');
-    $this->submitForm(['plugin_configuration[collection_input]' => 'template_context:target'], 'Update template inputs');
     $this->submitForm([
       'plugin_configuration[context_mapping][template_context:target]' => 'task_context:documents',
     ], 'Add');
@@ -414,8 +413,7 @@ class TaskJobEditFormTest extends BrowserTestBase {
     $this->submitForm([], 'Remove template');
     $this->assertSession()->pageTextContains('Remove this template from expansion items before deleting it.');
     $this->submitForm([], 'Save');
-    $this->assertSame('template_context:target', $this->saved()->getChecklistItems()['expand']['handler_configuration']['collection_input']);
-    $this->assertArrayNotHasKey('expand__template__review__confirm', $this->saved()->getExpandedChecklistItems());
+    $this->assertArrayHasKey('expand__template__review__confirm', $this->saved()->getExpandedChecklistItems());
   }
 
   /**

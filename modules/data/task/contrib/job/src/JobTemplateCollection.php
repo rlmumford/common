@@ -10,7 +10,12 @@ final class JobTemplateCollection {
   /**
    * Inserts each recorded invocation directly after its calling item.
    */
-  public static function expand(array $definitions, array $templates, array $invocations): array {
+  public static function expand(array $definitions, array $templates, array $invocations, bool $preserve_existing = FALSE): array {
+    $parents = array_filter($definitions, static fn(array $definition) => $definition['handler'] === 'add_checklist_template');
+    if ($preserve_existing) {
+      $parents = array_intersect_key($parents, $invocations);
+    }
+    $definitions = array_filter($definitions, static fn(array $definition) => !array_intersect_key($definition['derivation']['requirements'] ?? [], $parents));
     $result = [];
     foreach ($definitions as $name => $definition) {
       if (isset($result[$name])) {
@@ -25,11 +30,13 @@ final class JobTemplateCollection {
       if (!isset($templates[$template])) {
         throw new \InvalidArgumentException('A recorded collection template is missing.');
       }
-      for ($index = 0; $index < $invocations[$name]['count']; $index++) {
+      foreach (self::combinations($invocations[$name]['counts']) as $index => $combination) {
         $mapping = $configuration['context_mapping'];
-        $mapping[$configuration['collection_input']] = "item:{$name}:members.{$index}";
+        foreach ($combination as $input => $position) {
+          $mapping['template_context:' . $input] = "item:{$name}:members_{$input}.{$position}";
+        }
         // The persisted membership position is immutable, unlike a live delta.
-        $prefix = $name . '__member_' . $index . '__' . $template . '__';
+        $prefix = $name . ($combination ? '__member_' . $index : '__template') . '__' . $template . '__';
         $children = JobChecklistExpansion::instance($template, $templates, $prefix, $mapping);
         foreach ($children as &$child) {
           $derivation = $child['derivation'];
@@ -56,6 +63,34 @@ final class JobTemplateCollection {
       throw new \InvalidArgumentException('The task checklist exceeds 1,000 definitions.');
     }
     return $result;
+  }
+
+  /**
+   * Builds bounded Cartesian coordinates; an empty dimension yields no work.
+   */
+  public static function combinations(array $counts): array {
+    foreach ($counts as $count) {
+      if ($count < 0 || $count > 1000) {
+        throw new \InvalidArgumentException('A collection cannot exceed 1,000 members.');
+      }
+    }
+    if (in_array(0, $counts, TRUE)) {
+      return [];
+    }
+    if (array_product($counts) > 1000) {
+      throw new \InvalidArgumentException('Collection combinations exceed the 1,000-item checklist limit.');
+    }
+    $combinations = [[]];
+    foreach ($counts as $name => $count) {
+      $next = [];
+      foreach ($combinations as $combination) {
+        for ($index = 0; $index < $count; $index++) {
+          $next[] = $combination + [$name => $index];
+        }
+      }
+      $combinations = $next;
+    }
+    return $combinations;
   }
 
 }

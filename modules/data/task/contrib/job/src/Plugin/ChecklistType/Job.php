@@ -136,8 +136,8 @@ class Job extends ChecklistTypeBase implements PluginWithFormsInterface {
     $event = new JobChecklistDefinitionsEvent($task, $job, $job->getExpandedChecklistItems());
     $this->eventDispatcher->dispatch($event, JobChecklistDefinitionsEvent::NAME);
     $invocations = [];
-    $has_collections = array_filter($event->definitions, static fn(array $definition) => $definition['handler'] === 'add_checklist_template' && !empty($definition['handler_configuration']['collection_input']));
-    if (!$task->isNew() && $has_collections) {
+    $has_invocations = array_filter($event->definitions, static fn(array $definition) => $definition['handler'] === 'add_checklist_template');
+    if (!$task->isNew() && $has_invocations) {
       foreach ($this->itemStorage()->loadByProperties([
         'checklist_type' => $this->getPluginId(),
         'checklist.target_id' => $task->id(),
@@ -145,12 +145,11 @@ class Job extends ChecklistTypeBase implements PluginWithFormsInterface {
       ]) as $item) {
         if ($item->isComplete() && $item->get('handler')->id === 'add_checklist_template') {
           $configuration = $item->getHandler()->getConfiguration();
-          if (!empty($configuration['collection_input'])) {
-            $invocations[$item->getName()] = [
-              'configuration' => $configuration,
-              'count' => count($item->get('outcomes')->get('members')),
-            ];
+          $counts = [];
+          foreach ($item->get('outcomes')->get('iterated')->getValue() as $input) {
+            $counts[$input] = count($item->get('outcomes')->get('members_' . $input));
           }
+          $invocations[$item->getName()] = ['configuration' => $configuration, 'counts' => $counts];
         }
       }
     }

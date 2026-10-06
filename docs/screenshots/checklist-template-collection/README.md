@@ -3,11 +3,15 @@
 Real Playwright captures from the local Drupal DDEV preview on 2026-10-06 at
 1440 × 1100. Both images were opened and visually inspected before publication.
 
-- `configuration.png`: the job draft's template item repeats the Document input,
-  mapped to `task_context:documents` through the context assignment widget.
-- `document-reviews.png`: after the automatic parent completes, two separate manual
-  Review Document items display filenames from their respective entity contexts.
+- `configuration.png`: Document and Reviewer use ordinary context mappings.
+  Their sources are collections, so the UI identifies both as iteration inputs.
+- `document-reviews.png`: two File entities × two reviewer strings produce four
+  independently labelled manual review items.
 
-Fixture job: `document_collection`; local task: `19`. Documents are actual local
-File entities with harmless sample text, not real identity or banking records.
-The screenshot demonstrates collection expansion, not a new document viewer.
+The Playwright walkthrough also changed the selected template away and back,
+verified automatic AJAX rebuilding with mappings retained and the dialog still
+open, checked that the fallback button was hidden, and found no JavaScript errors.
+The functional browser test separately checks the non-JavaScript fallback.
+
+Fixture job: `document_collection`; local task: `21`. File entities contain harmless
+sample text. The screenshot demonstrates expansion, not a new document viewer.
