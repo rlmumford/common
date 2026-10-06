@@ -44,8 +44,17 @@ function task_job_additions_form_alter(array &$form, FormStateInterface $form_st
       '#open' => TRUE,
       '#parents' => ['templates', $name, 'exposures', $key],
     ];
-    $row['enabled'] = ['#type' => 'checkbox', '#title' => t('Expose template as an addition'), '#default_value' => !empty($configuration['enabled'])];
-    $row['label'] = ['#type' => 'textfield', '#title' => t('Addition label'), '#description' => t('Leave blank to use the template label.'), '#default_value' => $configuration['label'] ?? ''];
+    $row['enabled'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Expose template as an addition'),
+      '#default_value' => !empty($configuration['enabled']),
+    ];
+    $row['label'] = [
+      '#type' => 'textfield',
+      '#title' => t('Addition label'),
+      '#description' => t('Leave blank to use the template label.'),
+      '#default_value' => $configuration['label'] ?? '',
+    ];
     $mapping_definitions = array_map(static fn($definition) => (clone $definition)->setRequired(FALSE), $definitions);
     $mapping = ChecklistContextMapping::fromDefinitions($mapping_definitions, $configuration['context_mapping'] ?? []);
     $handler = \Drupal::service('context.handler');
