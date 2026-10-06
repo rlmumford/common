@@ -757,3 +757,20 @@ operation and typed outcomes. See its README for authoring and API examples.
 Future work: approval aggregation, AI prompts/inference, replacement requests and
 review-policy conditions. These should build on the same review records rather
 than assigning a single reviewer or overwriting the document's latest decision.
+
+
+### Named review requirements and AI analysis contracts
+
+Document types now define named staff/debtor/creditor-style review requirements,
+not a free role label on each item. Eligibility comes from a configured permission
+or a related user selected through Typed Data Plus context mapping. Evidence
+retains the requirement label and actual reviewer; requirements query only the
+current document version. Partial/incomplete remain distinct decisions and do not
+satisfy approval of the full scope.
+
+Type-owned prompts can be prepared with document placeholders, and submitted
+analysis is checked against a self-contained Draft 7 schema. This is the shared
+contract for future automated review, not an AI executor. Next AI work must add
+explicit run/authorization provenance, async execution and human confirmation.
+Scope changes, replacement requests and automatic aggregate status transitions
+remain separate workflow work; no one-person decision implicitly performs them.
