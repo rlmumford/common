@@ -50,7 +50,7 @@ jobs:
           from pathlib import Path
           path = Path('composer.json')
           data = json.loads(path.read_text())
-          names = ['task', 'checklist', 'service', 'plugin_reference', 'note']
+          names = ['task', 'checklist', 'service', 'plugin_reference', 'note', 'document']
           repos = data['repositories']
           for repo in repos.values() if isinstance(repos, dict) else repos:
               if repo['type'] == 'path':
@@ -60,7 +60,7 @@ jobs:
           PY
           # Drupal 10.6.17 permits Twig 3.30, which currently breaks rendering
           # input.html.twig; keep this consumer on the latest compatible Twig.
-          composer require rlmumford/task:2.x-dev rlmumford/service:2.x-dev rlmumford/note:2.x-dev drupal/entity_template:1.0.x-dev drupal/flexiform:3.0.x-dev drupal/communication:2.0.x-dev drupal/core-dev:^10 twig/twig:3.29.0 --with-all-dependencies --no-interaction
+          composer require rlmumford/document:2.x-dev rlmumford/task:2.x-dev rlmumford/service:2.x-dev rlmumford/note:2.x-dev drupal/entity_template:1.0.x-dev drupal/flexiform:3.0.x-dev drupal/communication:2.0.x-dev drupal/core-dev:^10 twig/twig:3.29.0 --with-all-dependencies --no-interaction
       - name: Test the installed task packages
         working-directory: /tmp/task-consumer
         env:
@@ -78,6 +78,12 @@ jobs:
           SIMPLETEST_DB: ${{ matrix.database == 'mysql' && 'mysql://root:testing@127.0.0.1:3306/task_consumer' || 'sqlite://localhost/:memory:' }}
           SYMFONY_DEPRECATIONS_HELPER: weak
         run: vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/service/tests/src/Kernel
+      - name: Test document review integration
+        working-directory: /tmp/task-consumer
+        env:
+          SIMPLETEST_DB: ${{ matrix.database == 'mysql' && 'mysql://root:testing@127.0.0.1:3306/task_consumer' || 'sqlite://localhost/:memory:' }}
+          SYMFONY_DEPRECATIONS_HELPER: weak
+        run: vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/document/contrib/checklist/tests/src/Kernel
       - name: Test the checklist module
         working-directory: /tmp/task-consumer
         env:

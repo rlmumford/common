@@ -743,3 +743,17 @@ cover 2 × 3 combinations, whole-list inputs, empty sets, nested collections,
 rollback/retry and named/dirty versions. The UI refreshes inputs automatically on
 template changes, with a js-hide rebuild button for the non-JavaScript fallback.
 Document/reviewer combinations are the inspected screenshot example.
+
+### Document reviews: individual evidence and checklist adapter
+
+The document module owns review policy and append-only `document_review` records.
+Each record identifies its document revision/file fingerprint, reviewer, reviewing
+role, decision, reason and time. A task decision is not an aggregate document
+approval: multiple clients may independently approve the same document.
+
+The optional `document_checklist` adapter provides context-mapped human review,
+type-owned decision buttons, shared document resources, the matching action
+operation and typed outcomes. See its README for authoring and API examples.
+Future work: approval aggregation, AI prompts/inference, replacement requests and
+review-policy conditions. These should build on the same review records rather
+than assigning a single reviewer or overwriting the document's latest decision.
