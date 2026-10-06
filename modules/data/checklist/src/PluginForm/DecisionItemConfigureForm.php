@@ -54,7 +54,7 @@ class DecisionItemConfigureForm extends PluginFormBase implements ContainerInjec
     $parents = [...$form['#parents'], 'options'];
     $form['options'] = ['#type' => 'details', '#title' => $this->t('Choices'), '#open' => TRUE];
     foreach (ConfigurationForm::rows($configuration['options'], $parents, $form_state) as $index => $row) {
-      $option = $row['configuration'];
+      $option = ConfigurationForm::input(['#parents' => [...$parents, $index]], $form_state) + $row['configuration'];
       $form['options'][$index] = ['#type' => 'fieldset', '#title' => $row['name'] ?: $this->t('New choice')];
       $element = &$form['options'][$index];
       $element['name'] = [
@@ -83,7 +83,8 @@ class DecisionItemConfigureForm extends PluginFormBase implements ContainerInjec
           '#empty_value' => '',
           '#default_value' => $option['template'] ?? '',
         ];
-        $definitions = $form_state->getTemporaryValue('branch_context_definitions') ?? [];
+        $element['update_template'] = ConfigurationForm::button([...$parents, $index], $this->t('Update template inputs'));
+        $definitions = ChecklistContextMapping::definitions($templates[$option['template'] ?? '']['context'] ?? []) + ($form_state->getTemporaryValue('branch_context_definitions') ?? []);
         $mapping = ChecklistContextMapping::fromDefinitions($definitions, $option['context_mapping'] ?? []);
         $contexts = $form_state->getTemporaryValue('gathered_contexts') ?? [];
         $element['context_mapping'] = ['#tree' => TRUE];
@@ -105,7 +106,7 @@ class DecisionItemConfigureForm extends PluginFormBase implements ContainerInjec
         }
         $element['context_mapping']['#type'] = 'details';
         $element['context_mapping']['#title'] = $this->t('Template context mapping');
-        $element['context_mapping']['#description'] = $this->t('Leave empty to inherit the job contexts.');
+        $element['context_mapping']['#description'] = $this->t('Map declared template inputs here. Normal task contexts remain available separately.');
       }
       $element['remove'] = ['#type' => 'checkbox', '#title' => $this->t('Remove choice')];
       $element['available'] = [

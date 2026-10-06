@@ -10,9 +10,11 @@ use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Form\SubformState;
+use Drupal\Core\Render\Element;
 use Drupal\task\Entity\Task;
 use Drupal\task_job\Form\JobEditForm;
 use Drupal\task_job\JobConfigurationChecklist;
+use Drupal\task_job_additions\AdditionDefinitions;
 
 /**
  * Implements hook_form_alter().
@@ -23,103 +25,131 @@ function task_job_additions_form_alter(array &$form, FormStateInterface $form_st
   if (!$object instanceof JobEditForm || !$name || !isset($form['templates'][$name])) {
     return;
   }
-  $templates = $object->getEntity()->get('checklist_templates') ?: [];
-  $form['templates'][$name]['allow_addition'] = [
-    '#type' => 'checkbox',
-    '#title' => t('Expose template as an addition'),
-    '#description' => t('Users also need permission to add checklist templates and edit the task. Each addition gets independent items and uses this task’s job version and contexts.'),
-    '#default_value' => !empty($templates[$name]['allow_addition']),
-    '#weight' => -2,
-  ];
-  $form['templates'][$name]['addition_label'] = [
-    '#type' => 'textfield',
-    '#title' => t('Addition label'),
-    '#description' => t('Shown in Add work. Leave blank to use the template label.'),
-    '#default_value' => $templates[$name]['addition_label'] ?? '',
-    '#weight' => -1,
-  ];
+  $template = ($object->getEntity()->get('checklist_templates') ?: [])[$name];
   $checklist = JobConfigurationChecklist::createFromJob($object->getEntity());
   $contexts = \Drupal::service('checklist.context_collector')->collectConfigContexts($checklist);
-  $definitions = [];
-  foreach ($object->getEntity()->getContextDefinitions() as $key => $definition) {
-    $definitions['task_context:' . $key] = (clone $definition)->setRequired(FALSE);
-  }
-  if ($definitions) {
-    $configuration = $templates[$name]['addition_context_mapping'] ?? [];
-    $mapping = ChecklistContextMapping::fromDefinitions($definitions, $configuration);
+  $definitions = ChecklistContextMapping::definitions($template['context'] ?? []);
+  $section = [
+    '#type' => 'details',
+    '#title' => t('Exposure'),
+    '#description' => t('Each addition button invokes this template with its own label, availability and input mappings. Disable a button to hide it without changing existing work.'),
+    '#open' => TRUE,
+    '#tree' => TRUE,
+    '#weight' => -1,
+  ];
+  foreach (AdditionDefinitions::exposures($template) as $key => $configuration) {
+    $row = [
+      '#type' => 'details',
+      '#title' => ($configuration['label'] ?? '') ?: ($key === 'default' ? t('Default addition') : $key),
+      '#open' => TRUE,
+      '#parents' => ['templates', $name, 'exposures', $key],
+    ];
+    $row['enabled'] = ['#type' => 'checkbox', '#title' => t('Expose template as an addition'), '#default_value' => !empty($configuration['enabled'])];
+    $row['label'] = ['#type' => 'textfield', '#title' => t('Addition label'), '#description' => t('Leave blank to use the template label.'), '#default_value' => $configuration['label'] ?? ''];
+    $mapping_definitions = array_map(static fn($definition) => (clone $definition)->setRequired(FALSE), $definitions);
+    $mapping = ChecklistContextMapping::fromDefinitions($mapping_definitions, $configuration['context_mapping'] ?? []);
     $handler = \Drupal::service('context.handler');
-    $element = ['#tree' => TRUE];
+    $row['context_mapping'] = ['#tree' => TRUE];
     if (method_exists($handler, 'getContextAssignmentElement')) {
-      $element = $handler->getContextAssignmentElement($mapping, $contexts);
+      $row['context_mapping'] = $handler->getContextAssignmentElement($mapping, $contexts);
     }
     else {
-      foreach ($definitions as $key => $definition) {
+      foreach ($mapping_definitions as $input => $definition) {
         $matches = $handler->getMatchingContexts($contexts, $definition);
-        $element[$key] = [
+        $row['context_mapping'][$input] = [
           '#type' => 'select',
           '#title' => $definition->getLabel(),
           '#options' => array_map(static fn($context) => $context->getContextDefinition()->getLabel(), $matches),
-          '#empty_option' => t('- Inherit -'),
-          '#empty_value' => '',
-          '#default_value' => $configuration[$key] ?? '',
+          '#empty_option' => t('- Not mapped -'),
+          '#default_value' => $configuration['context_mapping'][$input] ?? '',
         ];
       }
     }
-    $element['#type'] = 'details';
-    $element['#title'] = t('Addition context mapping');
-    $element['#description'] = t('Leave empty to inherit the task’s job contexts. Mapped values apply only to this addition and its children, using current task contexts when the items run. Availability conditions still use the parent task contexts.');
-    $element['#open'] = !empty($configuration);
-    $element['#weight'] = -1;
-    $form['templates'][$name]['addition_context_mapping'] = $element;
+    $row['context_mapping']['#type'] = 'details';
+    $row['context_mapping']['#title'] = t('Template input mapping');
+    $row['context_mapping']['#open'] = TRUE;
+    $row['context_mapping']['#description'] = t('Targets are declared under Template contexts. Sources come from the task, its outcomes or global providers. Missing required inputs prevent the items from running.');
+    $row['condition'] = \Drupal::service('checklist.condition_configuration_form')->build([
+      '#type' => 'details',
+      '#title' => t('Addition availability'),
+      '#open' => !empty($configuration['condition']),
+      '#parents' => ['templates', $name, 'exposures', $key, 'condition'],
+    ], $form_state, $configuration['condition'] ?? [], $contexts);
+    $section[$key] = $row;
   }
-  $form['templates'][$name]['addition_condition'] = \Drupal::service('checklist.condition_configuration_form')->build([
+  $section['_new'] = [
     '#type' => 'details',
-    '#title' => t('Addition availability'),
-    '#description' => t('Offer this addition only when the condition matches the current checklist. Missing required context values prevent a match. Existing additions are unaffected.'),
-    '#open' => !empty($templates[$name]['addition_condition']),
-    '#parents' => ['templates', $name, 'addition_condition'],
-    '#weight' => -1,
-  ], $form_state, $templates[$name]['addition_condition'] ?? [], $contexts);
+    '#title' => t('New addition button'),
+    'name' => ['#type' => 'textfield', '#title' => t('Button machine name')],
+    'label' => ['#type' => 'textfield', '#title' => t('New button label')],
+    'add' => ['#type' => 'submit', '#value' => t('Add addition button'), '#submit' => ['::submitForm', '::saveDraft']],
+  ];
+  $form['templates'][$name]['exposures'] = $section;
   array_unshift($form['#validate'], 'task_job_additions_validate_job');
   $form['#entity_builders'][] = 'task_job_additions_build_job';
 }
 
 /**
- * Validates condition plugin settings before the job builds its working entity.
+ * Validates each button's condition and the optional new button identity.
  */
 function task_job_additions_validate_job(array &$form, FormStateInterface $form_state): void {
   if (($form_state->getTriggeringElement()['#limit_validation_errors'] ?? NULL) === []) {
     return;
   }
   $name = $form_state->get('selected_template');
-  $element = &$form['templates'][$name]['addition_condition'];
-  $state = SubformState::createForSubform($element, $form, $form_state);
-  $condition = \Drupal::service('checklist.condition_configuration_form')->configuration($element, $state);
-  // Use an empty array to distinguish clearing a rule from an untouched tab.
-  $form_state->set('addition_condition_configuration', $condition ?? []);
+  $section = &$form['templates'][$name]['exposures'];
+  $values = $form_state->getValue(['templates', $name, 'exposures'], []);
+  $new = trim($values['_new']['name'] ?? '');
+  if ($new !== '' && (!preg_match('/^[a-z][a-z0-9_]*$/D', $new) || isset($section[$new]))) {
+    $form_state->setError($section['_new']['name'], t('Use a unique lowercase machine name for the button.'));
+  }
+  $conditions = [];
+  foreach (Element::children($section) as $key) {
+    if ($key === '_new') {
+      continue;
+    }
+    $element = &$section[$key]['condition'];
+    $state = SubformState::createForSubform($element, $form, $form_state);
+    $conditions[$key] = \Drupal::service('checklist.condition_configuration_form')->configuration($element, $state) ?? [];
+  }
+  $form_state->set('addition_conditions', $conditions);
 }
 
 /**
- * Keeps the addition option in the job's working draft until explicit Save.
+ * Keeps button configuration in the shared working draft until explicit Save.
  */
 function task_job_additions_build_job($entity_type, EntityInterface $entity, array &$form, FormStateInterface $form_state): void {
   $templates = $entity->get('checklist_templates') ?: [];
   foreach ($form_state->getValue('templates', []) as $name => $values) {
-    if (isset($templates[$name]) && isset($form['templates'][$name]['allow_addition'])) {
-      $templates[$name]['allow_addition'] = !empty($values['allow_addition']);
-      $templates[$name]['addition_label'] = trim($values['addition_label'] ?? '');
-      $mapping = array_filter($values['addition_context_mapping'] ?? [], static fn($value) => $value !== '');
-      unset($templates[$name]['addition_context_mapping']);
-      if ($mapping) {
-        $templates[$name]['addition_context_mapping'] = $mapping;
+    if (!isset($form['templates'][$name]['exposures'])) {
+      continue;
+    }
+    $exposures = AdditionDefinitions::exposures($templates[$name]);
+    foreach ($values['exposures'] ?? [] as $key => $row) {
+      if ($key === '_new') {
+        if ($new = trim($row['name'] ?? '')) {
+          $exposures[$new] = ['label' => trim($row['label'] ?? ''), 'enabled' => FALSE, 'context_mapping' => []];
+        }
+        continue;
       }
-      if ($form_state->has('addition_condition_configuration')) {
-        unset($templates[$name]['addition_condition']);
-        if ($condition = $form_state->get('addition_condition_configuration')) {
-          $templates[$name]['addition_condition'] = $condition;
+      if (!isset($exposures[$key])) {
+        continue;
+      }
+      $exposures[$key]['enabled'] = !empty($row['enabled']);
+      $exposures[$key]['label'] = trim($row['label'] ?? '');
+      $exposures[$key]['context_mapping'] = array_intersect_key(
+        array_filter($row['context_mapping'] ?? [], static fn($value) => $value !== ''),
+        ChecklistContextMapping::definitions($templates[$name]['context'] ?? []),
+      );
+      if ($form_state->has('addition_conditions')) {
+        unset($exposures[$key]['condition']);
+        if ($condition = $form_state->get('addition_conditions')[$key] ?? []) {
+          $exposures[$key]['condition'] = $condition;
         }
       }
     }
+    unset($templates[$name]['allow_addition'], $templates[$name]['addition_label'], $templates[$name]['addition_condition'], $templates[$name]['addition_context_mapping']);
+    $templates[$name]['exposures'] = $exposures;
   }
   $entity->set('checklist_templates', $templates);
 }

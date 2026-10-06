@@ -709,11 +709,13 @@ additions, preserving existing work and harmless request replay. The rule stays
 inside the job draft/version and its plugin dependencies join the job dependency
 calculation. Per-addition input contexts remain separate work.
 
-### Authored addition context mappings
+### Template inputs and exposed addition buttons
 
-Exposed templates can map declared job inputs using the standard context widget.
-Addition expansion reuses decision-branch scopes, so mapped values reach nested
-work while sibling additions and stored task contexts remain independent. Rules
-stay in named/dirty job configuration and the existing execution approval
-fingerprint. API callers cannot submit arbitrary mappings. Interactive per-instance
-input capture remains separate; these selectors resolve current source values.
+Templates declare their input definitions in the template editor. The Exposure
+section configures independent addition buttons, each with its own label,
+availability and mapping into those inputs. Runtime scopes keep template inputs
+separate from task contexts and sibling instances. Receipts identify the button;
+existing receipts use the default button. Configuration remains part of named/
+dirty job versions and execution approval. API callers cannot supply mappings.
+Decision choices also map into declared template inputs. A future expansion item
+will own invocation mappings; looping and interactive input capture are deferred.

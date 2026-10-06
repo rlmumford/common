@@ -675,7 +675,7 @@ class JobEditForm extends JobForm {
    * Edits named definitions within the same job working copy.
    */
   protected function buildTemplates(array $form, FormStateInterface $form_state, array $ajax_attributes): array {
-    $form['template_help'] = ['#markup' => $this->t('Define named groups of checklist items here, then select them on the Checklist tab. Templates share this job version and its contexts. Item names share the checklist namespace.')];
+    $form['template_help'] = ['#markup' => $this->t('Define named groups of checklist items here, then select them on the Checklist tab. Templates share this job version and can declare their own inputs alongside normal task contexts.')];
     $name = $form_state->get('selected_template');
     if ($name !== NULL) {
       $templates = $this->entity->get('checklist_templates') ?: [];
@@ -686,14 +686,27 @@ class JobEditForm extends JobForm {
       $form['heading']['#value'] = $template['label'];
       $element = [
         '#type' => 'container',
-        'machine_name' => ['#type' => 'item', '#title' => $this->t('Machine name'), '#plain_text' => $name],
+        'machine_name' => [
+          '#type' => 'item',
+          '#title' => $this->t('Machine name'),
+          '#plain_text' => $name,
+          '#weight' => -4,
+        ],
         'label' => [
           '#type' => 'textfield',
           '#title' => $this->t('Template label'),
+          '#weight' => -3,
           '#default_value' => $template['label'],
           '#required' => TRUE,
         ],
       ];
+      $element['context'] = TemplateContextForm::build($template['context'] ?? [], \Drupal::typedDataManager()->getDefinitions());
+      $element['context']['add'] = [
+        '#type' => 'submit',
+        '#value' => $this->t('Add template input'),
+        '#submit' => ['::submitForm', '::saveDraft'],
+      ];
+      $form['#validate'][] = '::validateTemplateContexts';
       $element = $this->buildChecklist($element, $form_state, $ajax_attributes, $name);
       $element['remove'] = [
         '#type' => 'submit',
@@ -719,6 +732,23 @@ class JobEditForm extends JobForm {
       ],
     ];
     return $form;
+  }
+
+  /**
+   * Validates the template's own input definitions before saving its draft.
+   */
+  public function validateTemplateContexts(array &$form, FormStateInterface $form_state): void {
+    $name = $form_state->get('selected_template');
+    $values = $form_state->getValue(['templates', $name, 'context'], []);
+    foreach ($values as $key => $row) {
+      if (!is_array($row) || !empty($row['remove']) || ($key === '_new' && empty($row['name']))) {
+        continue;
+      }
+      $input = $key === '_new' ? $row['name'] : $key;
+      if (!preg_match('/^[a-z][a-z0-9_]*$/D', $input) || ($key === '_new' && isset($values[$input])) || trim($row['label'] ?? '') === '') {
+        $form_state->setError($form['templates'][$name]['context'], $this->t('Each input needs a label and a unique lowercase machine name.'));
+      }
+    }
   }
 
   /**
@@ -982,6 +1012,9 @@ class JobEditForm extends JobForm {
       $templates = $entity->get('checklist_templates');
       foreach ($form_state->getValue('templates', []) as $name => $values) {
         $templates[$name]['label'] = $values['label'];
+        if (isset($form['templates'][$name]['context'])) {
+          $templates[$name]['context'] = TemplateContextForm::configuration($values['context'] ?? []);
+        }
       }
       $entity->set('checklist_templates', $templates);
     }

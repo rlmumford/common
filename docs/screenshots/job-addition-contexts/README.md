@@ -1,13 +1,15 @@
-# Addition context mapping editor
+# Template inputs and addition buttons
 
-Real Playwright screenshots from the isolated local Drupal preview on 2026-10-06,
-using Claro. Desktop viewport 1440px; mobile viewport 390px. Captures were inspected.
+Real Playwright captures of the local Drupal Claro editor, 6 October 2026.
+The fixture job declares no job-level inputs. Its Reference check template
+owns a required string input named `subject`, labelled “Reference subject”.
 
-The reference-check template maps the job's string **Reference subject** input to
-`checklist:entity.title.value`, and its user **Contact** input to
-`checklist:entity.creator.entity`. Both use the native Typed Data Plus autocomplete
-widget. The availability condition below still uses the containing task's decision.
+- `addition-context-config.png`: template input declaration, including type,
+  requiredness and cardinality; Exposure collapsed using its normal control.
+- `addition-exposures.png`: actual Exposure element capture showing two buttons
+  mapping the same input to the task title and description respectively.
+- `addition-context-mobile.png`: the same editor at a 390px viewport.
 
-The preview includes the companion Typed Data Plus entity-selector fix: without
-it, the condition editor can run entity validators against an empty entity context
-and fail. Browser and kernel tests cover the behavior separately from these images.
+Desktop viewport: 1440 × 1100. Captures were opened and visually inspected.
+These are configuration screenshots; runtime mapping and independent receipt
+behavior are covered by the kernel tests.

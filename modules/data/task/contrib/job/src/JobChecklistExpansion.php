@@ -32,7 +32,11 @@ final class JobChecklistExpansion {
       $aliases[$name] = $prefix . $name;
     }
     $result = [];
-    $scope = ['aliases' => $aliases, 'context_mapping' => $context_mapping];
+    $scope = [
+      'aliases' => $aliases,
+      'context_mapping' => $context_mapping,
+      'context_definitions' => $templates[$template]['context'] ?? [],
+    ];
     self::append($result, $items, $templates, $prefix, [], [$scope], [$template]);
     return $result;
   }
@@ -72,7 +76,11 @@ final class JobChecklistExpansion {
         foreach (array_keys($children) as $child) {
           $aliases[$child] = $child_prefix . $child;
         }
-        $scope = ['aliases' => $aliases, 'context_mapping' => $option['context_mapping'] ?? []];
+        $scope = [
+          'aliases' => $aliases,
+          'context_mapping' => $option['context_mapping'] ?? [],
+          'context_definitions' => $templates[$template]['context'] ?? [],
+        ];
         self::append(
           $result, $children, $templates, $child_prefix,
           $requirements + [$name => $choice],
