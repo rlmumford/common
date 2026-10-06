@@ -3,6 +3,7 @@
 namespace Drupal\checklist;
 
 use Drupal\Core\Plugin\ContextAwarePluginInterface;
+use Drupal\Core\Plugin\Context\ContextDefinition;
 use Drupal\Core\Plugin\ContextAwarePluginTrait;
 use Drupal\Core\Plugin\PluginBase;
 
@@ -14,6 +15,21 @@ use Drupal\Core\Plugin\PluginBase;
 final class ChecklistContextMapping extends PluginBase implements ContextAwarePluginInterface {
 
   use ContextAwarePluginTrait;
+
+  /**
+   * Builds namespaced template input definitions from portable configuration.
+   */
+  public static function definitions(array $configuration): array {
+    $definitions = [];
+    foreach ($configuration as $name => $settings) {
+      $definitions['template_context:' . $name] = ContextDefinition::create($settings['type'])
+        ->setLabel($settings['label'])
+        ->setDescription($settings['description'] ?? '')
+        ->setRequired($settings['required'] ?? TRUE)
+        ->setMultiple($settings['multiple'] ?? FALSE);
+    }
+    return $definitions;
+  }
 
   /**
    * Creates a mapping container for known context definitions.

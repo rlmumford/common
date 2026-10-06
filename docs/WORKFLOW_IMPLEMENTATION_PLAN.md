@@ -708,3 +708,14 @@ creation share the rule; creation rechecks fresh task data. Rules control new
 additions, preserving existing work and harmless request replay. The rule stays
 inside the job draft/version and its plugin dependencies join the job dependency
 calculation. Per-addition input contexts remain separate work.
+
+### Template inputs and exposed addition buttons
+
+Templates declare their input definitions in the template editor. The Exposure
+section configures independent addition buttons, each with its own label,
+availability and mapping into those inputs. Runtime scopes keep template inputs
+separate from task contexts and sibling instances. Receipts identify the button;
+existing receipts use the default button. Configuration remains part of named/
+dirty job versions and execution approval. API callers cannot supply mappings.
+Decision choices also map into declared template inputs. A future expansion item
+will own invocation mappings; looping and interactive input capture are deferred.

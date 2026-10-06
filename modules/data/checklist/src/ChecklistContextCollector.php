@@ -55,9 +55,12 @@ class ChecklistContextCollector implements ChecklistContextCollectorInterface {
     foreach ($derivation['scopes'] ?? [] as $scope) {
       // Resolve inputs in the enclosing scope before adding local aliases.
       $mapping = $scope['context_mapping'] ?? [];
-      if ($mapping) {
-        $definitions = [];
+      $definitions = ChecklistContextMapping::definitions($scope['context_definitions'] ?? []);
+      if ($mapping || $definitions) {
         foreach (array_keys($mapping) as $name) {
+          if (isset($definitions[$name])) {
+            continue;
+          }
           if (!isset($contexts[$name])) {
             throw new \InvalidArgumentException(sprintf('Unknown branch input "%s".', $name));
           }

@@ -47,16 +47,22 @@ class ChecklistContextPreparer {
       return TRUE;
     }
     $handler = $item->getHandler();
-    if (!$handler instanceof ContextAwarePluginInterface) {
+    $scopes = $item->get('derivation')->first()?->getValue()['scopes'] ?? [];
+    if (!$handler instanceof ContextAwarePluginInterface && !array_filter(array_column($scopes, 'context_definitions'))) {
       return TRUE;
     }
 
     // Core mapping does not clear previous values for now-unavailable sources.
-    foreach ($handler->getContextDefinitions() as $name => $definition) {
-      $handler->setContext($name, new Context($definition));
+    if ($handler instanceof ContextAwarePluginInterface) {
+      foreach ($handler->getContextDefinitions() as $name => $definition) {
+        $handler->setContext($name, new Context($definition));
+      }
     }
     try {
-      $this->contextHandler->applyContextMapping($handler, $this->collector->collectRuntimeContexts($checklist, $item));
+      $contexts = $this->collector->collectRuntimeContexts($checklist, $item);
+      if ($handler instanceof ContextAwarePluginInterface) {
+        $this->contextHandler->applyContextMapping($handler, $contexts);
+      }
     }
     catch (MissingValueContextException) {
       return FALSE;
