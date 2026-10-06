@@ -730,3 +730,16 @@ required-input blocking, replay/retry, execution approval and named/dirty versio
 are covered by kernel tests; a browser test covers configuration through the job
 draft. Existing decision expansion remains supported. Looping is still deferred.
 See the [job module guide](../modules/data/task/contrib/job/README.md#add-checklist-template-item).
+
+
+### Collection checklist-template invocation
+
+Add checklist template infers iteration from ordinary context mappings: a collection
+mapped into a single-value input produces one invocation per member. Multiple such
+mappings produce the Cartesian product. Inputs declared multiple-value receive the
+whole collection. Successful expansion freezes the participating collections and
+atomically materializes children; references retain live entity data. Kernel tests
+cover 2 × 3 combinations, whole-list inputs, empty sets, nested collections,
+rollback/retry and named/dirty versions. The UI refreshes inputs automatically on
+template changes, with a js-hide rebuild button for the non-JavaScript fallback.
+Document/reviewer combinations are the inspected screenshot example.
