@@ -69,6 +69,7 @@ function task_job_additions_form_alter(array &$form, FormStateInterface $form_st
   $section['add'] = [
     '#type' => 'link',
     '#title' => t('Add addition button'),
+    '#attributes' => ['class' => ['button']],
     '#url' => Url::fromRoute('task_job_additions.exposure.add', [
       'task_job' => $object->getEntity()->id(),
       'template' => $name,

@@ -741,6 +741,7 @@ class JobEditForm extends JobForm {
       $element['context']['add'] = [
         '#type' => 'link',
         '#title' => $this->t('Add template input'),
+        '#attributes' => ['class' => ['button']],
         '#url' => Url::fromRoute('task_job.template_context.add', [
           'task_job' => $this->entity->id(),
           'template' => $name,
