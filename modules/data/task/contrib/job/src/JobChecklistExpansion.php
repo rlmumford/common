@@ -88,12 +88,22 @@ final class JobChecklistExpansion {
           'context_mapping' => $option['context_mapping'] ?? [],
           'context_definitions' => $templates[$template]['context'] ?? [],
         ];
+        $expanded = [];
         self::append(
-          $result, $children, $templates, $child_prefix,
+          $expanded, $children, $templates, $child_prefix,
           $requirements + [$name => $automatic ? ['outcome' => 'template', 'value' => $template] : $choice],
           [...$scopes, $scope],
           [...$ancestors, $template],
         );
+        if (!$automatic || empty($option['collection_input'])) {
+          if (array_intersect_key($result, $expanded)) {
+            throw new \InvalidArgumentException('Expanded checklist item names collide.');
+          }
+          $result += $expanded;
+          if (count($result) > 1000) {
+            throw new \InvalidArgumentException('Checklist template expansion exceeds the supported size.');
+          }
+        }
       }
     }
   }

@@ -46,6 +46,23 @@ class AddChecklistTemplateConfigureForm extends PluginFormBase implements Contai
     $form['update'] = ConfigurationForm::button($form['#parents'], $this->t('Update template inputs'));
     $form['#template_inputs'] = $templates[$configuration['template']]['context'] ?? [];
     $definitions = ChecklistContextMapping::definitions($form['#template_inputs']);
+    $repeat_options = [];
+    foreach ($definitions as $name => $definition) {
+      if (!$definition->isMultiple()) {
+        $repeat_options[$name] = $definition->getLabel();
+      }
+    }
+    $form['collection_input'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Repeat for each'),
+      '#options' => $repeat_options,
+      '#empty_option' => $this->t('- Run once -'),
+      '#default_value' => $configuration['collection_input'],
+      '#description' => $this->t('Select the input that receives each member, then update template inputs and map a collection to it. Membership is fixed when this item completes.'),
+    ];
+    if (isset($definitions[$configuration['collection_input']])) {
+      $definitions[$configuration['collection_input']]->setMultiple(TRUE);
+    }
     foreach ($definitions as $definition) {
       // Allow incomplete drafts; required runtime inputs block execution.
       $definition->setRequired(FALSE);
@@ -85,6 +102,7 @@ class AddChecklistTemplateConfigureForm extends PluginFormBase implements Contai
     }
     $configuration = $this->plugin->getConfiguration();
     $configuration['template'] = $template;
+    $configuration['collection_input'] = $form_state->getValue('collection_input', '');
     $configuration['context_mapping'] = array_intersect_key(
       array_filter($form_state->getValue('context_mapping', [])),
       ChecklistContextMapping::definitions($form['#template_inputs']),

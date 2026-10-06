@@ -730,3 +730,15 @@ required-input blocking, replay/retry, execution approval and named/dirty versio
 are covered by kernel tests; a browser test covers configuration through the job
 draft. Existing decision expansion remains supported. Looping is still deferred.
 See the [job module guide](../modules/data/task/contrib/job/README.md#add-checklist-template-item).
+
+
+### Collection checklist-template invocation
+
+Add checklist template now supports **Repeat for each** on a single template input,
+with the source collection configured using the standard context mapping widget.
+Successful expansion records typed membership and child items atomically. Each
+member gets independently scoped work immediately after its parent. Later source
+changes do not retarget existing work; entity references retain live entity data.
+Empty sets, nested collections, rollback/retry and named/dirty versions have kernel
+coverage, and draft UI persistence has browser coverage. Document review is the
+walkthrough example. No new receipt table or API endpoint is required.
