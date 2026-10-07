@@ -759,6 +759,15 @@ review-policy conditions. These should build on the same review records rather
 than assigning a single reviewer or overwriting the document's latest decision.
 
 
+### Live document-review condition
+
+`document_reviews_approved` provides a native Drupal condition for all required
+reviews of the current version. Standard context mapping lets later items use the
+document outcome of a review item. Negation is supported without making missing or
+inaccessible contexts true. This complements remembered completion events; it does
+not introduce continuous task rescheduling or undo previously completed work.
+
+
 ### Named review requirements and AI analysis contracts
 
 Document types now define named staff/debtor/creditor-style review requirements,
