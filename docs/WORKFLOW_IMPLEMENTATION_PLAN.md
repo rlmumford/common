@@ -796,3 +796,24 @@ remain separate workflow work; no one-person decision implicitly performs them.
   work. New revisions change live state; they do not withdraw previous receipts.
 - Test target correlation, duplicate approvals, source rollback, job creation,
   dependency activation and fresh-review requirements after a revision.
+
+### Document review history
+
+Document-owned read-only history exposes reviewer, historical role/decision,
+reason, time, and current/earlier-version attribution. A small resource link opens
+history alongside the checklist without discarding working form input. Access,
+bounded pagination, desktop/mobile screenshots and browser/kernel coverage are
+included. This evidence trail is separate from checklist execution-attempt history.
+
+### Individual review follow-up triggers
+
+`ReviewRecorded` carries each authorized persisted review to optional workflow
+consumers. `document_task` exposes `document.review_recorded` to the normal job
+trigger editor with document and review contexts. Native condition plugins select
+role/decision; Entity Template creates configured follow-up work and can retain
+both contexts. This supplies the workflow entry point for rejected, incomplete,
+and partial decisions without hardcoding replacement or document-status policy.
+Tests cover context persistence, decision/role filtering, replay rejection and
+transaction rollback. Aggregate completion and remembered dependencies retain
+their existing semantics. AI execution and automatic replacement/scope editing
+remain later slices.
