@@ -42,3 +42,20 @@ function checklist_resolver_test_checklist_item_update(EntityInterface $entity) 
     \Drupal::state()->set('checklist_resolver_test.denied_field_operations', ['work' => ['edit']]);
   }
 }
+
+/**
+ * Implements hook_user_access().
+ */
+function checklist_resolver_test_user_access(EntityInterface $entity, $operation, AccountInterface $account) {
+  $policy = \Drupal::state()->get('checklist_resolver_test.execution_only', FALSE);
+  if (!$policy) {
+    return AccessResult::neutral();
+  }
+  if ($operation === 'update') {
+    return AccessResult::forbidden()->setCacheMaxAge(0);
+  }
+  if ($operation === 'execute checklist') {
+    return ($policy === 'revoked' ? AccessResult::forbidden() : AccessResult::allowed())->setCacheMaxAge(0);
+  }
+  return AccessResult::neutral();
+}

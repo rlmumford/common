@@ -125,7 +125,7 @@ class ChecklistProcessor {
     if (!ctype_digit($delta)) {
       throw new \InvalidArgumentException('The checklist key must identify a field and optional numeric delta.');
     }
-    $resolved = $this->resolver->resolve($checklist->getEntity(), $field_name, (int) $delta, 'update');
+    $resolved = $this->resolver->resolve($checklist->getEntity(), $field_name, (int) $delta, 'execute');
     if ($resolved->getType()->getPluginId() !== $checklist->getType()->getPluginId()) {
       throw new \InvalidArgumentException('The working checklist type does not match its host field.');
     }

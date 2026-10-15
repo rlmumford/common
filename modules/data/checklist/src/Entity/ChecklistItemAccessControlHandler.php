@@ -3,6 +3,7 @@
 namespace Drupal\checklist\Entity;
 
 use Drupal\Core\Access\AccessResult;
+use Drupal\checklist\ChecklistResolver;
 use Drupal\Core\Entity\EntityAccessControlHandler;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
@@ -33,7 +34,9 @@ class ChecklistItemAccessControlHandler extends EntityAccessControlHandler {
     $access = $host->access($host->isNew() ? 'create' : 'view', $account, TRUE)
       ->andIf($field->access('view', $account, TRUE));
     if (in_array($operation, ['execute action operation', 'execute iteration'], TRUE)) {
-      $access = $access->andIf($host->access($host->isNew() ? 'create' : 'update', $account, TRUE))
+      $host_operation = $operation === 'execute iteration' && $entity->getMethod() === ChecklistItemInterface::METHOD_AUTO
+        ? ChecklistResolver::executionOperation($host) : 'update';
+      $access = $access->andIf($host->access($host->isNew() ? 'create' : $host_operation, $account, TRUE))
         ->andIf($field->access('edit', $account, TRUE));
     }
     // An item-level grant must not bypass missing host or field permission.
