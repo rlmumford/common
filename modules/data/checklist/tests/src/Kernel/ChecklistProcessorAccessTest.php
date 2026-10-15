@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\checklist\Kernel;
 
+use Drupal\checklist_state_test\Plugin\ChecklistItemHandler\Iteration;
+use Drupal\checklist\Attempt\ChecklistAttempt;
+use Drupal\checklist\Entity\ChecklistItemInterface;
 use Drupal\Core\Session\AnonymousUserSession;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
@@ -43,9 +46,13 @@ class ChecklistProcessorAccessTest extends ChecklistItemExecutionTestBase {
     $this->assertSame('Produced', $this->reload($item)->get('outcomes')->get('value')->getValue());
 
     $manual = $item->createDuplicate();
-    $manual->set('name', 'decision')->set('handler', ['id' => 'decision', 'configuration' => [
-      'question' => 'Confirm', 'options' => ['yes' => ['label' => 'Yes']],
-    ]])->set('status', \Drupal\checklist\Entity\ChecklistItemInterface::STATUS_INCOMPLETE)->save();
+    $manual->set('name', 'decision')->set('handler', [
+      'id' => 'decision',
+      'configuration' => [
+        'question' => 'Confirm',
+        'options' => ['yes' => ['label' => 'Yes']],
+      ],
+    ])->set('status', ChecklistItemInterface::STATUS_INCOMPLETE)->save();
     $host->work->checklist->setItem('decision', $manual);
     $this->assertFalse($manual->access('execute action operation'));
     $this->assertFalse($manual->access('execute iteration'));
@@ -64,7 +71,7 @@ class ChecklistProcessorAccessTest extends ChecklistItemExecutionTestBase {
     $entities->getAccessControlHandler('user')->resetCache();
     $runner = $this->container->get('checklist.item_executor');
     $waiting = $runner->run($attempt);
-    $this->assertSame(\Drupal\checklist\Attempt\ChecklistAttempt::WAITING, $waiting->status);
+    $this->assertSame(ChecklistAttempt::WAITING, $waiting->status);
     $this->now += 5;
     $this->container->get('state')->set('checklist_resolver_test.execution_only', 'revoked');
     try {
@@ -73,7 +80,7 @@ class ChecklistProcessorAccessTest extends ChecklistItemExecutionTestBase {
     }
     catch (AccessDeniedHttpException) {
       $this->assertTrue($this->reload($item)->isIncomplete());
-      $this->assertCount(1, \Drupal\checklist_state_test\Plugin\ChecklistItemHandler\Iteration::$calls);
+      $this->assertCount(1, Iteration::$calls);
     }
   }
 
