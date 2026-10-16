@@ -98,9 +98,7 @@ class ChooseBlockController extends ControllerBase {
     $task_job = $this->tempstoreRepository->get($task_job);
 
     /** @var \Drupal\task\Entity\Task $temp_task */
-    $temp_task = $this->entityTypeManager->getStorage('task')->create([
-      'job' => $task_job,
-    ]);
+    $temp_task = $this->entityTypeManager->getStorage('task')->create($task_job->getTaskValues());
     $collect_resource_contexts = new CollectResourcesContextsEvent($temp_task);
     $this->eventDispatcher->dispatch($collect_resource_contexts, TaskEvents::COLLECT_RESOURCES_CONTEXTS);
     $definitions = $this->blockManager->getFilteredDefinitions(

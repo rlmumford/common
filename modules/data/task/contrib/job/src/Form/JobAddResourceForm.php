@@ -116,9 +116,7 @@ class JobAddResourceForm extends JobPluginFormBase {
    */
   protected function gatherContexts(JobInterface $task_job) {
     /** @var \Drupal\task\Entity\Task $tmp_task */
-    $tmp_task = $this->entityTypeManager->getStorage('task')->create([
-      'job' => $task_job,
-    ]);
+    $tmp_task = $this->entityTypeManager->getStorage('task')->create($task_job->getTaskValues());
     $event = new CollectResourcesContextsEvent($tmp_task);
     $this->eventDispatcher->dispatch($event, TaskEvents::COLLECT_RESOURCES_CONTEXTS);
 

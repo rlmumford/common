@@ -39,6 +39,19 @@ class VersionedJobChecklistTest extends KernelTestBase {
   }
 
   /**
+   * Generic task templates can inspect job-only components without a bound job.
+   */
+  public function testContextComponentOutsideJobBlueprint(): void {
+    $template = $this->container->get('plugin.manager.entity_template.template')->createInstance('standalone', [
+      'target_entity_type_id' => 'task',
+      'target_entity_bundle' => 'task',
+    ]);
+    $component = $this->container->get('plugin.manager.entity_template.component')->createInstance('task_context.data_select', []);
+    $component->setTemplate($template);
+    $this->assertSame([], $component->getTaskContextDefinitions());
+  }
+
+  /**
    * A task follows its named version and then its dirty working copy.
    */
   public function testTaskChecklistUsesVersionAndDirtyOverlay(): void {

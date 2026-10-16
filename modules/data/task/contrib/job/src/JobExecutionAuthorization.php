@@ -168,8 +168,16 @@ class JobExecutionAuthorization implements EventSubscriberInterface {
   protected function activeAuthorizer(int $uid, JobInterface $job): bool {
     $this->entities->getStorage('user_role')->resetCache();
     $account = $this->entities->getStorage('user')->loadUnchanged($uid);
-    return $account && $account->isActive() && $account->hasPermission(self::PERMISSION)
-      && ($job instanceof ConfigEntityInterface || $job->access('update', $account));
+    if (!$account || !$account->isActive() || !$account->hasPermission(self::PERMISSION)) {
+      return FALSE;
+    }
+    if ($job instanceof ConfigEntityInterface) {
+      return TRUE;
+    }
+    // Entity access caches survive in a worker even for max-age-zero results.
+    // Recheck content ownership and permissions against the refreshed account.
+    $this->entities->getAccessControlHandler($job->getEntityTypeId())->resetCache();
+    return $job->access('update', $account);
   }
 
   /**
