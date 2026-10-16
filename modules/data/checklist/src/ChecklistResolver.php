@@ -49,7 +49,8 @@ class ChecklistResolver {
    *   The field delta, including zero for a single-value field.
    * @param string $operation
    *   View, update, or execute. Execution uses the opt-in host operation;
-   *   otherwise it retains update access. Both writes require field edit access.
+   *   otherwise it retains update access. Both writes require field edit
+   *   access.
    *
    * @return \Drupal\checklist\ChecklistInterface
    *   The checklist on the supplied entity.

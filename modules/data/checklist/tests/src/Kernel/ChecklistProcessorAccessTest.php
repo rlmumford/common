@@ -64,7 +64,7 @@ class ChecklistProcessorAccessTest extends ChecklistItemExecutionTestBase {
    * Iterative workers recheck the separate permission before a continuation.
    */
   public function testExecutionPermissionRevokedBetweenIterations(): void {
-    [$host, $item, $attempt] = $this->work();
+    [, $item, $attempt] = $this->work();
     $entities = $this->container->get('entity_type.manager');
     $entities->getDefinition('user')->set('checklist_separate_execution_access', TRUE);
     $this->container->get('state')->set('checklist_resolver_test.execution_only', TRUE);
