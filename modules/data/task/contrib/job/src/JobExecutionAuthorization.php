@@ -95,7 +95,12 @@ class JobExecutionAuthorization implements EventSubscriberInterface {
       $configuration = Job::create($values);
     }
     $configuration->calculateDependencies();
-    $definition = Job::definitionHash($job->toArray());
+    // SQL field storage normalizes IDs, booleans and revision metadata. Hash
+    // the executable definition for content jobs, not those storage details.
+    // The grant key separately binds its entity type, ID and immutable revision.
+    $definition = $job instanceof ConfigEntityInterface
+      ? Job::definitionHash($job->toArray())
+      : hash('sha256', serialize([$job->getActiveHash(), (bool) $job->status()]));
     $pending = $configuration->getDependencies()['config'] ?? [];
     $dependencies = [];
     while ($name = array_pop($pending)) {
