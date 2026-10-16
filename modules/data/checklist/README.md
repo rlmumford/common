@@ -922,3 +922,18 @@ Whole-checklist processing runs as the current account and requires host/field
 update access plus item execution access for automatic actions. See
 [Processing access](docs/processing-access.md) for synchronous and iterative
 execution boundaries and worker-account requirements.
+
+## Separate automatic execution access
+
+Hosts may opt in by setting `checklist_separate_execution_access` on their entity
+type definition. Automatic checklist processing and iterations then require the
+host operation `execute checklist`, plus the existing host-view and field
+view/edit checks. The host access handler must explicitly authorize that
+operation. Without opt-in, processing continues to require `update`.
+
+Interactive actions, manual completion, state input and task editing still
+require `update`. An automatic-execution grant does not authorize a human
+confirmation or document-review action. The task queue runner and direct task
+processor honor the same opt-in operation; worker continuations recheck it before
+executing and before applying results. Applications must preserve their tenant
+boundary for both operations.

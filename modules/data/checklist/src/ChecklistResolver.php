@@ -4,6 +4,7 @@ namespace Drupal\checklist;
 
 use Drupal\checklist\Plugin\ChecklistType\ChecklistTypeInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -24,6 +25,16 @@ class ChecklistResolver {
   ) {}
 
   /**
+   * Gets the host operation required for automatic checklist processing.
+   *
+   * Opt-in hosts must explicitly authorize this operation in their access
+   * handler. Merely granting execution never grants interactive update access.
+   */
+  public static function executionOperation(EntityInterface $entity): string {
+    return $entity->getEntityType()->get('checklist_separate_execution_access') ? 'execute checklist' : 'update';
+  }
+
+  /**
    * Resolves an accessible checklist on a saved or unsaved entity.
    *
    * Preserves the supplied entity, translation, revision and checklist state.
@@ -37,8 +48,9 @@ class ChecklistResolver {
    * @param int $delta
    *   The field delta, including zero for a single-value field.
    * @param string $operation
-   *   Either view or update. New hosts require create access; update also
-   *   requires field edit access.
+   *   View, update, or execute. Execution uses the opt-in host operation;
+   *   otherwise it retains update access. Both writes require field edit
+   *   access.
    *
    * @return \Drupal\checklist\ChecklistInterface
    *   The checklist on the supplied entity.
@@ -51,15 +63,16 @@ class ChecklistResolver {
    *   When host or field access is denied.
    */
   public function resolve(FieldableEntityInterface $entity, string $field_name, int $delta = 0, string $operation = 'view'): ChecklistInterface {
-    if (!in_array($operation, ['view', 'update'], TRUE)) {
-      throw new \InvalidArgumentException('Checklist resolution supports view or update access.');
+    if (!in_array($operation, ['view', 'update', 'execute'], TRUE)) {
+      throw new \InvalidArgumentException('Checklist resolution supports view, update or execute access.');
     }
     if ($delta < 0) {
       throw new NotFoundHttpException('Checklist not found.');
     }
+    $host_operation = $operation === 'execute' ? self::executionOperation($entity) : 'update';
     $allowed = $entity->isNew()
       ? $entity->access('create', $this->currentUser)
-      : $entity->access('view', $this->currentUser) && ($operation === 'view' || $entity->access('update', $this->currentUser));
+      : $entity->access('view', $this->currentUser) && ($operation === 'view' || $entity->access($host_operation, $this->currentUser));
     if (!$allowed) {
       throw new AccessDeniedHttpException('The checklist host is not accessible.');
     }
@@ -70,7 +83,7 @@ class ChecklistResolver {
     if ($field->getFieldDefinition()->getType() !== 'checklist') {
       throw new NotFoundHttpException('Checklist not found.');
     }
-    if (!$field->access('view', $this->currentUser) || ($operation === 'update' && !$field->access('edit', $this->currentUser))) {
+    if (!$field->access('view', $this->currentUser) || ($operation !== 'view' && !$field->access('edit', $this->currentUser))) {
       throw new AccessDeniedHttpException('The checklist field is not accessible.');
     }
     $item = $field->get($delta);

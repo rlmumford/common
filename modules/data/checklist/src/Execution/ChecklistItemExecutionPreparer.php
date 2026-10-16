@@ -86,7 +86,7 @@ class ChecklistItemExecutionPreparer {
     }
     $this->entityTypeManager->getAccessControlHandler($host_type)->resetCache();
     $this->entityTypeManager->getAccessControlHandler('checklist_item')->resetCache();
-    $checklist = $this->resolver->resolve($host, $field, 0, 'update');
+    $checklist = $this->resolver->resolve($host, $field, 0, $automatic ? 'execute' : 'update');
     if ($checklist->getType()->getPluginId() !== $item->bundle() || !$checklist->hasItem($item->getName()) || $checklist->getItem($item->getName())->uuid() !== $item->uuid()) {
       throw new \DomainException('The item no longer belongs to the addressed checklist.');
     }

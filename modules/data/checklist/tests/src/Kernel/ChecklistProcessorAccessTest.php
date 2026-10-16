@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\checklist\Kernel;
 
+use Drupal\checklist_state_test\Plugin\ChecklistItemHandler\Iteration;
+use Drupal\checklist\Attempt\ChecklistAttempt;
+use Drupal\checklist\Entity\ChecklistItemInterface;
 use Drupal\Core\Session\AnonymousUserSession;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
@@ -19,6 +22,66 @@ class ChecklistProcessorAccessTest extends ChecklistItemExecutionTestBase {
     [$host, $item] = $this->work(record_attempt: FALSE);
     $item->set('handler', ['id' => 'context_producer', 'configuration' => []])->save();
     return [$host, $item];
+  }
+
+  /**
+   * Opt-in automatic execution does not grant manual update or decision access.
+   */
+  public function testExecutionOnlyPolicy(): void {
+    [$host, $item] = $this->synchronousWork();
+    $entities = $this->container->get('entity_type.manager');
+    $state = $this->container->get('state');
+    $state->set('checklist_resolver_test.execution_only', TRUE);
+    $entities->getAccessControlHandler('user')->resetCache();
+    try {
+      $host->work->checklist->process();
+      $this->fail('Hosts without opt-in must retain update access.');
+    }
+    catch (AccessDeniedHttpException) {
+      $this->assertTrue($this->reload($item)->isIncomplete());
+    }
+    $entities->getDefinition('user')->set('checklist_separate_execution_access', TRUE);
+    $this->assertFalse($host->access('update'));
+    $this->assertTrue($host->work->checklist->process());
+    $this->assertSame('Produced', $this->reload($item)->get('outcomes')->get('value')->getValue());
+
+    $manual = $item->createDuplicate();
+    $manual->set('name', 'decision')->set('handler', [
+      'id' => 'decision',
+      'configuration' => [
+        'question' => 'Confirm',
+        'options' => ['yes' => ['label' => 'Yes']],
+      ],
+    ])->set('status', ChecklistItemInterface::STATUS_INCOMPLETE)->save();
+    $host->work->checklist->setItem('decision', $manual);
+    $this->assertFalse($manual->access('execute action operation'));
+    $this->assertFalse($manual->access('execute iteration'));
+    $this->expectException(AccessDeniedHttpException::class);
+    $this->container->get('checklist.action_operation_dispatcher')->execute($host->work->checklist, 'decision', 'choose', ['choice' => 'yes']);
+  }
+
+  /**
+   * Iterative workers recheck the separate permission before a continuation.
+   */
+  public function testExecutionPermissionRevokedBetweenIterations(): void {
+    [, $item, $attempt] = $this->work();
+    $entities = $this->container->get('entity_type.manager');
+    $entities->getDefinition('user')->set('checklist_separate_execution_access', TRUE);
+    $this->container->get('state')->set('checklist_resolver_test.execution_only', TRUE);
+    $entities->getAccessControlHandler('user')->resetCache();
+    $runner = $this->container->get('checklist.item_executor');
+    $waiting = $runner->run($attempt);
+    $this->assertSame(ChecklistAttempt::WAITING, $waiting->status);
+    $this->now += 5;
+    $this->container->get('state')->set('checklist_resolver_test.execution_only', 'revoked');
+    try {
+      $runner->run($waiting);
+      $this->fail('Revoked execution must stop the next iteration.');
+    }
+    catch (AccessDeniedHttpException) {
+      $this->assertTrue($this->reload($item)->isIncomplete());
+      $this->assertCount(1, Iteration::$calls);
+    }
   }
 
   /**
@@ -49,7 +112,7 @@ class ChecklistProcessorAccessTest extends ChecklistItemExecutionTestBase {
   /**
    * Supplies host, field-view and field-edit access denials.
    */
-  public function denialProvider(): array {
+  public static function denialProvider(): array {
     return [['host'], ['view'], ['edit']];
   }
 
