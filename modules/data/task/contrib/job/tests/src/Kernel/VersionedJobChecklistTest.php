@@ -39,6 +39,19 @@ class VersionedJobChecklistTest extends KernelTestBase {
   }
 
   /**
+   * Generic task templates can inspect job-only components without a bound job.
+   */
+  public function testContextComponentOutsideJobBlueprint(): void {
+    $template = $this->container->get('plugin.manager.entity_template.template')->createInstance('standalone', [
+      'target_entity_type_id' => 'task',
+      'target_entity_bundle' => 'task',
+    ]);
+    $component = $this->container->get('plugin.manager.entity_template.component')->createInstance('task_context.data_select', []);
+    $component->setTemplate($template);
+    $this->assertSame([], $component->getTaskContextDefinitions());
+  }
+
+  /**
    * A task follows its named version and then its dirty working copy.
    */
   public function testTaskChecklistUsesVersionAndDirtyOverlay(): void {
@@ -338,6 +351,20 @@ class VersionedJobChecklistTest extends KernelTestBase {
     $contexts = $collector->collectConfigContexts(JobConfigurationChecklist::createFromJob($job));
     $this->assertArrayHasKey('item:decision:decision', $contexts);
     $this->assertArrayHasKey('item:decision:reason', $contexts);
+  }
+
+  /**
+   * Persisted tasks must not retain a cached, outdated config job object.
+   */
+  public function testResolverReloadsPersistedDefinition(): void {
+    $job = Job::create(['id' => 'refreshed', 'label' => 'Original definition']);
+    $job->save();
+    $task = Task::create(['title' => 'Existing task', 'job' => $job]);
+    $task->save();
+    $this->assertSame('Original definition', $task->get('job')->entity->label());
+    $changed = $this->container->get('entity_type.manager')->getStorage('task_job')->loadUnchanged($job->id());
+    $changed->setDefinitionValue('label', 'Changed definition')->save();
+    $this->assertSame('Changed definition', $this->container->get('task_job.resolver')->resolve($task)->label());
   }
 
 }

@@ -311,3 +311,33 @@ No new receipt table, module or endpoint is required.
 empty sets, entity references, frozen membership, nesting, rollback/retry and
 named/dirty versions. The draft browser test covers mapping persistence. See the
 [real UI captures](../../../../../docs/screenshots/checklist-template-collection/README.md).
+
+## Content job providers
+
+`JobInterface` extends `EntityInterface`, allowing a module to supply a content
+entity alongside exported `task_job` configuration. `JobDefinitionTrait` supplies
+the common checklist, template, context, trigger and resource behavior. Providers
+implement `getDefinitionValue()`/`setDefinitionValue()` for their own storage,
+`getTaskValues()` for authoritative task references, and
+`getTaskQueryConditions()` for task lookups.
+
+Runtime consumers use `task_job.resolver->resolve($task)`. The
+`task_job_resolve` alter hook can replace the core job with a content definition;
+the provider must validate ownership and load the task's saved revision. Content
+providers must enforce immutable task references and preserve referenced revisions.
+The job checklist rejects content configuration without an authoritative reference.
+Configuration jobs retain their existing named-version and refresh behavior.
+
+The `task_job_triggers` alter hook receives the selected trigger instances, event
+plugin ID and explicit context values before execution. Providers may replace
+core triggers with scoped definitions. The `task_job_selection` alter hook receives
+the manual job list and its cache metadata; `task_job_manual_job` resolves or
+rejects the effective definition when a manual creation route is visited.
+
+`JobTaskBuilder::forJob()` binds the actual definition, avoiding global plugin
+derivatives for tenant data. Editor links use `JobEditor::url()` and the entity
+type's `task_job_route_prefix` metadata. Providers supply equivalent routes with
+the `task_job` parameter converted to their entity type and appropriate entity
+access requirements. Draft and nested blueprint keys include the entity type.
+Delegated execution approval for revisionable jobs is keyed by entity type, ID
+and revision; authoring does not bypass the separate authorization permission.
