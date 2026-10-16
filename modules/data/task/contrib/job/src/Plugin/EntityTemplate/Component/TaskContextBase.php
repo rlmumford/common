@@ -102,9 +102,7 @@ abstract class TaskContextBase extends ComponentBase implements TemplateContextA
       $job = $template->getBlueprint()->getJob();
     }
 
-    $task = $this->entityTypeManager->getStorage('task')->create([
-      'job' => $job,
-    ]);
+    $task = $this->entityTypeManager->getStorage('task')->create($job->getTaskValues());
     return $task->get('context')->getPropertyDefinitions();
   }
 

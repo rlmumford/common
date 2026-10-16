@@ -340,4 +340,18 @@ class VersionedJobChecklistTest extends KernelTestBase {
     $this->assertArrayHasKey('item:decision:reason', $contexts);
   }
 
+  /**
+   * Persisted tasks must not retain a cached, outdated config job object.
+   */
+  public function testResolverReloadsPersistedDefinition(): void {
+    $job = Job::create(['id' => 'refreshed', 'label' => 'Original definition']);
+    $job->save();
+    $task = Task::create(['title' => 'Existing task', 'job' => $job]);
+    $task->save();
+    $this->assertSame('Original definition', $task->get('job')->entity->label());
+    $changed = $this->container->get('entity_type.manager')->getStorage('task_job')->loadUnchanged($job->id());
+    $changed->setDefinitionValue('label', 'Changed definition')->save();
+    $this->assertSame('Changed definition', $this->container->get('task_job.resolver')->resolve($task)->label());
+  }
+
 }

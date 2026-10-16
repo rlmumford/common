@@ -105,7 +105,7 @@ class JobAddResourceForm extends JobPluginFormBase {
       'id' => $block->getPluginId(),
       'uuid' => $uuid,
     ] + $block->getConfiguration();
-    $job->set('resources', $resources);
+    $job->setDefinitionValue('resources', $resources);
     $job->getResourcesCollection()->setConfiguration($job->getResourcesConfiguration());
 
     $this->tempstoreRepository->set($job);

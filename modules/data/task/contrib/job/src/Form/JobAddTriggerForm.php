@@ -87,7 +87,7 @@ class JobAddTriggerForm extends JobPluginFormBase {
       'label' => $plugin->getLabel(),
       'key' => $plugin->getKey(),
     ] + $plugin->getConfiguration();
-    $job->set('triggers', $triggers);
+    $job->setDefinitionValue('triggers', $triggers);
     $job->getTriggerCollection()->setConfiguration($job->getTriggersConfiguration());
 
     $this->tempstoreRepository->set($job);

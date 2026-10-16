@@ -2,6 +2,7 @@
 
 namespace Drupal\task_job\Controller;
 
+use Drupal\task_job\JobEditor;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Ajax\AjaxHelperTrait;
 use Drupal\Core\Block\BlockManagerInterface;
@@ -9,7 +10,6 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Plugin\Context\EntityContext;
 use Drupal\Core\Plugin\Context\EntityContextDefinition;
-use Drupal\Core\Url;
 use Drupal\task\Event\CollectResourcesContextsEvent;
 use Drupal\task\Event\TaskEvents;
 use Drupal\task_job\JobInterface;
@@ -130,7 +130,7 @@ class ChooseBlockController extends ControllerBase {
 
       $build[$category]['links']['#links'][] = [
         'title' => $definition['admin_label'],
-        'url' => Url::fromRoute(
+        'url' => JobEditor::url($task_job,
           'task_job.resource.add',
           [
             'task_job' => $task_job->id(),
