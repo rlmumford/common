@@ -80,7 +80,7 @@ class JobTaskBuilder extends BuilderBase {
    */
   public function getDefaultBlueprintEditTemplateUrl(
     BlueprintStorageInterface $blueprint_storage,
-    string $key
+    string $key,
   ): Url {
     /** @var \Drupal\entity_template\BlueprintEntityStorageAdaptor $blueprint_storage */
     return JobEditor::url($blueprint_storage->getEntity(),

@@ -73,7 +73,7 @@ class JobAddResourceForm extends JobPluginFormBase {
     PluginManagerInterface $manager,
     ConfigFactoryInterface $config_factory,
     EventDispatcherInterface $event_dispatcher,
-    EntityTypeManagerInterface $entity_type_manager
+    EntityTypeManagerInterface $entity_type_manager,
   ) {
     parent::__construct($tempstore_repository, $plugin_form_factory, $manager, $config_factory);
 

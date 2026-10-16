@@ -55,7 +55,7 @@ abstract class JobTriggerBase extends PluginBase implements JobTriggerInterface,
     ContainerInterface $container,
     array $configuration,
     $plugin_id,
-    $plugin_definition
+    $plugin_definition,
   ) {
     return new static(
       $configuration,
@@ -85,7 +85,7 @@ abstract class JobTriggerBase extends PluginBase implements JobTriggerInterface,
     string $plugin_id,
     $plugin_definition,
     TemplateBuilderManager $builder_manager,
-    EventDispatcherInterface $event_dispatcher
+    EventDispatcherInterface $event_dispatcher,
   ) {
     $this->builderManager = $builder_manager;
     $this->eventDispatcher = $event_dispatcher;

@@ -63,7 +63,7 @@ abstract class TaskContextBase extends ComponentBase implements TemplateContextA
     array $configuration,
     string $plugin_id,
     $plugin_definition,
-    EntityTypeManagerInterface $entity_type_manager
+    EntityTypeManagerInterface $entity_type_manager,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 

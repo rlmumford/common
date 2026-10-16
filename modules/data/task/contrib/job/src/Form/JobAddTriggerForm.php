@@ -55,7 +55,7 @@ class JobAddTriggerForm extends JobPluginFormBase {
     PluginFormFactoryInterface $plugin_form_factory,
     PluginManagerInterface $manager,
     ConfigFactoryInterface $config_factory,
-    BlueprintTempstoreRepository $blueprint_tempstore_repository
+    BlueprintTempstoreRepository $blueprint_tempstore_repository,
   ) {
     parent::__construct(
       $tempstore_repository, $plugin_form_factory, $manager, $config_factory

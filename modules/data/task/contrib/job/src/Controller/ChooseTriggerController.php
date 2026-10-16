@@ -56,7 +56,7 @@ class ChooseTriggerController extends ControllerBase {
   public function __construct(
     TaskJobTempstoreRepository $tempstore_repository,
     JobTriggerManager $manager,
-    FormBuilderInterface $form_builder
+    FormBuilderInterface $form_builder,
   ) {
     $this->manager = $manager;
     $this->formBuilder = $form_builder;
