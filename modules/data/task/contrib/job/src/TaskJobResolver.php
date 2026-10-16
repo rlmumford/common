@@ -6,14 +6,14 @@ use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 
 /**
- * Resolves the authoritative job reference of a task for every runtime consumer.
+ * Resolves the authoritative job reference for runtime consumers.
  */
 class TaskJobResolver {
 
   public function __construct(protected JobVersionResolverInterface $versions, protected ModuleHandlerInterface $modules) {}
 
   /**
-   * Resolves config jobs, allowing content-job providers to supply their source.
+   * Resolves config jobs and allows content providers to supply their source.
    */
   public function resolve(FieldableEntityInterface $task): ?JobInterface {
     $job = NULL;
