@@ -276,7 +276,7 @@ function task_job_update_8007() {
   if ($installed['job']->getType() !== 'task_job_reference') {
     if ($storage->countFieldData($installed['job'], TRUE)) {
       // Retain the old columns until both the copy and metadata update succeed.
-      // Re-running after interrupted nontransactional DDL safely repeats the copy.
+      // Retrying interrupted nontransactional DDL safely repeats the copy.
       $new_mapping = $storage->getTableMapping(['job' => $definition] + $installed);
       $columns = $new_mapping->getColumnNames('job');
       foreach ($definition->getColumns() as $property => $specification) {

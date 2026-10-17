@@ -236,7 +236,9 @@ function task_job_task_job_delete(JobInterface $job) {
  */
 function task_job_task_storage_prewrite(EntityInterface $task): void {
   $reference = $task->get('job');
-  if ($original = $task->getOriginal()) {
+  // Drupal 10 exposes the original entity as a property.
+  $original = method_exists($task, 'getOriginal') ? $task->getOriginal() : ($task->original ?? NULL);
+  if ($original) {
     $previous = $original->get('job');
     if (!$previous->isEmpty() && $previous->target_type !== 'task_job' && $previous->getValue() !== $reference->getValue()) {
       throw new \DomainException('An existing task must keep its content job reference and revision.');
