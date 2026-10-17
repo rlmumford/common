@@ -102,7 +102,7 @@ class Job extends ConfigEntityBase implements JobInterface, EntityWithPluginColl
    * {@inheritdoc}
    */
   public function getTaskQueryConditions(): array {
-    return ['job' => $this->getBaseJobId()];
+    return ['job.target_type' => 'task_job', 'job.target_id' => $this->getBaseJobId()];
   }
 
   /**

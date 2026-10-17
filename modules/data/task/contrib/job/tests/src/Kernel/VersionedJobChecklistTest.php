@@ -81,8 +81,7 @@ class VersionedJobChecklistTest extends KernelTestBase {
 
     $task = Task::create([
       'title' => 'Employment support task',
-      'job' => $base,
-      'job_version' => '6',
+      'job' => ['target_type' => 'task_job', 'target_id' => $base->id(), 'version' => '6'],
     ]);
     $task->save();
 
@@ -144,7 +143,10 @@ class VersionedJobChecklistTest extends KernelTestBase {
     $resolver = $this->container->get('task_job.version_resolver');
     $six = $resolver->createVersion($job, '6');
     $six->save();
-    $task = Task::create(['title' => 'Review', 'job' => $job, 'job_version' => '6']);
+    $task = Task::create([
+      'title' => 'Review',
+      'job' => ['target_type' => 'task_job', 'target_id' => $job->getBaseJobId(), 'version' => '6'],
+    ]);
     $task->save();
     $item = $task->checklist->checklist->getItem('review');
     $item->save();
@@ -260,7 +262,10 @@ class VersionedJobChecklistTest extends KernelTestBase {
     $resolver = $this->container->get('task_job.version_resolver');
     $six = $resolver->createVersion($job, '6');
     $six->save();
-    $task = Task::create(['title' => 'Preparation', 'job' => $job, 'job_version' => '6']);
+    $task = Task::create([
+      'title' => 'Preparation',
+      'job' => ['target_type' => 'task_job', 'target_id' => $job->getBaseJobId(), 'version' => '6'],
+    ]);
     $task->save();
     $storage = $this->container->get('entity_type.manager')->getStorage('task');
     $this->assertSame(['confirm'], array_keys($task->checklist->checklist->getItems()));

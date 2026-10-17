@@ -174,8 +174,8 @@ directly. Current user means the
 account performing the save, including a worker's execution account, so use a
 stable task/job context when assignment must not depend on the caller.
 
-A task with `job_version` resolves that version's saved dirty overlay for both
-assignment rules and task-context definitions. Without `job_version`, the existing
+A task with `job.version` resolves that version's saved dirty overlay for both
+assignment rules and task-context definitions. Without `job.version`, the existing
 direct job-reference behavior is retained. Unsaved job-editor drafts are not used
 for live task assignment. Missing required condition inputs mean no match;
 invalid plugin configuration or invalid selectors raise an error rather than
@@ -321,12 +321,40 @@ implement `getDefinitionValue()`/`setDefinitionValue()` for their own storage,
 `getTaskValues()` for authoritative task references, and
 `getTaskQueryConditions()` for task lookups.
 
-Runtime consumers use `task_job.resolver->resolve($task)`. The
-`task_job_resolve` alter hook can replace the core job with a content definition;
-the provider must validate ownership and load the task's saved revision. Content
-providers must enforce immutable task references and preserve referenced revisions.
-The job checklist rejects content configuration without an authoritative reference.
-Configuration jobs retain their existing named-version and refresh behavior.
+Tasks have one single-value `job` field of type `task_job_reference`, containing
+`target_type`, `target_id`, and `version`. `version` is a named configuration
+version for `task_job`, or a saved revision ID for a revisionable content job.
+The computed `job.entity` property resolves that exact reference. There are no
+separate content-job or revision fields on tasks.
+
+Runtime consumers use `task_job.resolver->resolve($task)`. It verifies that the
+entity implements `JobInterface`, checks the saved identity, and loads the named
+version or pinned revision. Providers implement `hook_task_job_reference_validate()`
+to reject invalid ownership; they cannot substitute another definition. Saved
+content-job references are immutable. Providers must preserve referenced revisions.
+The checklist uses the task reference rather than selecting a second job from its
+serialized plugin configuration. Configuration jobs retain their existing
+named-version, dirty-overlay and unversioned latest-definition behavior.
+
+Assign a `JobInterface` object to `job`, or use an explicit reference:
+
+```php
+$task->set('job', [
+  'target_type' => 'organization_job',
+  'target_id' => (string) $job->id(),
+  'version' => (string) $job->getRevisionId(),
+]);
+```
+
+A scalar `job` assignment remains shorthand for a configuration job. The old
+`job_version` task field is removed: callers now use `job.version`. Queries must
+include both `job.target_type` and `job.target_id`; `getTaskQueryConditions()`
+provides these conditions. IDs can overlap between providers. Update 8007 copies
+existing configuration references and versions before removing the old columns.
+Legacy versioned configuration IDs are normalized into a base ID and selector.
+Run database updates before using the new runtime on an existing installation.
+Unsaved job objects are available only for new-task editor previews; persisted
+tasks always resolve their stored definition selector.
 
 The `task_job_triggers` alter hook receives the selected trigger instances, event
 plugin ID and explicit context values before execution. Providers may replace

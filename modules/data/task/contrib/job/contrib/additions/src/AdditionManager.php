@@ -65,7 +65,7 @@ class AdditionManager {
     }
     $this->entities->getStorage('task_job')->resetCache();
     $job = $this->jobs->resolve($task);
-    if (!$job || $job->id() !== $type->getJob()?->id() || $job->getEntityTypeId() !== $type->getJob()?->getEntityTypeId() || ($job->getEntityTypeId() === 'task_job' && (string) ($type->getConfiguration()['job_version'] ?? '') !== (string) $task->get('job_version')->value)) {
+    if (!$job || $job->id() !== $type->getJob()?->id() || $job->getEntityTypeId() !== $type->getJob()?->getEntityTypeId() || ($job->getEntityTypeId() === 'task_job' && (string) ($type->getConfiguration()['job_version'] ?? '') !== (string) $task->get('job')->version)) {
       throw new AccessDeniedHttpException('The task job is unavailable or does not match the checklist.');
     }
     return [$task, $job, $checklist];

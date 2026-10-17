@@ -220,12 +220,6 @@ class TaskAddController extends ControllerBase {
       throw new NotFoundHttpException();
     }
     $task = $effective_job->getTrigger('manual')->createTask();
-    if ($task && $effective_job->getEntityTypeId() === 'task_job') {
-      $task->set('job', $effective_job->getBaseJobId());
-      if ($effective_job->getVersion() !== NULL) {
-        $task->set('job_version', $effective_job->getVersion());
-      }
-    }
     if ($task && $assignee) {
       $task->assignee = $assignee->id();
     }

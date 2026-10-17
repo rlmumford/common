@@ -91,8 +91,13 @@ class Job extends ChecklistTypeBase implements PluginWithFormsInterface {
   public function getChecklist(FieldableEntityInterface $entity, string $key): ChecklistInterface {
     if ($entity instanceof Task) {
       $job = \Drupal::service('task_job.resolver')->resolve($entity);
-      if ($job && $job->getEntityTypeId() !== 'task_job') {
+      if ($job) {
+        unset($this->configuration['job_entity_type'], $this->configuration['job_revision'], $this->configuration['job_version']);
         $this->configuration['job'] = $job;
+        if ($job->getEntityTypeId() === 'task_job') {
+          $this->configuration['job'] = $entity->get('job')->target_id;
+          $this->configuration['job_version'] = $entity->get('job')->version;
+        }
       }
       elseif (($this->configuration['job_entity_type'] ?? 'task_job') !== 'task_job'
         || (($this->configuration['job'] ?? NULL) instanceof JobInterface && $this->configuration['job']->getEntityTypeId() !== 'task_job')) {

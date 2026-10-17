@@ -21,19 +21,11 @@ function task_job_entity_base_field_info(EntityTypeInterface $entity_type) {
   $fields = [];
 
   if ($entity_type->id() == 'task') {
-    $fields['job'] = BaseFieldDefinition::create('entity_reference')
+    $fields['job'] = BaseFieldDefinition::create('task_job_reference')
       ->setLabel(new TranslatableMarkup('Job'))
-      ->setDescription(new TranslatableMarkup('The Job'))
-      ->setSetting('target_type', 'task_job')
-      ->setDisplayConfigurable('view', TRUE)
-      ->setDisplayConfigurable('form', TRUE);
-    $fields['job_version'] = BaseFieldDefinition::create('string')
-      ->setLabel(new TranslatableMarkup('Job version'))
-      ->setDescription(new TranslatableMarkup('The named job version used by this task.'))
-      ->setSetting('max_length', 128)
+      ->setDescription(new TranslatableMarkup('The job definition used by this task.'))
       ->setInternal(TRUE)
-      ->setDisplayConfigurable('view', TRUE)
-      ->setDisplayConfigurable('form', TRUE);
+      ->setDisplayConfigurable('view', TRUE);
   }
 
   return $fields;
@@ -60,8 +52,8 @@ function _task_job_task_checklist_default_value(EntityInterface $task) {
     $configuration = ['job' => $job];
     if ($job->getEntityTypeId() === 'task_job') {
       $configuration = ['job' => $task->get('job')->target_id];
-      if (!$task->get('job_version')->isEmpty()) {
-        $configuration['job_version'] = $task->get('job_version')->value;
+      if ($task->get('job')->version !== NULL) {
+        $configuration['job_version'] = $task->get('job')->version;
       }
     }
     return ['id' => 'job', 'configuration' => $configuration];
@@ -237,4 +229,18 @@ function task_job_task_job_update(JobInterface $job) {
  */
 function task_job_task_job_delete(JobInterface $job) {
   \Drupal::keyValue('task_job.execution_authorization')->delete($job->id());
+}
+
+/**
+ * Implements hook_task_storage_prewrite().
+ */
+function task_job_task_storage_prewrite(EntityInterface $task): void {
+  $reference = $task->get('job');
+  if ($original = $task->getOriginal()) {
+    $previous = $original->get('job');
+    if (!$previous->isEmpty() && $previous->target_type !== 'task_job' && $previous->getValue() !== $reference->getValue()) {
+      throw new \DomainException('An existing task must keep its content job reference and revision.');
+    }
+  }
+  \Drupal::service('task_job.resolver')->resolve($task, FALSE);
 }

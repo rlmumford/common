@@ -49,4 +49,4 @@ services:
 
   task_job.resolver:
     class: Drupal\task_job\TaskJobResolver
-    arguments: ['@task_job.version_resolver', '@module_handler']
+    arguments: ['@task_job.version_resolver', '@module_handler', '@entity_type.manager']
