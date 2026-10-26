@@ -7,3 +7,5 @@ services:
     class: '\Drupal\task_context\EventSubscriber\TaskChecklistCollectContextsSubscriber'
     tags:
       - { name: event_subscriber }
+  task_context.entity_references:
+    class: Drupal\task_context\EntityReferences

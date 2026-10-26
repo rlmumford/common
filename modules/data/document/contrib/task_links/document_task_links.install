@@ -1,0 +1,53 @@
+<?php
+
+/**
+ * @file
+ * Storage for observed task/document relationships.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function document_task_links_schema(): array {
+  return [
+    'document_task_link' => [
+      'description' => 'Current and previously observed task/document references.',
+      'fields' => [
+        'id' => ['type' => 'serial', 'not null' => TRUE],
+        'task_id' => ['type' => 'int', 'not null' => TRUE],
+        'document_id' => ['type' => 'int', 'not null' => TRUE],
+        'observed_revision' => ['type' => 'int', 'not null' => FALSE],
+        'source_type' => ['type' => 'varchar', 'length' => 32, 'not null' => TRUE],
+        'source_id' => ['type' => 'int', 'not null' => TRUE],
+        'field_name' => ['type' => 'varchar', 'length' => 128, 'not null' => TRUE],
+        'path' => ['type' => 'text', 'not null' => TRUE],
+        'relation' => ['type' => 'varchar', 'length' => 8, 'not null' => TRUE],
+        'active_key' => ['type' => 'varchar', 'length' => 64, 'not null' => FALSE],
+        'first_seen' => ['type' => 'int', 'not null' => TRUE],
+        'removed' => ['type' => 'int', 'not null' => FALSE],
+      ],
+      'primary key' => ['id'],
+      'unique keys' => ['current_link' => ['active_key']],
+      'indexes' => [
+        'document_tasks' => ['document_id', 'task_id'],
+        'task_documents' => ['task_id', 'document_id'],
+        'source' => ['source_type', 'source_id'],
+      ],
+    ],
+  ];
+}
+
+/**
+ * Implements hook_install().
+ */
+function document_task_links_install(): void {
+  // Cron backfills bounded batches. Existing links begin history at discovery.
+  \Drupal::state()->set('document_task_links.backfill', ['task' => 0, 'checklist_item' => 0]);
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function document_task_links_uninstall(): void {
+  \Drupal::state()->delete('document_task_links.backfill');
+}

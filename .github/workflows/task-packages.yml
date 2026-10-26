@@ -88,6 +88,7 @@ jobs:
         run: |
           vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/document/contrib/checklist/tests/src/Kernel
           vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/document/contrib/task/tests/src/Kernel
+          vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/document/contrib/task_links/tests/src/Kernel
       - name: Test the checklist module
         working-directory: /tmp/task-consumer
         env:

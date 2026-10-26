@@ -1,0 +1,7 @@
+services:
+  document_task_links.index:
+    class: Drupal\document_task_links\LinkIndex
+    arguments: ['@database', '@entity_type.manager', '@task_context.entity_references', '@datetime.time', '@module_handler']
+  document_task_links.presentation:
+    class: Drupal\document_task_links\LinkPresentation
+    arguments: ['@document_task_links.index', '@entity_type.manager', '@date.formatter']
