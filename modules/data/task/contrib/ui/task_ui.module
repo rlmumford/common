@@ -12,6 +12,8 @@ use Drupal\task_ui\Form\WorkspaceForms;
  * Implements hook_views_data_alter().
  */
 function task_ui_views_data_alter(array &$data): void {
+  // Drupal 10 does not enable empty operators on optional base fields.
+  $data['task']['assignee']['filter']['allow empty'] = TRUE;
   foreach ([
     'open' => ['Task workspace link', 'title'],
     'state' => ['Current readiness', 'id'],

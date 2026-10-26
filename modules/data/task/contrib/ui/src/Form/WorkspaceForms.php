@@ -25,7 +25,7 @@ final class WorkspaceForms {
     if ($task instanceof TaskInterface) {
       // Embedded forms must POST to their task rather than the board route.
       $form['#action'] = $task->toUrl()->toString();
-      // AJAX rebuilds can randomize form IDs; keep the replacement target stable.
+      // AJAX rebuilds randomize form IDs; keep the replacement target stable.
       $form['#attributes']['data-task-completion'] = $task->uuid();
       $form['actions']['complete']['#ajax'] = [
         'callback' => [static::class, 'complete'],
