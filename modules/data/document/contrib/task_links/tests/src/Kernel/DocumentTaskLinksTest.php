@@ -80,7 +80,7 @@ class DocumentTaskLinksTest extends KernelTestBase {
     $item = ChecklistItem::create([
       'checklist_type' => 'document_work_test',
       'name' => 'review',
-      'title' => 'Review the existing filing',
+      'title' => 'Review <existing> & confirm',
       'handler' => ['id' => 'document_review'],
       'checklist' => ['target_id' => $task->id(), 'checklist_key' => 'checklist'],
       'outcomes' => [['key' => 'document', 'value' => $document->id()]],
@@ -98,6 +98,13 @@ class DocumentTaskLinksTest extends KernelTestBase {
     $this->assertSame('document', $outcome['name']);
     $this->assertSame('Reviewed document', $outcome['label']);
     $this->assertEquals($document->id(), $outcome['document_id']);
+    $labels = $this->container->get('document_task_links.presentation')->relations($task, (int) $document->id());
+    $html = '';
+    foreach ($labels['#items'] as $label) {
+      $html .= (string) $this->container->get('renderer')->renderInIsolation($label);
+    }
+    $this->assertStringContainsString('Review &lt;existing&gt; &amp; confirm', $html);
+    $this->assertStringNotContainsString('<existing>', $html);
     $task->set('input_document', NULL)->set('context', [])->save();
     $this->assertEquals(1, $this->view($document)->total_rows, 'The outcome alone links the task.');
     $item->set('outcomes', [['key' => 'document', 'value' => $other->id()]])->save();

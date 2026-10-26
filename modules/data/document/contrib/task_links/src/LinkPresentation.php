@@ -70,7 +70,7 @@ final class LinkPresentation {
           '@item' => $reference['item_title'] ?: $reference['item_name'],
           '@item_name' => $reference['item_name'],
         ]);
-      $items[(string) $label] = ['#plain_text' => $label];
+      $items[(string) $label] = ['#markup' => $label];
     }
     return ['#theme' => 'item_list', '#items' => array_values($items), '#cache' => ['max-age' => 0]];
   }
