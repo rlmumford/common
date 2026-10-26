@@ -32,7 +32,7 @@ class ChecklistItemReaderTest extends KernelTestBase {
    * {@inheritdoc}
    */
   protected static $modules = [
-    'system', 'user', 'field', 'text', 'filter', 'options', 'entity', 'entity_test',
+    'system', 'user', 'field', 'text', 'filter', 'options', 'entity',
     'checklist', 'checklist_context_test', 'checklist_resolver_test',
     'checklist_reader_test', 'plugin_reference', 'typed_data', 'typed_data_plus',
     'typed_data_reference', 'typed_data_context_assignment', 'inline_entity_form',
@@ -108,6 +108,22 @@ class ChecklistItemReaderTest extends KernelTestBase {
       $host->save();
     }
     return $host;
+  }
+
+  /**
+   * Read-only checklist viewers see state without unusable mutation forms.
+   */
+  public function testReadOnlyRowsHaveNoActionControls(): void {
+    $host = $this->host();
+    $checklist = $this->container->get('checklist.resolver')->resolve($host, 'work');
+    $this->container->get('state')->set('checklist_resolver_test.denied_field_operations', ['work' => ['edit']]);
+    $this->container->get('entity_type.manager')->getAccessControlHandler('checklist_item')->resetCache();
+    $item = $checklist->getItem('decision');
+    $this->assertTrue($item->access('view action state'));
+    $this->assertFalse($item->access('execute action operation'));
+    $row = $this->container->get('checklist.row_builder')->build($checklist, $item, 'en');
+    $this->assertSame([], $row['checkbox']);
+    $this->assertArrayHasKey('label', $row);
   }
 
   /**
