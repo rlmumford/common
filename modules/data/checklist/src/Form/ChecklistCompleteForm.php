@@ -141,7 +141,7 @@ class ChecklistCompleteForm extends FormBase {
       $type->hasFormClass('complete')
     ) {
       $plugin_form = $this->pluginFormFactory->createInstance($type, 'complete');
-      $form = $plugin_form->validateConfigurationForm($form, $form_state);
+      $plugin_form->validateConfigurationForm($form, $form_state);
     }
   }
 
@@ -159,7 +159,7 @@ class ChecklistCompleteForm extends FormBase {
       $type->hasFormClass('complete')
     ) {
       $plugin_form = $this->pluginFormFactory->createInstance($type, 'complete');
-      $form = $plugin_form->submitConfigurationForm($form, $form_state);
+      $plugin_form->submitConfigurationForm($form, $form_state);
     }
 
     $this->checklist->complete();

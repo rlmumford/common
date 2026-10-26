@@ -6,6 +6,7 @@ use Drupal\KernelTests\KernelTestBase;
 use Drupal\task\Entity\Task;
 use Drupal\user\Entity\User;
 use Drupal\user\Entity\Role;
+use Drupal\views\Views;
 
 /**
  * Exercises query access, pagination and shared readiness in the workspace.
@@ -18,7 +19,7 @@ class WorkQueueTest extends KernelTestBase {
    * {@inheritdoc}
    */
   protected static $modules = [
-    'system', 'user', 'field', 'text', 'filter', 'options', 'datetime', 'entity',
+    'system', 'user', 'field', 'text', 'filter', 'options', 'datetime', 'entity', 'views',
     'task', 'task_ui', 'task_checklist', 'checklist', 'plugin_reference',
     'typed_data', 'typed_data_plus', 'typed_data_reference',
   ];
@@ -32,7 +33,7 @@ class WorkQueueTest extends KernelTestBase {
     foreach (['user', 'task', 'checklist_item'] as $type) {
       $this->installEntitySchema($type);
     }
-    $this->installConfig(['system', 'user']);
+    $this->installConfig(['system', 'user', 'task_ui']);
     $this->container->get('router.builder')->rebuild();
   }
 
@@ -49,22 +50,36 @@ class WorkQueueTest extends KernelTestBase {
     for ($i = 0; $i < 26; $i++) {
       Task::create(['title' => 'Review ' . $i, 'assignee' => $user->id()])->save();
     }
-    $queue = $this->container->get('task_ui.queue');
-    $page = $queue->build('team');
-    $this->assertCount(25, $page['active']['#rows']);
-    $this->assertSame(26, $this->container->get('pager.manager')->getPager()->getTotalItems());
-    $this->assertArrayHasKey('empty', $queue->build('unassigned'));
+    $view = Views::getView('task_workspace');
+    $view->setDisplay('team');
+    $view->execute();
+    $this->assertCount(25, $view->result);
+    $this->assertEquals(26, $view->total_rows);
+    $unassigned = Views::getView('task_workspace');
+    $unassigned->setDisplay('unassigned');
+    $unassigned->execute();
+    $this->assertCount(0, $unassigned->result);
     $future = Task::create([
       'title' => 'Scheduled review',
       'assignee' => $user->id(),
       'start' => gmdate('Y-m-d\TH:i:s', time() + 3600),
     ]);
     $future->save();
-    $page = $queue->build('mine', 'Scheduled');
-    $this->assertCount(1, $page['pending']['#rows']);
+    $mine = Views::getView('task_workspace');
+    $mine->setDisplay('mine');
+    $mine->setExposedInput(['title' => 'Scheduled']);
+    $mine->execute();
+    $this->assertCount(1, $mine->result);
+    $this->assertEquals($future->id(), $mine->result[0]->_entity->id());
+    $this->assertSame('Scheduled', (string) $this->container->get('task_ui.presenter')->state($future));
     $future->resolve()->save();
-    $this->assertArrayHasKey('empty', $queue->build('mine', 'Scheduled'));
-    $this->assertCount(1, $queue->build('history', 'Scheduled')['resolved']['#rows']);
+    foreach (['mine' => 0, 'history' => 1] as $display => $count) {
+      $view = Views::getView('task_workspace');
+      $view->setDisplay($display);
+      $view->setExposedInput(['title' => 'Scheduled']);
+      $view->execute();
+      $this->assertCount($count, $view->result);
+    }
   }
 
 }

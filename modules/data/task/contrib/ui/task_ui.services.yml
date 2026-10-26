@@ -1,7 +1,15 @@
 services:
   task_ui.queue:
     class: Drupal\task_ui\WorkQueue
-    arguments: ['@entity_type.manager', '@current_user', '@task.readiness', '@date.formatter', '@datetime.time', '@module_handler']
+    arguments: ['@module_handler']
+  task_ui.presenter:
+    class: Drupal\task_ui\TaskPresenter
+    arguments: ['@task.readiness', '@date.formatter', '@datetime.time', '@module_handler', '@entity_type.manager']
+  task_ui.form_ajax_response:
+    class: Drupal\task_ui\Form\WorkspaceAjaxResponseBuilder
+    decorates: form_ajax_response_builder
+    decoration_priority: -10
+    arguments: ['@task_ui.form_ajax_response.inner']
   task_ui.routes:
     class: Drupal\task_ui\Routing\RouteSubscriber
     tags:
