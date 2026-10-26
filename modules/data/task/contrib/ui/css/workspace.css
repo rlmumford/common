@@ -1,0 +1,4 @@
+/* Keep navigation compact without changing the checklist's resource layout. */
+.task-work-navigation ul { display: flex; flex-wrap: wrap; gap: 1rem; list-style: none; padding: 0; }
+.task-work-summary { margin-block: 1rem; }
+.task-work-actions { display: flex; gap: 1rem; margin-block: 1rem; }

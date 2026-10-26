@@ -1,0 +1,8 @@
+services:
+  task_ui.queue:
+    class: Drupal\task_ui\WorkQueue
+    arguments: ['@entity_type.manager', '@current_user', '@task.readiness', '@date.formatter', '@datetime.time', '@module_handler']
+  task_ui.routes:
+    class: Drupal\task_ui\Routing\RouteSubscriber
+    tags:
+      - { name: event_subscriber }

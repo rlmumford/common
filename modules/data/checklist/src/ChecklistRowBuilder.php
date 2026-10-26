@@ -95,7 +95,7 @@ class ChecklistRowBuilder {
     }
 
     $controls = [];
-    if ($available && $handler->hasFormClass('row')) {
+    if ($available && $handler->hasFormClass('row') && $checklist_item->access('execute action operation')) {
       $form_class = ChecklistItemRowForm::class;
       if (is_subclass_of($handler->getFormClass('row'), CustomFormObjectClassInterface::class)) {
         $form_class = [$handler->getFormClass('row'), 'getFormObjectClass']($handler, $form_class);
