@@ -30,11 +30,18 @@ final class EntityReferences {
       $key = $item['key'] ?? '';
       $parts = preg_split('/[.\[\]]/', $key, -1, PREG_SPLIT_NO_EMPTY);
       $definition = $definitions[array_shift($parts)] ?? NULL;
+      $list_label = NULL;
       foreach ($parts as $part) {
         if ($definition instanceof EntityDataDefinitionInterface) {
           // A reference to an entity is a boundary, not its property graph.
           $definition = NULL;
           break;
+        }
+        if ($definition instanceof ListDataDefinitionInterface) {
+          $list_label = (string) $definition->getLabel();
+        }
+        else {
+          $list_label = NULL;
         }
         $definition = match (TRUE) {
           $definition instanceof ListDataDefinitionInterface => $definition->getItemDefinition(),
@@ -43,10 +50,11 @@ final class EntityReferences {
         };
       }
       if ($definition instanceof ListDataDefinitionInterface && str_ends_with($key, '[]')) {
+        $list_label = (string) $definition->getLabel();
         $definition = $definition->getItemDefinition();
       }
       if ($definition) {
-        yield from $this->walk($definition, $item['value'] ?? $item['blob'] ?? NULL, str_replace('[]', '[' . $delta . ']', $key));
+        yield from $this->walk($definition, $item['value'] ?? $item['blob'] ?? NULL, str_replace('[]', '[' . $delta . ']', $key), $list_label);
       }
     }
   }
@@ -54,11 +62,12 @@ final class EntityReferences {
   /**
    * Walks defined complex/list values without interpreting arbitrary integers.
    */
-  private function walk(DataDefinitionInterface $definition, mixed $value, string $path): iterable {
+  private function walk(DataDefinitionInterface $definition, mixed $value, string $path, ?string $list_label = NULL): iterable {
     if ($value === NULL || $value === '') {
       return;
     }
     if ($definition instanceof DataReferenceDefinitionInterface) {
+      $list_label = $list_label ?: (string) $definition->getLabel();
       $definition = $definition->getTargetDefinition();
       $value = is_array($value) ? ($value['target_id'] ?? NULL) : $value;
     }
@@ -75,7 +84,7 @@ final class EntityReferences {
           'entity_type' => $definition->getEntityTypeId(),
           'entity_id' => (string) $id,
           'path' => $path,
-          'label' => (string) ($definition->getLabel() ?: $path),
+          'label' => (string) ($list_label ?: $definition->getLabel() ?: $path),
         ];
       }
       return;
@@ -85,7 +94,7 @@ final class EntityReferences {
     }
     if ($definition instanceof ListDataDefinitionInterface) {
       foreach ($value as $index => $child) {
-        yield from $this->walk($definition->getItemDefinition(), $child, $path . '[' . $index . ']');
+        yield from $this->walk($definition->getItemDefinition(), $child, $path . '[' . $index . ']', (string) $definition->getLabel());
       }
     }
     elseif ($definition instanceof ComplexDataDefinitionInterface) {
