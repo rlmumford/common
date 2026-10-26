@@ -1,0 +1,46 @@
+<?php
+
+/**
+ * @file
+ * Rebuildable query storage for typed references, without workflow history.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function typed_reference_index_schema(): array {
+  return [
+    'typed_reference_index' => [
+      'description' => 'Entity identities extracted from current typed fields.',
+      'fields' => [
+        'id' => ['type' => 'varchar', 'length' => 64, 'not null' => TRUE],
+        'source_type' => ['type' => 'varchar', 'length' => 64, 'not null' => TRUE],
+        'source_id' => ['type' => 'varchar', 'length' => 255, 'not null' => TRUE],
+        'langcode' => ['type' => 'varchar', 'length' => 32, 'not null' => TRUE],
+        'field_name' => ['type' => 'varchar', 'length' => 128, 'not null' => TRUE],
+        'property_path' => ['type' => 'text', 'not null' => TRUE],
+        'target_type' => ['type' => 'varchar', 'length' => 64, 'not null' => TRUE],
+        'target_id' => ['type' => 'varchar', 'length' => 255, 'not null' => TRUE],
+      ],
+      'primary key' => ['id'],
+      'indexes' => [
+        'source' => ['source_type', 'source_id'],
+        'target' => ['target_type', 'target_id'],
+      ],
+    ],
+  ];
+}
+
+/**
+ * Implements hook_install().
+ */
+function typed_reference_index_install(): void {
+  \Drupal::state()->set('typed_reference_index.rebuild', []);
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function typed_reference_index_uninstall(): void {
+  \Drupal::state()->delete('typed_reference_index.rebuild');
+}

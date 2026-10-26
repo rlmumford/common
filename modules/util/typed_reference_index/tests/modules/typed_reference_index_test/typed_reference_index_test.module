@@ -1,0 +1,19 @@
+<?php
+
+/**
+ * @file
+ * Defines nested entity references without any workflow integration.
+ */
+
+use Drupal\Core\TypedData\ListDataDefinition;
+use Drupal\Core\TypedData\MapDataDefinition;
+use Drupal\typed_data_reference\TypedDataReferenceItemList;
+
+/**
+ * Implements hook_typed_data_reference_property_definitions_alter().
+ */
+function typed_reference_index_test_typed_data_reference_property_definitions_alter(array &$definitions, TypedDataReferenceItemList $field): void {
+  if ($field->getName() === 'references') {
+    $definitions['packet'] = MapDataDefinition::create()->setPropertyDefinition('records', ListDataDefinition::create('entity:entity_test'));
+  }
+}

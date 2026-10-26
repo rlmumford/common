@@ -1,0 +1,11 @@
+{
+    "name": "rlmumford/typed_reference_index",
+    "description": "Reverse lookups for nested typed entity references.",
+    "type": "drupal-module",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": ">=8.1",
+        "drupal/core": "^10 || ^11",
+        "drupal/typed_data_plus": "2.0.x-dev"
+    }
+}

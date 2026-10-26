@@ -1,0 +1,6 @@
+name: Typed reference index fixtures
+type: module
+package: Testing
+core_version_requirement: ^10 || ^11
+dependencies:
+  - typed_reference_index:typed_reference_index
