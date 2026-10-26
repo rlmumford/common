@@ -8,7 +8,7 @@ use Drupal\views\ResultRow;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Shows all recorded directions without multiplying task rows.
+ * Shows saved context and outcome links without multiplying task rows.
  *
  * @ViewsField("document_task_links")
  */

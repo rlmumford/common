@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\task_context;
+namespace Drupal\typed_reference_index;
 
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\TypedData\EntityDataDefinitionInterface;
@@ -19,7 +19,7 @@ use Drupal\typed_data_reference\TypedDataReferenceItemList;
 final class EntityReferences {
 
   /**
-   * Yields entity_type, entity_id and path for each declared entity reference.
+   * Yields identities, paths and labels for declared entity references.
    */
   public function collect(TypedDataReferenceItemList $field): iterable {
     if ($field->isEmpty()) {
@@ -71,7 +71,12 @@ final class EntityReferences {
         throw new \UnexpectedValueException('A stored entity context must contain an entity ID.');
       }
       if ((string) $id !== '') {
-        yield ['entity_type' => $definition->getEntityTypeId(), 'entity_id' => (string) $id, 'path' => $path];
+        yield [
+          'entity_type' => $definition->getEntityTypeId(),
+          'entity_id' => (string) $id,
+          'path' => $path,
+          'label' => (string) ($definition->getLabel() ?: $path),
+        ];
       }
       return;
     }

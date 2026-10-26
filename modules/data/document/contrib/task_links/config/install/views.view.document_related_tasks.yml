@@ -10,7 +10,7 @@ dependencies:
 id: document_related_tasks
 label: Document related tasks
 module: views
-description: Current and previously recorded input and output relationships.
+description: Tasks with saved document contexts or checklist outcomes.
 tag: Tasks
 base_table: task
 base_field: id
@@ -142,7 +142,7 @@ display:
           field: area_text_custom
           plugin_id: text_custom
           empty: true
-          content: No recorded tasks for this document.
+          content: No related tasks for this document.
       arguments:
         document_task_links:
           id: document_task_links

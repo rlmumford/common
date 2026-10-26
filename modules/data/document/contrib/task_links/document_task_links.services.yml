@@ -1,7 +1,7 @@
 services:
-  document_task_links.index:
-    class: Drupal\document_task_links\LinkIndex
-    arguments: ['@database', '@entity_type.manager', '@task_context.entity_references', '@datetime.time', '@module_handler']
+  document_task_links.work:
+    class: Drupal\document_task_links\RelatedWork
+    arguments: ['@database', '@entity_type.manager', '@entity_field.manager', '@typed_reference_index.references', '@typed_reference_index.index', '@plugin.manager.checklist_type', '@module_handler']
   document_task_links.presentation:
     class: Drupal\document_task_links\LinkPresentation
-    arguments: ['@document_task_links.index', '@entity_type.manager', '@date.formatter']
+    arguments: ['@document_task_links.work', '@entity_type.manager']

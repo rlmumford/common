@@ -1,0 +1,6 @@
+services:
+  typed_reference_index.references:
+    class: Drupal\typed_reference_index\EntityReferences
+  typed_reference_index.index:
+    class: Drupal\typed_reference_index\ReferenceIndex
+    arguments: ['@database', '@entity_type.manager', '@entity_field.manager', '@typed_reference_index.references']

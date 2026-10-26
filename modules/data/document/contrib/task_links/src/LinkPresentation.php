@@ -2,14 +2,13 @@
 
 namespace Drupal\document_task_links;
 
-use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Link;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\task\TaskInterface;
 
 /**
- * Presents links only when both ends are visible and compatible.
+ * Presents the saved context and outcome relationships.
  */
 final class LinkPresentation {
   use StringTranslationTrait;
@@ -17,22 +16,23 @@ final class LinkPresentation {
   /**
    * Constructs the presenter.
    */
-  public function __construct(private readonly LinkIndex $index, private readonly EntityTypeManagerInterface $entities, private readonly DateFormatterInterface $dates) {}
+  public function __construct(private readonly RelatedWork $work, private readonly EntityTypeManagerInterface $entities) {}
 
   /**
-   * Lists the task's input/output documents, including recorded former links.
+   * Lists documents referenced by this task and its checklist outcomes.
    */
   public function documents(TaskInterface $task): array {
     if (!$task->access('view')) {
       return [];
     }
-    $ids = array_unique(array_column($this->index->observations((int) $task->id()), 'document_id'));
+    $references = $this->work->references($task);
+    $ids = array_unique(array_column($references, 'document_id'));
     $items = [];
     foreach ($this->entities->getStorage('document')->loadMultiple($ids) as $document) {
-      if ($document->access('view') && $this->index->compatible($task, $document)) {
+      if ($document->access('view') && $this->work->compatible($task, $document)) {
         $items[] = [
           'document' => $document->hasLinkTemplate('canonical') ? Link::fromTextAndUrl($document->label(), $document->toUrl())->toRenderable() : ['#plain_text' => $document->label()],
-          'relations' => $this->relations($task, (int) $document->id()),
+          'relations' => $this->labels(array_filter($references, static fn(array $reference) => $reference['document_id'] == $document->id())),
         ];
       }
     }
@@ -46,38 +46,33 @@ final class LinkPresentation {
   }
 
   /**
-   * Describes observations, never implying that dynamic references pin bytes.
+   * Shows the context or the originating checklist item and outcome name.
    */
   public function relations(TaskInterface $task, int $document_id): array {
     $document = $this->entities->getStorage('document')->load($document_id);
-    if (!$task->access('view') || !$document || !$document->access('view') || !$this->index->compatible($task, $document)) {
+    if (!$task->access('view') || !$document || !$document->access('view') || !$this->work->compatible($task, $document)) {
       return [];
     }
+    return $this->labels(array_filter($this->work->references($task), static fn(array $reference) => $reference['document_id'] == $document_id));
+  }
+
+  /**
+   * Formats saved relationship identities without asserting document creation.
+   */
+  private function labels(array $references): array {
     $items = [];
-    foreach ($this->index->observations((int) $task->id(), $document_id) as $link) {
-      $label = $link['relation'] === 'input' ? $this->t('Input') : $this->t('Output');
-      if ($link['removed']) {
-        $label = $this->t('Former @direction', ['@direction' => $label]);
-      }
-      $details = [
-        $label,
-        $this->t('First recorded @date', ['@date' => $this->dates->format($link['first_seen'], 'short')]),
-      ];
-      if ($link['observed_revision']) {
-        $details[] = $this->t('Observed revision @revision', ['@revision' => $link['observed_revision']]);
-      }
-      if ($link['removed']) {
-        $details[] = $this->t('Link removed @date', ['@date' => $this->dates->format($link['removed'], 'short')]);
-      }
-      if ($link['source_type'] === 'checklist_item') {
-        $source = $this->entities->getStorage('checklist_item')->load($link['source_id']);
-        if ($source && $this->index->task($source)?->id() == $task->id() && $source->access('view action state') && $source->get('outcomes')->access('view')) {
-          $details[] = $this->t('Checklist item: @item', ['@item' => $source->get('title')->value ?: $source->get('name')->value]);
-        }
-      }
-      $items[] = ['#plain_text' => implode(' · ', $details)];
+    foreach ($references as $reference) {
+      $label = $reference['kind'] === 'context'
+        ? $this->t('Context: @label (@name)', ['@label' => $reference['label'], '@name' => $reference['name']])
+        : $this->t('Outcome: @label (@name) — @item (@item_name)', [
+          '@label' => $reference['label'],
+          '@name' => $reference['name'],
+          '@item' => $reference['item_title'] ?: $reference['item_name'],
+          '@item_name' => $reference['item_name'],
+        ]);
+      $items[(string) $label] = ['#plain_text' => $label];
     }
-    return ['#theme' => 'item_list', '#items' => $items, '#cache' => ['max-age' => 0]];
+    return ['#theme' => 'item_list', '#items' => array_values($items), '#cache' => ['max-age' => 0]];
   }
 
 }

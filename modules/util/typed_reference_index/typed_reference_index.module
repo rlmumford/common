@@ -1,0 +1,75 @@
+<?php
+
+/**
+ * @file
+ * Maintains a generic lookup of current stored typed entity references.
+ */
+
+use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\EntityInterface;
+
+/**
+ * Implements hook_entity_insert().
+ */
+function typed_reference_index_entity_insert(EntityInterface $entity): void {
+  if ($entity instanceof ContentEntityInterface) {
+    \Drupal::service('typed_reference_index.index')->synchronize($entity);
+  }
+}
+
+/**
+ * Implements hook_entity_update().
+ */
+function typed_reference_index_entity_update(EntityInterface $entity): void {
+  typed_reference_index_entity_insert($entity);
+}
+
+/**
+ * Implements hook_entity_delete().
+ */
+function typed_reference_index_entity_delete(EntityInterface $entity): void {
+  if ($entity instanceof ContentEntityInterface) {
+    \Drupal::service('typed_reference_index.index')->remove($entity->getEntityTypeId(), (string) $entity->id());
+  }
+}
+
+/**
+ * Implements hook_cron().
+ */
+function typed_reference_index_cron(): void {
+  $state = \Drupal::state();
+  if (!\Drupal::lock()->acquire('typed_reference_index.rebuild', 120)) {
+    return;
+  }
+  try {
+    $progress = $state->get('typed_reference_index.rebuild');
+    if ($progress === NULL) {
+      return;
+    }
+    $index = \Drupal::service('typed_reference_index.index');
+    if ($progress === []) {
+      $index->clear();
+      $progress = array_fill_keys($index->sourceTypes(), NULL);
+      $state->set('typed_reference_index.rebuild', $progress);
+    }
+    if ($progress) {
+      $type = array_key_first($progress);
+      $next = $index->rebuild($type, $progress[$type]);
+      if ($next === NULL) {
+        unset($progress[$type]);
+      }
+      else {
+        $progress[$type] = $next;
+      }
+    }
+    if ($progress) {
+      $state->set('typed_reference_index.rebuild', $progress);
+    }
+    else {
+      $state->delete('typed_reference_index.rebuild');
+    }
+  }
+  finally {
+    \Drupal::lock()->release('typed_reference_index.rebuild');
+  }
+}

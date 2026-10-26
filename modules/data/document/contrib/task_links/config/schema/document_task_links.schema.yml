@@ -3,4 +3,4 @@ views.argument.document_task_links:
   label: Related document argument
 views.field.document_task_links:
   type: views_field
-  label: Recorded document relationships
+  label: Document contexts and outcomes

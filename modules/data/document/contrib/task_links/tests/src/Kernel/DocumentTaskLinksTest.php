@@ -12,7 +12,7 @@ use Drupal\user\Entity\User;
 use Drupal\views\Views;
 
 /**
- * Tests recorded relationships through real storage and access-aware Views.
+ * Tests existing document relationships through access-aware Views.
  *
  * @group document
  */
@@ -24,8 +24,9 @@ class DocumentTaskLinksTest extends KernelTestBase {
   protected static $modules = [
     'system', 'user', 'field', 'file', 'text', 'filter', 'options', 'datetime',
     'entity', 'views', 'document', 'document_task_links', 'document_task_links_test',
-    'task', 'task_ui', 'task_context', 'task_checklist', 'checklist',
-    'plugin_reference', 'typed_data', 'typed_data_plus', 'typed_data_reference',
+    'document_checklist', 'typed_reference_index', 'task', 'task_ui',
+    'task_context', 'task_checklist', 'checklist', 'plugin_reference',
+    'typed_data', 'typed_data_plus', 'typed_data_reference',
     'typed_data_context_assignment',
   ];
 
@@ -39,7 +40,7 @@ class DocumentTaskLinksTest extends KernelTestBase {
     }
     $this->installSchema('file', ['file_usage']);
     $this->installSchema('task_checklist', ['task_checklist_request']);
-    $this->installSchema('document_task_links', ['document_task_link']);
+    $this->installSchema('typed_reference_index', ['typed_reference_index']);
     $this->installSchema('checklist', ['checklist_attempt', 'checklist_attempt_head', 'checklist_attempt_event']);
     $this->installConfig(['system', 'user', 'task_ui', 'document_task_links']);
     User::create(['uid' => 1, 'name' => 'root'])->save();
@@ -61,9 +62,9 @@ class DocumentTaskLinksTest extends KernelTestBase {
   }
 
   /**
-   * Direct, nested and multiple outcome references yield one task row.
+   * Contexts and outcomes reuse the same existing document and task host.
    */
-  public function testRelationshipsAndHistory(): void {
+  public function testContextsAndOutcomes(): void {
     $document = $this->document();
     $other = $this->document('Other');
     $task = Task::create([
@@ -78,67 +79,38 @@ class DocumentTaskLinksTest extends KernelTestBase {
     $task->save();
     $item = ChecklistItem::create([
       'checklist_type' => 'document_work_test',
-      'name' => 'produce',
-      'title' => 'Produce document',
-      'handler' => ['id' => 'simply_checkable'],
+      'name' => 'review',
+      'title' => 'Review the existing filing',
+      'handler' => ['id' => 'document_review'],
       'checklist' => ['target_id' => $task->id(), 'checklist_key' => 'checklist'],
       'outcomes' => [['key' => 'document', 'value' => $document->id()]],
     ]);
     $item->save();
-    $index = $this->container->get('document_task_links.index');
-    $links = $index->observations((int) $task->id());
-    $this->assertCount(5, $links);
-    $this->assertCount(1, array_filter($links, fn($link) => $link['relation'] === 'output'));
-    $view = $this->view($document);
-    $this->assertCount(1, $view->result);
-    $this->assertEquals(1, $view->total_rows);
+    $this->assertEquals(1, $this->view($document)->total_rows);
     $task->resolve()->save();
-    $this->assertCount(1, $this->view($document)->result);
-    // Updating bytes does not rewrite the revision observed on existing links.
-    $revision = $document->getRevisionId();
-    $document->setNewRevision(TRUE);
-    $document->save();
-    $task->save();
-    foreach ($index->observations((int) $task->id(), (int) $document->id()) as $link) {
-      $this->assertEquals($revision, $link['observed_revision']);
-    }
+    // Completing the task does not remove its contexts or outcomes.
+    $this->assertEquals(1, $this->view($document)->total_rows);
+    $work = $this->container->get('document_task_links.work');
+    $references = $work->references($task);
+    $this->assertCount(5, $references);
+    $outcome = array_values(array_filter($references, fn($reference) => $reference['kind'] === 'outcome'))[0];
+    $this->assertSame('review', $outcome['item_name']);
+    $this->assertSame('document', $outcome['name']);
+    $this->assertSame('Reviewed document', $outcome['label']);
+    $this->assertEquals($document->id(), $outcome['document_id']);
     $task->set('input_document', NULL)->set('context', [])->save();
+    $this->assertEquals(1, $this->view($document)->total_rows, 'The outcome alone links the task.');
     $item->set('outcomes', [['key' => 'document', 'value' => $other->id()]])->save();
-    $old = $index->observations((int) $task->id(), (int) $document->id());
-    $this->assertCount(4, $old);
-    $this->assertCount(4, array_filter($old, fn($link) => $link['removed'] !== NULL));
-    $this->assertCount(1, $this->view($document)->result);
-    $task->set('input_document', $document->id())->save();
-    $this->assertCount(5, $index->observations((int) $task->id(), (int) $document->id()));
-    $before = $index->observations((int) $task->id());
-    foreach (['task', 'checklist_item'] as $type) {
-      $this->assertNotNull($index->backfill($type, 0));
-    }
-    $this->assertSame($before, $index->observations((int) $task->id()));
+    $this->assertEquals(0, $this->view($document)->total_rows, 'No independent former-link history remains.');
+    $this->assertEquals(1, $this->view($other)->total_rows);
+    // Moving the item uses its actual host; no task ID is cached in the index.
+    $second = Task::create(['title' => 'Other task', 'assignee' => $this->container->get('current_user')->id()]);
+    $second->save();
+    $item->get('checklist')->target_id = $second->id();
+    $item->save();
+    $this->assertEquals($second->id(), $this->view($other)->result[0]->_entity->id());
     $item->delete();
-    $this->assertNotNull($index->observations((int) $task->id(), (int) $other->id())[0]['removed']);
-    $document->delete();
-    $this->assertSame([], $index->observations((int) $task->id(), (int) $document->id()));
-    $task->delete();
-    $this->assertSame([], $index->observations((int) $task->id()));
-  }
-
-  /**
-   * Saving an unpublished task revision does not change the current links.
-   */
-  public function testNonDefaultTaskRevision(): void {
-    $document = $this->document();
-    $other = $this->document('Draft input');
-    $task = Task::create(['title' => 'Review', 'input_document' => $document->id()]);
-    $task->save();
-    $index = $this->container->get('document_task_links.index');
-    $before = $index->observations((int) $task->id());
-    $task->setNewRevision(TRUE);
-    $task->isDefaultRevision(FALSE);
-    $task->set('input_document', $other->id())->save();
-    $this->assertSame($before, $index->observations((int) $task->id()));
-    $index->backfill('task', 0);
-    $this->assertSame($before, $index->observations((int) $task->id()));
+    $this->assertEquals(0, $this->view($other)->total_rows);
   }
 
   /**
@@ -157,8 +129,10 @@ class DocumentTaskLinksTest extends KernelTestBase {
     $view = $this->view($document);
     $this->assertEquals(26, $view->total_rows);
     $this->assertCount(25, $view->result);
-    $view = $this->view($document, 1);
-    $this->assertCount(1, $view->result);
+    $this->assertCount(1, $this->view($document, 1)->result);
+    // The direct reference works even without the typed-reference cache.
+    $this->container->get('typed_reference_index.index')->clear();
+    $this->assertEquals(26, $this->view($document)->total_rows);
     $role = Role::load('worker');
     $role->revokePermission('view any document')->save();
     $this->container->get('entity_type.manager')->getAccessControlHandler('document')->resetCache();
@@ -166,23 +140,26 @@ class DocumentTaskLinksTest extends KernelTestBase {
   }
 
   /**
-   * Backfill is bounded and current links are restored without guessed history.
+   * Non-default task revisions cannot replace current reference query results.
    */
-  public function testBackfillAndRollback(): void {
+  public function testNonDefaultTaskRevision(): void {
     $document = $this->document();
-    $task = Task::create(['title' => 'Older task', 'input_document' => $document->id()]);
+    $other = $this->document('Draft input');
+    $task = Task::create([
+      'title' => 'Review',
+      'input_document' => $document->id(),
+      'assignee' => $this->container->get('current_user')->id(),
+    ]);
     $task->save();
-    $database = $this->container->get('database');
-    $database->delete('document_task_link')->execute();
-    $index = $this->container->get('document_task_links.index');
-    $this->assertSame((int) $task->id(), $index->backfill('task', 0, 1));
-    $this->assertNull($index->backfill('task', (int) $task->id(), 1));
-    $this->assertCount(1, $index->observations((int) $task->id()));
-    $transaction = $database->startTransaction();
-    $task->set('input_document', NULL)->save();
-    $transaction->rollBack();
-    unset($transaction);
-    $this->assertNull($index->observations((int) $task->id())[0]['removed']);
+    $task->setNewRevision(TRUE);
+    $task->isDefaultRevision(FALSE);
+    $task->set('input_document', $other->id())->save();
+    $this->assertEquals(1, $this->view($document)->total_rows);
+    $this->assertEquals(0, $this->view($other)->total_rows);
+    // Nested contexts saved on the draft must not replace current links either.
+    $task->set('context', [['key' => 'document', 'value' => $other->id()]])->save();
+    $this->assertEquals(1, $this->view($document)->total_rows);
+    $this->assertEquals(0, $this->view($other)->total_rows);
   }
 
   /**

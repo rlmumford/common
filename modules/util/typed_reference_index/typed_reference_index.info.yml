@@ -1,0 +1,7 @@
+name: Typed reference index
+type: module
+description: Rebuildable reverse lookups for stored typed entity references.
+package: RLMumford
+core_version_requirement: ^10 || ^11
+dependencies:
+  - typed_data_plus:typed_data_reference

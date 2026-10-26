@@ -25,7 +25,7 @@ function document_task_links_test_entity_base_field_info(EntityTypeInterface $ty
  */
 function document_task_links_test_typed_data_reference_property_definitions_alter(array &$definitions, TypedDataReferenceItemList $field): void {
   if (in_array($field->getName(), ['context', 'outcomes'], TRUE)) {
-    $definitions['document'] = EntityDataDefinition::create('document');
+    $definitions['document'] ??= EntityDataDefinition::create('document');
     $definitions['documents'] = ListDataDefinition::create('entity:document');
     $definitions['packet'] = MapDataDefinition::create()
       ->setPropertyDefinition('documents', ListDataDefinition::create('entity:document'))
