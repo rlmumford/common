@@ -63,7 +63,7 @@ class JobAssignmentRuleForm extends FormBase {
       '#default_value' => $configuration['label'] ?? '',
     ];
     $contexts = $this->rules->contexts($job);
-    $selector = $form_state->getValue('selector') ?? $configuration['selector'] ?? 'context_user';
+    $selector = $form_state->getUserInput()['selector'] ?? $form_state->getValue('selector') ?? $configuration['selector'] ?? 'context_user';
     $form['selector'] = [
       '#type' => 'select',
       '#title' => $this->t('Select assignee using'),
@@ -116,7 +116,7 @@ class JobAssignmentRuleForm extends FormBase {
    * Keeps condition-selection and operand rebuilds inside the current dialog.
    */
   protected function ajaxRebuildControls(array &$element): void {
-    if (isset($element['#checklist_configuration_add']) || isset($element['#submit']) && isset($element['#limit_validation_errors'])) {
+    if (isset($element['#checklist_configuration_add']) || isset($element['#submit']) && is_array($element['#limit_validation_errors'] ?? NULL)) {
       $element['#ajax']['callback'] = '::rebuildDialog';
     }
     foreach ($element as $key => &$child) {
@@ -138,7 +138,7 @@ class JobAssignmentRuleForm extends FormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    if (isset($form_state->getTriggeringElement()['#limit_validation_errors'])) {
+    if (is_array($form_state->getTriggeringElement()['#limit_validation_errors'] ?? NULL)) {
       return;
     }
     $form_state->get('selector_plugin')->validateConfigurationForm($form['selector_settings'], SubformState::createForSubform($form['selector_settings'], $form, $form_state));
