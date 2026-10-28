@@ -134,6 +134,43 @@ class ChecklistInputProgressTest extends ChecklistItemExecutionTestBase {
   }
 
   /**
+   * Accepted decisions persist as outcomes independently of working state.
+   */
+  public function testInputOutcomesSurviveFreshRetry(): void {
+    [, $item, $waiting] = $this->inputWork();
+    $executor = $this->container->get('checklist.item_executor');
+    $queued = $executor->acceptInput($item, $waiting,
+      ['reference' => 'DOC-42'], ['reference' => 'DOC-42']);
+    $this->assertSame('DOC-42', $this->reload($item)->get('outcomes')->get('reference')->getValue());
+    $journal = $this->container->get('checklist.attempt_journal');
+    $running = $journal->transition($queued, ChecklistAttempt::RUNNING, 1);
+    $failed = $journal->transition($running, ChecklistAttempt::FAILED, 1);
+    $this->reload($item)->setFailed()->save();
+    $executor->retry($item, $failed, ChecklistAttempt::FRESH, TRUE);
+    $fresh = $this->reload($item);
+    $this->assertTrue($fresh->get('state')->isEmpty());
+    $this->assertSame('DOC-42', $fresh->get('outcomes')->get('reference')->getValue());
+    $this->assertFalse($fresh->isComplete());
+  }
+
+  /**
+   * Invalid outcomes roll back input state and the attempt transition.
+   */
+  public function testInvalidInputOutcomeRollsBack(): void {
+    [, $item, $waiting] = $this->inputWork();
+    try {
+      $this->container->get('checklist.item_executor')->acceptInput($item, $waiting,
+        ['reference' => 'DOC-42'], ['undeclared' => 'not an allowed outcome']);
+      $this->fail('Undeclared outcomes must not be accepted.');
+    }
+    catch (\InvalidArgumentException) {
+      $this->assertNull($this->reload($item)->get('state')->get('reference')->getValue());
+      $this->assertTrue($this->reload($item)->get('outcomes')->isEmpty());
+      $this->assertSame($waiting->version, $this->container->get('checklist.attempt_journal')->latest($item)->version);
+    }
+  }
+
+  /**
    * A queued retry must poll instead of opening a stale input request.
    */
   public function testQueuedRetryInput(): void {
