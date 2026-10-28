@@ -937,3 +937,14 @@ confirmation or document-review action. The task queue runner and direct task
 processor honor the same opt-in operation; worker continuations recheck it before
 executing and before applying results. Applications must preserve their tenant
 boundary for both operations.
+
+## Canonical decisions accepted during automatic work
+
+`ChecklistItemExecutor::acceptInput($item, $attempt, $state, $outcomes = [])`
+can atomically publish declared typed outcomes alongside accepted working state.
+Use outcomes for an accepted staff decision that must survive a fresh retry;
+keep temporary selections in state. Only trusted handlers map validated input to
+these arguments; this is not an endpoint accepting arbitrary client outcome maps.
+The existing input fence, authorization checks, type validation and journal event
+apply to both writes in one transaction. Invalid outcomes roll back state and
+attempt changes too. Supplying input does not itself complete the item.

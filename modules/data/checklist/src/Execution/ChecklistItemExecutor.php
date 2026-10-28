@@ -243,12 +243,14 @@ class ChecklistItemExecutor {
    * Accepts input while preserving the attempt's executor and identity.
    *
    * Internal plugin API, not an endpoint accepting arbitrary state. The plugin
-   * validates domain input and maps it to declared working-state names. Both
-   * its action form and action operation should call this same method, passing
+   * validates domain input and maps it to declared state and outcome names.
+   * Outcomes record accepted staff decisions immediately and survive fresh
+   * retries; working state remains temporary. Never pass arbitrary client maps.
+   * The action form and operation should both call this method, passing
    * the attempt snapshot/version that accompanied the input request. No worker
    * or provider runs here; the existing scheduler picks up the continuation.
    */
-  public function acceptInput(ChecklistItemInterface $item, ChecklistAttempt $expected, array $state): ChecklistAttempt {
+  public function acceptInput(ChecklistItemInterface $item, ChecklistAttempt $expected, array $state, array $outcomes = []): ChecklistAttempt {
     if ($expected->itemUuid !== $item->uuid() || $expected->path !== ChecklistAttempt::ACTION) {
       throw new \DomainException('Input requires the matching automatic attempt.');
     }
@@ -263,8 +265,8 @@ class ChecklistItemExecutor {
       return $fresh;
     };
     $prepare();
-    return $this->claims->acceptInput($expected, (int) $this->currentUser->id(), function () use ($prepare, $state): void {
-      $this->apply($prepare(), new ChecklistItemResult(ChecklistAttempt::WAITING, state: $state));
+    return $this->claims->acceptInput($expected, (int) $this->currentUser->id(), function () use ($prepare, $state, $outcomes): void {
+      $this->apply($prepare(), new ChecklistItemResult(ChecklistAttempt::WAITING, state: $state, outcomes: $outcomes));
     });
   }
 
