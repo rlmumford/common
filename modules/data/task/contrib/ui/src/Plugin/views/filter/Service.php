@@ -74,6 +74,15 @@ final class Service extends StringFilter {
   /**
    * {@inheritdoc}
    */
+  public function calculateDependencies() {
+    $dependencies = parent::calculateDependencies();
+    $dependencies['module'][] = 'service';
+    return $dependencies;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getCacheMaxAge() {
     return 0;
   }

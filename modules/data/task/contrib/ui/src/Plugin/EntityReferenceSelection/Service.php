@@ -26,7 +26,7 @@ final class Service extends DefaultSelection {
       // Reuse the parent's cached entities and translated, escaped labels.
       $services = $this->entityTypeManager->getStorage('service')->loadMultiple(array_keys($labels));
       foreach ($services as $id => $service) {
-        // Query access scopes candidates; entity access can restrict them further.
+        // Entity access can restrict the query-scoped candidates further.
         if (!$service->access('view')) {
           unset($options[$bundle][$id]);
         }
