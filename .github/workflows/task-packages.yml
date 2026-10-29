@@ -68,6 +68,7 @@ jobs:
           SYMFONY_DEPRECATIONS_HELPER: weak
         run: |
           vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/task/contrib/ui/tests/src/Kernel
+          vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/task/contrib/work_queue/tests
           vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/task/tests/src/Kernel
           vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/task/contrib/job/tests/src/Kernel/VersionedJobChecklistTest.php
           vendor/bin/phpunit --bootstrap /tmp/task-consumer/web/core/tests/bootstrap.php web/modules/contrib/task/contrib/job/tests/src/Kernel/JobReferenceTest.php
