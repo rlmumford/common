@@ -1,0 +1,26 @@
+<?php
+
+/**
+ * @file
+ * Optional prerequisite used by checklist reconciliation regressions.
+ */
+
+use Drupal\checklist\ChecklistInterface;
+
+/**
+ * Implements hook_checklist_items_alter().
+ */
+function checklist_context_test_checklist_items_alter(array &$items, ChecklistInterface $checklist): void {
+  if (!\Drupal::state()->get('checklist_context_test.prerequisite')) {
+    return;
+  }
+  $name = 'prerequisite';
+  $items[$name] ??= $checklist->getType()->itemStorage()->create([
+    'checklist_type' => $checklist->getType()->getPluginId(),
+    'checklist' => ['entity' => $checklist->getEntity(), 'checklist_key' => $checklist->getKey()],
+    'name' => $name,
+    'title' => 'Prerequisite',
+    'handler' => ['id' => 'completion_readiness_test', 'configuration' => []],
+  ]);
+  $items = [$name => $items[$name]] + $items;
+}
