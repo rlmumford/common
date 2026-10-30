@@ -34,7 +34,7 @@ class SimplyCheckableChecklistWidget extends WidgetBase {
     $delta,
     array $element,
     array &$form,
-    FormStateInterface $form_state
+    FormStateInterface $form_state,
   ) {
     /** @var \Drupal\checklist\Plugin\Field\FieldType\ChecklistItem $item */
     $item = $items->get($delta);
@@ -166,6 +166,11 @@ class SimplyCheckableChecklistWidget extends WidgetBase {
       $existing_names = [];
       /** @var \Drupal\checklist\Entity\ChecklistItem $checklist_item */
       foreach ($widget_state[$delta]['checklist_items'] as $name => $checklist_item) {
+        // Read-only rows have no input; retain their original definition.
+        if (!$checklist_item->isNew() || !$checklist_item->getHandler() instanceof SimplyCheckableChecklistItemHandler) {
+          $existing_names[] = $name;
+          continue;
+        }
         $checklist_item->name = $checklist_values[$name]['name'];
         $checklist_item->title = $checklist_values[$name]['title'];
 

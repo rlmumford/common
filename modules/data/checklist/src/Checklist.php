@@ -160,6 +160,8 @@ class Checklist implements ChecklistInterface {
       unset($items[$name]);
     }
 
+    $items = array_replace(array_intersect_key($this->definedItems, $items), $items);
+    \Drupal::moduleHandler()->alter('checklist_items', $items, $this);
     return $items;
   }
 
@@ -209,8 +211,7 @@ class Checklist implements ChecklistInterface {
    * {@inheritdoc}
    */
   public function getOrderedItems(): array {
-    $items = $this->getItems();
-    return array_replace(array_intersect_key($this->definedItems, $items), $items);
+    return $this->getItems();
   }
 
   /**

@@ -59,6 +59,23 @@ class ChecklistCompletionTest extends KernelTestBase {
   }
 
   /**
+   * Integrations prepend prerequisites while retaining saved identity and work.
+   */
+  public function testContributedPrerequisite(): void {
+    $this->container->get('state')->set('checklist_context_test.prerequisite', TRUE);
+    $checklist = $this->checklist(['work' => ['method' => 'manual']]);
+    $this->assertSame(['prerequisite', 'work'], array_keys($checklist->getOrderedItems()));
+    $item = $checklist->getItem('prerequisite');
+    $item->setComplete()->save();
+    $uuid = $item->uuid();
+    $host = $this->container->get('entity_type.manager')->getStorage('user')->loadUnchanged($checklist->getEntity()->id());
+    $restored = $host->get('checklist')->checklist;
+    $this->assertSame(['prerequisite', 'work'], array_keys($restored->getOrderedItems()));
+    $this->assertSame($uuid, $restored->getItem('prerequisite')->uuid());
+    $this->assertTrue($restored->getItem('prerequisite')->isComplete());
+  }
+
+  /**
    * Unknown applicability blocks execution and completion until it is known.
    */
   public function testUnknownApplicability(): void {
