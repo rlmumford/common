@@ -3,6 +3,7 @@
 namespace Drupal\document\Review;
 
 use JsonSchema\Uri\UriRetriever;
+use JsonSchema\Constraints\Constraint;
 use JsonSchema\Validator;
 
 /**
@@ -31,7 +32,7 @@ final class AnalysisSchema {
     // The library maps this fixed URI to its bundled Draft 7 meta-schema.
     // Validate the definition itself, including properties absent from a probe.
     $validator = new Validator();
-    $validator->validate($schema, (new UriRetriever())->retrieve('http://json-schema.org/draft-07/schema#'));
+    $validator->validate($schema, (new UriRetriever())->retrieve('http://json-schema.org/draft-07/schema#'), Constraint::CHECK_MODE_STRICT);
     if (!$validator->isValid()) {
       throw new \InvalidArgumentException('The analysis schema is not a valid Draft 7 schema.');
     }
@@ -62,7 +63,7 @@ final class AnalysisSchema {
     $json = json_encode((object) $analysis, JSON_THROW_ON_ERROR);
     $data = json_decode($json);
     $validator = new Validator();
-    $validator->validate($data, self::parse($schema_json));
+    $validator->validate($data, self::parse($schema_json), Constraint::CHECK_MODE_STRICT);
     if (!$validator->isValid()) {
       throw new \InvalidArgumentException('Analysis does not match the review definition schema.');
     }

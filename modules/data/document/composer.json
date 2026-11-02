@@ -13,7 +13,7 @@
         "drupal/core": "^10.2 || ^11",
         "drupal/entity": "^1.4",
         "drupal/typed_data_plus": "2.0.x-dev",
-        "justinrainbow/json-schema": "^6.12"
+        "justinrainbow/json-schema": "^6.8.2"
     },
     "suggest": {
         "drupal/pdf_tools": "Required by the document_generation submodule.",
