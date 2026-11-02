@@ -2,6 +2,7 @@
 
 /**
  * @file
+ * Install and update functions for the Project module.
  */
 
 use Drupal\Core\Config\FileStorage;

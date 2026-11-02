@@ -2,6 +2,7 @@
 
 /**
  * @file
+ * Install and update functions for the CRM module.
  */
 
 use Drupal\Core\Config\Config;
