@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @file
+ * Install and update functions for the CRM module.
+ */
+
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\FileStorage;
 
@@ -7,7 +12,7 @@ use Drupal\Core\Config\FileStorage;
  * Update layout.
  */
 function rlmcrm_update_8001() {
-  $source = new FileStorage(drupal_get_path('module', 'rlmcrm').'/config/install');
+  $source = new FileStorage(\Drupal::service('extension.list.module')->getPath('rlmcrm') . '/config/install');
   /** @var \Drupal\Core\Config\StorageInterface $config_storage */
   $config_storage = \Drupal::service('config.storage');
 
@@ -57,7 +62,7 @@ function rlmcrm_update_8001() {
  * Add places field to the individual profile and AKA's to the firm profile.
  */
 function rlmcrm_update_8002() {
-  $source = new FileStorage(drupal_get_path('module', 'rlmcrm').'/config/install');
+  $source = new FileStorage(\Drupal::service('extension.list.module')->getPath('rlmcrm') . '/config/install');
   /** @var \Drupal\Core\Config\StorageInterface $config_storage */
   $config_storage = \Drupal::service('config.storage');
 

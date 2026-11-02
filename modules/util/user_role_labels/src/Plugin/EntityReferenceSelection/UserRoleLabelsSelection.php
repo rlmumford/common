@@ -4,6 +4,7 @@ namespace Drupal\user_role_labels\Plugin\EntityReferenceSelection;
 
 use Drupal\Core\Entity\Plugin\EntityReferenceSelection\DefaultSelection;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\user\Entity\Role;
 use Drupal\user\Plugin\EntityReferenceSelection\UserSelection;
 use Drupal\user\RoleInterface;
 
@@ -48,7 +49,7 @@ class UserRoleLabelsSelection extends UserSelection {
           continue;
         }
 
-        $label_condition_group->condition('role_label_'.$role->id(), $match, $match_operator);
+        $label_condition_group->condition('role_label_' . $role->id(), $match, $match_operator);
       }
       $query->condition($label_condition_group);
     }
@@ -68,10 +69,19 @@ class UserRoleLabelsSelection extends UserSelection {
     $form = parent::buildConfigurationForm($form, $form_state);
     $configuration = $this->getConfiguration();
 
+    // Labels of the real (non-anonymous, non-authenticated) roles a new user
+    // can be stored as. Replaces user_role_names(), removed in drupal:11.0.0.
+    $role_names = [];
+    foreach (Role::loadMultiple() as $role) {
+      if (!in_array($role->id(), [RoleInterface::ANONYMOUS_ID, RoleInterface::AUTHENTICATED_ID], TRUE)) {
+        $role_names[$role->id()] = $role->label();
+      }
+    }
+
     $form['auto_create_roles'] = [
       '#type' => 'checkboxes',
       '#title' => $this->t('Store new users as'),
-      '#options' => array_diff_key(user_role_names(TRUE), [RoleInterface::AUTHENTICATED_ID => RoleInterface::AUTHENTICATED_ID]),
+      '#options' => $role_names,
       '#default_value' => !empty($configuration['auto_create_roles']) ? $configuration['auto_create_roles'] : [],
       '#states' => [
         'visible' => [
