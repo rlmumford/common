@@ -3,11 +3,9 @@
 namespace Drupal\document\Plugin\Field\FieldWidget;
 
 use Drupal\Component\Utility\Bytes;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\document\Entity\Document;
 use Symfony\Component\DependencyInjection\ContainerInterface;
