@@ -160,14 +160,14 @@ class DocumentSelector extends WidgetBase {
       '#title' => $this->t('File'),
       '#upload_location' => 'private://documents/' . date('Y-m'),
       '#upload_validators' => array_filter([
-        'file_validate_extensions' => [$this->getSetting('upload_extensions')],
+        'FileExtension' => ['extensions' => $this->getSetting('upload_extensions')],
         // In bytes. The setting is written the way the settings form invites -
-        // "32 MB" - and file_validate_size() wants a number: it compares the
+        // "32 MB" - and the size validator wants a number: it compares the
         // file size against it and then hands it to ByteSizeMarkup::create(),
         // which is typed int|float and throws a TypeError on a string. The
         // upload then fails with "Oops, something went wrong" and no file.
-        'file_validate_size' => $this->getSetting('upload_max_size')
-          ? [Bytes::toNumber($this->getSetting('upload_max_size'))]
+        'FileSizeLimit' => $this->getSetting('upload_max_size')
+          ? ['fileLimit' => (int) Bytes::toNumber($this->getSetting('upload_max_size'))]
           : NULL,
       ]),
       '#states' => $existing ? [
