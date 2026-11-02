@@ -90,7 +90,7 @@ class InvoiceMailAttachmentTest extends UnitTestCase {
     MimeMailFormatHelper::mimeMailFile(NULL, $contents, 'invoice.pdf', 'application/pdf', 'attachment');
     $parts = array_values(MimeMailFormatHelper::mimeMailFile());
     $this->assertCount(1, $parts);
-    $this->assertSame($contents, $parts[0]['file']);
+    $this->assertSame($contents, $parts[0]['filecontent'] ?? $parts[0]['file']);
     $this->assertSame('attachment', $parts[0]['Content-Disposition']);
   }
 
