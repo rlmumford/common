@@ -2,14 +2,9 @@
 
 namespace Drupal\flexilayout_builder\EventSubscriber;
 
-use Drupal\block_content\Access\RefinableDependentAccessInterface;
-use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Block\BlockPluginInterface;
-use Drupal\Core\Render\Element;
-use Drupal\Core\Render\PlaceholderInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\ctools_block\Plugin\Block\EntityField;
-use Drupal\layout_builder\Access\LayoutPreviewAccessAllowed;
 use Drupal\layout_builder\Event\SectionComponentBuildRenderArrayEvent;
 use Drupal\layout_builder\LayoutBuilderEvents;
 use Drupal\layout_builder\Plugin\Block\FieldBlock;

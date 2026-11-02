@@ -58,7 +58,7 @@ function project_update_8001() {
   }
 
   // Install configuration.
-  $source = new FileStorage(drupal_get_path('module', 'project').'/config/install');
+  $source = new FileStorage(\Drupal::service('extension.list.module')->getPath('project').'/config/install');
   /** @var \Drupal\Core\Config\StorageInterface $config_storage */
   $config_storage = \Drupal::project('config.storage');
 
@@ -75,7 +75,7 @@ function project_update_8001() {
  */
 function project_update_8002() {
   // Install configuration.
-  $source = new FileStorage(drupal_get_path('module', 'project').'/config/install');
+  $source = new FileStorage(\Drupal::service('extension.list.module')->getPath('project').'/config/install');
   /** @var \Drupal\Core\Config\StorageInterface $config_storage */
   $config_storage = \Drupal::project('config.storage');
 
