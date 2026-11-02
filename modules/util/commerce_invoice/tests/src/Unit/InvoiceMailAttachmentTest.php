@@ -68,7 +68,7 @@ class InvoiceMailAttachmentTest extends UnitTestCase {
   /**
    * Tests the formatter accepts binary content without treating it as a path.
    */
-  public function testBinaryContentIsNotAFilePath() {
+  public function testBinaryAttachmentContent() {
     $file_system = $this->createMock(FileSystemInterface::class);
     $file_system->expects($this->never())->method('realpath');
     $config = $this->createMock(ImmutableConfig::class);
