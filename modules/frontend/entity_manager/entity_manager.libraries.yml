@@ -1,0 +1,11 @@
+reader:
+  css:
+    component:
+      css/entity-manager.css: {}
+  js:
+    js/entity-manager.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+    - core/drupal.ajax
+    - core/drupalSettings

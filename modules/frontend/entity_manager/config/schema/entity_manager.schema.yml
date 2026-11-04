@@ -1,0 +1,7 @@
+views.style.entity_manager:
+  type: views.style.table
+  label: Entity Manager table
+  mapping:
+    view_mode:
+      type: string
+      label: Entity preview view mode

@@ -1,0 +1,17 @@
+/* The ordinary table remains the no-JavaScript and closed-reader layout. */
+.entity-manager { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+.entity-manager--open { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.entity-manager__list, .entity-manager__reader { min-width: 0; }
+.entity-manager__reader[hidden] { display: none; }
+.entity-manager__list { overflow-x: auto; }
+.entity-manager__reader { overflow-wrap: anywhere; }
+.entity-manager__toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.entity-manager__toolbar .button { margin: 0; }
+.entity-manager tr[data-entity-manager-url] { cursor: pointer; }
+.entity-manager tr.entity-manager__selected { box-shadow: inset 4px 0 var(--gin-color-primary, #005ea2); }
+.entity-manager tr.entity-manager__selected td { background-color: var(--gin-bg-item-hover, #eef4ff); }
+.entity-manager [data-entity-manager-status]:empty { display: none; }
+@media (max-width: 60rem) {
+  .entity-manager--open { grid-template-columns: minmax(0, 1fr); }
+  .entity-manager--open .entity-manager__reader { grid-row: 1; }
+}

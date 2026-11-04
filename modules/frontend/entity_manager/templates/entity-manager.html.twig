@@ -1,0 +1,11 @@
+<div class="entity-manager" data-entity-manager>
+  <div class="entity-manager__list">{{ table }}</div>
+  <section class="entity-manager__reader" hidden aria-label="{{ 'Selected record'|t }}">
+    <div class="entity-manager__toolbar">
+      <a data-entity-manager-open>{{ 'Open full page'|t }}</a>
+      <button type="button" class="button" data-entity-manager-close>{{ 'Close preview'|t }}</button>
+    </div>
+    <p role="status" data-entity-manager-status></p>
+    <div id="{{ reader_id }}" data-entity-manager-content></div>
+  </section>
+</div>

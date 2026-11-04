@@ -1,0 +1,55 @@
+name: Entity Manager
+on:
+  pull_request:
+    paths:
+      - 'modules/frontend/entity_manager/**'
+      - '.github/workflows/entity-manager.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: testing
+          MYSQL_DATABASE: entity_manager
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -ptesting"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: gd, pdo_mysql
+          tools: composer:v2
+          coverage: none
+      - name: Build a Drupal 11 consumer
+        run: |
+          composer create-project drupal/recommended-project:^11.4 /tmp/entity-manager-consumer --no-interaction
+          cd /tmp/entity-manager-consumer
+          composer require --dev drupal/core-dev:^11.4 --with-all-dependencies --no-interaction
+          mkdir -p web/modules/custom
+          cp -R "$GITHUB_WORKSPACE/modules/frontend/entity_manager" web/modules/custom/
+          mkdir -p /tmp/entity-manager-browser
+          chmod -R a+w web/sites /tmp/entity-manager-browser
+      - name: Exercise Views and entity access
+        working-directory: /tmp/entity-manager-consumer/web
+        env:
+          SIMPLETEST_DB: mysql://root:testing@127.0.0.1:3306/entity_manager
+          SIMPLETEST_BASE_URL: http://127.0.0.1:8888
+          BROWSERTEST_OUTPUT_DIRECTORY: /tmp/entity-manager-browser
+          SYMFONY_DEPRECATIONS_HELPER: weak
+        run: |
+          php -S 127.0.0.1:8888 .ht.router.php >/tmp/entity-manager-browser.log 2>&1 &
+          ../vendor/bin/phpunit --bootstrap core/tests/bootstrap.php modules/custom/entity_manager/tests
+      - name: Show browser server log on failure
+        if: failure()
+        run: tail -n 100 /tmp/entity-manager-browser.log

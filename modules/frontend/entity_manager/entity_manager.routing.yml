@@ -1,0 +1,7 @@
+entity_manager.preview:
+  path: '/entity-manager/{view_id}/{display_id}/{entity_id}'
+  defaults:
+    _controller: '\Drupal\entity_manager\Controller\EntityPreview::preview'
+  requirements:
+    _custom_access: '\Drupal\entity_manager\Controller\EntityPreview::access'
+  methods: [GET]
