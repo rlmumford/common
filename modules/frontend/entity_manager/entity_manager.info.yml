@@ -1,0 +1,7 @@
+name: Entity Manager
+type: module
+description: Reusable Views tables with an accessible entity reader alongside the list.
+package: RLMumford
+core_version_requirement: ^11
+dependencies:
+  - drupal:views

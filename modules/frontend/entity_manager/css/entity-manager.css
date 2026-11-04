@@ -1,0 +1,29 @@
+/* The ordinary table remains the no-JavaScript and closed-reader layout. */
+.entity-manager { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+.entity-manager--open { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.entity-manager__list, .entity-manager__reader { min-width: 0; }
+.entity-manager__reader[hidden] { display: none; }
+.entity-manager__list { overflow-x: auto; }
+.entity-manager__reader { overflow-wrap: anywhere; scroll-margin-top: 7rem; }
+.entity-manager__toolbar { display: flex; align-items: center; justify-content: flex-end; gap: .25rem; }
+.entity-manager__toolbar .entity-manager__control { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; padding: .25rem; margin: 0; border: 0; border-radius: .25rem; background: transparent; box-shadow: none; color: var(--gin-color-text, #263445); cursor: pointer; }
+.entity-manager__toolbar .entity-manager__control:hover { background: var(--gin-bg-item-hover, #eef4ff); }
+.entity-manager__toolbar .entity-manager__control:focus-visible { outline: 2px solid var(--gin-color-primary, #005ea2); outline-offset: 2px; }
+.entity-manager__toolbar .entity-manager__close { color: var(--gin-color-danger, #b42318); }
+.entity-manager__control svg { width: 1.25rem; height: 1.25rem; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.entity-manager__toolbar .entity-manager__back { display: none; }
+/* This heading receives focus to announce the loaded record; it is not a control. */
+.entity-manager [data-entity-manager-heading]:focus { outline: none; box-shadow: none; }
+.entity-manager tr[data-entity-manager-url] { cursor: pointer; }
+.entity-manager tr.entity-manager__selected { box-shadow: inset 4px 0 var(--gin-color-primary, #005ea2); }
+.entity-manager tr.entity-manager__selected td { background-color: var(--gin-bg-item-hover, #eef4ff); }
+.entity-manager [data-entity-manager-status]:empty { display: none; }
+@media (max-width: 60rem) {
+  .entity-manager--open { grid-template-columns: minmax(0, 1fr); }
+  .entity-manager--open .entity-manager__list,
+  .entity-manager-view--open > .view-filters,
+  .entity-manager-view--open > .pager { display: none; }
+  .entity-manager__toolbar .entity-manager__control { width: 2.75rem; height: 2.75rem; }
+  .entity-manager__toolbar .entity-manager__back { display: inline-flex; margin-inline-end: auto; }
+  .entity-manager__toolbar .entity-manager__close { display: none; }
+}
