@@ -4,6 +4,9 @@
     attach(context) {
       once('entity-manager', '[data-entity-manager]', context).forEach((element) => {
         const reader = element.querySelector('.entity-manager__reader');
+        const view = element.closest('.view');
+        const mobile = window.matchMedia('(max-width: 60rem)');
+        let listScroll = 0;
         const content = reader.querySelector('[data-entity-manager-content]');
         // Cached instances of the same View may repeat server-generated IDs.
         content.id = `entity-manager-reader-client-${++readerSequence}`;
@@ -26,10 +29,12 @@
           clear();
           reader.hidden = true;
           element.classList.remove('entity-manager--open');
+          view?.classList.remove('entity-manager-view--open');
           element.querySelectorAll('.entity-manager__selected').forEach((row) => row.classList.remove('entity-manager__selected'));
           opener?.focus({preventScroll: true});
+          if (mobile.matches) window.scrollTo({top: listScroll, behavior: 'instant'});
         };
-        reader.querySelector('[data-entity-manager-close]').addEventListener('click', close);
+        reader.querySelectorAll('[data-entity-manager-close]').forEach((button) => button.addEventListener('click', close));
         reader.addEventListener('keydown', (event) => {
           if (event.key === 'Escape') { event.preventDefault(); close(); }
         });
@@ -48,10 +53,13 @@
             if (!canLeave()) return;
             const version = ++generation;
             opener = link;
+            if (!element.classList.contains('entity-manager--open')) listScroll = window.scrollY;
             clear();
             fullPage.href = canonical.href;
             reader.hidden = false;
             element.classList.add('entity-manager--open');
+            view?.classList.add('entity-manager-view--open');
+            if (mobile.matches) reader.scrollIntoView({block: 'start', behavior: 'instant'});
             element.querySelectorAll('.entity-manager__selected').forEach((r) => r.classList.remove('entity-manager__selected'));
             row.classList.add('entity-manager__selected');
             status.textContent = Drupal.t('Loading @label…', {'@label': row.dataset.entityManagerLabel});
@@ -68,9 +76,6 @@
                 if (version !== generation) return;
                 status.textContent = '';
                 content.querySelector('[data-entity-manager-heading]')?.focus({preventScroll: true});
-                if (window.matchMedia('(max-width: 60rem)').matches) {
-                  reader.scrollIntoView({block: 'start', behavior: 'smooth'});
-                }
               });
             };
             ajax.error = function () {

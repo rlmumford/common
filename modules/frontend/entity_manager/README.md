@@ -20,8 +20,11 @@ pass the View and entity access checks independently.
 Canonical links work without JavaScript and with modified clicks. Actions and
 other links inside rows are not intercepted. The reader supports closing,
 keyboard focus, unsaved-input confirmation and stale-response suppression;
-on narrow screens it stacks above the list. Multiple tables have separate
-reader containers. Selecting or closing a row never mutates the entity.
+on narrow screens it replaces the list and hides its filters/pager until the
+back arrow restores them at the previous scroll position. Desktop uses compact
+open-full-page and close icons at the top right. The loaded heading receives
+focus for announcement without a control-style focus ring; interactive controls
+retain keyboard focus indicators. Multiple tables have separate reader containers. Selecting or closing a row never mutates the entity.
 
 This replaces the table/reader pattern of the platform's Entity Manager, without
 porting its organization or workflow assumptions. Existing `task_ui` workspaces
