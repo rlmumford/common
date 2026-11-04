@@ -68,6 +68,9 @@
                 if (version !== generation) return;
                 status.textContent = '';
                 content.querySelector('[data-entity-manager-heading]')?.focus({preventScroll: true});
+                if (window.matchMedia('(max-width: 60rem)').matches) {
+                  reader.scrollIntoView({block: 'start', behavior: 'smooth'});
+                }
               });
             };
             ajax.error = function () {

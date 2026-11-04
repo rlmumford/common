@@ -4,7 +4,7 @@
 .entity-manager__list, .entity-manager__reader { min-width: 0; }
 .entity-manager__reader[hidden] { display: none; }
 .entity-manager__list { overflow-x: auto; }
-.entity-manager__reader { overflow-wrap: anywhere; }
+.entity-manager__reader { overflow-wrap: anywhere; scroll-margin-top: 7rem; }
 .entity-manager__toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .entity-manager__toolbar .button { margin: 0; }
 .entity-manager tr[data-entity-manager-url] { cursor: pointer; }
