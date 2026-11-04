@@ -142,7 +142,7 @@ final class ChecklistReportBuilderTest extends ChecklistItemExecutionTestBase {
         'id' => 'context_test',
         'configuration' => [
           'default_items' => [
-            'hidden' => ['title' => 'Private item title', 'handler' => 'iteration_test'],
+            'hidden' => ['title' => 'Private item title', 'handler' => 'iteration_test', 'handler_configuration' => []],
           ],
         ],
       ],

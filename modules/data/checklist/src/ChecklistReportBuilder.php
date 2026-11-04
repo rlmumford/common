@@ -104,6 +104,9 @@ final class ChecklistReportBuilder {
       }
       $handler = $item->getHandler();
       if ($handler instanceof ExpectedOutcomeChecklistItemHandlerInterface && $item->get('outcomes')->access('view')) {
+        if ($attempt !== NULL) {
+          $row['outcome_notice'] = ['#plain_text' => $this->t('Outcomes show the item’s current recorded evidence, not a snapshot of the selected execution.')];
+        }
         $row['outcomes'] = ['#type' => 'container', '#attributes' => ['class' => ['checklist-report__outcomes']]];
         foreach ($handler->expectedOutcomeDefinitions() as $key => $definition) {
           $value = $item->get('outcomes')->get($key);

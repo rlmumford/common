@@ -963,6 +963,8 @@ Applications must explicitly select safe preview content and authorize every
 referenced entity and field. Without a callback the report displays only outcome
 labels and whether evidence exists; it never serializes arbitrary typed values.
 A failed attempt and an item's completion disposition are displayed separately.
+Outcomes are the item's current evidence, not historical attempt snapshots;
+selecting a history cursor makes that distinction explicit in the report.
 
 `task_checklist.report_builder` wraps this presentation with task identity, status,
 creation time and application-authorized context. It can be used without enabling
