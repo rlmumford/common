@@ -45,6 +45,9 @@ services:
   checklist.resolver:
     class: Drupal\checklist\ChecklistResolver
     arguments: ['@current_user']
+  checklist.report_builder:
+    class: Drupal\checklist\ChecklistReportBuilder
+    arguments: ['@checklist.resolver', '@checklist.item_reader', '@date.formatter', '@request_stack']
   checklist.item_reader:
     class: Drupal\checklist\ChecklistItemReader
     arguments: ['@checklist.resolver', '@checklist.context_preparer', '@checklist.attempt_journal']

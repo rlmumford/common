@@ -1,0 +1,15 @@
+.checklist-report__item { margin-block: 1.5rem; padding-block-end: 1.5rem; border-bottom: 1px solid var(--gin-border-color, #ddd); }
+.checklist-report__heading { display: flex; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.checklist-report__heading h3 { margin: 0; font-size: 1.125rem; }
+.checklist-report__state { border-radius: 1rem; padding: .2rem .65rem; background: var(--gin-bg-layer2, #eee); font-weight: 600; }
+.checklist-report__state[data-state="complete"], .checklist-report__state[data-state="succeeded"] { background: #e7f3ec; color: #146c3d; }
+.checklist-report__state[data-state="failed"] { background: #fbe9e7; color: #a32219; }
+.checklist-report .checklist-report__item > .form-item { margin-block: .5rem 1rem; color: var(--gin-color-text-light, #555); }
+.checklist-report details { border: 0; box-shadow: none; background: transparent; margin-block: .5rem; }
+.checklist-report details > summary { padding-block: .5rem; padding-inline: 2.5rem .5rem; }
+.checklist-report details > .details-wrapper { margin-block: .5rem; }
+.checklist-report__outcomes { margin-inline-start: 1rem; }
+.checklist-report pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 28rem; overflow: auto; }
+.checklist-report__history table { font-size: .875rem; }
+.checklist-report__history a { display: inline-block; margin-inline-end: 1rem; }
+@media (max-width: 40rem) { .checklist-report__history .details-wrapper { overflow-x: auto; } }
