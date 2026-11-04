@@ -6,7 +6,9 @@ use Drupal\checklist\Attempt\ChecklistAttempt;
 use Drupal\checklist_state_test\Plugin\ChecklistItemHandler\Iteration;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\Request;
+use Drupal\user\Entity\User;
 
 /**
  * Tests display-only reports, explicit previews and bounded history.
@@ -78,6 +80,7 @@ final class ChecklistReportBuilderTest extends ChecklistItemExecutionTestBase {
     $query = $history['navigation']['later']['#url']->getOption('query');
     $this->assertSame($attempt->id, $query['checklist_history']['work'][0]['worker']['attempt']);
     $request = Request::create('/report', 'GET', $query);
+    $request->setSession($this->container->get('request_stack')->getCurrentRequest()->getSession());
     $this->container->get('request_stack')->push($request);
     try {
       $next = $builder->build($host, 'work')['items']['worker']['history'];
@@ -98,9 +101,60 @@ final class ChecklistReportBuilderTest extends ChecklistItemExecutionTestBase {
    */
   public function testMalformedCursor(): void {
     [$host] = $this->work();
-    $this->container->get('request_stack')->push(Request::create('/report', 'GET', ['checklist_history' => 'invalid']));
-    $this->expectException(BadRequestHttpException::class);
-    $this->container->get('checklist.report_builder')->build($host, 'work');
+    $stack = $this->container->get('request_stack');
+    $stack->push(Request::create('/report', 'GET', ['checklist_history' => 'invalid']));
+    try {
+      $this->expectException(BadRequestHttpException::class);
+      $this->container->get('checklist.report_builder')->build($host, 'work');
+    }
+    finally {
+      $stack->pop();
+    }
+  }
+
+  /**
+   * The shared reader rejects an attempt belonging to another checklist item.
+   */
+  public function testForeignAttempt(): void {
+    [$host] = $this->work();
+    [, , $other] = $this->work(name: 'Other host');
+    $stack = $this->container->get('request_stack');
+    $stack->push(Request::create('/report', 'GET', [
+      'checklist_history' => ['work' => [0 => ['worker' => ['attempt' => $other->id]]]],
+    ]));
+    try {
+      $this->expectException(NotFoundHttpException::class);
+      $this->container->get('checklist.report_builder')->build($host, 'work');
+    }
+    finally {
+      $stack->pop();
+    }
+  }
+
+  /**
+   * Hidden item titles, evidence and history are omitted entirely.
+   */
+  public function testHiddenItem(): void {
+    $this->enableModules(['checklist_reader_test']);
+    $host = User::create([
+      'name' => 'Hidden host',
+      'work' => [
+        'id' => 'context_test',
+        'configuration' => [
+          'default_items' => [
+            'hidden' => ['title' => 'Private item title', 'handler' => 'iteration_test'],
+          ],
+        ],
+      ],
+    ]);
+    $host->save();
+    $build = $this->container->get('checklist.report_builder')->build($host, 'work', 0, static function () {
+      throw new \LogicException('Hidden evidence must not be previewed.');
+    });
+    $this->assertArrayNotHasKey('hidden', $build['items']);
+    $html = (string) $this->container->get('renderer')->renderInIsolation($build);
+    $this->assertStringNotContainsString('Private item title', $html);
+    $this->assertStringContainsString('No visible checklist items.', $html);
   }
 
 }

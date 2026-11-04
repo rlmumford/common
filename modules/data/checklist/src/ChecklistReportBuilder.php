@@ -8,6 +8,8 @@ use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Url;
+use Drupal\Core\TypedData\ComplexDataInterface;
+use Drupal\Core\TypedData\ListInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
@@ -96,7 +98,7 @@ final class ChecklistReportBuilder {
       if ($history['attempt']) {
         $row['attempt'] = [
           '#type' => 'item',
-          '#title' => $this->t('Latest execution'),
+          '#title' => $attempt === NULL ? $this->t('Latest execution') : $this->t('Selected execution'),
           '#plain_text' => $this->stateLabel($history['attempt']['status']),
         ];
       }
@@ -104,7 +106,9 @@ final class ChecklistReportBuilder {
       if ($handler instanceof ExpectedOutcomeChecklistItemHandlerInterface && $item->get('outcomes')->access('view')) {
         $row['outcomes'] = ['#type' => 'container', '#attributes' => ['class' => ['checklist-report__outcomes']]];
         foreach ($handler->expectedOutcomeDefinitions() as $key => $definition) {
-          $recorded = !$item->get('outcomes')->get($key)->isEmpty();
+          $value = $item->get('outcomes')->get($key);
+          $recorded = $value instanceof ComplexDataInterface || $value instanceof ListInterface
+            ? !$value->isEmpty() : $value->getValue() !== NULL;
           $content = $recorded && $preview ? $preview($item, $key) : [];
           $row['outcomes'][$key] = [
             '#type' => $content ? 'details' : 'item',
