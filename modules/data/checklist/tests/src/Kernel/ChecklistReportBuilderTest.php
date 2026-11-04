@@ -68,7 +68,7 @@ final class ChecklistReportBuilderTest extends ChecklistItemExecutionTestBase {
    * Long histories use pinned cursors without fetching other item attempts.
    */
   public function testBoundedHistory(): void {
-    [$host, $item, $attempt] = $this->work();
+    [$host, , $attempt] = $this->work();
     $journal = $this->container->get('checklist.attempt_journal');
     for ($i = 0; $i < 54; $i++) {
       $attempt = $journal->transition($attempt, $i % 2 ? ChecklistAttempt::WAITING : ChecklistAttempt::RUNNING, 1, 'Event ' . $i);
