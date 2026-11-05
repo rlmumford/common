@@ -948,3 +948,26 @@ these arguments; this is not an endpoint accepting arbitrary client outcome maps
 The existing input fence, authorization checks, type validation and journal event
 apply to both writes in one transaction. Invalid outcomes roll back state and
 attempt changes too. Supplying input does not itself complete the item.
+
+## Read-only reports
+
+`checklist.report_builder` renders a saved checklist as visible item headings,
+completion states, labeled outcome availability and expandable, paginated attempt
+history. It uses the resolver and history reader, never the interactive formatter,
+execution gates, action methods, editing tempstore or forms. Host, checklist-field,
+item and outcome-field access are checked before evidence is displayed. Reports
+are uncacheable.
+
+The optional preview callback receives a visible item and recorded outcome name.
+Applications must explicitly select safe preview content and authorize every
+referenced entity and field. Without a callback the report displays only outcome
+labels and whether evidence exists; it never serializes arbitrary typed values.
+A failed attempt and an item's completion disposition are displayed separately.
+Outcomes are the item's current evidence, not historical attempt snapshots;
+selecting a history cursor makes that distinction explicit in the report.
+
+`task_checklist.report_builder` wraps this presentation with task identity, status,
+creation time and application-authorized context. It can be used without enabling
+the interactive `task_ui` workspace. It does not register new routes: the app's
+report route retains its source/case/organization authorization policy. History
+links stay on that route and pin the selected attempt while paging.

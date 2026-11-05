@@ -19,3 +19,8 @@ retry:
   css:
     theme:
       css/checklist-retry.css: {}
+
+report:
+  css:
+    theme:
+      css/checklist-report.css: {}
