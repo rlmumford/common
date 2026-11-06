@@ -52,7 +52,7 @@ class TaskIntegrationTest extends KernelTestBase {
   }
 
   /**
-   * Report context chips preserve render access, including denied and empty data.
+   * Report chips preserve access and omit denied or empty context.
    */
   public function testReportContextAccess(): void {
     $account = User::create(['name' => 'report administrator', 'status' => 1]);
