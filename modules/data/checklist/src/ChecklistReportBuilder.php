@@ -78,7 +78,7 @@ final class ChecklistReportBuilder {
       $row = [
         '#type' => 'details',
         '#open' => count($build['items']) === 2 || $attempt !== NULL || $after > 0
-          || in_array($state, ['failed', 'running'], TRUE),
+        || in_array($state, ['failed', 'running'], TRUE),
         '#attributes' => ['class' => ['checklist-report__item'], 'data-checklist-item' => $name],
         '#title' => [
           '#theme' => 'checklist_report_item_summary',

@@ -69,7 +69,9 @@ final class TaskReportBuilder {
           '#type' => 'container',
           '#attributes' => ['class' => ['task-report__chip', 'task-report__chip--identity']],
           'label' => [
-            '#type' => 'html_tag', '#tag' => 'span', '#value' => $this->t('Task'),
+            '#type' => 'html_tag',
+            '#tag' => 'span',
+            '#value' => $this->t('Task'),
             '#attributes' => ['class' => ['visually-hidden']],
           ],
           'id' => ['#plain_text' => '#' . $task->id()],
@@ -92,7 +94,9 @@ final class TaskReportBuilder {
         '#type' => 'container',
         '#attributes' => ['class' => ['task-report__chip', 'task-report__chip--created']],
         'label' => [
-          '#type' => 'html_tag', '#tag' => 'span', '#value' => $this->t('Created'),
+          '#type' => 'html_tag',
+          '#tag' => 'span',
+          '#value' => $this->t('Created'),
           '#attributes' => ['class' => ['visually-hidden']],
         ],
         'date' => [
