@@ -76,38 +76,27 @@ final class ChecklistReportBuilder {
       $history = $this->reader->readHistory($host, $field, $delta, $name, $attempt, $after, 50);
       $state = $history['status'];
       $row = [
-        '#type' => 'container',
+        '#type' => 'details',
+        '#open' => count($build['items']) === 2 || $attempt !== NULL || $after > 0 || in_array($state, ['failed', 'running'], TRUE),
         '#attributes' => ['class' => ['checklist-report__item'], 'data-checklist-item' => $name],
-        'heading' => [
-          '#type' => 'container',
-          '#attributes' => ['class' => ['checklist-report__heading']],
-          'title' => ['#type' => 'html_tag', '#tag' => 'h3', 'text' => ['#plain_text' => $history['title']]],
-          'state' => [
-            '#type' => 'html_tag',
-            '#tag' => 'span',
-            '#attributes' => ['class' => ['checklist-report__state'], 'data-state' => $state],
-            'text' => ['#plain_text' => $this->stateLabel($state)],
-          ],
-        ],
-        'method' => [
-          '#type' => 'item',
-          '#plain_text' => $item->getMethod() === ChecklistItemInterface::METHOD_AUTO
-            ? $this->t('Automatic checklist item') : $this->t('Manual checklist item'),
+        '#title' => [
+          '#theme' => 'checklist_report_item_summary',
+          '#title' => $history['title'],
+          '#state' => $state,
+          '#state_label' => $this->stateLabel($state),
+          '#automatic' => $item->getMethod() === ChecklistItemInterface::METHOD_AUTO,
         ],
       ];
-      if ($history['attempt']) {
-        $row['attempt'] = [
-          '#type' => 'item',
-          '#title' => $attempt === NULL ? $this->t('Latest execution') : $this->t('Selected execution'),
-          '#plain_text' => $this->stateLabel($history['attempt']['status']),
-        ];
-      }
       $handler = $item->getHandler();
       if ($handler instanceof ExpectedOutcomeChecklistItemHandlerInterface && $item->get('outcomes')->access('view')) {
         if ($attempt !== NULL) {
           $row['outcome_notice'] = ['#plain_text' => $this->t('Outcomes show the item’s current recorded evidence, not a snapshot of the selected execution.')];
         }
-        $row['outcomes'] = ['#type' => 'container', '#attributes' => ['class' => ['checklist-report__outcomes']]];
+        $row['outcomes'] = [
+          '#type' => 'container',
+          '#attributes' => ['class' => ['checklist-report__outcomes']],
+          'heading' => ['#type' => 'html_tag', '#tag' => 'h3', '#value' => $this->t('Outcomes')],
+        ];
         foreach ($handler->expectedOutcomeDefinitions() as $key => $definition) {
           $value = $item->get('outcomes')->get($key);
           $recorded = $value instanceof ComplexDataInterface || $value instanceof ListInterface
@@ -116,6 +105,7 @@ final class ChecklistReportBuilder {
           $row['outcomes'][$key] = [
             '#type' => $content ? 'details' : 'item',
             '#title' => $definition->getLabel() ?: $key,
+            '#attributes' => ['class' => ['checklist-report__outcome']],
             'content' => $content ?: ['#plain_text' => $recorded ? $this->t('Recorded') : $this->t('Not recorded yet')],
           ];
         }
@@ -187,6 +177,11 @@ final class ChecklistReportBuilder {
       '#title' => $this->t('Execution history'),
       '#open' => $selected !== NULL || $after > 0,
       '#attributes' => ['class' => ['checklist-report__history']],
+      'attempt' => $history['attempt'] ? [
+        '#type' => 'item',
+        '#title' => $selected === NULL ? $this->t('Latest execution') : $this->t('Selected execution'),
+        '#plain_text' => $this->stateLabel($history['attempt']['status']),
+      ] : [],
       'events' => [
         '#type' => 'table',
         '#header' => [$this->t('Time'), $this->t('State'), $this->t('Details')],
