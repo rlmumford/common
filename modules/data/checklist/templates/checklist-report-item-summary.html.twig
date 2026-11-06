@@ -1,0 +1,14 @@
+<span class="checklist-report__heading">
+  <span class="checklist-report__method" title="{{ automatic ? 'Automatic'|t : 'Manual'|t }}">
+    <span class="visually-hidden">{{ automatic ? 'Automatic checklist item'|t : 'Manual checklist item'|t }}</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true" focusable="false">
+      {% if automatic %}
+        <path d="m13 2-9 12h7l-1 8 10-12h-7z"/>
+      {% else %}
+        <circle cx="12" cy="7" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3"/>
+      {% endif %}
+    </svg>
+  </span>
+  <span class="checklist-report__title">{{ title }}</span>
+  <span class="checklist-report__state" data-state="{{ state }}">{{ state_label }}</span>
+</span>

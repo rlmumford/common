@@ -49,3 +49,14 @@ function checklist_entity_field_access($operation, FieldDefinitionInterface $fie
   }
   return AccessResult::neutral();
 }
+
+/**
+ * Implements hook_theme().
+ */
+function checklist_theme() {
+  return [
+    'checklist_report_item_summary' => [
+      'variables' => ['title' => '', 'state' => '', 'state_label' => '', 'automatic' => FALSE],
+    ],
+  ];
+}
