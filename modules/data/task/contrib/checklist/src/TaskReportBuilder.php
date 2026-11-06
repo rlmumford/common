@@ -68,7 +68,10 @@ final class TaskReportBuilder {
         'identity' => [
           '#type' => 'container',
           '#attributes' => ['class' => ['task-report__chip', 'task-report__chip--identity']],
-          'label' => ['#type' => 'html_tag', '#tag' => 'span', '#value' => $this->t('Task'), '#attributes' => ['class' => ['visually-hidden']]],
+          'label' => [
+            '#type' => 'html_tag', '#tag' => 'span', '#value' => $this->t('Task'),
+            '#attributes' => ['class' => ['visually-hidden']],
+          ],
           'id' => ['#plain_text' => '#' . $task->id()],
         ],
       ],
@@ -77,7 +80,10 @@ final class TaskReportBuilder {
     if ($task->get('status')->access('view')) {
       $build['summary']['status'] = [
         '#type' => 'container',
-        '#attributes' => ['class' => ['task-report__chip', 'task-report__chip--status'], 'data-status' => $task->get('status')->value],
+        '#attributes' => [
+          'class' => ['task-report__chip', 'task-report__chip--status'],
+          'data-status' => $task->get('status')->value,
+        ],
         'field' => $task->get('status')->view(['label' => 'hidden', 'type' => 'list_default']),
       ];
     }
@@ -85,7 +91,10 @@ final class TaskReportBuilder {
       $build['summary']['created'] = [
         '#type' => 'container',
         '#attributes' => ['class' => ['task-report__chip', 'task-report__chip--created']],
-        'label' => ['#type' => 'html_tag', '#tag' => 'span', '#value' => $this->t('Created'), '#attributes' => ['class' => ['visually-hidden']]],
+        'label' => [
+          '#type' => 'html_tag', '#tag' => 'span', '#value' => $this->t('Created'),
+          '#attributes' => ['class' => ['visually-hidden']],
+        ],
         'date' => [
           '#type' => 'html_tag',
           '#tag' => 'time',
