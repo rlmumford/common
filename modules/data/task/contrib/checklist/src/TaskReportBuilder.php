@@ -53,6 +53,7 @@ final class TaskReportBuilder {
       $context[$key] = [
         '#type' => 'container',
         '#attributes' => ['class' => ['task-report__chip', 'task-report__chip--context']],
+        '#access' => $context[$key]['#access'] ?? (bool) $context[$key],
         'content' => $context[$key],
       ];
     }
